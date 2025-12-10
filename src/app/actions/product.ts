@@ -1,0 +1,116 @@
+"use server"
+
+import { z } from "zod"
+import { db } from "@/lib/db"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { productSchema } from "@/lib/validations"
+import { revalidatePath } from "next/cache"
+
+export async function createProduct(formData: z.infer<typeof productSchema>) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  const validatedFields = productSchema.safeParse(formData)
+
+  if (!validatedFields.success) {
+    return { error: "Neispravni podaci", details: validatedFields.error.flatten() }
+  }
+
+  const product = await db.product.create({
+    data: {
+      ...validatedFields.data,
+      companyId: company.id,
+    },
+  })
+
+  revalidatePath("/products")
+  return { success: "Proizvod kreiran", data: product }
+}
+
+export async function updateProduct(
+  productId: string,
+  formData: z.infer<typeof productSchema>
+) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  const existingProduct = await db.product.findFirst({
+    where: {
+      id: productId,
+      companyId: company.id,
+    },
+  })
+
+  if (!existingProduct) {
+    return { error: "Proizvod nije pronađen" }
+  }
+
+  const validatedFields = productSchema.safeParse(formData)
+
+  if (!validatedFields.success) {
+    return { error: "Neispravni podaci", details: validatedFields.error.flatten() }
+  }
+
+  const product = await db.product.update({
+    where: { id: productId },
+    data: validatedFields.data,
+  })
+
+  revalidatePath("/products")
+  return { success: "Proizvod ažuriran", data: product }
+}
+
+export async function deleteProduct(productId: string) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  const product = await db.product.findFirst({
+    where: {
+      id: productId,
+      companyId: company.id,
+    },
+  })
+
+  if (!product) {
+    return { error: "Proizvod nije pronađen" }
+  }
+
+  await db.product.delete({
+    where: { id: productId },
+  })
+
+  revalidatePath("/products")
+  return { success: "Proizvod obrisan" }
+}
+
+export async function getProducts(activeOnly: boolean = false) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  return db.product.findMany({
+    where: {
+      companyId: company.id,
+      ...(activeOnly && { isActive: true }),
+    },
+    orderBy: { name: "asc" },
+  })
+}
+
+export async function searchProducts(query: string) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  return db.product.findMany({
+    where: {
+      companyId: company.id,
+      isActive: true,
+      OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { sku: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    take: 10,
+    orderBy: { name: "asc" },
+  })
+}

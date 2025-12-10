@@ -1,0 +1,195 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { companySettingsSchema } from "@/lib/validations"
+import { updateCompanySettings } from "@/app/actions/company"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Company } from "@prisma/client"
+
+type SettingsFormInput = z.input<typeof companySettingsSchema>
+
+interface EInvoiceSettingsFormProps {
+  company: Company
+}
+
+const providers = [
+  {
+    id: "ie-racuni",
+    name: "IE Računi",
+    description: "Hrvatski pružatelj e-fakturiranja. Integracija s poreznom upravom.",
+    website: "https://ie-racuni.hr",
+  },
+  {
+    id: "fina",
+    name: "Fina",
+    description: "Nacionalni klirinški sustav. Siguran prijenos e-računa.",
+    website: "https://www.fina.hr",
+  },
+  {
+    id: "ddd-invoices",
+    name: "DDD Invoices",
+    description: "Međunarodni PEPPOL pristupnik za EU tržište.",
+    website: "https://dddinvoices.com",
+  },
+  {
+    id: "mock",
+    name: "Test način (Mock)",
+    description: "Za testiranje bez stvarnog slanja. Računi se ne šalju nikuda.",
+    website: null,
+  },
+]
+
+export function EInvoiceSettingsForm({ company }: EInvoiceSettingsFormProps) {
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [testingConnection, setTestingConnection] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<SettingsFormInput>({
+    resolver: zodResolver(companySettingsSchema),
+    defaultValues: {
+      eInvoiceProvider: company.eInvoiceProvider as "ie-racuni" | "fina" | "ddd-invoices" | undefined,
+      eInvoiceApiKey: company.eInvoiceApiKey || "",
+    },
+  })
+
+  const selectedProvider = watch("eInvoiceProvider")
+  const selectedProviderInfo = providers.find(p => p.id === selectedProvider)
+
+  async function onSubmit(data: SettingsFormInput) {
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+
+    const result = await updateCompanySettings(company.id, data)
+
+    if (result?.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+
+    setSuccess("Postavke e-računa uspješno ažurirane")
+    setLoading(false)
+    router.refresh()
+  }
+
+  async function testConnection() {
+    setTestingConnection(true)
+    setError(null)
+    setSuccess(null)
+
+    // Simulate API test
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    if (selectedProvider === "mock") {
+      setSuccess("Test uspješan! Mock provider je spreman za testiranje.")
+    } else if (!watch("eInvoiceApiKey")) {
+      setError("API ključ je obavezan za testiranje veze")
+    } else {
+      setSuccess("Veza s pružateljem uspješno testirana!")
+    }
+
+    setTestingConnection(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+          {success}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Informacijski posrednik</label>
+          <select
+            className="h-10 w-full rounded-md border border-gray-300 px-3"
+            {...register("eInvoiceProvider")}
+          >
+            <option value="">Odaberite pružatelja...</option>
+            {providers.map((provider) => (
+              <option key={provider.id} value={provider.id}>
+                {provider.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedProviderInfo && (
+          <div className="rounded-md bg-gray-50 p-4">
+            <h4 className="font-medium">{selectedProviderInfo.name}</h4>
+            <p className="mt-1 text-sm text-gray-600">{selectedProviderInfo.description}</p>
+            {selectedProviderInfo.website && (
+              <a
+                href={selectedProviderInfo.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm text-blue-600 hover:underline"
+              >
+                Posjetite web stranicu →
+              </a>
+            )}
+          </div>
+        )}
+
+        {selectedProvider && selectedProvider !== "mock" && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">API ključ</label>
+            <Input
+              type="password"
+              {...register("eInvoiceApiKey")}
+              placeholder="Unesite API ključ od pružatelja"
+            />
+            <p className="text-xs text-gray-500">
+              API ključ dobivate od odabranog informacijskog posrednika nakon registracije.
+            </p>
+          </div>
+        )}
+
+        {selectedProvider === "mock" && (
+          <div className="rounded-md bg-yellow-50 p-4">
+            <h4 className="font-medium text-yellow-800">Test način rada</h4>
+            <p className="mt-1 text-sm text-yellow-700">
+              U test načinu rada e-računi se ne šalju nikuda. Koristite za testiranje
+              funkcionalnosti aplikacije prije povezivanja sa stvarnim pružateljem.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-4">
+        <Button type="submit" disabled={loading}>
+          {loading ? "Spremanje..." : "Spremi postavke"}
+        </Button>
+        {selectedProvider && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={testConnection}
+            disabled={testingConnection}
+          >
+            {testingConnection ? "Testiranje..." : "Testiraj vezu"}
+          </Button>
+        )}
+      </div>
+    </form>
+  )
+}

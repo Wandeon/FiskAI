@@ -18,7 +18,7 @@ export const companySchema = z.object({
 })
 
 export const companySettingsSchema = z.object({
-  eInvoiceProvider: z.enum(["ie-racuni", "fina", "ddd-invoices"]).optional(),
+  eInvoiceProvider: z.enum(["ie-racuni", "fina", "ddd-invoices", "mock"]).optional(),
   eInvoiceApiKey: z.string().optional(),
 })
 
