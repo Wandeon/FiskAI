@@ -59,8 +59,8 @@ export function EInvoiceSettingsForm({ company }: EInvoiceSettingsFormProps) {
   } = useForm<SettingsFormInput>({
     resolver: zodResolver(companySettingsSchema),
     defaultValues: {
-      eInvoiceProvider: company.eInvoiceProvider as "ie-racuni" | "fina" | "ddd-invoices" | undefined,
-      eInvoiceApiKey: company.eInvoiceApiKey || "",
+      eInvoiceProvider: company.eInvoiceProvider as "ie-racuni" | "fina" | "ddd-invoices" | "mock" | undefined,
+      eInvoiceApiKey: "",  // Always empty - encrypted keys cannot be shown
     },
   })
 

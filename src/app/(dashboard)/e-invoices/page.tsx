@@ -33,7 +33,7 @@ export default async function EInvoicesPage() {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
-  const eInvoices = await getEInvoices()
+  const { items: eInvoices } = await getEInvoices()
 
   // Calculate summary stats
   const stats = {

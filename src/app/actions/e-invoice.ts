@@ -7,6 +7,7 @@ import { eInvoiceSchema } from "@/lib/validations"
 import { createEInvoiceProvider, generateUBLInvoice } from "@/lib/e-invoice"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { decryptOptionalSecret } from "@/lib/secrets"
 const Decimal = Prisma.Decimal
 
 export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
@@ -21,32 +22,52 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
 
   const { buyerId, lines, ...invoiceData } = validatedFields.data
 
-  // Calculate totals
+  // Verify buyer belongs to this company (prevent cross-tenant data access)
+  const buyerExists = await db.contact.findFirst({
+    where: {
+      id: buyerId,
+      companyId: company.id
+    },
+    select: { id: true }  // Only select what's needed for existence check
+  })
+
+  if (!buyerExists) {
+    return { error: "Invalid buyer - contact not found or doesn't belong to your company" }
+  }
+
+  // Calculate totals using Decimal for all money calculations
   const lineItems = lines.map((line, index) => {
-    const netAmount = line.quantity * line.unitPrice
-    const vatAmount = netAmount * (line.vatRate / 100)
+    // Use Decimal for all money calculations
+    const quantity = new Decimal(line.quantity)
+    const unitPrice = new Decimal(line.unitPrice)
+    const vatRate = new Decimal(line.vatRate)
+
+    const netAmount = quantity.mul(unitPrice)
+    const vatAmount = netAmount.mul(vatRate).div(100)
+
     return {
       lineNumber: index + 1,
       description: line.description,
-      quantity: new Decimal(line.quantity),
+      quantity,
       unit: line.unit,
-      unitPrice: new Decimal(line.unitPrice),
-      netAmount: new Decimal(netAmount),
-      vatRate: new Decimal(line.vatRate),
+      unitPrice,
+      netAmount,
+      vatRate,
       vatCategory: line.vatCategory,
-      vatAmount: new Decimal(vatAmount),
+      vatAmount,
     }
   })
 
+  // Calculate totals using Decimal
   const netAmount = lineItems.reduce(
-    (sum, line) => sum + Number(line.netAmount),
-    0
+    (sum, line) => sum.add(line.netAmount),
+    new Decimal(0)
   )
   const vatAmount = lineItems.reduce(
-    (sum, line) => sum + Number(line.vatAmount),
-    0
+    (sum, line) => sum.add(line.vatAmount),
+    new Decimal(0)
   )
-  const totalAmount = netAmount + vatAmount
+  const totalAmount = netAmount.add(vatAmount)
 
   const eInvoice = await db.eInvoice.create({
     data: {
@@ -58,9 +79,9 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
       dueDate: invoiceData.dueDate,
       currency: invoiceData.currency,
       buyerReference: invoiceData.buyerReference,
-      netAmount: new Decimal(netAmount),
-      vatAmount: new Decimal(vatAmount),
-      totalAmount: new Decimal(totalAmount),
+      netAmount,
+      vatAmount,
+      totalAmount,
       status: "DRAFT",
       lines: {
         create: lineItems,
@@ -106,9 +127,16 @@ export async function sendEInvoice(eInvoiceId: string) {
 
   // Get provider (use mock for now)
   const providerName = company.eInvoiceProvider || "mock"
-  const provider = createEInvoiceProvider(providerName, {
-    apiKey: company.eInvoiceApiKey || "",
-  })
+
+  // Decrypt API key with error handling
+  let apiKey = ""
+  try {
+    apiKey = decryptOptionalSecret(company.eInvoiceApiKeyEncrypted) || ""
+  } catch {
+    return { error: "Failed to decrypt API key. Please reconfigure your e-invoice settings." }
+  }
+
+  const provider = createEInvoiceProvider(providerName, { apiKey })
 
   // Send via provider
   const result = await provider.sendInvoice(eInvoice, ublXml)
@@ -142,26 +170,52 @@ export async function sendEInvoice(eInvoiceId: string) {
   return { success: "E-Invoice sent successfully", data: result }
 }
 
-export async function getEInvoices(
-  direction?: "OUTBOUND" | "INBOUND",
+export async function getEInvoices(options?: {
+  direction?: "OUTBOUND" | "INBOUND"
   status?: string
-) {
+  cursor?: string
+  limit?: number
+}) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
-  return db.eInvoice.findMany({
+  const limit = Math.min(options?.limit ?? 20, 100)  // Cap at 100 to prevent abuse
+
+  const invoices = await db.eInvoice.findMany({
     where: {
       companyId: company.id,
-      ...(direction && { direction }),
-      ...(status && { status: status as "DRAFT" | "PENDING_FISCALIZATION" | "FISCALIZED" | "SENT" | "DELIVERED" | "ACCEPTED" | "REJECTED" | "ARCHIVED" | "ERROR" }),
+      ...(options?.direction && { direction: options.direction }),
+      ...(options?.status && { status: options.status as "DRAFT" | "PENDING_FISCALIZATION" | "FISCALIZED" | "SENT" | "DELIVERED" | "ACCEPTED" | "REJECTED" | "ARCHIVED" | "ERROR" }),
     },
-    include: {
-      buyer: true,
-      seller: true,
-      lines: true,
+    // Only select fields needed for list view
+    select: {
+      id: true,
+      invoiceNumber: true,
+      status: true,
+      totalAmount: true,
+      vatAmount: true,
+      issueDate: true,
+      dueDate: true,
+      jir: true,
+      currency: true,
+      createdAt: true,
+      buyer: {
+        select: { name: true, oib: true }
+      }
     },
     orderBy: { createdAt: "desc" },
+    take: limit + 1,
+    ...(options?.cursor && {
+      cursor: { id: options.cursor },
+      skip: 1,
+    }),
   })
+
+  const hasMore = invoices.length > limit
+  const items = hasMore ? invoices.slice(0, -1) : invoices
+  const nextCursor = hasMore ? items[items.length - 1]?.id : undefined
+
+  return { items, nextCursor, hasMore }
 }
 
 export async function getEInvoice(eInvoiceId: string) {

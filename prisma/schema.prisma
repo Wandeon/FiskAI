@@ -81,8 +81,8 @@ model Company {
   isVatPayer    Boolean   @default(false)
 
   // E-invoice settings
-  eInvoiceProvider    String?
-  eInvoiceApiKey      String?
+  eInvoiceProvider          String?
+  eInvoiceApiKeyEncrypted   String?  // AES-256-GCM encrypted, format: iv:ciphertext:tag
 
   // Relations
   users         CompanyUser[]

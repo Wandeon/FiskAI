@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth-utils"
 import { companySchema, companySettingsSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { encryptSecret } from "@/lib/secrets"
 
 export async function createCompany(formData: z.input<typeof companySchema>) {
   const user = await requireAuth()
@@ -109,9 +110,16 @@ export async function updateCompanySettings(
     return { error: "Invalid fields" }
   }
 
+  const data = validatedFields.data
+
   await db.company.update({
     where: { id: companyId },
-    data: validatedFields.data,
+    data: {
+      eInvoiceProvider: data.eInvoiceProvider,
+      eInvoiceApiKeyEncrypted: data.eInvoiceApiKey
+        ? encryptSecret(data.eInvoiceApiKey)
+        : undefined,  // Keep existing if not provided, null clears it
+    },
   })
 
   revalidatePath("/settings")
