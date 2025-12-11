@@ -2,14 +2,13 @@ import { requireAuth, getCurrentCompany } from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { Prisma, EInvoiceStatus } from "@prisma/client"
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist"
-import { AlertBanner } from "@/components/dashboard/alert-banner"
-import { RecentActivity } from "@/components/dashboard/recent-activity"
-import { QuickStats } from "@/components/dashboard/quick-stats"
-import { FiscalizationStatus } from "@/components/dashboard/fiscalization-status"
+import { TrendingUp, FileText, Users, Package } from "lucide-react"
 import { HeroBanner } from "@/components/dashboard/hero-banner"
 import { RevenueTrendCard } from "@/components/dashboard/revenue-trend-card"
 import { ActionCards } from "@/components/dashboard/action-cards"
+import { FiscalizationStatus } from "@/components/dashboard/fiscalization-status"
+import { RecentActivity } from "@/components/dashboard/recent-activity"
+import { TodayActionsCard } from "@/components/dashboard/today-actions-card"
 
 const Decimal = Prisma.Decimal
 
@@ -143,60 +142,91 @@ export default async function DashboardPage() {
 
   const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'korisniče'
 
+  const alerts = [
+    !company.eInvoiceProvider && {
+      id: "provider",
+      type: "warning" as const,
+      title: "Povežite informacijskog posrednika",
+      description: "Bez posrednika ne možete slati e-račune.",
+      action: { label: "Postavke", href: "/settings" },
+    },
+    draftInvoices > 0 && {
+      id: "drafts",
+      type: "info" as const,
+      title: `${draftInvoices} e-račun${draftInvoices === 1 ? '' : 'a'} čeka slanje`,
+      description: "Dovršite nacrte i pošaljite kupcima.",
+      action: { label: "Pregledaj", href: "/e-invoices?status=DRAFT" },
+    },
+  ].filter(Boolean) as {
+    id: string
+    type: "warning" | "info"
+    title: string
+    description: string
+    action?: { label: string; href: string }
+  }[]
+
+  const statHighlights = [
+    {
+      id: "revenue",
+      label: "Ukupni prihod",
+      value: `${totalRevenueValue.toLocaleString('hr-HR', { minimumFractionDigits: 2 })} €`,
+      icon: <TrendingUp className="h-4 w-4" />,
+      change: `Zadnjih ${monthsWindow} mjeseci`,
+    },
+    {
+      id: "einvoices",
+      label: "E-Računi",
+      value: eInvoiceCount.toString(),
+      icon: <FileText className="h-4 w-4" />,
+      change: draftInvoices > 0 ? `${draftInvoices} u nacrtu` : undefined,
+    },
+    {
+      id: "contacts",
+      label: "Kontakti",
+      value: contactCount.toString(),
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      id: "products",
+      label: "Proizvodi",
+      value: productCount.toString(),
+      icon: <Package className="h-4 w-4" />,
+    },
+  ]
+
+  const upcomingTasks = onboardingItems
+    .filter((item) => !item.completed)
+    .map((item) => ({
+      id: item.id,
+      label: item.label,
+      href: item.href,
+      completed: item.completed,
+    }))
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-3">
-        <HeroBanner
-          className="lg:col-span-2"
-          userName={firstName}
-          companyName={company.name}
-          draftInvoices={draftInvoices}
-          providerConfigured={!!company.eInvoiceProvider}
-          contactCount={contactCount}
-        />
-        <OnboardingChecklist items={onboardingItems} className="h-full" />
-      </div>
-
-      <div className="space-y-3">
-        {!company.eInvoiceProvider && (
-          <AlertBanner
-            type="error"
-            title="E-računi nisu konfigurirani"
-            description="Povežite se s posrednikom za slanje e-računa"
-            action={{ label: "Konfiguriraj", href: "/settings" }}
+      <div className="grid gap-6 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <div className="space-y-6">
+          <HeroBanner
+            userName={firstName}
+            companyName={company.name}
+            draftInvoices={draftInvoices}
+            providerConfigured={!!company.eInvoiceProvider}
+            contactCount={contactCount}
           />
-        )}
-        {draftInvoices > 0 && (
-          <AlertBanner
-            type="warning"
-            title={`${draftInvoices} ${draftInvoices === 1 ? 'račun' : draftInvoices < 5 ? 'računa' : 'računa'} u nacrtu`}
-            description="Dovršite ih i pošaljite kupcima"
-            action={{ label: "Pregledaj", href: "/e-invoices?status=DRAFT" }}
+          <TodayActionsCard alerts={alerts} stats={statHighlights} tasks={upcomingTasks} />
+          <RevenueTrendCard data={revenueTrendData} />
+        </div>
+        <div className="space-y-6">
+          <FiscalizationStatus
+            isVatPayer={company.isVatPayer}
+            eInvoiceProvider={company.eInvoiceProvider}
+            oib={company.oib}
+            vatNumber={company.vatNumber}
           />
-        )}
-      </div>
-
-      <QuickStats
-        totalRevenue={totalRevenueValue}
-        eInvoiceCount={eInvoiceCount}
-        contactCount={contactCount}
-        productCount={productCount}
-        draftCount={draftInvoices}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <RevenueTrendCard data={revenueTrendData} className="lg:col-span-2" />
-        <FiscalizationStatus
-          isVatPayer={company.isVatPayer}
-          eInvoiceProvider={company.eInvoiceProvider}
-          oib={company.oib}
-          vatNumber={company.vatNumber}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <RecentActivity invoices={recentInvoices} />
-        <ActionCards />
+          <RecentActivity invoices={recentInvoices} />
+          <ActionCards />
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -38,7 +39,13 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
             <div className="rounded-2xl surface-glass px-3 py-3">
               <div className="flex items-center gap-3">
                 {user.image ? (
-                  <img src={user.image} alt={user.name || 'Profile'} className="h-10 w-10 rounded-full object-cover" />
+                  <Image
+                    src={user.image}
+                    alt={user.name || 'Profile'}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold">
                     {(user.name || user.email || 'U').slice(0, 2).toUpperCase()}

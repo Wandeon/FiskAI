@@ -2,56 +2,107 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, Users, Settings, Plus } from "lucide-react"
+import { LayoutDashboard, FileText, Users, Settings, Plus, Receipt, Package } from "lucide-react"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Početna" },
   { href: "/e-invoices", icon: FileText, label: "Računi" },
-  { href: "/e-invoices/new", icon: Plus, label: "Novo", isAction: true },
   { href: "/contacts", icon: Users, label: "Kontakti" },
   { href: "/settings", icon: Settings, label: "Postavke" },
 ]
 
+const quickActions = [
+  { href: "/e-invoices/new", label: "E-račun", icon: Receipt },
+  { href: "/invoices/new", label: "Dokument", icon: FileText },
+  { href: "/contacts/new", label: "Kontakt", icon: Users },
+  { href: "/products/new", label: "Proizvod", icon: Package },
+]
+
 export function BottomNav() {
   const pathname = usePathname()
+  const [isQuickOpen, setIsQuickOpen] = useState(false)
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom md:hidden">
-      <div className="flex items-center justify-around">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          const Icon = item.icon
+    <>
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 md:hidden",
+          isQuickOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsQuickOpen(false)}
+        aria-hidden="true"
+      />
 
-          if (item.isAction) {
-            return (
+      {/* Quick actions drawer */}
+      <div
+        className={cn(
+          "fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden transition-transform duration-200",
+          isQuickOpen ? "translate-y-0" : "translate-y-6 pointer-events-none"
+        )}
+      >
+        <div className="rounded-3xl surface-glass border border-white/20 shadow-glow p-4 space-y-3 safe-bottom">
+          <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
+            Brze akcije
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {quickActions.map((action) => (
               <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center justify-center -mt-6"
+                key={action.href}
+                href={action.href}
+                onClick={() => setIsQuickOpen(false)}
+                className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-white/10"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg">
-                  <Icon className="h-6 w-6" />
-                </div>
+                <action.icon className="icon-md text-[var(--muted)]" />
+                {action.label}
               </Link>
-            )
-          }
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center py-2 px-3 touch-target",
-                isActive ? "text-brand-600" : "text-[var(--muted)]"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              <span className="mt-1 text-xs font-medium">{item.label}</span>
-            </Link>
-          )
-        })}
+            ))}
+          </div>
+        </div>
       </div>
-    </nav>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur safe-bottom md:hidden">
+        <div className="flex items-center justify-around px-2 py-1">
+          {navItems.slice(0, 2).map((item) => (
+            <NavLink key={item.href} item={item} activePath={pathname} />
+          ))}
+
+          <button
+            onClick={() => setIsQuickOpen((prev) => !prev)}
+            className={cn(
+              "flex h-14 w-14 -mt-8 items-center justify-center rounded-full shadow-glow transition-all focus-ring",
+              isQuickOpen ? "bg-[var(--surface)] text-brand-600" : "bg-brand-600 text-white"
+            )}
+            aria-label={isQuickOpen ? "Zatvori brze akcije" : "Otvori brze akcije"}
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+
+          {navItems.slice(2).map((item) => (
+            <NavLink key={item.href} item={item} activePath={pathname} />
+          ))}
+        </div>
+      </nav>
+    </>
+  )
+}
+
+function NavLink({ item, activePath }: { item: typeof navItems[number]; activePath: string }) {
+  const isActive =
+    activePath === item.href || activePath.startsWith(item.href + "/")
+  const Icon = item.icon
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 py-2 px-2 text-xs font-medium",
+        isActive ? "text-brand-600" : "text-[var(--muted)]"
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span>{item.label}</span>
+    </Link>
   )
 }

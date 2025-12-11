@@ -18,6 +18,8 @@ The new shell/components (Header, Sidebar, MobileNav, FAB, redesigned Contacts p
 - Invoices table also uses `ResponsiveTable` for cohesive desktop/mobile behavior.
 - Banking transactions table adopts `ResponsiveTable`, so mobile users see transaction cards with match status chips and quick link buttons.
 - Base design tokens (`src/styles/tokens.ts`) now drive Tailwind, glassmorphic surfaces, and typography utilities; hero banner showcases the layered gradient treatment.
+- Sidebar and header dropdowns gained glassmorphic cards + motion, and the bottom navigation now bundles a slide-up quick actions drawer for mobile.
+- Dashboard hero area now features a “Današnje akcije” card merging alerts, quick stats, and onboarding tasks, with fiscalization/recents stacked in the right column for a story-driven view.
 - Dashboard hero/insights: gradient hero banner, revenue trend sparkline, invite/AI action cards, reorganized onboarding grid.
 
 ## Upcoming Enhancements
