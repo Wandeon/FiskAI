@@ -4,10 +4,10 @@ import { setTenantContext } from '@/lib/prisma-extensions'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/data-table'
 import { InvoiceType, EInvoiceStatus, Prisma } from '@prisma/client'
 import { InvoiceFilters } from '@/components/invoices/invoice-filters'
 import type { MultiSelectOption } from '@/components/ui/multi-select'
+import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
 
 const TYPE_LABELS: Record<string, string> = {
   INVOICE: 'Račun',
@@ -130,20 +130,20 @@ export default async function InvoicesPage({
 
   type InvoiceRow = typeof invoices[0]
 
-  const columns = [
+  const columns: Column<InvoiceRow>[] = [
     {
       key: 'invoiceNumber',
-      header: 'Broj',
-      cell: (inv: InvoiceRow) => (
-        <Link href={`/invoices/${inv.id}`} className="font-mono text-blue-600 hover:underline">
-          {inv.invoiceNumber}
+      label: 'Broj',
+      render: (inv) => (
+        <Link href={`/invoices/${inv.id}`} className="font-mono text-brand-600 hover:text-brand-700">
+          {inv.invoiceNumber || 'Bez broja'}
         </Link>
       ),
     },
     {
       key: 'type',
-      header: 'Vrsta',
-      cell: (inv: InvoiceRow) => (
+      label: 'Vrsta',
+      render: (inv) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${TYPE_COLORS[inv.type] || 'bg-gray-100'}`}>
           {TYPE_LABELS[inv.type] || inv.type}
         </span>
@@ -151,37 +151,33 @@ export default async function InvoicesPage({
     },
     {
       key: 'buyer',
-      header: 'Kupac',
-      cell: (inv: InvoiceRow) => inv.buyer?.name || '-',
+      label: 'Kupac',
+      render: (inv) => inv.buyer?.name || '—',
     },
     {
       key: 'totalAmount',
-      header: 'Iznos',
-      cell: (inv: InvoiceRow) =>
-        new Intl.NumberFormat('hr-HR', {
-          style: 'currency',
-          currency: inv.currency,
-        }).format(Number(inv.totalAmount)),
+      label: 'Iznos',
+      render: (inv) => formatCurrency(Number(inv.totalAmount), inv.currency),
     },
     {
       key: 'status',
-      header: 'Status',
-      cell: (inv: InvoiceRow) => (
-        <span className="text-sm text-gray-600">
+      label: 'Status',
+      render: (inv) => (
+        <span className="text-sm text-[var(--muted)]">
           {STATUS_LABELS[inv.status] || inv.status}
         </span>
       ),
     },
     {
       key: 'issueDate',
-      header: 'Datum',
-      cell: (inv: InvoiceRow) => new Date(inv.issueDate).toLocaleDateString('hr-HR'),
+      label: 'Datum',
+      render: (inv) => new Date(inv.issueDate).toLocaleDateString('hr-HR'),
     },
     {
       key: 'actions',
-      header: '',
-      cell: (inv: InvoiceRow) => (
-        <Link href={`/invoices/${inv.id}`} className="text-sm text-blue-600 hover:underline">
+      label: '',
+      render: (inv) => (
+        <Link href={`/invoices/${inv.id}`} className="text-sm text-brand-600 hover:text-brand-700">
           Pregledaj
         </Link>
       ),
@@ -244,11 +240,46 @@ export default async function InvoicesPage({
           </CardContent>
         </Card>
       ) : (
-        <DataTable
+        <ResponsiveTable
           columns={columns}
           data={invoices}
-          caption="Popis dokumenata"
+          className="bg-[var(--surface)] rounded-2xl border border-[var(--border)]"
           getRowKey={(inv) => inv.id}
+          renderCard={(inv) => (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase text-[var(--muted)] tracking-wide">
+                    {new Date(inv.issueDate).toLocaleDateString('hr-HR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                  <p className="font-semibold text-[var(--foreground)]">{inv.invoiceNumber || 'Bez broja'}</p>
+                  <p className="text-sm text-[var(--muted)]">{inv.buyer?.name || 'Nepoznat kupac'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-[var(--foreground)]">
+                    {formatCurrency(Number(inv.totalAmount), inv.currency)}
+                  </p>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[inv.type] || 'bg-gray-100'}`}>
+                    {TYPE_LABELS[inv.type] || inv.type}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm text-[var(--muted)]">
+                <div>
+                  <p className="font-medium text-[var(--foreground)]">
+                    {STATUS_LABELS[inv.status] || inv.status}
+                  </p>
+                  <p className="text-xs uppercase tracking-wide">Status</p>
+                </div>
+                <Link
+                  href={`/invoices/${inv.id}`}
+                  className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                >
+                  Detalji →
+                </Link>
+              </div>
+            </div>
+          )}
         />
       )}
 
@@ -307,4 +338,11 @@ function isInvoiceType(value: string): value is InvoiceType {
 
 function isInvoiceStatus(value: string): value is EInvoiceStatus {
   return Object.values(EInvoiceStatus).includes(value as EInvoiceStatus)
+}
+
+function formatCurrency(value: number, currency: string) {
+  return new Intl.NumberFormat('hr-HR', {
+    style: 'currency',
+    currency,
+  }).format(value)
 }

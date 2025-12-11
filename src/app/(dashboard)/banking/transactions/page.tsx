@@ -4,8 +4,8 @@ import { setTenantContext } from '@/lib/prisma-extensions'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/data-table'
 import { Prisma, MatchStatus } from '@prisma/client'
+import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
 
 const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
   UNMATCHED: 'Nepovezano',
@@ -99,11 +99,11 @@ export default async function TransactionsPage({
 
   type TransactionRow = (typeof transactions)[0]
 
-  const columns = [
+  const columns: Column<TransactionRow>[] = [
     {
       key: 'date',
-      header: 'Datum',
-      cell: (txn: TransactionRow) => (
+      label: 'Datum',
+      render: (txn) => (
         <span className="text-sm">
           {new Date(txn.date).toLocaleDateString('hr-HR')}
         </span>
@@ -111,15 +111,15 @@ export default async function TransactionsPage({
     },
     {
       key: 'bankAccount',
-      header: 'Račun',
-      cell: (txn: TransactionRow) => (
+      label: 'Račun',
+      render: (txn) => (
         <span className="text-sm text-gray-600">{txn.bankAccount.name}</span>
       ),
     },
     {
       key: 'description',
-      header: 'Opis',
-      cell: (txn: TransactionRow) => (
+      label: 'Opis',
+      render: (txn) => (
         <div className="max-w-md">
           <div className="text-sm truncate">{txn.description}</div>
           {txn.counterpartyName && (
@@ -133,37 +133,31 @@ export default async function TransactionsPage({
     },
     {
       key: 'amount',
-      header: 'Iznos',
-      cell: (txn: TransactionRow) => (
+      label: 'Iznos',
+      render: (txn) => (
         <span
           className={`font-mono text-sm font-semibold ${
             Number(txn.amount) >= 0 ? 'text-green-600' : 'text-red-600'
           }`}
         >
           {Number(txn.amount) >= 0 ? '+' : ''}
-          {new Intl.NumberFormat('hr-HR', {
-            style: 'currency',
-            currency: txn.bankAccount.currency,
-          }).format(Number(txn.amount))}
+          {formatCurrency(Number(txn.amount), txn.bankAccount.currency)}
         </span>
       ),
     },
     {
       key: 'balance',
-      header: 'Stanje',
-      cell: (txn: TransactionRow) => (
+      label: 'Stanje',
+      render: (txn) => (
         <span className="font-mono text-sm text-gray-600">
-          {new Intl.NumberFormat('hr-HR', {
-            style: 'currency',
-            currency: txn.bankAccount.currency,
-          }).format(Number(txn.balance))}
+          {formatCurrency(Number(txn.balance), txn.bankAccount.currency)}
         </span>
       ),
     },
     {
       key: 'matchStatus',
-      header: 'Status',
-      cell: (txn: TransactionRow) => (
+      label: 'Status',
+      render: (txn) => (
         <div>
           <span
             className={`text-xs px-2 py-1 rounded ${
@@ -185,8 +179,8 @@ export default async function TransactionsPage({
     },
     {
       key: 'actions',
-      header: '',
-      cell: (txn: TransactionRow) =>
+      label: '',
+      render: (txn) =>
         txn.matchStatus === 'UNMATCHED' ? (
           <Button variant="outline" size="sm">
             Poveži
@@ -337,11 +331,58 @@ export default async function TransactionsPage({
           </CardContent>
         </Card>
       ) : (
-        <DataTable
+        <ResponsiveTable
           columns={columns}
           data={transactions}
-          caption="Popis transakcija"
+          className="bg-[var(--surface)] rounded-2xl border border-[var(--border)]"
           getRowKey={(txn) => txn.id}
+          renderCard={(txn) => (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase text-[var(--muted)] tracking-wide">
+                    {new Date(txn.date).toLocaleDateString('hr-HR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                  <p className="font-semibold text-[var(--foreground)]">
+                    {txn.description}
+                  </p>
+                  <p className="text-sm text-[var(--muted)]">{txn.bankAccount.name}</p>
+                  {txn.counterpartyName && (
+                    <p className="text-xs text-[var(--muted)] mt-1">{txn.counterpartyName}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className={`text-lg font-semibold ${Number(txn.amount) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {Number(txn.amount) >= 0 ? '+' : ''}
+                    {formatCurrency(Number(txn.amount), txn.bankAccount.currency)}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">
+                    Stanje: {formatCurrency(Number(txn.balance), txn.bankAccount.currency)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${MATCH_STATUS_COLORS[txn.matchStatus]}`}>
+                    {MATCH_STATUS_LABELS[txn.matchStatus]}
+                  </span>
+                  {txn.matchedInvoice && (
+                    <p className="text-xs text-[var(--muted)] mt-1">
+                      Račun: {txn.matchedInvoice.invoiceNumber}
+                    </p>
+                  )}
+                  {txn.matchedExpense && (
+                    <p className="text-xs text-[var(--muted)]">Trošak: {txn.matchedExpense.description}</p>
+                  )}
+                </div>
+                {txn.matchStatus === 'UNMATCHED' && (
+                  <Button variant="outline" size="sm">
+                    Poveži
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         />
       )}
 
@@ -350,7 +391,7 @@ export default async function TransactionsPage({
         <div className="flex justify-center gap-2">
           {page > 1 && (
             <Link
-              href={`?page=${page - 1}${params.accountId ? `&accountId=${params.accountId}` : ''}${params.status ? `&status=${params.status}` : ''}${params.dateFrom ? `&dateFrom=${params.dateFrom}` : ''}${params.dateTo ? `&dateTo=${params.dateTo}` : ''}`}
+              href={buildPaginationLink(page - 1, params)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               ← Prethodna
@@ -361,7 +402,7 @@ export default async function TransactionsPage({
           </span>
           {page < totalPages && (
             <Link
-              href={`?page=${page + 1}${params.accountId ? `&accountId=${params.accountId}` : ''}${params.status ? `&status=${params.status}` : ''}${params.dateFrom ? `&dateFrom=${params.dateFrom}` : ''}${params.dateTo ? `&dateTo=${params.dateTo}` : ''}`}
+              href={buildPaginationLink(page + 1, params)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               Sljedeća →
@@ -371,4 +412,30 @@ export default async function TransactionsPage({
       )}
     </div>
   )
+}
+
+function buildPaginationLink(
+  page: number,
+  params: {
+    accountId?: string
+    status?: string
+    dateFrom?: string
+    dateTo?: string
+  }
+) {
+  const query = new URLSearchParams()
+  query.set('page', String(page))
+  if (params.accountId) query.set('accountId', params.accountId)
+  if (params.status) query.set('status', params.status)
+  if (params.dateFrom) query.set('dateFrom', params.dateFrom)
+  if (params.dateTo) query.set('dateTo', params.dateTo)
+  const qs = query.toString()
+  return qs ? `/banking/transactions?${qs}` : '/banking/transactions'
+}
+
+function formatCurrency(value: number, currency: string) {
+  return new Intl.NumberFormat('hr-HR', {
+    style: 'currency',
+    currency,
+  }).format(value)
 }
