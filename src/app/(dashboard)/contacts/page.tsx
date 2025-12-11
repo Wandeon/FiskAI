@@ -1,76 +1,157 @@
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
-import { db } from "@/lib/db"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { getContactList } from "@/app/actions/contact-list"
 import { DeleteContactButton } from "./delete-button"
+import { Button } from "@/components/ui/button"
+import { ContactType } from "@prisma/client"
 
-export default async function ContactsPage() {
-  const user = await requireAuth()
-  const company = await requireCompany(user.id!)
+interface PageProps {
+  searchParams: Promise<{ search?: string; type?: string; page?: string }>
+}
 
-  const contacts = await db.contact.findMany({
-    where: { companyId: company.id },
-    orderBy: { name: "asc" },
+export default async function ContactsPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const search = params.search || ""
+  const type = (params.type as ContactType | "ALL") || "ALL"
+  const page = parseInt(params.page || "1", 10)
+
+  const { contacts, pagination } = await getContactList({
+    search,
+    type,
+    page,
+    limit: 20,
   })
 
-  const typeLabels = {
+  const typeLabels: Record<ContactType, string> = {
     CUSTOMER: "Kupac",
     SUPPLIER: "Dobavljač",
     BOTH: "Kupac/Dobavljač",
   }
 
+  const typeColors: Record<ContactType, string> = {
+    CUSTOMER: "bg-blue-100 text-blue-700",
+    SUPPLIER: "bg-purple-100 text-purple-700",
+    BOTH: "bg-green-100 text-green-700",
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Kontakti</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Kontakti</h1>
+          <p className="text-sm text-gray-600">
+            {pagination.total} kontakata ukupno
+          </p>
+        </div>
         <Link href="/contacts/new">
-          <Button>Novi kontakt</Button>
+          <Button>+ Novi kontakt</Button>
         </Link>
       </div>
 
+      {/* Search and Filter */}
+      <form className="flex gap-4" method="get">
+        <input
+          type="text"
+          name="search"
+          defaultValue={search}
+          placeholder="Pretraži po nazivu, OIB-u ili emailu..."
+          className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <select
+          name="type"
+          defaultValue={type}
+          className="rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="ALL">Svi tipovi</option>
+          <option value="CUSTOMER">Kupci</option>
+          <option value="SUPPLIER">Dobavljači</option>
+          <option value="BOTH">Kupci/Dobavljači</option>
+        </select>
+        <Button type="submit" variant="outline">
+          Filtriraj
+        </Button>
+      </form>
+
       {contacts.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-gray-500 mb-4">Nemate još nijednog kontakta</p>
-            <Link href="/contacts/new">
-              <Button>Dodaj prvi kontakt</Button>
+        <div className="rounded-md border border-dashed border-gray-300 p-8 text-center">
+          <p className="text-gray-500">
+            {search || type !== "ALL"
+              ? "Nema kontakata koji odgovaraju filteru"
+              : "Nemate još nijedan kontakt"}
+          </p>
+          {!search && type === "ALL" && (
+            <Link href="/contacts/new" className="mt-2 inline-block text-blue-600 hover:underline">
+              Dodajte prvi kontakt
             </Link>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       ) : (
-        <div className="grid gap-4">
-          {contacts.map((contact) => (
-            <Card key={contact.id}>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-semibold">{contact.name}</h3>
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                        {typeLabels[contact.type]}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                      {contact.oib && <span>OIB: {contact.oib}</span>}
-                      {contact.email && <span>{contact.email}</span>}
-                      {contact.phone && <span>{contact.phone}</span>}
-                      {contact.city && <span>{contact.city}</span>}
-                    </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {contacts.map((contact) => (
+              <div
+                key={contact.id}
+                className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+              >
+                <div className="mb-2 flex items-start justify-between">
+                  <div>
+                    <h3 className="font-medium">{contact.name}</h3>
+                    <span
+                      className={`mt-1 inline-block rounded px-2 py-0.5 text-xs ${
+                        typeColors[contact.type]
+                      }`}
+                    >
+                      {typeLabels[contact.type]}
+                    </span>
                   </div>
-                  <div className="flex gap-2">
-                    <Link href={`/contacts/${contact.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        Uredi
-                      </Button>
-                    </Link>
-                    <DeleteContactButton contactId={contact.id} contactName={contact.name} />
+                  <div className="text-xs text-gray-500">
+                    {contact._count.eInvoicesAsBuyer + contact._count.eInvoicesAsSeller} računa
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <div className="mt-3 space-y-1 text-sm text-gray-600">
+                  <p>OIB: {contact.oib}</p>
+                  {contact.email && <p>{contact.email}</p>}
+                  {contact.phone && <p>{contact.phone}</p>}
+                  {contact.city && <p>{contact.city}</p>}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Link href={`/contacts/${contact.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                      Uredi
+                    </Button>
+                  </Link>
+                  <DeleteContactButton contactId={contact.id} contactName={contact.name} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              {page > 1 && (
+                <Link
+                  href={`/contacts?page=${page - 1}${search ? `&search=${search}` : ""}${type !== "ALL" ? `&type=${type}` : ""}`}
+                >
+                  <Button variant="outline" size="sm">
+                    Prethodna
+                  </Button>
+                </Link>
+              )}
+              <span className="text-sm text-gray-600">
+                Stranica {page} od {pagination.totalPages}
+              </span>
+              {pagination.hasMore && (
+                <Link
+                  href={`/contacts?page=${page + 1}${search ? `&search=${search}` : ""}${type !== "ALL" ? `&type=${type}` : ""}`}
+                >
+                  <Button variant="outline" size="sm">
+                    Sljedeća
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

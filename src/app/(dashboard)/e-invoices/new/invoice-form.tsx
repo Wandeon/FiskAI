@@ -14,6 +14,7 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ProductPicker } from "@/components/invoice/product-picker"
 import { Contact, Product } from "@prisma/client"
 import { toast } from "@/lib/toast"
+import { trackEvent, AnalyticsEvents } from "@/lib/analytics"
 
 type EInvoiceFormInput = z.input<typeof eInvoiceSchema>
 
@@ -84,6 +85,10 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
       return
     }
 
+    trackEvent(AnalyticsEvents.INVOICE_CREATED, {
+      lineCount: data.lines.length,
+      hasProduct: data.lines.some((l) => l.description),
+    })
     toast.success("E-račun kreiran", "Možete ga pregledati i poslati")
     router.push("/e-invoices")
   }

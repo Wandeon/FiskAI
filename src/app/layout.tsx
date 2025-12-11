@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,7 +26,11 @@ export default function RootLayout({
             duration: 4000,
           }}
         />
-        {children}
+        <Suspense fallback={null}>
+          <AnalyticsProvider>
+            {children}
+          </AnalyticsProvider>
+        </Suspense>
       </body>
     </html>
   );
