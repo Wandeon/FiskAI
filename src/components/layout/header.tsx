@@ -5,6 +5,7 @@ import { getCurrentCompany } from "@/lib/auth-utils"
 import { Button } from "@/components/ui/button"
 import { CompanySwitcher } from "./company-switcher"
 import { QuickActions, Notifications, UserMenu, CompanyStatus } from "./header-actions"
+import { CommandPalette } from "@/components/ui/command-palette"
 
 export async function Header() {
   const session = await auth()
@@ -60,6 +61,7 @@ export async function Header() {
         <div className="flex items-center gap-2 md:gap-3">
           {session?.user ? (
             <>
+              <CommandPalette />
               {/* Quick Actions (Hidden on mobile - use FAB instead) */}
               <QuickActions className="hidden sm:block" />
 

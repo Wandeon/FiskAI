@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { Search, Filter, X } from "lucide-react"
 import { cn } from "@/lib/utils"

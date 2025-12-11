@@ -21,7 +21,6 @@ export default function NewProductPage() {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<ProductFormInput>({
@@ -34,9 +33,7 @@ export default function NewProductPage() {
     },
   })
 
-  const selectedVatCategory = watch("vatCategory")
-
-  // Auto-set VAT rate when category changes
+// Auto-set VAT rate when category changes
   function handleVatCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const category = e.target.value as "S" | "AA" | "E" | "Z" | "O"
     const vatCat = vatCategories.find(v => v.code === category)

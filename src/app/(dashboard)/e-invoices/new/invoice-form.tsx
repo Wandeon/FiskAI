@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { eInvoiceSchema } from "@/lib/validations"
 import { createEInvoice } from "@/app/actions/e-invoice"
 import { z } from "zod"
-import { Plus, ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react"
+import { Plus, ArrowLeft, ArrowRight, Save, Loader2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PageCard, PageCardHeader, PageCardTitle, PageCardContent } from "@/components/ui/page-card"
@@ -17,7 +17,9 @@ import { InvoiceSummary } from "@/components/invoice/invoice-summary"
 import { StepIndicator } from "@/components/invoice/invoice-step-indicator"
 import { LineItemEditor } from "@/components/invoice/line-item-editor"
 import { AlertBanner } from "@/components/dashboard/alert-banner"
-import { Contact, Product } from "@prisma/client"
+import { Contact, Product, Company } from "@prisma/client"
+import { InvoicePdfPreview } from "@/components/invoice/invoice-pdf-preview"
+import { renderToStaticMarkup } from "react-dom/server"
 import { toast } from "@/lib/toast"
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
@@ -27,6 +29,7 @@ type EInvoiceFormInput = z.input<typeof eInvoiceSchema>
 interface InvoiceFormProps {
   contacts: Contact[]
   products: Product[]
+  company: Company
 }
 
 const STEPS = [
@@ -35,11 +38,12 @@ const STEPS = [
   { id: "review", name: "Pregled" },
 ]
 
-export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
+export function InvoiceForm({ contacts, products, company }: InvoiceFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
 
   const {
     register,
@@ -93,6 +97,7 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       localStorage.setItem('einvoice-draft', JSON.stringify(watchedValues))
+      setLastSavedAt(new Date())
     }, 1000)
     return () => clearTimeout(timer)
   }, [watchedValues])
@@ -168,6 +173,29 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
     update(index, { ...currentLine, [field]: value })
   }
 
+  const handleDownloadPdf = () => {
+    if (typeof window === "undefined") return
+    const markup = renderToStaticMarkup(
+      <InvoicePdfPreview
+        company={company}
+        buyer={selectedBuyer || null}
+        invoiceNumber={watchedValues.invoiceNumber || "Draft"}
+        issueDate={watchedValues.issueDate as Date | undefined}
+        dueDate={watchedValues.dueDate as Date | undefined}
+        lines={watchedValues.lines}
+        currency={watchedValues.currency || "EUR"}
+      />
+    )
+    const html = `<!doctype html><html><head><meta charset="utf-8" /><title>FiskAI Invoice Preview</title><style>body{margin:0;padding:24px;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;}</style></head><body>${markup}</body></html>`
+    const win = window.open("", "_blank")
+    if (win) {
+      win.document.write(html)
+      win.document.close()
+      win.focus()
+      setTimeout(() => win.print(), 300)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -183,12 +211,27 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
       </div>
 
       {/* Step Indicator */}
-      <div className="pt-4 pb-8">
+      <div className="pt-4 pb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <StepIndicator
           steps={STEPS}
           currentStep={currentStep}
           onStepClick={setCurrentStep}
         />
+        <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+          <span>
+            {currentStep === 0
+              ? "Odaberite kupca"
+              : currentStep === 1
+                ? "Dodajte stavke i proizvode"
+                : "Pregled prije spremanja"}
+          </span>
+          {lastSavedAt && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-secondary)] px-2 py-1">
+              <Loader2 className="h-3 w-3" />
+              U zadnje vrijeme spremljeno {lastSavedAt.toLocaleTimeString("hr-HR")}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -313,40 +356,32 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
             {/* Step 3: Review */}
             <div className={cn(currentStep !== 2 && "hidden")}>
               <PageCard>
-                <PageCardHeader>
+                <PageCardHeader
+                  actions={
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={handleDownloadPdf}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Preuzmi PDF
+                      </Button>
+                    </div>
+                  }
+                >
                   <PageCardTitle>Pregled i slanje</PageCardTitle>
                 </PageCardHeader>
                 <PageCardContent>
                   <div className="space-y-6">
-                    {/* Buyer Summary */}
-                    <div className="rounded-lg bg-[var(--surface-secondary)] p-4">
-                      <h4 className="font-medium text-[var(--foreground)] mb-2">Kupac</h4>
-                      <p className="text-[var(--foreground)]">{selectedBuyer?.name || "—"}</p>
-                      <p className="text-sm text-[var(--muted)]">OIB: {selectedBuyer?.oib || "—"}</p>
-                    </div>
-
-                    {/* Items Summary */}
-                    <div>
-                      <h4 className="font-medium text-[var(--foreground)] mb-3">Stavke</h4>
-                      <div className="border border-[var(--border)] rounded-lg divide-y divide-[var(--border)]">
-                        {watchedValues.lines.map((line, i) => (
-                          <div key={i} className="flex justify-between items-center p-3">
-                            <div>
-                              <p className="font-medium">{line.description || `Stavka ${i + 1}`}</p>
-                              <p className="text-sm text-[var(--muted)]">
-                                {line.quantity} × {(line.unitPrice || 0).toLocaleString('hr-HR', { minimumFractionDigits: 2 })} € (PDV {line.vatRate}%)
-                              </p>
-                            </div>
-                            <p className="font-medium">
-                              {((line.quantity || 0) * (line.unitPrice || 0) * (1 + (line.vatRate || 0) / 100)).toLocaleString('hr-HR', { minimumFractionDigits: 2 })} €
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <InvoicePdfPreview
+                      company={company}
+                      buyer={selectedBuyer || null}
+                      invoiceNumber={watchedValues.invoiceNumber || "Draft"}
+                      issueDate={watchedValues.issueDate as Date | undefined}
+                      dueDate={watchedValues.dueDate as Date | undefined}
+                      lines={watchedValues.lines}
+                      currency={watchedValues.currency || "EUR"}
+                    />
 
                     <p className="text-sm text-[var(--muted)]">
-                      Klikom na &quot;Spremi&quot; račun će biti spremljen kao nacrt. Možete ga kasnije pregledati i poslati kupcu.
+                      Klikom na &quot;Spremi&quot; račun će biti spremljen kao nacrt. Možete ga kasnije pregledati i poslati kupcu ili preuzeti PDF verziju.
                     </p>
                   </div>
                 </PageCardContent>
@@ -354,7 +389,7 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-4">
+            <div className="hidden justify-between pt-4 md:flex">
               <Button
                 type="button"
                 variant="outline"
@@ -402,6 +437,42 @@ export function InvoiceForm({ contacts, products }: InvoiceFormProps) {
           </div>
         </div>
       </form>
+
+      {/* Mobile sticky controls */}
+      <div className="fixed left-0 right-0 bottom-20 z-30 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-card md:hidden">
+        <div className="flex items-center justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handlePrevStep}
+            disabled={currentStep === 0 || loading}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Nazad
+          </Button>
+          {currentStep < STEPS.length - 1 ? (
+            <Button size="sm" onClick={handleNextStep}>
+              Dalje
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleSubmit(onSubmit)} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Spremanje...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-1" />
+                  Spremi nacrt
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

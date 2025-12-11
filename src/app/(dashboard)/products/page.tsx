@@ -18,9 +18,6 @@ export default async function ProductsPage() {
   const getUnitName = (code: string) =>
     unitCodes.find(u => u.code === code)?.name || code
 
-  const getVatCategoryName = (code: string) =>
-    vatCategories.find(v => v.code === code)?.name || code
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

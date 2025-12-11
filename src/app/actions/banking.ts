@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { requireAuth, requireCompany } from '@/lib/auth-utils'
 import { setTenantContext } from '@/lib/prisma-extensions'
 import { revalidatePath } from 'next/cache'
-import { Prisma, MatchStatus, ImportFormat } from '@prisma/client'
+import { Prisma, ImportFormat } from '@prisma/client'
 
 const Decimal = Prisma.Decimal
 

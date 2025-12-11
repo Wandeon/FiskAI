@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { FAB } from "@/components/ui/fab"
+import { BottomNav } from "@/components/layout/bottom-nav"
 
 export default async function DashboardLayout({
   children,
@@ -48,6 +49,9 @@ export default async function DashboardLayout({
         {/* Mobile FAB */}
         <FAB />
       </div>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { ContactListSkeleton } from "@/components/contacts/contact-skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { ContactType } from "@prisma/client"
+import { CommandPalette } from "@/components/ui/command-palette"
 
 interface PageProps {
   searchParams: Promise<{ search?: string; type?: string; page?: string }>
@@ -105,6 +106,19 @@ export default async function ContactsPage({ searchParams }: PageProps) {
         </Link>
       </div>
 
+      {/* Quick actions */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-2">
+          <QuickFilterButton value="ALL" current={type} />
+          <QuickFilterButton value="CUSTOMER" current={type} />
+          <QuickFilterButton value="SUPPLIER" current={type} />
+          <QuickFilterButton value="BOTH" current={type} />
+        </div>
+        <div className="flex gap-2 items-center">
+          <CommandPalette className="lg:hidden" />
+        </div>
+      </div>
+
       {/* Filters */}
       <ContactFilters initialSearch={search} initialType={type} />
 
@@ -113,5 +127,20 @@ export default async function ContactsPage({ searchParams }: PageProps) {
         <ContactList search={search} type={type} page={page} />
       </Suspense>
     </div>
+  )
+}
+function QuickFilterButton({ value, current }: { value: string; current: string }) {
+  const isActive = current === value
+  let label = "Svi"
+  if (value === "CUSTOMER") label = "Kupci"
+  else if (value === "SUPPLIER") label = "Dobavljači"
+  else if (value === "BOTH") label = "Kupci/Dobavljači"
+
+  return (
+    <Link href={`/contacts?type=${value}`} className="text-sm">
+      <Button variant={isActive ? "default" : "outline"} size="sm">
+        {label}
+      </Button>
+    </Link>
   )
 }

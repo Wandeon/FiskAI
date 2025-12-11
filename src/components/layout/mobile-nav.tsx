@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navigation, isNavItemActive } from "@/lib/navigation"
+import { CommandPalette } from "@/components/ui/command-palette"
 
 interface MobileNavProps {
   companyName?: string
@@ -133,6 +134,11 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
           </div>
         )}
       </aside>
+
+      {/* Mobile command palette trigger */}
+      <div className="fixed right-4 bottom-32 z-40 md:hidden">
+        <CommandPalette triggerType="fab" />
+      </div>
     </>
   )
 }

@@ -26,7 +26,6 @@ export function EditProductForm({ product }: EditProductFormProps) {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<ProductFormInput>({
