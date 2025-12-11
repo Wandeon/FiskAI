@@ -6,8 +6,11 @@ services:
     restart: unless-stopped
     volumes:
       - fiskai_postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+      - coolify
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fiskai} -d ${POSTGRES_DB:-fiskai}"]
+      test: ["CMD-SHELL", "pg_isready -U \${POSTGRES_USER:-fiskai} -d \${POSTGRES_DB:-fiskai}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,3 +32,7 @@ services:
 
 volumes:
   fiskai_postgres_data:
+
+networks:
+  coolify:
+    external: true
