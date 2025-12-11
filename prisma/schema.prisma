@@ -96,6 +96,7 @@ model Company {
   expenses          Expense[]
   expenseCategories ExpenseCategory[]
   recurringExpenses RecurringExpense[]
+  savedReports      SavedReport[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -502,4 +503,46 @@ enum Frequency {
   MONTHLY
   QUARTERLY
   YEARLY
+}
+
+// ============================================
+// REPORTING MODULE
+// ============================================
+
+model SavedReport {
+  id        String @id @default(cuid())
+  companyId String
+  userId    String
+
+  name    String // "Q4 2025 VAT"
+  type    ReportType
+  filters Json // { dateFrom, dateTo, categories, ... }
+
+  schedule ReportSchedule @default(NONE)
+  emailTo  String[] // Recipients for scheduled reports
+
+  createdAt DateTime  @default(now())
+  lastRunAt DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([type])
+}
+
+enum ReportType {
+  VAT_SUMMARY
+  PROFIT_LOSS
+  REVENUE_BY_CUSTOMER
+  EXPENSES_BY_CATEGORY
+  RECEIVABLES_AGING
+  PAYABLES_AGING
+  CASH_FLOW
+}
+
+enum ReportSchedule {
+  NONE
+  WEEKLY
+  MONTHLY
+  QUARTERLY
 }
