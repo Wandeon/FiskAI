@@ -2,7 +2,7 @@
 services:
   fiskai-db:
     image: postgres:16-alpine
-    container_name: fiskai-postgres
+    container_name: fiskai-db
     restart: unless-stopped
     volumes:
       - fiskai_postgres_data:/var/lib/postgresql/data
