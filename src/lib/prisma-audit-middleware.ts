@@ -138,11 +138,11 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
       let userId: string | null = null;
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
         const { getContext } = require('./context');
         const ctx = getContext();
         if (ctx?.userId) userId = ctx.userId;
-      } catch (e) {
+      } catch {
         // Ignore import errors or context errors
       }
 
@@ -161,3 +161,4 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
 
     return result;
   };
+}
