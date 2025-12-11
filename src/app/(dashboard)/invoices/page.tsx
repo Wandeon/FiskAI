@@ -56,6 +56,7 @@ export default async function InvoicesPage({
 
   const typeParam = params.type
   const statusParam = params.status
+  const dueParam = params.due
   const searchTerm = Array.isArray(params.search) ? params.search[0] ?? '' : params.search ?? ''
 
   const selectedTypes = Array.isArray(typeParam)
@@ -87,6 +88,12 @@ export default async function InvoicesPage({
   if (filteredStatuses.length > 0) {
     where.status = { in: filteredStatuses }
   }
+  if (dueParam === 'overdue') {
+    where.dueDate = { lt: new Date() }
+    where.status = {
+      in: ['SENT', 'PENDING_FISCALIZATION', 'FISCALIZED', 'DELIVERED', 'ACCEPTED'],
+    }
+  }
   if (searchTerm) {
     where.OR = [
       {
@@ -108,7 +115,7 @@ export default async function InvoicesPage({
     ]
   }
 
-  const [invoices, total, typeStats, statusStats] = await Promise.all([
+  const [invoices, total, typeStats, statusCurrencyBuckets, overdueBuckets] = await Promise.all([
     db.eInvoice.findMany({
       where,
       include: {
@@ -125,28 +132,52 @@ export default async function InvoicesPage({
       _count: true,
     }),
     db.eInvoice.groupBy({
-      by: ['status'],
+      by: ['status', 'currency'],
       where: { companyId: company.id },
-      _count: true,
+      _count: { id: true },
+      _sum: { totalAmount: true },
+    }),
+    db.eInvoice.groupBy({
+      by: ['currency'],
+      where: {
+        companyId: company.id,
+        dueDate: { lt: new Date() },
+        status: {
+          in: ['SENT', 'PENDING_FISCALIZATION', 'FISCALIZED', 'DELIVERED', 'ACCEPTED'],
+        },
+      },
+      _count: { id: true },
       _sum: { totalAmount: true },
     }),
   ])
 
   const totalPages = Math.ceil(total / pageSize)
 
-  const getStatusBucket = (status: EInvoiceStatus) =>
-    statusStats.find((bucket) => bucket.status === status)
-
-  const sumForStatus = (status: EInvoiceStatus) =>
-    Number(getStatusBucket(status)?._sum.totalAmount || 0)
+  const getStatusBuckets = (status: EInvoiceStatus) =>
+    statusCurrencyBuckets.filter((bucket) => bucket.status === status)
 
   const countForStatus = (status: EInvoiceStatus) =>
-    Number(getStatusBucket(status)?._count || 0)
+    getStatusBuckets(status).reduce((sum, bucket) => sum + Number(bucket._count.id || 0), 0)
 
-  const sentSum = sumForStatus('SENT') + sumForStatus('PENDING_FISCALIZATION')
-  const deliveredSum = sumForStatus('DELIVERED') + sumForStatus('ACCEPTED')
+  const bucketAmounts = (statuses: EInvoiceStatus[]) => {
+    const currencyMap = new Map<string, number>()
+    statusCurrencyBuckets
+      .filter((bucket) => statuses.includes(bucket.status as EInvoiceStatus))
+      .forEach((bucket) => {
+        const current = currencyMap.get(bucket.currency) || 0
+        currencyMap.set(bucket.currency, current + Number(bucket._sum.totalAmount || 0))
+      })
+    return Array.from(currencyMap.entries()).map(([currency, value]) => ({ currency, value }))
+  }
+
+  const sentAmounts = bucketAmounts(['SENT', 'PENDING_FISCALIZATION'])
+  const deliveredAmounts = bucketAmounts(['DELIVERED', 'ACCEPTED'])
   const draftCount = countForStatus('DRAFT')
   const errorCount = countForStatus('ERROR') + countForStatus('REJECTED')
+  const sentCount = countForStatus('SENT') + countForStatus('PENDING_FISCALIZATION')
+  const deliveredCount = countForStatus('DELIVERED') + countForStatus('ACCEPTED')
+
+  const overdueCount = overdueBuckets.reduce((sum, bucket) => sum + Number(bucket._count.id || 0), 0)
 
   type InvoiceRow = typeof invoices[0]
 
@@ -245,23 +276,47 @@ export default async function InvoicesPage({
       {/* Status quick buckets */}
       <div className="flex flex-wrap gap-2 text-sm">
         {([
-          { status: 'DRAFT' as const, label: 'Nacrti', amount: 0, count: draftCount },
-          { status: 'SENT' as const, label: 'Poslano/Fiskalizacija', amount: sentSum, count: countForStatus('SENT') + countForStatus('PENDING_FISCALIZATION') },
-          { status: 'DELIVERED' as const, label: 'Dostavljeno/Prihvaćeno', amount: deliveredSum, count: countForStatus('DELIVERED') + countForStatus('ACCEPTED') },
-          { status: 'ERROR' as const, label: 'Greške/Odbijeno', amount: 0, count: errorCount },
+          { status: 'DRAFT' as const, label: 'Nacrti', amounts: [], count: draftCount },
+          {
+            status: 'SENT' as const,
+            label: 'Poslano/Fiskalizacija',
+            amounts: sentAmounts,
+            count: sentCount,
+          },
+          {
+            status: 'DELIVERED' as const,
+            label: 'Dostavljeno/Prihvaćeno',
+            amounts: deliveredAmounts,
+            count: deliveredCount,
+          },
+          { status: 'ERROR' as const, label: 'Greške/Odbijeno', amounts: [], count: errorCount },
         ]).map((item) => (
           <Link
             key={item.status}
-            href={buildPaginationLink(1, searchTerm, selectedTypes, [item.status])}
+            href={buildPaginationLink(1, searchTerm, selectedTypes, [item.status], undefined)}
             className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-1 font-medium text-[var(--foreground)] hover:border-brand-200 hover:text-brand-700"
           >
             <span className="inline-flex h-2 w-2 rounded-full bg-brand-500" />
             {item.label}
             <span className="text-xs text-[var(--muted)]">
-              {item.count} {item.amount > 0 && `· ${formatCurrency(item.amount, 'EUR')}`}
+              {item.count}
+              {item.amounts.length > 0 && ` · ${formatCurrencyList(item.amounts)}`}
             </span>
           </Link>
         ))}
+        <Link
+          href={buildPaginationLink(1, searchTerm, selectedTypes, selectedStatuses, 'overdue')}
+          className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-900 hover:border-amber-300"
+        >
+          <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+          Dospjelo
+          <span className="text-xs text-amber-800">
+            {overdueCount} {overdueBuckets.length > 0 && `· ${formatCurrencyList(overdueBuckets.map((bucket) => ({
+              currency: bucket.currency,
+              value: Number(bucket._sum.totalAmount || 0),
+            })))}`}
+          </span>
+        </Link>
       </div>
 
       <InvoiceFilters
@@ -271,6 +326,25 @@ export default async function InvoicesPage({
         typeOptions={buildOptions(TYPE_LABELS)}
         statusOptions={buildOptions(STATUS_LABELS)}
       />
+
+      {overdueCount > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-sm text-amber-900">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold">Dospjelo</span>
+            <span className="text-xs">
+              {formatCurrencyList(
+                overdueBuckets.map((bucket) => ({
+                  currency: bucket.currency,
+                  value: Number(bucket._sum.totalAmount || 0),
+                }))
+              )}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-amber-800">
+            {overdueCount} dokument{overdueCount === 1 ? '' : 'a'} s dospijećem u prošlosti. Pregledajte i podsjetite kupca.
+          </p>
+        </div>
+      )}
 
       {/* Table */}
       {invoices.length === 0 ? (
@@ -331,7 +405,7 @@ export default async function InvoicesPage({
         <div className="flex justify-center gap-2">
           {page > 1 && (
             <Link
-              href={buildPaginationLink(page - 1, searchTerm, selectedTypes, selectedStatuses)}
+              href={buildPaginationLink(page - 1, searchTerm, selectedTypes, selectedStatuses, dueParam === 'overdue' ? 'overdue' : undefined)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               ← Prethodna
@@ -342,7 +416,7 @@ export default async function InvoicesPage({
           </span>
           {page < totalPages && (
             <Link
-              href={buildPaginationLink(page + 1, searchTerm, selectedTypes, selectedStatuses)}
+              href={buildPaginationLink(page + 1, searchTerm, selectedTypes, selectedStatuses, dueParam === 'overdue' ? 'overdue' : undefined)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               Sljedeća →
@@ -363,6 +437,7 @@ function buildPaginationLink(
   search: string,
   types: string[],
   statuses: string[],
+  due?: string,
 ) {
   const params = new URLSearchParams()
   params.set('page', String(page))
@@ -371,6 +446,9 @@ function buildPaginationLink(
   }
   types.forEach((type) => params.append('type', type))
   statuses.forEach((status) => params.append('status', status))
+  if (due) {
+    params.set('due', due)
+  }
   const query = params.toString()
   return query ? `/invoices?${query}` : '/invoices'
 }
@@ -388,4 +466,11 @@ function formatCurrency(value: number, currency: string) {
     style: 'currency',
     currency,
   }).format(value)
+}
+
+function formatCurrencyList(entries: Array<{ currency: string; value: number }>) {
+  if (entries.length === 0) return ''
+  return entries
+    .map((item) => `${formatCurrency(item.value, item.currency)}`)
+    .join(' · ')
 }

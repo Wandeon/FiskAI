@@ -101,7 +101,7 @@ export default async function ExpensesPage({
     ]
   }
 
-  const [expenses, total, categories, statusBuckets] = await Promise.all([
+  const [expenses, total, categories, statusBuckets, categoryBuckets] = await Promise.all([
     db.expense.findMany({
       where,
       include: {
@@ -123,6 +123,11 @@ export default async function ExpensesPage({
       _sum: { totalAmount: true },
       _count: { id: true },
     }),
+    db.expense.groupBy({
+      by: ['categoryId', 'currency'],
+      where: { companyId: company.id },
+      _sum: { totalAmount: true },
+    }),
   ])
 
   const totalPages = Math.ceil(total / pageSize)
@@ -135,6 +140,20 @@ export default async function ExpensesPage({
   const draftCount = countFor('DRAFT')
   const pendingCount = countFor('PENDING')
   const paidCount = countFor('PAID')
+
+  const topCategories = categoryBuckets
+    .reduce<Record<string, { label: string; amount: number; currency: string }>>((acc, bucket) => {
+      const category = categories.find((c) => c.id === bucket.categoryId)
+      const key = `${bucket.categoryId}-${bucket.currency}`
+      acc[key] = {
+        label: category?.name || 'Nepoznato',
+        amount: Number(bucket._sum.totalAmount || 0),
+        currency: bucket.currency,
+      }
+      return acc
+    }, {})
+
+  const sortedCategories = Object.values(topCategories).sort((a, b) => b.amount - a.amount).slice(0, 3)
 
   const columns: Column<typeof expenses[0]>[] = [
     {
@@ -232,6 +251,28 @@ export default async function ExpensesPage({
           </CardContent>
         </Card>
       </div>
+
+      {sortedCategories.length > 0 && (
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]/70 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Top kategorije</p>
+              <p className="text-sm text-[var(--muted)]">Najveći troškovi po kategoriji</p>
+            </div>
+            <Link href="/expenses/categories" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+              Uredi kategorije →
+            </Link>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {sortedCategories.map((cat) => (
+              <div key={`${cat.label}-${cat.currency}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
+                <p className="text-sm font-semibold text-[var(--foreground)]">{cat.label}</p>
+                <p className="text-sm text-[var(--muted)]">{formatCurrency(cat.amount, cat.currency)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick status filters */}
       <div className="flex flex-wrap gap-2 text-sm">

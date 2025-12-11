@@ -27,6 +27,8 @@ The new shell/components (Header, Sidebar, MobileNav, FAB, redesigned Contacts p
 - Products page now surfaces a “Zdravlje kataloga” card that highlights missing šifre, nula cijena, and neaktivni artikli with quick CTA to add items (CSV import button stubbed for upcoming bulk imports).
 - Expenses list gained quick status chips + aggregate cards (paid/pending/draft counts and sums) so finance teams can jump straight to actionable buckets.
 - Invoices list now shows status buckets (Nacrti, Poslano/Fiskalizacija, Dostavljeno/Prihvaćeno, Greške/Odbijeno) with counts and sums, plus type cards that highlight active filters for faster triage.
+- Invoices buckets now surface multi-currency sums and an overdue alert based on due dates, so teams can see dospjeli dokumenti and outstanding amounts per currency at a glance.
+- Expenses gained “Top kategorije” summary cards (aggregated per currency) and a quick link to manage categories, so teams can see where spend concentrates.
 
 ## Upcoming Enhancements
 ### 1. Visual Language & Theming
