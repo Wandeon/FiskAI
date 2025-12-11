@@ -9,9 +9,19 @@ import { navigation, isNavItemActive } from "@/lib/navigation"
 
 interface SidebarProps {
   defaultCollapsed?: boolean
+  user: {
+    name?: string | null
+    email?: string | null
+    image?: string | null
+  }
+  company?: {
+    name: string
+    eInvoiceProvider?: string | null
+    isVatPayer: boolean
+  }
 }
 
-export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
+export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
   const pathname = usePathname()
 
@@ -23,6 +33,44 @@ export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
       )}
     >
       <div className="flex h-full flex-col">
+        {!isCollapsed && (
+          <div className="border-b border-[var(--border)] p-3">
+            <div className="rounded-2xl surface-glass px-3 py-3">
+              <div className="flex items-center gap-3">
+                {user.image ? (
+                  <img src={user.image} alt={user.name || 'Profile'} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold">
+                    {(user.name || user.email || 'U').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-[var(--foreground)] truncate">{user.name || user.email}</p>
+                  {company && (
+                    <p className="text-xs text-[var(--muted)] truncate">{company.name}</p>
+                  )}
+                </div>
+              </div>
+              {company && (
+                <div className="mt-3 flex gap-2 text-xs text-[var(--muted)]">
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 font-medium",
+                    company.eInvoiceProvider ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                  )}>
+                    {company.eInvoiceProvider ? "Posrednik spojen" : "Posrednik nije konfiguriran"}
+                  </span>
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 font-medium",
+                    company.isVatPayer ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
+                  )}>
+                    {company.isVatPayer ? "PDV obveznik" : "Nije PDV obveznik"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin p-3">
           {navigation.map((section, sectionIdx) => (

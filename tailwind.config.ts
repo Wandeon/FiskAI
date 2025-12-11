@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { designTokens } from "./src/styles/tokens";
 
 const config: Config = {
   darkMode: 'class',
@@ -10,21 +11,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand colors
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
-        },
-        // Surface colors for cards, backgrounds
+        brand: designTokens.colors.brand,
+        neutral: designTokens.colors.neutrals,
         surface: {
           DEFAULT: 'var(--surface)',
           secondary: 'var(--surface-secondary)',
@@ -50,20 +38,27 @@ const config: Config = {
         },
       },
       borderRadius: {
-        'card': '0.75rem',
-        'button': '0.5rem',
+        'card': designTokens.radii.card,
+        'button': designTokens.radii.md,
+        'pill': designTokens.radii.pill,
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-        'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-        'elevated': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        'card': designTokens.shadows.card,
+        'card-hover': designTokens.shadows.cardHover,
+        'elevated': designTokens.shadows.elevated,
+        'glow': designTokens.shadows.glow,
       },
       spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
+        '18': designTokens.spacing["18"],
+        '22': designTokens.spacing["22"],
+        '88': designTokens.spacing["88"],
       },
       fontSize: {
         'xxs': ['0.625rem', { lineHeight: '0.875rem' }],
+      },
+      fontFamily: {
+        sans: designTokens.typography.fontFamily,
+        heading: designTokens.typography.headingFont,
       },
       animation: {
         'slide-in': 'slideIn 0.2s ease-out',

@@ -47,24 +47,24 @@ export function QuickActions({ className }: QuickActionsProps) {
     <div ref={ref} className={cn("relative", className)}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-button bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors focus-ring"
+        className="flex items-center gap-2 rounded-full bg-brand-600/95 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all focus-ring hover:bg-brand-600"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="icon-md" />
         <span className="hidden sm:inline">Novo</span>
         <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 rounded-card border border-[var(--border)] bg-[var(--surface)] shadow-elevated animate-scale-in z-50">
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl surface-glass border-white/10 shadow-glow animate-scale-in z-50 origin-top-right">
           <div className="p-1">
             {actions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-secondary)] transition-colors"
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
               >
-                <action.icon className="h-4 w-4 text-[var(--muted)]" />
+                <action.icon className="icon-md text-[var(--muted)]" />
                 {action.name}
               </Link>
             ))}
@@ -203,30 +203,30 @@ export function UserMenu({ user, className }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-56 rounded-card border border-[var(--border)] bg-[var(--surface)] shadow-elevated animate-scale-in z-50">
-          <div className="border-b border-[var(--border)] px-4 py-3">
-            <p className="font-medium text-[var(--foreground)] truncate">{user.name || 'Korisnik'}</p>
+        <div className="absolute right-0 top-full mt-2 w-60 rounded-2xl surface-glass border-white/10 shadow-glow animate-scale-in z-50">
+          <div className="border-b border-white/10 px-4 py-3">
+            <p className="font-semibold text-[var(--foreground)] truncate">{user.name || 'Korisnik'}</p>
             <p className="text-sm text-[var(--muted)] truncate">{user.email}</p>
           </div>
           <div className="p-1">
             <Link
               href="/settings/profile"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-secondary)] transition-colors"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
             >
-              <User className="h-4 w-4 text-[var(--muted)]" />
+              <User className="icon-md text-[var(--muted)]" />
               Moj profil
             </Link>
             <Link
               href="/settings"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--surface-secondary)] transition-colors"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
             >
-              <Settings className="h-4 w-4 text-[var(--muted)]" />
+              <Settings className="icon-md text-[var(--muted)]" />
               Postavke
             </Link>
           </div>
-          <div className="border-t border-[var(--border)] p-1">
+          <div className="border-t border-white/10 p-1">
             <LogoutButton />
           </div>
         </div>

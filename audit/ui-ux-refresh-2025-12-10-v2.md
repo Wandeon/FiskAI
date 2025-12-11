@@ -17,6 +17,7 @@ The new shell/components (Header, Sidebar, MobileNav, FAB, redesigned Contacts p
 - Expenses table now renders via `ResponsiveTable`, giving mobile users card-style entries with status chips and detail links.
 - Invoices table also uses `ResponsiveTable` for cohesive desktop/mobile behavior.
 - Banking transactions table adopts `ResponsiveTable`, so mobile users see transaction cards with match status chips and quick link buttons.
+- Base design tokens (`src/styles/tokens.ts`) now drive Tailwind, glassmorphic surfaces, and typography utilities; hero banner showcases the layered gradient treatment.
 - Dashboard hero/insights: gradient hero banner, revenue trend sparkline, invite/AI action cards, reorganized onboarding grid.
 
 ## Upcoming Enhancements

@@ -5,7 +5,6 @@ import { getCurrentCompany } from "@/lib/auth-utils"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
-import { FAB } from "@/components/ui/fab"
 import { BottomNav } from "@/components/layout/bottom-nav"
 
 export default async function DashboardLayout({
@@ -32,7 +31,14 @@ export default async function DashboardLayout({
       <div className="flex flex-1">
         {/* Desktop Sidebar - hidden on mobile */}
         <div className="hidden md:block">
-          <Sidebar />
+          <Sidebar
+            user={{
+              name: session.user.name,
+              email: session.user.email,
+              image: session.user.image,
+            }}
+            company={currentCompany || undefined}
+          />
         </div>
 
         {/* Mobile Navigation */}
@@ -46,8 +52,6 @@ export default async function DashboardLayout({
           {children}
         </main>
 
-        {/* Mobile FAB */}
-        <FAB />
       </div>
 
       {/* Mobile bottom navigation */}
