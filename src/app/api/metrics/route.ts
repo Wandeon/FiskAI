@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { withApiLogging } from "@/lib/api-logging"
+import { logger } from "@/lib/logger"
 
 export const dynamic = "force-dynamic"
 
-export async function GET() {
+export const GET = withApiLogging(async () => {
   const startTime = Date.now()
 
   try {
-    // Collect metrics
     const [
       userCount,
       companyCount,
@@ -27,7 +28,6 @@ export async function GET() {
 
     const dbQueryTime = Date.now() - startTime
 
-    // Format as Prometheus text exposition format
     const metrics = [
       "# HELP fiskai_users_total Total number of registered users",
       "# TYPE fiskai_users_total gauge",
@@ -65,7 +65,8 @@ export async function GET() {
         "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
       },
     })
-  } catch {
+  } catch (error) {
+    logger.error({ error }, "Metrics endpoint failed")
     const metrics = [
       "# HELP fiskai_up Application up status (1 = up, 0 = down)",
       "# TYPE fiskai_up gauge",
@@ -79,4 +80,4 @@ export async function GET() {
       },
     })
   }
-}
+})

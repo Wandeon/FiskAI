@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { suggestCategory, suggestCategoryByVendor } from '@/lib/ai/categorize'
 import { db } from '@/lib/db'
+import { withApiLogging } from '@/lib/api-logging'
+import { updateContext } from '@/lib/context'
+import { logger } from '@/lib/logger'
 
-export async function POST(req: NextRequest) {
+export const POST = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  updateContext({ userId: session.user.id })
+
   try {
     const body = await req.json()
     const { description, vendor } = body
 
-    // Get company from companyUser relation
     const companyUser = await db.companyUser.findFirst({
       where: { userId: session.user.id, isDefault: true },
       include: { company: true }
@@ -27,10 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     const companyId = companyUser.company.id
+    updateContext({ companyId })
 
     const suggestions = []
 
-    // First, try to find category based on vendor history
     if (vendor) {
       const vendorSuggestion = await suggestCategoryByVendor(vendor, companyId)
       if (vendorSuggestion) {
@@ -38,13 +42,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Then, add keyword-based suggestions from description
     if (description) {
       const descSuggestions = await suggestCategory(description, companyId)
       suggestions.push(...descSuggestions)
     }
 
-    // Remove duplicates and sort by confidence
     const uniqueSuggestions = suggestions
       .filter(
         (suggestion, index, self) =>
@@ -55,10 +57,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ suggestions: uniqueSuggestions })
   } catch (error) {
-    console.error('Category suggestion error:', error)
+    logger.error({ error }, 'Category suggestion error')
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Suggestion failed' },
       { status: 500 }
     )
   }
-}
+})

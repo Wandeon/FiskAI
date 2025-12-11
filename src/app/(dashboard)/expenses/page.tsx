@@ -4,10 +4,10 @@ import { setTenantContext } from '@/lib/prisma-extensions'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/data-table'
 import { ExpenseStatus, Prisma } from '@prisma/client'
 import { ExpenseFilters } from '@/components/expenses/expense-filters'
 import type { MultiSelectOption } from '@/components/ui/multi-select'
+import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Nacrt',
@@ -126,52 +126,51 @@ export default async function ExpensesPage({
 
   const totalPages = Math.ceil(total / pageSize)
 
-  const columns = [
+  const columns: Column<typeof expenses[0]>[] = [
     {
       key: 'date',
-      header: 'Datum',
-      cell: (exp: typeof expenses[0]) => new Date(exp.date).toLocaleDateString('hr-HR')
+      label: 'Datum',
+      render: (exp) => new Date(exp.date).toLocaleDateString('hr-HR'),
     },
     {
       key: 'description',
-      header: 'Opis',
-      cell: (exp: typeof expenses[0]) => exp.description.length > 40 ? exp.description.slice(0, 40) + '...' : exp.description
+      label: 'Opis',
+      render: (exp) => (
+        exp.description.length > 40 ? `${exp.description.slice(0, 40)}…` : exp.description
+      ),
     },
     {
       key: 'vendor',
-      header: 'Dobavljač',
-      cell: (exp: typeof expenses[0]) => exp.vendor?.name || '-'
+      label: 'Dobavljač',
+      render: (exp) => exp.vendor?.name || '—',
     },
     {
       key: 'category',
-      header: 'Kategorija',
-      cell: (exp: typeof expenses[0]) => exp.category.name
+      label: 'Kategorija',
+      render: (exp) => exp.category.name,
     },
     {
       key: 'totalAmount',
-      header: 'Iznos',
-      cell: (exp: typeof expenses[0]) => new Intl.NumberFormat('hr-HR', {
-        style: 'currency',
-        currency: exp.currency,
-      }).format(Number(exp.totalAmount))
+      label: 'Iznos',
+      render: (exp) => formatCurrency(Number(exp.totalAmount), exp.currency),
     },
     {
       key: 'status',
-      header: 'Status',
-      cell: (exp: typeof expenses[0]) => (
+      label: 'Status',
+      render: (exp) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[exp.status]}`}>
           {STATUS_LABELS[exp.status]}
         </span>
-      )
+      ),
     },
     {
       key: 'actions',
-      header: '',
-      cell: (exp: typeof expenses[0]) => (
-        <Link href={`/expenses/${exp.id}`} className="text-sm text-blue-600 hover:underline">
+      label: '',
+      render: (exp) => (
+        <Link href={`/expenses/${exp.id}`} className="text-sm text-brand-600 hover:text-brand-700">
           Pregledaj
         </Link>
-      )
+      ),
     },
   ]
 
@@ -229,7 +228,45 @@ export default async function ExpensesPage({
           </CardContent>
         </Card>
       ) : (
-        <DataTable columns={columns} data={expenses} caption="Popis troškova" getRowKey={(exp) => exp.id} />
+        <ResponsiveTable
+          columns={columns}
+          data={expenses}
+          className="bg-[var(--surface)] rounded-2xl border border-[var(--border)]"
+          getRowKey={(exp) => exp.id}
+          renderCard={(exp) => (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase text-[var(--muted)] tracking-wide">
+                    {new Date(exp.date).toLocaleDateString('hr-HR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                  <p className="text-base font-semibold text-[var(--foreground)]">{exp.description}</p>
+                  <p className="text-sm text-[var(--muted)]">{exp.vendor?.name || 'Nepoznati dobavljač'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-[var(--foreground)]">
+                    {formatCurrency(Number(exp.totalAmount), exp.currency)}
+                  </p>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[exp.status]}`}>
+                    {STATUS_LABELS[exp.status]}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm text-[var(--muted)]">
+                <div>
+                  <p className="font-medium text-[var(--foreground)]">{exp.category.name}</p>
+                  <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Kategorija</p>
+                </div>
+                <Link
+                  href={`/expenses/${exp.id}`}
+                  className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                >
+                  Detalji →
+                </Link>
+              </div>
+            </div>
+          )}
+        />
       )}
 
       {/* Pagination */}
@@ -280,4 +317,11 @@ function buildPaginationLink(page: number, search: string, statuses: string[], c
 
 function isExpenseStatus(value: string): value is ExpenseStatus {
   return Object.values(ExpenseStatus).includes(value as ExpenseStatus)
+}
+
+function formatCurrency(value: number, currency: string) {
+  return new Intl.NumberFormat('hr-HR', {
+    style: 'currency',
+    currency,
+  }).format(value)
 }

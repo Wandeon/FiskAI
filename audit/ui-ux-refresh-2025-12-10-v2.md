@@ -14,6 +14,7 @@ The new shell/components (Header, Sidebar, MobileNav, FAB, redesigned Contacts p
 - Header now surfaces an onboarding progress pill with CTA + accountant invite link, so admins see remaining setup steps globally.
 - Invoices list received multi-select filters (type/status) plus invoice/buyer search with preserved pagination URLs.
 - Expenses list now mirrors the modern filters (search + multi-select categories/status) for consistent workflow UX.
+- Expenses table now renders via `ResponsiveTable`, giving mobile users card-style entries with status chips and detail links.
 - Dashboard hero/insights: gradient hero banner, revenue trend sparkline, invite/AI action cards, reorganized onboarding grid.
 
 ## Upcoming Enhancements

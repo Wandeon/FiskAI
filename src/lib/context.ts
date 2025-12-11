@@ -17,3 +17,9 @@ export function getContext(): RequestContext | undefined {
 export function runWithContext<T>(context: RequestContext, fn: () => T): T {
     return contextStore.run(context, fn)
 }
+
+export function updateContext(context: Partial<RequestContext>) {
+    const store = contextStore.getStore()
+    if (!store) return
+    Object.assign(store, context)
+}

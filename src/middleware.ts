@@ -1,34 +1,33 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import { logger } from "./lib/logger"
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { logger } from './lib/logger'
 
 export async function middleware(request: NextRequest) {
-    const requestId = request.headers.get("x-request-id") || crypto.randomUUID()
+  const requestId = request.headers.get('x-request-id') || crypto.randomUUID()
+  const startTime = Date.now()
 
-    // Create a response object
-    const response = NextResponse.next()
+  // Log incoming request
+  logger.info({
+    requestId,
+    method: request.method,
+    path: request.nextUrl.pathname,
+    userAgent: request.headers.get('user-agent')?.slice(0, 100),
+  }, 'Incoming request')
 
-    // Set the request ID header
-    response.headers.set("x-request-id", requestId)
+  // Create response with request ID header
+  const response = NextResponse.next()
+  response.headers.set('x-request-id', requestId)
 
-    // Log the request
-    // Note: We cannot use the shared AsyncLocalStorage context here directly 
-    // because Middleware runs in a separate runtime/scope.
-    // We log explicitly with the values available.
-    logger.info({
-        requestId,
-        method: request.method,
-        url: request.url,
-        userAgent: request.headers.get("user-agent"),
-        msg: "Incoming Request"
-    })
+  // Calculate duration (note: this is middleware duration, not full request)
+  const durationMs = Date.now() - startTime
+  response.headers.set('x-response-time', `${durationMs}ms`)
 
-    return response
+  return response
 }
 
 export const config = {
-    matcher: [
-        // Skip all internal paths
-        "/((?!_next/static|_next/image|favicon.ico).*)",
-    ],
+  matcher: [
+    // Skip static files and internal Next.js routes
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }

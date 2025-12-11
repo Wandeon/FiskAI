@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { withApiLogging } from "@/lib/api-logging"
+import { logger } from "@/lib/logger"
 
 export const dynamic = "force-dynamic"
 
@@ -9,7 +11,7 @@ interface HealthCheck {
   message?: string
 }
 
-export async function GET() {
+export const GET = withApiLogging(async () => {
   const checks: Record<string, HealthCheck> = {}
   let overallStatus: "ready" | "degraded" | "not_ready" = "ready"
 
@@ -22,6 +24,7 @@ export async function GET() {
       latency: Date.now() - dbStart,
     }
   } catch (error) {
+    logger.error({ error }, "Database health check failed")
     checks.database = {
       status: "failed",
       latency: Date.now() - dbStart,
@@ -59,4 +62,4 @@ export async function GET() {
   const statusCode = overallStatus === "not_ready" ? 503 : 200
 
   return NextResponse.json(response, { status: statusCode })
-}
+})

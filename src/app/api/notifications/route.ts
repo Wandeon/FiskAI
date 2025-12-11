@@ -2,9 +2,13 @@ import { NextResponse } from "next/server"
 import { requireAuth, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { getNotificationCenterFeed, countUnreadNotifications } from "@/lib/notifications"
+import { withApiLogging } from "@/lib/api-logging"
+import { updateContext } from "@/lib/context"
 
-export async function GET() {
+export const GET = withApiLogging(async () => {
   const user = await requireAuth()
+  updateContext({ userId: user.id! })
+
   const company = await getCurrentCompany(user.id!)
 
   if (!company) {
@@ -14,6 +18,8 @@ export async function GET() {
       lastSeenAt: null,
     })
   }
+
+  updateContext({ companyId: company.id })
 
   const companyUser = await db.companyUser.findFirst({
     where: { userId: user.id!, companyId: company.id },
@@ -36,4 +42,4 @@ export async function GET() {
     unreadCount,
     lastSeenAt: companyUser?.notificationSeenAt?.toISOString() ?? null,
   })
-}
+})
