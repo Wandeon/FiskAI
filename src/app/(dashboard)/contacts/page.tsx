@@ -11,13 +11,17 @@ import { ContactType } from "@prisma/client"
 import { CommandPalette } from "@/components/ui/command-palette"
 
 interface PageProps {
-  searchParams: Promise<{ search?: string; type?: string; page?: string }>
+  searchParams: Promise<{ search?: string; type?: string; page?: string; segment?: string | string[] }>
 }
 
-async function ContactList({ search, type, page }: { search: string; type: string; page: number }) {
+const SEGMENTS = ["VAT_PAYER", "MISSING_EMAIL", "NO_DOCUMENTS"] as const
+
+async function ContactList({ search, type, page, segments }: { search: string; type: string; page: number; segments: string[] }) {
+  const validSegments = segments.filter((segment) => SEGMENTS.includes(segment as typeof SEGMENTS[number]))
   const { contacts, pagination } = await getContactList({
     search,
     type: type as ContactType | "ALL",
+    segments: validSegments as typeof SEGMENTS[number][],
     page,
     limit: 12,
   })
@@ -87,6 +91,12 @@ export default async function ContactsPage({ searchParams }: PageProps) {
   const search = params.search || ""
   const type = params.type || "ALL"
   const page = parseInt(params.page || "1", 10)
+  const segmentsParam = params.segment
+  const segments = Array.isArray(segmentsParam)
+    ? segmentsParam
+    : segmentsParam
+      ? [segmentsParam]
+      : []
 
   return (
     <div className="space-y-6">
@@ -120,11 +130,11 @@ export default async function ContactsPage({ searchParams }: PageProps) {
       </div>
 
       {/* Filters */}
-      <ContactFilters initialSearch={search} initialType={type} />
+      <ContactFilters initialSearch={search} initialType={type} initialSegments={segments} />
 
       {/* Contact List */}
       <Suspense fallback={<ContactListSkeleton />}>
-        <ContactList search={search} type={type} page={page} />
+        <ContactList search={search} type={type} page={page} segments={segments} />
       </Suspense>
     </div>
   )

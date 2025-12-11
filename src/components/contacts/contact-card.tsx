@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Mail, Phone, MapPin, FileText, Pencil } from "lucide-react"
+import { Mail, Phone, MapPin, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContactType } from "@prisma/client"
 import { DeleteContactButton } from "@/app/(dashboard)/contacts/delete-button"
@@ -101,28 +101,48 @@ export function ContactCard({ contact }: ContactCardProps) {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-3 bg-[var(--surface-secondary)]">
+      <div className="space-y-3 border-t border-[var(--border)] px-4 py-3 bg-[var(--surface-secondary)]">
         <div className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
           <FileText className="h-4 w-4" />
           <span>{invoiceCount} {invoiceCount === 1 ? 'račun' : invoiceCount < 5 ? 'računa' : 'računa'}</span>
         </div>
-
-        <div className="flex items-center gap-1">
-          <Link
-            href={`/e-invoices/new?contactId=${contact.id}`}
-            className="rounded-button p-2 text-[var(--muted)] hover:bg-[var(--surface)] hover:text-brand-600 transition-colors"
-            title="Novi račun"
-          >
-            <FileText className="h-4 w-4" />
-          </Link>
-          <Link
-            href={`/contacts/${contact.id}/edit`}
-            className="rounded-button p-2 text-[var(--muted)] hover:bg-[var(--surface)] hover:text-brand-600 transition-colors"
-            title="Uredi"
-          >
-            <Pencil className="h-4 w-4" />
-          </Link>
-          <DeleteContactButton contactId={contact.id} contactName={contact.name} />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {contact.email && (
+              <a
+                href={`mailto:${contact.email}`}
+                className="rounded-full bg-white/70 p-2 text-[var(--muted)] hover:text-brand-600 transition-colors"
+                title="Pošalji email"
+              >
+                <Mail className="h-4 w-4" />
+              </a>
+            )}
+            {contact.phone && (
+              <a
+                href={`tel:${contact.phone}`}
+                className="rounded-full bg-white/70 p-2 text-[var(--muted)] hover:text-brand-600 transition-colors"
+                title="Nazovi"
+              >
+                <Phone className="h-4 w-4" />
+              </a>
+            )}
+            <Link
+              href={`/e-invoices/new?contactId=${contact.id}`}
+              className="rounded-full bg-white/70 p-2 text-[var(--muted)] hover:text-brand-600 transition-colors"
+              title="Novi račun"
+            >
+              <FileText className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/contacts/${contact.id}/edit`}
+              className="rounded-button px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors"
+            >
+              Uredi
+            </Link>
+            <DeleteContactButton contactId={contact.id} contactName={contact.name} />
+          </div>
         </div>
       </div>
     </div>

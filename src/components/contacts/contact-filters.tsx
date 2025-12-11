@@ -16,23 +16,37 @@ const typeOptions = [
 interface ContactFiltersProps {
   initialSearch?: string
   initialType?: string
+  initialSegments?: string[]
 }
 
-export function ContactFilters({ initialSearch = "", initialType = "ALL" }: ContactFiltersProps) {
+const segmentOptions = [
+  { value: "VAT_PAYER", label: "PDV obveznici" },
+  { value: "MISSING_EMAIL", label: "Bez e-maila" },
+  { value: "NO_DOCUMENTS", label: "Bez e-računa" },
+] as const
+
+export function ContactFilters({ initialSearch = "", initialType = "ALL", initialSegments = [] }: ContactFiltersProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const [search, setSearch] = useState(initialSearch)
   const [type, setType] = useState(initialType)
   const [isOpen, setIsOpen] = useState(false)
+  const [segments, setSegments] = useState<string[]>(initialSegments)
 
-  const hasFilters = search || type !== "ALL"
+  const hasFilters = search || type !== "ALL" || segments.length > 0
+  const toggleSegment = (value: string) => {
+    setSegments((prev) =>
+      prev.includes(value) ? prev.filter((segment) => segment !== value) : [...prev, value]
+    )
+  }
 
   const applyFilters = () => {
     startTransition(() => {
       const params = new URLSearchParams()
       if (search) params.set("search", search)
       if (type !== "ALL") params.set("type", type)
+      segments.forEach((segment) => params.append("segment", segment))
       router.push(`/contacts?${params.toString()}`)
     })
     setIsOpen(false)
@@ -41,6 +55,7 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL" }: Cont
   const clearFilters = () => {
     setSearch("")
     setType("ALL")
+    setSegments([])
     startTransition(() => {
       router.push("/contacts")
     })
@@ -80,17 +95,41 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL" }: Cont
         </button>
 
         {/* Desktop Filters */}
-        <div className="hidden items-center gap-3 md:flex">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="rounded-button border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--foreground)] focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-          >
-            {typeOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+        <div className="hidden flex-1 flex-col gap-2 md:flex">
+          <div className="flex gap-3 items-center">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="rounded-button border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--foreground)] focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            >
+              {typeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {segmentOptions.map((segment) => {
+              const isActive = segments.includes(segment.value)
+              return (
+                <button
+                  key={segment.value}
+                  type="button"
+                  onClick={() => toggleSegment(segment.value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    isActive
+                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      : "border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--muted)] hover:border-brand-200"
+                  )}
+                >
+                  {segment.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
+        <div className="hidden items-center gap-3 md:flex">
           <Button onClick={applyFilters} disabled={isPending}>
             {isPending ? "Učitavanje..." : "Filtriraj"}
           </Button>
@@ -123,6 +162,26 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL" }: Cont
                     )}
                   >
                     {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[var(--foreground)]">Segmenti</label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {segmentOptions.map((segment) => (
+                  <button
+                    key={segment.value}
+                    onClick={() => toggleSegment(segment.value)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      segments.includes(segment.value)
+                        ? "bg-brand-500 text-white"
+                        : "bg-[var(--surface-secondary)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                    )}
+                  >
+                    {segment.label}
                   </button>
                 ))}
               </div>
