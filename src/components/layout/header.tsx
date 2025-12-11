@@ -9,6 +9,8 @@ import { CommandPalette } from "@/components/ui/command-palette"
 import { getNotificationCenterFeed, countUnreadNotifications } from "@/lib/notifications"
 import { db } from "@/lib/db"
 import { OnboardingProgressPill } from "./onboarding-progress-pill"
+import { deriveCapabilities } from "@/lib/capabilities"
+import { PlanBadge } from "./plan-badge"
 
 export async function Header() {
   const session = await auth()
@@ -27,6 +29,7 @@ export async function Header() {
   let notificationItems: Awaited<ReturnType<typeof getNotificationCenterFeed>>["items"] = []
   let notificationUnreadCount = 0
   let onboardingProgress: { completed: number; total: number } | null = null
+  let capabilities = deriveCapabilities(null)
 
   if (session?.user?.id && currentCompany) {
     const [
@@ -67,6 +70,8 @@ export async function Header() {
       completed: steps.filter(Boolean).length,
       total: steps.length,
     }
+
+    capabilities = deriveCapabilities(currentCompany)
   }
 
   return (
@@ -111,6 +116,8 @@ export async function Header() {
               className="hidden lg:flex"
             />
           )}
+
+          <PlanBadge capabilities={capabilities} className="hidden xl:flex" />
         </div>
 
         {/* Right Section */}

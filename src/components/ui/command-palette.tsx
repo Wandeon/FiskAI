@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Command, CornerDownLeft, Search } from "lucide-react"
 import { navigation } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
+import { useCapabilities } from "@/hooks/use-capabilities"
 
 interface CommandEntry {
   id: string
@@ -22,11 +23,14 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState("")
+  const capabilities = useCapabilities()
 
   const commands: CommandEntry[] = useMemo(() => {
     const entries: CommandEntry[] = []
     navigation.forEach((section) => {
       section.items.forEach((item) => {
+        const moduleAllowed = item.module ? capabilities.modules[item.module]?.enabled !== false : true
+        if (!moduleAllowed) return
         entries.push({
           id: item.href,
           label: item.name,
@@ -45,7 +49,7 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
       })
     })
     return entries
-  }, [])
+  }, [capabilities])
 
   const filtered = useMemo(() => {
     if (!query.trim()) return commands.slice(0, 8)

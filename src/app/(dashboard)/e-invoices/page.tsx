@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { EInvoiceActions } from "./invoice-actions"
 import { DataTable, Column } from "@/components/ui/data-table"
+import { deriveCapabilities } from "@/lib/capabilities"
+import { redirect } from "next/navigation"
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Nacrt",
@@ -49,6 +51,10 @@ type InvoiceItem = {
 export default async function EInvoicesPage() {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+  const capabilities = deriveCapabilities(company)
+  if (capabilities.modules.eInvoicing?.enabled === false) {
+    redirect("/settings?tab=plan")
+  }
 
   const { items: eInvoices } = await getEInvoices()
 

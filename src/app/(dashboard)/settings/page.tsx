@@ -5,6 +5,7 @@ import { EInvoiceSettingsForm } from "./einvoice-settings-form"
 import Link from "next/link"
 import { Building2, ReceiptText, ShieldCheck, ChevronRight, ArrowUpRight, ListChecks } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PlanSettingsForm } from "./plan-settings-form"
 
 const tabs = [
   {
@@ -18,6 +19,12 @@ const tabs = [
     label: "E-računi",
     description: "Informacijski posrednik i API ključevi",
     icon: ReceiptText,
+  },
+  {
+    id: "plan",
+    label: "Plan & pravna forma",
+    description: "Pravna forma, PDV status i moduli",
+    icon: ShieldCheck,
   },
   {
     id: "compliance",
@@ -129,6 +136,20 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent>
                 <EInvoiceSettingsForm company={company} />
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "plan" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Plan & pravna forma</CardTitle>
+                <CardDescription>
+                  Odaberite pravnu formu, PDV status i module dostupne ovom klijentu
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PlanSettingsForm company={company} />
               </CardContent>
             </Card>
           )}

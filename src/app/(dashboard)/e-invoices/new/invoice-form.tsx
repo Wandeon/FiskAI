@@ -23,6 +23,8 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { toast } from "@/lib/toast"
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
+import type { Capabilities } from "@/lib/capabilities"
+import { getInvoiceVisibility } from "@/lib/field-visibility"
 
 type EInvoiceFormInput = z.input<typeof eInvoiceSchema>
 
@@ -30,6 +32,7 @@ interface InvoiceFormProps {
   contacts: Contact[]
   products: Product[]
   company: Company
+  capabilities: Capabilities
 }
 
 const STEPS = [
@@ -38,12 +41,13 @@ const STEPS = [
   { id: "review", name: "Pregled" },
 ]
 
-export function InvoiceForm({ contacts, products, company }: InvoiceFormProps) {
+export function InvoiceForm({ contacts, products, company, capabilities }: InvoiceFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const invoiceVisibility = getInvoiceVisibility(capabilities)
 
   const {
     register,
@@ -64,7 +68,7 @@ export function InvoiceForm({ contacts, products, company }: InvoiceFormProps) {
           quantity: 1,
           unit: "C62",
           unitPrice: 0,
-          vatRate: 25,
+          vatRate: invoiceVisibility.showVatFields ? 25 : 0,
           vatCategory: "S",
         },
       ],
@@ -163,14 +167,22 @@ export function InvoiceForm({ contacts, products, company }: InvoiceFormProps) {
       quantity: 1,
       unit: product.unit,
       unitPrice: unitPrice,
-      vatRate: vatRate,
+      vatRate: invoiceVisibility.showVatFields ? vatRate : 0,
       vatCategory: "S",
     })
   }
 
   const handleLineChange = (index: number, field: string, value: string | number) => {
     const currentLine = fields[index]
-    update(index, { ...currentLine, [field]: value })
+    if (!invoiceVisibility.showVatFields && field === "vatRate") {
+      return
+    }
+    const nextLine = {
+      ...currentLine,
+      [field]: value,
+      ...(invoiceVisibility.showVatFields ? {} : { vatRate: 0 }),
+    }
+    update(index, nextLine)
   }
 
   const handleDownloadPdf = () => {
@@ -320,15 +332,16 @@ export function InvoiceForm({ contacts, products, company }: InvoiceFormProps) {
                 <PageCardContent>
                   <div className="space-y-4">
                     {fields.map((field, index) => (
-                      <LineItemEditor
-                        key={field.id}
-                        index={index}
-                        line={watchedValues.lines[index] || field}
-                        onChange={(f, v) => handleLineChange(index, f, v)}
-                        onRemove={() => remove(index)}
-                        canRemove={fields.length > 1}
-                      />
-                    ))}
+          <LineItemEditor
+            key={field.id}
+            index={index}
+            line={watchedValues.lines[index] || field}
+            onChange={(f, v) => handleLineChange(index, f, v)}
+            onRemove={() => remove(index)}
+            canRemove={fields.length > 1}
+            showVat={invoiceVisibility.showVatFields}
+          />
+        ))}
 
                     <Button
                       type="button"

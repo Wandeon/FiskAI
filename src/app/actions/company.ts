@@ -3,7 +3,7 @@
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-utils"
-import { companySchema, companySettingsSchema } from "@/lib/validations"
+import { companySchema, companySettingsSchema, planSettingsSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { encryptSecret } from "@/lib/secrets"
@@ -124,6 +124,45 @@ export async function updateCompanySettings(
 
   revalidatePath("/settings")
   return { success: "Settings updated" }
+}
+
+export async function updateCompanyPlan(
+  companyId: string,
+  formData: z.infer<typeof planSettingsSchema>
+) {
+  const user = await requireAuth()
+
+  const companyUser = await db.companyUser.findFirst({
+    where: {
+      userId: user.id!,
+      companyId,
+      role: { in: ["OWNER", "ADMIN"] },
+    },
+  })
+
+  if (!companyUser) {
+    return { error: "Unauthorized" }
+  }
+
+  const validated = planSettingsSchema.safeParse(formData)
+  if (!validated.success) {
+    return { error: "Invalid fields", details: validated.error.flatten() }
+  }
+
+  const data = validated.data
+
+  await db.company.update({
+    where: { id: companyId },
+    data: {
+      legalForm: data.legalForm,
+      isVatPayer: data.isVatPayer,
+      entitlements: data.entitlements,
+    },
+  })
+
+  revalidatePath("/settings")
+  revalidatePath("/dashboard")
+  return { success: "Plan updated" }
 }
 
 export async function switchCompany(companyId: string) {

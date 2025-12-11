@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 import { setTenantContext } from '@/lib/prisma-extensions'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { deriveCapabilities } from '@/lib/capabilities'
+import { redirect } from 'next/navigation'
 
 const REPORTS = [
   { href: '/reports/vat', title: 'PDV obrazac', description: 'Pregled ulaznog i izlaznog PDV-a', icon: '📊' },
@@ -15,6 +17,10 @@ const REPORTS = [
 export default async function ReportsPage() {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+  const capabilities = deriveCapabilities(company)
+  if (capabilities.modules.reports?.enabled === false) {
+    redirect("/settings?tab=plan")
+  }
 
   setTenantContext({ companyId: company.id, userId: user.id! })
 

@@ -5,17 +5,18 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, FileText, Users, Settings, Plus, Receipt, Package } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useCapabilities } from "@/hooks/use-capabilities"
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Početna" },
-  { href: "/e-invoices", icon: FileText, label: "Računi" },
+  { href: "/e-invoices", icon: FileText, label: "Računi", module: "invoicing" },
   { href: "/contacts", icon: Users, label: "Kontakti" },
-  { href: "/settings", icon: Settings, label: "Postavke" },
+  { href: "/settings", icon: Settings, label: "Postavke", module: "settings" },
 ]
 
 const quickActions = [
-  { href: "/e-invoices/new", label: "E-račun", icon: Receipt },
-  { href: "/invoices/new", label: "Dokument", icon: FileText },
+  { href: "/e-invoices/new", label: "E-račun", icon: Receipt, module: "invoicing" },
+  { href: "/invoices/new", label: "Dokument", icon: FileText, module: "invoicing" },
   { href: "/contacts/new", label: "Kontakt", icon: Users },
   { href: "/products/new", label: "Proizvod", icon: Package },
 ]
@@ -23,6 +24,7 @@ const quickActions = [
 export function BottomNav() {
   const pathname = usePathname()
   const [isQuickOpen, setIsQuickOpen] = useState(false)
+  const capabilities = useCapabilities()
 
   return (
     <>
@@ -48,7 +50,9 @@ export function BottomNav() {
             Brze akcije
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => (
+            {quickActions
+              .filter((action) => (action.module ? capabilities.modules[action.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+              .map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
@@ -65,7 +69,10 @@ export function BottomNav() {
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur safe-bottom md:hidden">
         <div className="flex items-center justify-around px-2 py-1">
-          {navItems.slice(0, 2).map((item) => (
+          {navItems
+            .filter((item) => (item.module ? capabilities.modules[item.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+            .slice(0, 2)
+            .map((item) => (
             <NavLink key={item.href} item={item} activePath={pathname} />
           ))}
 
@@ -80,7 +87,10 @@ export function BottomNav() {
             <Plus className="h-6 w-6" />
           </button>
 
-          {navItems.slice(2).map((item) => (
+          {navItems
+            .filter((item) => (item.module ? capabilities.modules[item.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+            .slice(2)
+            .map((item) => (
             <NavLink key={item.href} item={item} activePath={pathname} />
           ))}
         </div>

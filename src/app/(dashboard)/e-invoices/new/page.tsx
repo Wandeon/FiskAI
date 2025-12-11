@@ -4,6 +4,7 @@ import { requireCompany } from "@/lib/auth-utils"
 import { getContacts } from "@/app/actions/contact"
 import { getProducts } from "@/app/actions/product"
 import { InvoiceForm } from "./invoice-form"
+import { deriveCapabilities } from "@/lib/capabilities"
 
 export default async function NewEInvoicePage() {
   const session = await auth()
@@ -18,5 +19,7 @@ export default async function NewEInvoicePage() {
     getProducts(),
   ])
 
-  return <InvoiceForm contacts={contacts} products={products} company={company} />
+  const capabilities = deriveCapabilities(company)
+
+  return <InvoiceForm contacts={contacts} products={products} company={company} capabilities={capabilities} />
 }

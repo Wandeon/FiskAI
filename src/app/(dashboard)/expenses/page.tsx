@@ -9,6 +9,8 @@ import { ExpenseFilters } from '@/components/expenses/expense-filters'
 import type { MultiSelectOption } from '@/components/ui/multi-select'
 import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
 import { ExpenseInlineStatus } from '@/components/expenses/expense-inline-status'
+import { deriveCapabilities } from '@/lib/capabilities'
+import { redirect } from 'next/navigation'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Nacrt',
@@ -31,6 +33,10 @@ export default async function ExpensesPage({
 }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+  const capabilities = deriveCapabilities(company)
+  if (capabilities.modules.expenses?.enabled === false) {
+    redirect('/settings?tab=plan')
+  }
   const params = await searchParams
 
   setTenantContext({

@@ -8,6 +8,8 @@ import { InvoiceType, EInvoiceStatus, Prisma } from '@prisma/client'
 import { InvoiceFilters } from '@/components/invoices/invoice-filters'
 import type { MultiSelectOption } from '@/components/ui/multi-select'
 import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
+import { deriveCapabilities } from '@/lib/capabilities'
+import { redirect } from 'next/navigation'
 
 const TYPE_LABELS: Record<string, string> = {
   INVOICE: 'Račun',
@@ -46,6 +48,10 @@ export default async function InvoicesPage({
 }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+  const capabilities = deriveCapabilities(company)
+  if (capabilities.modules.invoicing?.enabled === false) {
+    redirect('/settings?tab=plan')
+  }
 
   setTenantContext({
     companyId: company.id,

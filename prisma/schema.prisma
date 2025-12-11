@@ -79,6 +79,9 @@ model Company {
   phone      String?
   iban       String?
   isVatPayer Boolean @default(false)
+  legalForm      String?
+  entitlements   Json?
+  featureFlags   Json?
 
   // E-invoice settings
   eInvoiceProvider        String?

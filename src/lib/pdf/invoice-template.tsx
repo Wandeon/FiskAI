@@ -338,7 +338,7 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
               key={index}
               style={[
                 styles.tableRow,
-                index % 2 === 1 && styles.tableRowAlt,
+                index % 2 === 1 ? styles.tableRowAlt : {},
               ]}
             >
               <Text style={styles.col1}>{line.lineNumber}</Text>

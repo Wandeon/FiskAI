@@ -17,6 +17,7 @@ interface LineItemEditorProps {
   onRemove: () => void
   canRemove: boolean
   error?: Record<string, string>
+  showVat?: boolean
 }
 
 const unitOptions = [
@@ -44,9 +45,10 @@ export function LineItemEditor({
   onRemove,
   canRemove,
   error,
+  showVat = true,
 }: LineItemEditorProps) {
   const lineTotal = (line.quantity || 0) * (line.unitPrice || 0)
-  const vatAmount = lineTotal * ((line.vatRate || 0) / 100)
+  const vatAmount = showVat ? lineTotal * ((line.vatRate || 0) / 100) : 0
   const unit = line.unit || "C62"
   const vatRate = line.vatRate || 25
 
@@ -130,20 +132,22 @@ export function LineItemEditor({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              PDV
-            </label>
-            <select
-              value={vatRate}
-              onChange={(e) => onChange("vatRate", parseInt(e.target.value))}
-              className="w-full rounded-button border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            >
-              {vatOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          {showVat !== false && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                PDV
+              </label>
+              <select
+                value={vatRate}
+                onChange={(e) => onChange("vatRate", parseInt(e.target.value))}
+                className="w-full rounded-button border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              >
+                {vatOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Line Total */}

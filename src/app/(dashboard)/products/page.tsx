@@ -7,10 +7,16 @@ import { unitCodes, vatCategories } from "@/lib/validations/product"
 import { ProductTable } from "@/components/products/product-table"
 import { ProductHealth } from "@/components/products/product-health"
 import { ProductCsvImport } from "@/components/products/product-csv-import"
+import { deriveCapabilities } from "@/lib/capabilities"
+import { redirect } from "next/navigation"
 
 export default async function ProductsPage() {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+  const capabilities = deriveCapabilities(company)
+  if (capabilities.modules.invoicing?.enabled === false) {
+    redirect("/settings?tab=plan")
+  }
 
   const products = await db.product.findMany({
     where: { companyId: company.id },

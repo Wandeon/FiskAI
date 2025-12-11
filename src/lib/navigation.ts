@@ -17,6 +17,7 @@ export interface NavItem {
   icon: LucideIcon
   badge?: number
   children?: { name: string; href: string }[]
+  module?: "invoicing" | "eInvoicing" | "expenses" | "banking" | "reports" | "settings"
 }
 
 export interface NavSection {
@@ -38,6 +39,7 @@ export const navigation: NavSection[] = [
         name: "Dokumenti",
         href: "/invoices",
         icon: FileText,
+        module: "invoicing",
         children: [
           { name: "Svi dokumenti", href: "/invoices" },
           { name: "Novi dokument", href: "/invoices/new" },
@@ -47,14 +49,15 @@ export const navigation: NavSection[] = [
         name: "E-Računi",
         href: "/e-invoices",
         icon: Receipt,
+        module: "eInvoicing",
         children: [
           { name: "Svi e-računi", href: "/e-invoices" },
           { name: "Novi e-račun", href: "/e-invoices/new" },
         ]
       },
-      { name: "Troškovi", href: "/expenses", icon: Wallet },
-      { name: "Banka", href: "/banking", icon: Building2 },
-      { name: "Izvještaji", href: "/reports", icon: BarChart3 },
+      { name: "Troškovi", href: "/expenses", icon: Wallet, module: "expenses" },
+      { name: "Banka", href: "/banking", icon: Building2, module: "banking" },
+      { name: "Izvještaji", href: "/reports", icon: BarChart3, module: "reports" },
     ],
   },
   {
@@ -67,7 +70,7 @@ export const navigation: NavSection[] = [
   {
     title: "Sustav",
     items: [
-      { name: "Postavke", href: "/settings", icon: Settings },
+      { name: "Postavke", href: "/settings", icon: Settings, module: "settings" },
     ],
   },
 ]
