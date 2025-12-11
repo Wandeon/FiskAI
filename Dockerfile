@@ -14,8 +14,8 @@ COPY package.json package-lock.json* ./
 # Copy Prisma schema (needed for postinstall prisma generate)
 COPY prisma ./prisma
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (using legacy-peer-deps for openai package compatibility)
+RUN npm ci --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
