@@ -1,0 +1,297 @@
+'use server'
+
+import { db } from '@/lib/db'
+import { requireAuth, requireCompany } from '@/lib/auth-utils'
+import { revalidatePath } from 'next/cache'
+import { Prisma, ExpenseStatus, PaymentMethod } from '@prisma/client'
+
+const Decimal = Prisma.Decimal
+
+interface ActionResult<T = unknown> {
+  success: boolean
+  error?: string
+  data?: T
+}
+
+interface CreateExpenseInput {
+  categoryId: string
+  vendorId?: string
+  description: string
+  date: Date
+  dueDate?: Date
+  netAmount: number
+  vatAmount: number
+  totalAmount: number
+  vatDeductible?: boolean
+  currency?: string
+  paymentMethod?: string
+  notes?: string
+}
+
+export async function createExpense(input: CreateExpenseInput): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    // Verify category exists
+    const category = await db.expenseCategory.findFirst({
+      where: {
+        id: input.categoryId,
+        OR: [{ companyId: company.id }, { companyId: null }],
+      },
+    })
+
+    if (!category) {
+      return { success: false, error: 'Kategorija nije pronađena' }
+    }
+
+    // Verify vendor if provided
+    if (input.vendorId) {
+      const vendor = await db.contact.findFirst({
+        where: { id: input.vendorId, companyId: company.id },
+      })
+      if (!vendor) {
+        return { success: false, error: 'Dobavljač nije pronađen' }
+      }
+    }
+
+    const status: ExpenseStatus = input.paymentMethod ? 'PAID' : 'DRAFT'
+
+    const expense = await db.expense.create({
+      data: {
+        companyId: company.id,
+        categoryId: input.categoryId,
+        vendorId: input.vendorId || null,
+        description: input.description,
+        date: input.date,
+        dueDate: input.dueDate || null,
+        netAmount: new Decimal(input.netAmount),
+        vatAmount: new Decimal(input.vatAmount),
+        totalAmount: new Decimal(input.totalAmount),
+        vatDeductible: input.vatDeductible ?? true,
+        currency: input.currency || 'EUR',
+        status,
+        paymentMethod: input.paymentMethod as PaymentMethod | null,
+        paymentDate: input.paymentMethod ? new Date() : null,
+        notes: input.notes || null,
+      },
+    })
+
+    revalidatePath('/expenses')
+    return { success: true, data: expense }
+  } catch (error) {
+    console.error('Failed to create expense:', error)
+    return { success: false, error: 'Greška pri kreiranju troška' }
+  }
+}
+
+export async function updateExpense(
+  id: string,
+  input: Partial<CreateExpenseInput>
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    const existing = await db.expense.findFirst({
+      where: { id, companyId: company.id },
+    })
+
+    if (!existing) {
+      return { success: false, error: 'Trošak nije pronađen' }
+    }
+
+    const updateData: Prisma.ExpenseUpdateInput = {}
+
+    if (input.categoryId) updateData.category = { connect: { id: input.categoryId } }
+    if (input.vendorId !== undefined) {
+      updateData.vendor = input.vendorId ? { connect: { id: input.vendorId } } : { disconnect: true }
+    }
+    if (input.description) updateData.description = input.description
+    if (input.date) updateData.date = input.date
+    if (input.dueDate !== undefined) updateData.dueDate = input.dueDate
+    if (input.netAmount !== undefined) updateData.netAmount = new Decimal(input.netAmount)
+    if (input.vatAmount !== undefined) updateData.vatAmount = new Decimal(input.vatAmount)
+    if (input.totalAmount !== undefined) updateData.totalAmount = new Decimal(input.totalAmount)
+    if (input.vatDeductible !== undefined) updateData.vatDeductible = input.vatDeductible
+    if (input.notes !== undefined) updateData.notes = input.notes
+    if (input.paymentMethod !== undefined) {
+      updateData.paymentMethod = input.paymentMethod as PaymentMethod | null
+      if (input.paymentMethod) {
+        updateData.status = 'PAID'
+        updateData.paymentDate = new Date()
+      }
+    }
+
+    const expense = await db.expense.update({
+      where: { id },
+      data: updateData,
+    })
+
+    revalidatePath('/expenses')
+    revalidatePath(`/expenses/${id}`)
+    return { success: true, data: expense }
+  } catch (error) {
+    console.error('Failed to update expense:', error)
+    return { success: false, error: 'Greška pri ažuriranju troška' }
+  }
+}
+
+export async function deleteExpense(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    const expense = await db.expense.findFirst({
+      where: { id, companyId: company.id },
+    })
+
+    if (!expense) {
+      return { success: false, error: 'Trošak nije pronađen' }
+    }
+
+    await db.expense.delete({ where: { id } })
+
+    revalidatePath('/expenses')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete expense:', error)
+    return { success: false, error: 'Greška pri brisanju troška' }
+  }
+}
+
+export async function markExpenseAsPaid(
+  id: string,
+  paymentMethod: PaymentMethod
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    const expense = await db.expense.findFirst({
+      where: { id, companyId: company.id },
+    })
+
+    if (!expense) {
+      return { success: false, error: 'Trošak nije pronađen' }
+    }
+
+    if (expense.status === 'PAID') {
+      return { success: false, error: 'Trošak je već plaćen' }
+    }
+
+    await db.expense.update({
+      where: { id },
+      data: {
+        status: 'PAID',
+        paymentMethod,
+        paymentDate: new Date(),
+      },
+    })
+
+    revalidatePath('/expenses')
+    revalidatePath(`/expenses/${id}`)
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to mark expense as paid:', error)
+    return { success: false, error: 'Greška pri označavanju plaćanja' }
+  }
+}
+
+// Category actions
+export async function createExpenseCategory(input: {
+  name: string
+  code: string
+  vatDeductibleDefault?: boolean
+}): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    // Check for duplicate code
+    const existing = await db.expenseCategory.findUnique({
+      where: { companyId_code: { companyId: company.id, code: input.code } },
+    })
+
+    if (existing) {
+      return { success: false, error: `Kategorija s kodom ${input.code} već postoji` }
+    }
+
+    const category = await db.expenseCategory.create({
+      data: {
+        companyId: company.id,
+        name: input.name,
+        code: input.code.toUpperCase(),
+        vatDeductibleDefault: input.vatDeductibleDefault ?? true,
+      },
+    })
+
+    revalidatePath('/expenses/categories')
+    return { success: true, data: category }
+  } catch (error) {
+    console.error('Failed to create category:', error)
+    return { success: false, error: 'Greška pri kreiranju kategorije' }
+  }
+}
+
+export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    const category = await db.expenseCategory.findFirst({
+      where: { id, companyId: company.id },
+    })
+
+    if (!category) {
+      return { success: false, error: 'Kategorija nije pronađena' }
+    }
+
+    // Check if category has expenses
+    const expenseCount = await db.expense.count({ where: { categoryId: id } })
+    if (expenseCount > 0) {
+      return { success: false, error: 'Nije moguće obrisati kategoriju koja ima troškove' }
+    }
+
+    await db.expenseCategory.delete({ where: { id } })
+
+    revalidatePath('/expenses/categories')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete category:', error)
+    return { success: false, error: 'Greška pri brisanju kategorije' }
+  }
+}
+
+// Seed default categories for a company
+export async function seedDefaultCategories(): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+    const company = await requireCompany(user.id!)
+
+    const defaults = [
+      { code: 'OFFICE', name: 'Uredski materijal', vatDeductibleDefault: true },
+      { code: 'TRAVEL', name: 'Putni troškovi', vatDeductibleDefault: true },
+      { code: 'FUEL', name: 'Gorivo', vatDeductibleDefault: false }, // 50% deductible
+      { code: 'TELECOM', name: 'Telekomunikacije', vatDeductibleDefault: true },
+      { code: 'RENT', name: 'Najam', vatDeductibleDefault: true },
+      { code: 'UTILITIES', name: 'Režije', vatDeductibleDefault: true },
+      { code: 'SERVICES', name: 'Usluge', vatDeductibleDefault: true },
+      { code: 'OTHER', name: 'Ostalo', vatDeductibleDefault: false },
+    ]
+
+    for (const cat of defaults) {
+      await db.expenseCategory.upsert({
+        where: { companyId_code: { companyId: company.id, code: cat.code } },
+        update: {},
+        create: { ...cat, companyId: company.id },
+      })
+    }
+
+    revalidatePath('/expenses/categories')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to seed categories:', error)
+    return { success: false, error: 'Greška pri kreiranju zadanih kategorija' }
+  }
+}

@@ -85,14 +85,17 @@ model Company {
   eInvoiceApiKeyEncrypted String? // AES-256-GCM encrypted, format: iv:ciphertext:tag
 
   // Relations
-  users            CompanyUser[]
-  contacts         Contact[]
-  products         Product[]
-  eInvoices        EInvoice[]
-  auditLogs        AuditLog[]
-  businessPremises BusinessPremises[]
-  paymentDevices   PaymentDevice[]
-  invoiceSequences InvoiceSequence[]
+  users             CompanyUser[]
+  contacts          Contact[]
+  products          Product[]
+  eInvoices         EInvoice[]
+  auditLogs         AuditLog[]
+  businessPremises  BusinessPremises[]
+  paymentDevices    PaymentDevice[]
+  invoiceSequences  InvoiceSequence[]
+  expenses          Expense[]
+  expenseCategories ExpenseCategory[]
+  recurringExpenses RecurringExpense[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,6 +149,7 @@ model Contact {
   // E-Invoice relations
   eInvoicesAsBuyer  EInvoice[] @relation("EInvoiceBuyer")
   eInvoicesAsSeller EInvoice[] @relation("EInvoiceSeller")
+  expensesAsVendor  Expense[]  @relation("ExpenseVendor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -394,4 +398,108 @@ model InvoiceSequence {
 
   @@unique([businessPremisesId, year])
   @@index([companyId])
+}
+
+// ============================================
+// EXPENSES MODULE
+// ============================================
+
+model Expense {
+  id         String  @id @default(cuid())
+  companyId  String
+  vendorId   String? // FK to Contact (supplier)
+  categoryId String
+
+  description String
+  date        DateTime
+  dueDate     DateTime?
+
+  netAmount     Decimal @db.Decimal(10, 2)
+  vatAmount     Decimal @db.Decimal(10, 2)
+  totalAmount   Decimal @db.Decimal(10, 2)
+  vatDeductible Boolean @default(true)
+  currency      String  @default("EUR")
+
+  status        ExpenseStatus  @default(DRAFT)
+  paymentMethod PaymentMethod?
+  paymentDate   DateTime?
+
+  receiptUrl String?
+  notes      String? @db.Text
+
+  company  Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vendor   Contact?        @relation("ExpenseVendor", fields: [vendorId], references: [id])
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([date])
+  @@index([status])
+  @@index([categoryId])
+}
+
+model ExpenseCategory {
+  id                   String  @id @default(cuid())
+  companyId            String? // null = system default category
+  name                 String // "Uredski materijal"
+  code                 String // "OFFICE"
+  vatDeductibleDefault Boolean @default(true)
+  isActive             Boolean @default(true)
+
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model RecurringExpense {
+  id          String  @id @default(cuid())
+  companyId   String
+  vendorId    String?
+  categoryId  String
+  description String
+
+  netAmount   Decimal @db.Decimal(10, 2)
+  vatAmount   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  frequency Frequency
+  nextDate  DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([nextDate])
+}
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  OTHER
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
 }

@@ -8,6 +8,7 @@ const navigation = [
   { name: "Nadzorna ploča", href: "/dashboard", icon: "📊" },
   { name: "Dokumenti", href: "/invoices", icon: "📋" },
   { name: "E-Računi", href: "/e-invoices", icon: "📄" },
+  { name: "Troškovi", href: "/expenses", icon: "💸" },
   { name: "Kontakti", href: "/contacts", icon: "👥" },
   { name: "Proizvodi", href: "/products", icon: "📦" },
   { name: "Postavke", href: "/settings", icon: "⚙️" },
