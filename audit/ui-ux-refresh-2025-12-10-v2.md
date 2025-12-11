@@ -20,7 +20,10 @@ The new shell/components (Header, Sidebar, MobileNav, FAB, redesigned Contacts p
 - Base design tokens (`src/styles/tokens.ts`) now drive Tailwind, glassmorphic surfaces, and typography utilities; hero banner showcases the layered gradient treatment.
 - Sidebar and header dropdowns gained glassmorphic cards + motion, and the bottom navigation now bundles a slide-up quick actions drawer for mobile.
 - Dashboard hero area now features a “Današnje akcije” card merging alerts, quick stats, and onboarding tasks, with fiscalization/recents stacked in the right column for a story-driven view.
+- Contact cards gained inline quick actions (email/call/new invoice) to reduce friction when following up.
+- Contact filters now include segment chips (PDV obveznici, bez e-maila, bez e-računa) to target workflow personas quickly.
 - Dashboard hero/insights: gradient hero banner, revenue trend sparkline, invite/AI action cards, reorganized onboarding grid.
+- Dashboard insight column now includes PDV overview (plaćeno/u tijeku), invoice funnel visualization, and contextual tips so admins see tax exposure and conversion health at a glance.
 
 ## Upcoming Enhancements
 ### 1. Visual Language & Theming

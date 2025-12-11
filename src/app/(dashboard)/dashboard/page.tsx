@@ -9,6 +9,9 @@ import { ActionCards } from "@/components/dashboard/action-cards"
 import { FiscalizationStatus } from "@/components/dashboard/fiscalization-status"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { TodayActionsCard } from "@/components/dashboard/today-actions-card"
+import { VatOverviewCard } from "@/components/dashboard/vat-overview-card"
+import { InvoiceFunnelCard } from "@/components/dashboard/invoice-funnel-card"
+import { InsightsCard } from "@/components/dashboard/insights-card"
 
 const Decimal = Prisma.Decimal
 
@@ -36,6 +39,7 @@ export default async function DashboardPage() {
     recentInvoices,
     totalRevenue,
     revenueTrendRaw,
+    statusBuckets,
   ] = await Promise.all([
     db.eInvoice.count({ where: { companyId: company.id } }),
     db.contact.count({ where: { companyId: company.id } }),
@@ -73,6 +77,12 @@ export default async function DashboardPage() {
         createdAt: true,
         totalAmount: true,
       },
+    }),
+    db.eInvoice.groupBy({
+      by: ["status"],
+      where: { companyId: company.id },
+      _count: { id: true },
+      _sum: { vatAmount: true },
     }),
   ])
 
@@ -141,6 +151,27 @@ export default async function DashboardPage() {
   ]
 
   const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'korisniče'
+
+  const getStatusAggregate = (status: EInvoiceStatus) =>
+    statusBuckets.find((bucket) => bucket.status === status)
+
+  const sumVatForStatuses = (statuses: EInvoiceStatus[]) =>
+    statuses.reduce((sum, status) => {
+      const bucket = getStatusAggregate(status)
+      return sum + Number(bucket?._sum.vatAmount || 0)
+    }, 0)
+
+  const vatPaid = sumVatForStatuses(["FISCALIZED", "DELIVERED", "ACCEPTED"])
+  const vatPending = sumVatForStatuses(["PENDING_FISCALIZATION", "SENT"])
+
+  const statusCount = (status: EInvoiceStatus) => Number(getStatusAggregate(status)?._count.id || 0)
+
+  const funnelStages = [
+    { label: "Nacrti", value: statusCount("DRAFT") },
+    { label: "Slanje", value: statusCount("SENT") + statusCount("PENDING_FISCALIZATION") },
+    { label: "Dostavljeno", value: statusCount("DELIVERED") },
+    { label: "Prihvaćeno", value: statusCount("ACCEPTED") },
+  ]
 
   const alerts = [
     !company.eInvoiceProvider && {
@@ -223,6 +254,18 @@ export default async function DashboardPage() {
             eInvoiceProvider={company.eInvoiceProvider}
             oib={company.oib}
             vatNumber={company.vatNumber}
+          />
+          <VatOverviewCard
+            paidVat={vatPaid}
+            pendingVat={vatPending}
+            isVatPayer={company.isVatPayer}
+          />
+          <InvoiceFunnelCard stages={funnelStages} />
+          <InsightsCard
+            companyName={company.name}
+            isVatPayer={company.isVatPayer}
+            contactCount={contactCount}
+            productCount={productCount}
           />
           <RecentActivity invoices={recentInvoices} />
           <ActionCards />
