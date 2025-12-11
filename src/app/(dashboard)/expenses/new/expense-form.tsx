@@ -1,15 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Camera, Sparkles, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { toast } from '@/lib/toast'
 import { createExpense } from '@/app/actions/expense'
+import { ReceiptScanner } from '@/components/expense/receipt-scanner'
 import type { ExpenseCategory } from '@prisma/client'
+import type { ExtractedReceipt, CategorySuggestion } from '@/lib/ai/types'
 
 interface ExpenseFormProps {
   vendors: Array<{ id: string; name: string }>
@@ -19,8 +23,13 @@ interface ExpenseFormProps {
 export function ExpenseForm({ vendors, categories }: ExpenseFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [categoryId, setCategoryId] = useState('')
   const [vendorId, setVendorId] = useState('')
+  const [vendorName, setVendorName] = useState('')
+  const [vendorOib, setVendorOib] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [dueDate, setDueDate] = useState('')
   const [description, setDescription] = useState('')
@@ -33,6 +42,84 @@ export function ExpenseForm({ vendors, categories }: ExpenseFormProps) {
   const net = parseFloat(netAmount) || 0
   const vat = net * (parseFloat(vatRate) / 100)
   const total = net + vat
+
+  // Auto-suggest category when description or vendor changes
+  useEffect(() => {
+    const getSuggestions = async () => {
+      if (!description && !vendorName) {
+        setSuggestions([])
+        return
+      }
+
+      setLoadingSuggestions(true)
+      try {
+        const response = await fetch('/api/ai/suggest-category', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: description || '',
+            vendor: vendorName || '',
+            companyId: 'current', // Will be set by API from session
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setSuggestions(data.suggestions || [])
+        }
+      } catch (error) {
+        console.error('Failed to get suggestions:', error)
+      } finally {
+        setLoadingSuggestions(false)
+      }
+    }
+
+    const timeoutId = setTimeout(getSuggestions, 500)
+    return () => clearTimeout(timeoutId)
+  }, [description, vendorName])
+
+  const handleExtracted = (data: ExtractedReceipt) => {
+    // Fill form with extracted data
+    setVendorName(data.vendor)
+    if (data.vendorOib) setVendorOib(data.vendorOib)
+    setDate(data.date)
+
+    // Calculate net amount from total and VAT
+    const extractedTotal = data.total
+    const extractedVat = data.vatAmount
+    const extractedNet = extractedTotal - extractedVat
+
+    setNetAmount(extractedNet.toFixed(2))
+
+    // Determine VAT rate from extracted data
+    if (extractedVat > 0 && extractedNet > 0) {
+      const rate = (extractedVat / extractedNet) * 100
+      if (Math.abs(rate - 25) < 1) setVatRate('25')
+      else if (Math.abs(rate - 13) < 1) setVatRate('13')
+      else if (Math.abs(rate - 5) < 1) setVatRate('5')
+    }
+
+    // Set payment method
+    if (data.paymentMethod) {
+      const methodMap: Record<string, string> = {
+        'cash': 'CASH',
+        'card': 'CARD',
+        'transfer': 'TRANSFER'
+      }
+      setPaymentMethod(methodMap[data.paymentMethod] || '')
+    }
+
+    // Set description from items
+    if (data.items.length > 0) {
+      const itemsDesc = data.items
+        .map((item) => `${item.description} (${item.quantity}x)`)
+        .join(', ')
+      setDescription(itemsDesc)
+    }
+
+    setShowScanner(false)
+    toast.success('Podaci uspješno izvučeni iz računa!')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -66,24 +153,74 @@ export function ExpenseForm({ vendors, categories }: ExpenseFormProps) {
 
   const formatCurrency = (n: number) => new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' }).format(n)
 
+  if (showScanner) {
+    return (
+      <ReceiptScanner
+        onExtracted={handleExtracted}
+        onCancel={() => setShowScanner(false)}
+      />
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowScanner(true)}
+        >
+          <Camera className="h-4 w-4 mr-2" />
+          Skeniraj račun
+        </Button>
+      </div>
+
       <Card>
         <CardHeader><CardTitle className="text-base">Osnovni podaci</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <div>
-            <Label>Kategorija *</Label>
+          <div className="md:col-span-2">
+            <Label>
+              Kategorija *
+              {loadingSuggestions && (
+                <Loader2 className="h-3 w-3 ml-2 inline animate-spin" />
+              )}
+            </Label>
             <select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); const cat = categories.find(c => c.id === e.target.value); if (cat) setVatDeductible(cat.vatDeductibleDefault); }} className="w-full mt-1 rounded-md border-gray-300" required>
               <option value="">Odaberite...</option>
               {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
             </select>
+            {suggestions.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500 flex items-center">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Prijedlozi:
+                </span>
+                {suggestions.map((suggestion) => (
+                  <Badge
+                    key={suggestion.categoryId}
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-gray-200"
+                    onClick={() => setCategoryId(suggestion.categoryId)}
+                  >
+                    {suggestion.categoryName}
+                    <span className="ml-1 text-xs opacity-70">
+                      ({Math.round(suggestion.confidence * 100)}%)
+                    </span>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <Label>Dobavljač</Label>
-            <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full mt-1 rounded-md border-gray-300">
+            <select value={vendorId} onChange={(e) => { setVendorId(e.target.value); const v = vendors.find(x => x.id === e.target.value); setVendorName(v?.name || ''); }} className="w-full mt-1 rounded-md border-gray-300">
               <option value="">Nepoznat</option>
               {vendors.map((v) => (<option key={v.id} value={v.id}>{v.name}</option>))}
             </select>
+          </div>
+          <div>
+            <Label>OIB dobavljača</Label>
+            <Input value={vendorOib} onChange={(e) => setVendorOib(e.target.value)} placeholder="12345678901" maxLength={11} />
           </div>
           <div className="md:col-span-2">
             <Label>Opis *</Label>
