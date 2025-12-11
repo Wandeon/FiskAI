@@ -2,6 +2,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { CompanySettingsForm } from "./company-settings-form"
 import { EInvoiceSettingsForm } from "./einvoice-settings-form"
+import Link from "next/link"
 
 export default async function SettingsPage() {
   const user = await requireAuth()
@@ -102,6 +103,18 @@ export default async function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Audit Log Section */}
+        <Link href="/settings/audit-log">
+          <Card className="cursor-pointer transition-colors hover:bg-gray-50">
+            <CardHeader>
+              <CardTitle>Revizijski dnevnik</CardTitle>
+              <CardDescription>
+                Pregled svih akcija u sustavu
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
     </div>
   )

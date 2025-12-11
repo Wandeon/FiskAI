@@ -1,5 +1,5 @@
 // src/lib/prisma-extensions.ts
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, AuditAction } from "@prisma/client"
 
 // Context for current request
 export type TenantContext = {
@@ -19,10 +19,90 @@ export function getTenantContext(): TenantContext | null {
 }
 
 // Models that require tenant filtering
-const TENANT_MODELS = ["Contact", "Product", "EInvoice", "EInvoiceLine"] as const
+const TENANT_MODELS = ["Contact", "Product", "EInvoice", "EInvoiceLine", "AuditLog"] as const
+
+// Models to audit (exclude AuditLog itself to prevent infinite loops)
+const AUDITED_MODELS = ["Contact", "Product", "EInvoice", "Company"] as const
+type AuditedModel = typeof AUDITED_MODELS[number]
+
+// Audit queue to avoid blocking main operations
+interface AuditQueueItem {
+  companyId: string
+  userId: string | null
+  action: AuditAction
+  entity: string
+  entityId: string
+  changes: Record<string, unknown> | null
+}
+
+const auditQueue: AuditQueueItem[] = []
+let isProcessingAudit = false
+
+async function processAuditQueue(prismaBase: PrismaClient) {
+  if (isProcessingAudit || auditQueue.length === 0) return
+  isProcessingAudit = true
+
+  try {
+    while (auditQueue.length > 0) {
+      const item = auditQueue.shift()
+      if (!item) continue
+
+      try {
+        await prismaBase.auditLog.create({
+          data: {
+            companyId: item.companyId,
+            userId: item.userId,
+            action: item.action,
+            entity: item.entity,
+            entityId: item.entityId,
+            changes: item.changes as Record<string, never> | undefined,
+          },
+        })
+      } catch (error) {
+        console.error("[Audit] Failed to log:", error)
+      }
+    }
+  } finally {
+    isProcessingAudit = false
+  }
+}
+
+function queueAuditLog(
+  prismaBase: PrismaClient,
+  model: string,
+  action: AuditAction,
+  result: Record<string, unknown>
+) {
+  const companyId = result.companyId as string
+  const entityId = result.id as string
+  const context = getTenantContext()
+
+  if (!companyId || !entityId) return
+
+  // Create a JSON-serializable changes object
+  const changes: Record<string, unknown> =
+    action === "DELETE"
+      ? { before: JSON.parse(JSON.stringify(result)) }
+      : { after: JSON.parse(JSON.stringify(result)) }
+
+  auditQueue.push({
+    companyId,
+    userId: context?.userId ?? null,
+    action,
+    entity: model,
+    entityId,
+    changes,
+  })
+
+  // Process queue asynchronously
+  setImmediate(() => processAuditQueue(prismaBase))
+}
 
 // Extension to automatically add companyId filter to queries
 export function withTenantIsolation(prisma: PrismaClient) {
+  // Keep reference to base prisma for audit logging
+  const prismaBase = prisma
+
   return prisma.$extends({
     query: {
       $allModels: {
@@ -66,7 +146,14 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             } as any
           }
-          return query(args)
+          const result = await query(args)
+
+          // Audit logging for create operations
+          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+            queueAuditLog(prismaBase, model, "CREATE", result as Record<string, unknown>)
+          }
+
+          return result
         },
         async update({ model, args, query }) {
           const context = getTenantContext()
@@ -76,7 +163,14 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             }
           }
-          return query(args)
+          const result = await query(args)
+
+          // Audit logging for update operations
+          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+            queueAuditLog(prismaBase, model, "UPDATE", result as Record<string, unknown>)
+          }
+
+          return result
         },
         async delete({ model, args, query }) {
           const context = getTenantContext()
@@ -86,7 +180,14 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             }
           }
-          return query(args)
+          const result = await query(args)
+
+          // Audit logging for delete operations
+          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+            queueAuditLog(prismaBase, model, "DELETE", result as Record<string, unknown>)
+          }
+
+          return result
         },
       },
     },
