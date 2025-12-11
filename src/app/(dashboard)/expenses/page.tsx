@@ -5,7 +5,9 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
-import { ExpenseStatus } from '@prisma/client'
+import { ExpenseStatus, Prisma } from '@prisma/client'
+import { ExpenseFilters } from '@/components/expenses/expense-filters'
+import type { MultiSelectOption } from '@/components/ui/multi-select'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Nacrt',
@@ -24,7 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default async function ExpensesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; category?: string; page?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
@@ -35,15 +37,69 @@ export default async function ExpensesPage({
     userId: user.id!,
   })
 
-  const page = parseInt(params.page || '1')
+  const searchTerm = Array.isArray(params.search) ? params.search[0] ?? '' : params.search ?? ''
+  const statusParam = params.status
+  const categoryParam = params.category
+
+  const selectedStatuses = Array.isArray(statusParam)
+    ? statusParam
+    : statusParam
+      ? [statusParam]
+      : []
+  const selectedCategories = Array.isArray(categoryParam)
+    ? categoryParam
+    : categoryParam
+      ? [categoryParam]
+      : []
+
+  const pageParam = Array.isArray(params.page) ? params.page[0] : params.page
+  const page = parseInt(pageParam || '1')
   const pageSize = 20
   const skip = (page - 1) * pageSize
 
-  const where: { companyId: string; status?: ExpenseStatus; categoryId?: string } = {
+  const where: PrismaExpenseWhere = {
     companyId: company.id,
   }
-  if (params.status) where.status = params.status as ExpenseStatus
-  if (params.category) where.categoryId = params.category
+
+  const filteredStatuses = selectedStatuses.filter(isExpenseStatus)
+  if (filteredStatuses.length > 0) {
+    where.status = { in: filteredStatuses }
+  }
+
+  if (selectedCategories.length > 0) {
+    where.categoryId = { in: selectedCategories }
+  }
+
+  if (searchTerm) {
+    where.OR = [
+      {
+        vendor: {
+          is: {
+            name: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+      {
+        description: {
+          contains: searchTerm,
+          mode: 'insensitive',
+        },
+      },
+      {
+        vendor: {
+          is: {
+            oib: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+    ]
+  }
 
   const [expenses, total, categories, stats] = await Promise.all([
     db.expense.findMany({
@@ -156,25 +212,13 @@ export default async function ExpensesPage({
         </Card>
       </div>
 
-      {/* Filters */}
-      <form className="flex gap-2" method="GET">
-        <select name="status" defaultValue={params.status || ''} className="rounded-md border-gray-300 text-sm">
-          <option value="">Svi statusi</option>
-          {Object.entries(STATUS_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
-        <select name="category" defaultValue={params.category || ''} className="rounded-md border-gray-300 text-sm">
-          <option value="">Sve kategorije</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <Button type="submit" variant="outline" size="sm">Filtriraj</Button>
-        {(params.status || params.category) && (
-          <Link href="/expenses"><Button variant="ghost" size="sm">Očisti</Button></Link>
-        )}
-      </form>
+      <ExpenseFilters
+        statusOptions={buildStatusOptions(STATUS_LABELS)}
+        categoryOptions={buildCategoryOptions(categories)}
+        initialStatuses={selectedStatuses}
+        initialCategories={selectedCategories}
+        initialSearch={searchTerm}
+      />
 
       {/* Table */}
       {expenses.length === 0 ? (
@@ -192,13 +236,19 @@ export default async function ExpensesPage({
       {totalPages > 1 && (
         <div className="flex justify-center gap-2">
           {page > 1 && (
-            <Link href={`?page=${page - 1}${params.status ? `&status=${params.status}` : ''}${params.category ? `&category=${params.category}` : ''}`} className="px-3 py-1 border rounded hover:bg-gray-50">
+            <Link
+              href={buildPaginationLink(page - 1, searchTerm, selectedStatuses, selectedCategories)}
+              className="px-3 py-1 border rounded hover:bg-gray-50"
+            >
               ← Prethodna
             </Link>
           )}
           <span className="px-3 py-1">Stranica {page} od {totalPages}</span>
           {page < totalPages && (
-            <Link href={`?page=${page + 1}${params.status ? `&status=${params.status}` : ''}${params.category ? `&category=${params.category}` : ''}`} className="px-3 py-1 border rounded hover:bg-gray-50">
+            <Link
+              href={buildPaginationLink(page + 1, searchTerm, selectedStatuses, selectedCategories)}
+              className="px-3 py-1 border rounded hover:bg-gray-50"
+            >
               Sljedeća →
             </Link>
           )}
@@ -206,4 +256,28 @@ export default async function ExpensesPage({
       )}
     </div>
   )
+}
+
+type PrismaExpenseWhere = Prisma.ExpenseWhereInput
+
+function buildStatusOptions(dictionary: Record<string, string>): MultiSelectOption[] {
+  return Object.entries(dictionary).map(([value, label]) => ({ value, label }))
+}
+
+function buildCategoryOptions(categories: Array<{ id: string; name: string }>): MultiSelectOption[] {
+  return categories.map((category) => ({ value: category.id, label: category.name }))
+}
+
+function buildPaginationLink(page: number, search: string, statuses: string[], categories: string[]) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  if (search) params.set('search', search)
+  statuses.forEach((status) => params.append('status', status))
+  categories.forEach((category) => params.append('category', category))
+  const query = params.toString()
+  return query ? `/expenses?${query}` : '/expenses'
+}
+
+function isExpenseStatus(value: string): value is ExpenseStatus {
+  return Object.values(ExpenseStatus).includes(value as ExpenseStatus)
 }

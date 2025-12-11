@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
 import { InvoiceType, EInvoiceStatus, Prisma } from '@prisma/client'
+import { InvoiceFilters } from '@/components/invoices/invoice-filters'
+import type { MultiSelectOption } from '@/components/ui/multi-select'
 
 const TYPE_LABELS: Record<string, string> = {
   INVOICE: 'Račun',
@@ -40,7 +42,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; status?: string; page?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
@@ -51,7 +53,24 @@ export default async function InvoicesPage({
   })
 
   const params = await searchParams
-  const page = parseInt(params.page || '1')
+
+  const typeParam = params.type
+  const statusParam = params.status
+  const searchTerm = Array.isArray(params.search) ? params.search[0] ?? '' : params.search ?? ''
+
+  const selectedTypes = Array.isArray(typeParam)
+    ? typeParam
+    : typeParam
+      ? [typeParam]
+      : []
+  const selectedStatuses = Array.isArray(statusParam)
+    ? statusParam
+    : statusParam
+      ? [statusParam]
+      : []
+
+  const pageParam = Array.isArray(params.page) ? params.page[0] : params.page
+  const page = parseInt(pageParam || '1')
   const pageSize = 20
   const skip = (page - 1) * pageSize
 
@@ -60,11 +79,33 @@ export default async function InvoicesPage({
     companyId: company.id,
   }
 
-  if (params.type && params.type in InvoiceType) {
-    where.type = params.type as InvoiceType
+  const filteredTypes = selectedTypes.filter(isInvoiceType)
+  if (filteredTypes.length > 0) {
+    where.type = { in: filteredTypes }
   }
-  if (params.status && params.status in EInvoiceStatus) {
-    where.status = params.status as EInvoiceStatus
+  const filteredStatuses = selectedStatuses.filter(isInvoiceStatus)
+  if (filteredStatuses.length > 0) {
+    where.status = { in: filteredStatuses }
+  }
+  if (searchTerm) {
+    where.OR = [
+      {
+        invoiceNumber: {
+          contains: searchTerm,
+          mode: 'insensitive',
+        },
+      },
+      {
+        buyer: {
+          is: {
+            name: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+    ]
   }
 
   const [invoices, total, stats] = await Promise.all([
@@ -184,37 +225,13 @@ export default async function InvoicesPage({
         })}
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <form className="flex gap-2" method="GET">
-          <select
-            name="type"
-            defaultValue={params.type || ''}
-            className="rounded-md border-gray-300 text-sm"
-          >
-            <option value="">Sve vrste</option>
-            {Object.entries(TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <select
-            name="status"
-            defaultValue={params.status || ''}
-            className="rounded-md border-gray-300 text-sm"
-          >
-            <option value="">Svi statusi</option>
-            {Object.entries(STATUS_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <Button type="submit" variant="outline" size="sm">Filtriraj</Button>
-          {(params.type || params.status) && (
-            <Link href="/invoices">
-              <Button variant="ghost" size="sm">Očisti</Button>
-            </Link>
-          )}
-        </form>
-      </div>
+      <InvoiceFilters
+        initialSearch={searchTerm}
+        initialTypes={selectedTypes}
+        initialStatuses={selectedStatuses}
+        typeOptions={buildOptions(TYPE_LABELS)}
+        statusOptions={buildOptions(STATUS_LABELS)}
+      />
 
       {/* Table */}
       {invoices.length === 0 ? (
@@ -240,7 +257,7 @@ export default async function InvoicesPage({
         <div className="flex justify-center gap-2">
           {page > 1 && (
             <Link
-              href={`?page=${page - 1}${params.type ? `&type=${params.type}` : ''}${params.status ? `&status=${params.status}` : ''}`}
+              href={buildPaginationLink(page - 1, searchTerm, selectedTypes, selectedStatuses)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               ← Prethodna
@@ -251,7 +268,7 @@ export default async function InvoicesPage({
           </span>
           {page < totalPages && (
             <Link
-              href={`?page=${page + 1}${params.type ? `&type=${params.type}` : ''}${params.status ? `&status=${params.status}` : ''}`}
+              href={buildPaginationLink(page + 1, searchTerm, selectedTypes, selectedStatuses)}
               className="px-3 py-1 border rounded hover:bg-gray-50"
             >
               Sljedeća →
@@ -261,4 +278,33 @@ export default async function InvoicesPage({
       )}
     </div>
   )
+}
+
+function buildOptions(dictionary: Record<string, string>): MultiSelectOption[] {
+  return Object.entries(dictionary).map(([value, label]) => ({ value, label }))
+}
+
+function buildPaginationLink(
+  page: number,
+  search: string,
+  types: string[],
+  statuses: string[],
+) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  if (search) {
+    params.set('search', search)
+  }
+  types.forEach((type) => params.append('type', type))
+  statuses.forEach((status) => params.append('status', status))
+  const query = params.toString()
+  return query ? `/invoices?${query}` : '/invoices'
+}
+
+function isInvoiceType(value: string): value is InvoiceType {
+  return Object.values(InvoiceType).includes(value as InvoiceType)
+}
+
+function isInvoiceStatus(value: string): value is EInvoiceStatus {
+  return Object.values(EInvoiceStatus).includes(value as EInvoiceStatus)
 }
