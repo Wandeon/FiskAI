@@ -311,3 +311,103 @@ export async function markInvoiceAsPaid(invoiceId: string) {
   revalidatePath(`/e-invoices/${invoiceId}`)
   return { success: "Invoice marked as paid" }
 }
+
+export async function sendInvoiceEmail(invoiceId: string) {
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+
+  // Fetch invoice with buyer contact email
+  const invoice = await db.eInvoice.findFirst({
+    where: {
+      id: invoiceId,
+      companyId: company.id,
+    },
+    include: {
+      buyer: true,
+      company: true,
+      lines: true,
+    },
+  })
+
+  if (!invoice) {
+    return { error: "Invoice not found or you don't have permission to access it" }
+  }
+
+  // Check if buyer has email
+  if (!invoice.buyer?.email) {
+    return { error: "Buyer does not have an email address" }
+  }
+
+  // Check if invoice is in a valid status to be sent
+  const validStatuses = ["FISCALIZED", "SENT", "DELIVERED"]
+  if (!validStatuses.includes(invoice.status)) {
+    return { error: "Invoice must be fiscalized before sending via email" }
+  }
+
+  try {
+    // Generate PDF using existing API endpoint
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"
+    const pdfUrl = `${baseUrl}/api/invoices/${invoiceId}/pdf`
+    
+    // For server-side, we need to use absolute URL
+    const pdfResponse = await fetch(pdfUrl, {
+      headers: {
+        "x-invoice-id": invoiceId,
+      },
+    })
+
+    if (!pdfResponse.ok) {
+      return { error: "Failed to generate PDF" }
+    }
+
+    const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer())
+
+    // Prepare email
+    const { sendEmail } = await import("@/lib/email")
+    const InvoiceEmail = (await import("@/lib/email/templates/invoice-email")).default
+
+    // Check if buyer is B2B (has OIB and is a company)
+    const isB2B = !!invoice.buyer.oib && invoice.buyer.oib.length === 11
+
+    // Send email with PDF attachment
+    const result = await sendEmail({
+      to: invoice.buyer.email,
+      subject: `Račun ${invoice.invoiceNumber} - ${invoice.company.name}`,
+      react: InvoiceEmail({
+        invoiceNumber: invoice.invoiceNumber,
+        buyerName: invoice.buyer.name,
+        issueDate: new Date(invoice.issueDate).toLocaleDateString("hr-HR"),
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("hr-HR") : undefined,
+        totalAmount: Number(invoice.totalAmount).toFixed(2),
+        currency: invoice.currency,
+        companyName: invoice.company.name,
+        jir: invoice.jir || undefined,
+        isB2B,
+      }),
+      attachments: [
+        {
+          filename: `racun-${invoice.invoiceNumber.replace(/\//g, "-")}.pdf`,
+          content: pdfBuffer,
+        },
+      ],
+    })
+
+    if (!result.success) {
+      return { error: result.error || "Failed to send email" }
+    }
+
+    // Track sentAt timestamp
+    await db.eInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        sentAt: new Date(),
+      },
+    })
+
+    revalidatePath(`/invoices/${invoiceId}`)
+    return { success: "Email sent successfully" }
+  } catch (error) {
+    console.error("Error sending invoice email:", error)
+    return { error: error instanceof Error ? error.message : "Failed to send email" }
+  }
+}

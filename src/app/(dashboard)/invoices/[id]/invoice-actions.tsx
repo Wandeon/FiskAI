@@ -5,19 +5,24 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/lib/toast'
 import { convertToInvoice, deleteInvoice } from '@/app/actions/invoice'
-import type { EInvoice } from '@prisma/client'
+import { sendInvoiceEmail } from '@/app/actions/e-invoice'
+import type { EInvoice, Contact } from '@prisma/client'
 
 interface InvoiceActionsProps {
-  invoice: EInvoice
+  invoice: EInvoice & { buyer: Contact | null }
 }
 
 export function InvoiceActions({ invoice }: InvoiceActionsProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
 
   const canConvert = invoice.type === 'QUOTE' || invoice.type === 'PROFORMA'
   const canDelete = invoice.status === 'DRAFT'
+  const canSendEmail = 
+    invoice.buyer?.email && 
+    ['FISCALIZED', 'SENT', 'DELIVERED'].includes(invoice.status)
 
   async function handleConvert() {
     if (!confirm('Pretvoriti ovaj dokument u račun?')) return
@@ -59,10 +64,8 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
         throw new Error('Failed to download PDF')
       }
       
-      // Get the blob from response
       const blob = await response.blob()
       
-      // Create a download link and trigger download
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -70,7 +73,6 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
       document.body.appendChild(a)
       a.click()
       
-      // Cleanup
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       
@@ -83,6 +85,21 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
     }
   }
 
+  async function handleSendEmail() {
+    if (!confirm(`Poslati račun na e-mail adresu ${invoice.buyer?.email}?`)) return
+    setIsSendingEmail(true)
+
+    const result = await sendInvoiceEmail(invoice.id)
+    setIsSendingEmail(false)
+
+    if (result.success) {
+      toast.success('E-mail uspješno poslan')
+      router.refresh()
+    } else {
+      toast.error(result.error || 'Greška pri slanju e-maila')
+    }
+  }
+
   return (
     <div className="flex gap-2">
       <Button 
@@ -92,6 +109,16 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
       >
         {isDownloading ? 'Preuzimanje...' : 'Preuzmi PDF'}
       </Button>
+      
+      {canSendEmail && (
+        <Button 
+          onClick={handleSendEmail} 
+          disabled={isSendingEmail}
+          variant="outline"
+        >
+          {isSendingEmail ? 'Šaljem...' : 'Pošalji e-mailom'}
+        </Button>
+      )}
       
       {canConvert && (
         <Button onClick={handleConvert} disabled={isLoading}>
