@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server"
-import { requireAuth, getCurrentCompany } from "@/lib/auth-utils"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { withApiLogging } from "@/lib/api-logging"
 import { updateContext } from "@/lib/context"
 
 export const POST = withApiLogging(async () => {
-  const user = await requireAuth()
+  const user = await getCurrentUser()
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   updateContext({ userId: user.id! })
 
   const company = await getCurrentCompany(user.id!)

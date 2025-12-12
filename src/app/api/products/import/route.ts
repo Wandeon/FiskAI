@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
@@ -19,8 +19,17 @@ const importSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const company = await getCurrentCompany(user.id!)
+
+    if (!company) {
+      return NextResponse.json({ error: "No company found" }, { status: 404 })
+    }
 
     const body = await request.json()
     const parsed = importSchema.safeParse(body)
