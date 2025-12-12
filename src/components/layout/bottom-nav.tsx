@@ -41,11 +41,11 @@ export function BottomNav() {
       {/* Quick actions drawer */}
       <div
         className={cn(
-          "fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden transition-transform duration-200",
-          isQuickOpen ? "translate-y-0" : "translate-y-6 pointer-events-none"
+          "fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden transition-all duration-250 ease-out",
+          isQuickOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
         )}
       >
-        <div className="rounded-3xl surface-glass border border-white/20 shadow-glow p-4 space-y-3 safe-bottom">
+        <div className="rounded-3xl surface-glass border border-white/20 shadow-glow p-4 space-y-3 safe-bottom animate-slide-up">
           <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
             Brze akcije
           </p>

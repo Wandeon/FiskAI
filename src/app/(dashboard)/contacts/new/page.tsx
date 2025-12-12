@@ -15,6 +15,13 @@ import { toast } from "@/lib/toast"
 
 type ContactFormInput = z.input<typeof contactSchema>
 
+// EU country codes for VAT lookup
+const EU_COUNTRIES = [
+  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR",
+  "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
+  "SE", "SI", "SK"
+]
+
 export default function NewContactPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +42,9 @@ export default function NewContactPage() {
   })
 
   const oibValue = watch("oib") || ""
+  const countryValue = watch("country") || "HR"
+  const isLocalCustomer = countryValue === "HR"
+  const isEuCustomer = EU_COUNTRIES.includes(countryValue) && countryValue !== "HR"
 
   async function onSubmit(data: ContactFormInput) {
     setLoading(true)
@@ -76,7 +86,7 @@ export default function NewContactPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold">Novi kontakt</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -107,15 +117,76 @@ export default function NewContactPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">OIB</label>
-              <OibInput
-                value={oibValue}
-                onChange={(value) => setValue("oib", value)}
-                onLookupSuccess={handleOibLookupSuccess}
-                onLookupError={handleOibLookupError}
-                error={errors.oib?.message}
-              />
+              <label className="text-sm font-medium">Država</label>
+              <select
+                className="h-10 w-full rounded-md border border-gray-300 px-3"
+                {...register("country")}
+              >
+                <option value="HR">🇭🇷 Hrvatska</option>
+                <optgroup label="EU zemlje">
+                  <option value="AT">🇦🇹 Austrija</option>
+                  <option value="BE">🇧🇪 Belgija</option>
+                  <option value="BG">🇧🇬 Bugarska</option>
+                  <option value="CY">🇨🇾 Cipar</option>
+                  <option value="CZ">🇨🇿 Češka</option>
+                  <option value="DE">🇩🇪 Njemačka</option>
+                  <option value="DK">🇩🇰 Danska</option>
+                  <option value="EE">🇪🇪 Estonija</option>
+                  <option value="EL">🇬🇷 Grčka</option>
+                  <option value="ES">🇪🇸 Španjolska</option>
+                  <option value="FI">🇫🇮 Finska</option>
+                  <option value="FR">🇫🇷 Francuska</option>
+                  <option value="HU">🇭🇺 Mađarska</option>
+                  <option value="IE">🇮🇪 Irska</option>
+                  <option value="IT">🇮🇹 Italija</option>
+                  <option value="LT">🇱🇹 Litva</option>
+                  <option value="LU">🇱🇺 Luksemburg</option>
+                  <option value="LV">🇱🇻 Latvija</option>
+                  <option value="MT">🇲🇹 Malta</option>
+                  <option value="NL">🇳🇱 Nizozemska</option>
+                  <option value="PL">🇵🇱 Poljska</option>
+                  <option value="PT">🇵🇹 Portugal</option>
+                  <option value="RO">🇷🇴 Rumunjska</option>
+                  <option value="SE">🇸🇪 Švedska</option>
+                  <option value="SI">🇸🇮 Slovenija</option>
+                  <option value="SK">🇸🇰 Slovačka</option>
+                </optgroup>
+                <optgroup label="Ostale zemlje">
+                  <option value="OTHER">Ostalo (izvan EU)</option>
+                </optgroup>
+              </select>
             </div>
+
+            {isLocalCustomer ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">OIB</label>
+                <OibInput
+                  value={oibValue}
+                  onChange={(value) => setValue("oib", value)}
+                  onLookupSuccess={handleOibLookupSuccess}
+                  onLookupError={handleOibLookupError}
+                  error={errors.oib?.message}
+                />
+                <p className="text-xs text-gray-500">
+                  11 znamenaka - automatski pronalazi podatke tvrtke
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {isEuCustomer ? "PDV ID (VAT)" : "Porezni broj"}
+                </label>
+                <Input
+                  {...register("vatNumber")}
+                  placeholder={isEuCustomer ? `${countryValue}123456789` : "Porezni identifikacijski broj"}
+                />
+                {isEuCustomer && (
+                  <p className="text-xs text-gray-500">
+                    EU PDV identifikacijski broj (npr. {countryValue}123456789)
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Naziv *</label>
@@ -126,13 +197,19 @@ export default function NewContactPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">VAT broj</label>
-              <Input
-                {...register("vatNumber")}
-                placeholder="HR12345678901"
-              />
-            </div>
+            {isLocalCustomer && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">PDV ID</label>
+                <Input
+                  {...register("vatNumber")}
+                  placeholder="HR12345678901"
+                  disabled
+                />
+                <p className="text-xs text-gray-500">
+                  Automatski popunjeno iz OIB-a (HR + OIB)
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -162,14 +239,6 @@ export default function NewContactPage() {
               <Input
                 {...register("city")}
                 placeholder="Zagreb"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Država</label>
-              <Input
-                {...register("country")}
-                placeholder="HR"
               />
             </div>
           </CardContent>

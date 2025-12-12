@@ -62,7 +62,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[260px,1fr]">
+      <div className="grid gap-6 lg:grid-cols-[260px,1fr] max-w-6xl">
         <nav className="space-y-4">
           <div className="flex flex-col gap-2">
             {tabs.map((tab) => {

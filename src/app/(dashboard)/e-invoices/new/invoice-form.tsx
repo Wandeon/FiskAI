@@ -209,7 +209,7 @@ export function InvoiceForm({ contacts, products, company, capabilities }: Invoi
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -382,7 +382,7 @@ export function InvoiceForm({ contacts, products, company, capabilities }: Invoi
                   <PageCardTitle>Pregled i slanje</PageCardTitle>
                 </PageCardHeader>
                 <PageCardContent>
-                  <div className="space-y-6">
+                  <div className="space-y-6 max-w-5xl mx-auto">
                     <InvoicePdfPreview
                       company={company}
                       buyer={selectedBuyer || null}
