@@ -75,7 +75,7 @@ export function InvoiceForm({ contacts, products, company, capabilities }: Invoi
     },
   })
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "lines",
   })
@@ -172,12 +172,12 @@ export function InvoiceForm({ contacts, products, company, capabilities }: Invoi
     })
   }
 
-const handleLineChange = (index: number, field: string, value: string | number) => {
+  const handleLineChange = (index: number, field: string, value: string | number) => {
     if (!invoiceVisibility.showVatFields && field === "vatRate") {
       return
     }
-    // Use setValue instead of update to prevent focus loss
-    setValue(`lines..` as any, value, { shouldDirty: true })
+    // Update a single field to avoid replacing the whole array and losing focus
+    setValue(`lines.${index}.${field}` as any, value, { shouldDirty: true, shouldValidate: false })
   }
 
   const handleDownloadPdf = () => {

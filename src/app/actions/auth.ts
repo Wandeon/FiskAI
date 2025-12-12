@@ -171,3 +171,31 @@ export async function resetPassword(token: string, newPassword: string) {
     return { error: 'Došlo je do greške prilikom resetiranja lozinke' }
   }
 }
+
+export async function loginWithPasskey(userId: string) {
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return { error: "Korisnik nije pronađen" }
+    }
+
+    // Use signIn with a special passkey identifier
+    // We need to bypass password check for passkey auth
+    await signIn("credentials", {
+      email: user.email,
+      password: `__PASSKEY__${userId}`,
+      redirect: false,
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Passkey login error:", error)
+    if (error instanceof AuthError) {
+      return { error: "Greška pri prijavi" }
+    }
+    throw error
+  }
+}

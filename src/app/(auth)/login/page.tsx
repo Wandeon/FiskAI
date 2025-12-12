@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, LoginInput } from "@/lib/validations"
-import { login } from "@/app/actions/auth"
+import { login, loginWithPasskey } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
@@ -74,7 +74,7 @@ export default function LoginPage() {
       }
 
       const { userId, ...options } = await startResponse.json()
-      const authResponse = await startAuthentication({ optionsJSON: 
+      const authResponse = await startAuthentication({ optionsJSON:
         options as PublicKeyCredentialRequestOptionsJSON
        })
 
@@ -88,7 +88,15 @@ export default function LoginPage() {
         throw new Error("Failed to verify authentication")
       }
 
-      toast.success("Uspješna prijava!")
+      const finishData = await finishResponse.json()
+
+      // Create actual session using server action
+      const sessionResult = await loginWithPasskey(finishData.user.id)
+      if (sessionResult?.error) {
+        throw new Error(sessionResult.error)
+      }
+
+      toast.success("Uspjesna prijava!")
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
@@ -98,7 +106,7 @@ export default function LoginPage() {
       } else if (error instanceof Error) {
         setError(error.message)
       } else {
-        setError("Greška prilikom prijave s passkey")
+        setError("Greska prilikom prijave s passkey")
       }
     } finally {
       setPasskeyLoading(false)
@@ -187,6 +195,11 @@ export default function LoginPage() {
                   {...register("password")}
                 />
               </div>
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  Zaboravljena lozinka?
+                </Link>
+              </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Prijava..." : "Prijavi se"}
               </Button>
@@ -213,7 +226,7 @@ export default function LoginPage() {
               </>
             )}
             <p className="mt-4 text-center text-sm text-gray-600">
-              Nemate račun?{" "}
+              Nemate racun?{" "}
               <Link href="/register" className="text-blue-600 hover:underline">
                 Registrirajte se
               </Link>

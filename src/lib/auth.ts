@@ -24,6 +24,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        const password = credentials.password as string
+
+        // Check for passkey authentication
+        if (password.startsWith("__PASSKEY__")) {
+          const userId = password.replace("__PASSKEY__", "")
+          const user = await db.user.findUnique({
+            where: { id: userId, email: credentials.email as string },
+          })
+          if (user) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+            }
+          }
+          return null
+        }
+
         const user = await db.user.findUnique({
           where: { email: credentials.email as string },
         })
@@ -33,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const passwordMatch = await bcrypt.compare(
-          credentials.password as string,
+          password,
           user.passwordHash
         )
 
