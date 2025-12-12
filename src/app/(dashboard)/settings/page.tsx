@@ -3,7 +3,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { CompanySettingsForm } from "./company-settings-form"
 import { EInvoiceSettingsForm } from "./einvoice-settings-form"
 import Link from "next/link"
-import { Building2, ReceiptText, ShieldCheck, ChevronRight, ArrowUpRight, ListChecks } from "lucide-react"
+import { PasskeyManager } from "@/components/settings/passkey-manager"
+import { Building2, ReceiptText, ShieldCheck, KeyRound, ChevronRight, ArrowUpRight, ListChecks } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PlanSettingsForm } from "./plan-settings-form"
 
@@ -20,6 +21,12 @@ const tabs = [
     description: "Informacijski posrednik i API ključevi",
     icon: ReceiptText,
   },
+  },
+  {
+    id: "security",
+    label: "Sigurnost",
+    description: "Passkeys i autentifikacija",
+    icon: KeyRound,
   {
     id: "plan",
     label: "Plan & pravna forma",
@@ -150,6 +157,20 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent>
                 <PlanSettingsForm company={company} />
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "security" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Sigurnost i autentifikacija</CardTitle>
+                <CardDescription>
+                  Upravljajte passkeys i drugim metodama autentifikacije
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PasskeyManager />
               </CardContent>
             </Card>
           )}

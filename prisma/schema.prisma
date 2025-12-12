@@ -655,3 +655,16 @@ enum ImportFormat {
   XML_CAMT053
   MT940
 }
+
+model WebAuthnCredential {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    String
+  counter      BigInt   @default(0)
+  transports   String?
+  name         String?
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime?
+}
