@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { searchCompaniesByName } from "@/lib/oib-lookup"
+import { searchByName } from "@/lib/oib-lookup"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] })
   }
 
-  const result = await searchCompaniesByName(query.trim())
+  const result = await searchByName(query.trim())
   if (!result.success) {
     return NextResponse.json({ error: result.error || "Pretraga nije uspjela" }, { status: 400 })
   }

@@ -1,8 +1,8 @@
 /**
  * OIB Lookup Service
  * Provides smart lookup for Croatian company data using:
- * 1. VIES API (EU VAT information)
- * 2. Sudski Registar API (Croatian court registry)
+ * 1. VIES API (EU VAT information) - for VAT-registered companies
+ * 2. Sudski Registar API (Croatian court registry) - for d.o.o./j.d.o.o.
  */
 
 export interface OibLookupResult {
@@ -21,6 +21,7 @@ export interface OibSearchResult {
   results?: Array<{
     name: string
     oib?: string
+    mbs?: string
     address?: string
     city?: string
     postalCode?: string
@@ -29,17 +30,53 @@ export interface OibSearchResult {
   error?: string
 }
 
-export interface OibSearchResult {
-  success: boolean
-  results?: Array<{
-    name: string
-    oib?: string
-    address?: string
-    city?: string
-    postalCode?: string
-    vatNumber?: string
-  }>
-  error?: string
+// Sudski Registar credentials
+const SUDSKI_CLIENT_ID = process.env.SUDSKI_REGISTAR_CLIENT_ID || "-pqJEAO_1yMxuAx498tTNw.."
+const SUDSKI_CLIENT_SECRET = process.env.SUDSKI_REGISTAR_CLIENT_SECRET || "bHVm9CkAcZTlG1o1Php6Nw.."
+const SUDSKI_TOKEN_URL = "https://sudreg-data.gov.hr/api/oauth/token"
+const SUDSKI_API_BASE = "https://sudreg-data.gov.hr/api/javni"
+
+// Token cache
+let cachedToken: { token: string; expiresAt: number } | null = null
+
+/**
+ * Get OAuth token for Sudski Registar API
+ */
+async function getSudskiToken(): Promise<string | null> {
+  // Return cached token if still valid (with 5 min buffer)
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 5 * 60 * 1000) {
+    return cachedToken.token
+  }
+
+  try {
+    const credentials = Buffer.from(`${SUDSKI_CLIENT_ID}:${SUDSKI_CLIENT_SECRET}`).toString("base64")
+
+    const response = await fetch(SUDSKI_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    })
+
+    if (!response.ok) {
+      console.error("Failed to get Sudski Registar token:", response.status)
+      return null
+    }
+
+    const data = await response.json()
+
+    cachedToken = {
+      token: data.access_token,
+      expiresAt: Date.now() + (data.expires_in * 1000),
+    }
+
+    return cachedToken.token
+  } catch (error) {
+    console.error("Error getting Sudski Registar token:", error)
+    return null
+  }
 }
 
 /**
@@ -71,7 +108,7 @@ export function validateOib(oib: string): boolean {
 async function lookupVies(oib: string): Promise<OibLookupResult> {
   try {
     const url = `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/HR/vat/${oib}`
-    
+
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
@@ -86,7 +123,6 @@ async function lookupVies(oib: string): Promise<OibLookupResult> {
     clearTimeout(timeoutId)
 
     if (!response.ok) {
-      // VIES returns 200 even for invalid, so non-200 means API error
       return {
         success: false,
         error: "VIES API nedostupan",
@@ -98,7 +134,7 @@ async function lookupVies(oib: string): Promise<OibLookupResult> {
     if (!data.valid) {
       return {
         success: false,
-        error: "OIB nije pronađen u VIES sustavu",
+        error: "OIB nije pronaden u VIES sustavu",
       }
     }
 
@@ -118,139 +154,227 @@ async function lookupVies(oib: string): Promise<OibLookupResult> {
     if (error instanceof Error && error.name === "AbortError") {
       return {
         success: false,
-        error: "VIES API timeout (predugo čekanje)",
+        error: "VIES API timeout - pokusajte ponovno",
       }
     }
     return {
       success: false,
-      error: "Greška pri pozivanju VIES API-ja",
+      error: "Greska pri dohvatu iz VIES-a",
     }
   }
 }
 
 /**
  * Lookup company data via Sudski Registar API
- * Currently implemented without API key (can be added later)
- * Only works for d.o.o./j.d.o.o., not obrt
+ * Works for d.o.o., j.d.o.o. and other court-registered entities
  */
 async function lookupSudskiRegistar(oib: string): Promise<OibLookupResult> {
   try {
-    void oib
-    // Note: Sudski Registar API requires authentication
-    // For now, return "not implemented" gracefully
-    // When API key is available, implement the actual lookup
-    
-    return {
-      success: false,
-      error: "Sudski Registar API zahtijeva ključ (nije konfigurirano)",
+    const token = await getSudskiToken()
+    if (!token) {
+      return {
+        success: false,
+        error: "Sudski registar autentifikacija nije uspjela",
+      }
     }
 
-    /* Implementation template for when API key is available:
-    const url = `https://sudreg-data.gov.hr/api/javni/subjekt?oib=${oib}`
-    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
+
+    const url = `${SUDSKI_API_BASE}/detalji_subjekta?tip_identifikatora=oib&identifikator=${oib}`
+
     const response = await fetch(url, {
       method: "GET",
       headers: {
+        "Authorization": `Bearer ${token}`,
         "Accept": "application/json",
-        "Authorization": `Bearer ${process.env.SUDSKI_REGISTAR_API_KEY}`,
       },
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
+
     if (!response.ok) {
-      return { success: false, error: "Sudski Registar API greška" }
+      const errorData = await response.json().catch(() => ({}))
+      if (errorData.error_code === 505 || errorData.error_code === 508) {
+        return {
+          success: false,
+          error: "OIB nije pronaden u Sudskom registru",
+        }
+      }
+      return {
+        success: false,
+        error: "Sudski registar API greska",
+      }
     }
 
     const data = await response.json()
-    
+
+    // Extract company name
+    const name = data.tvrtka?.ime || data.skracena_tvrtka?.ime || ""
+
+    // Extract address
+    const sjediste = data.sjediste || {}
+    let street = ""
+    if (sjediste.ulica) {
+      street = sjediste.ulica
+      if (sjediste.kucni_broj) {
+        street = street + " " + sjediste.kucni_broj
+      }
+    }
+    const city = sjediste.naziv_naselja || ""
+
+    // Croatian postal codes are 5 digits, based on region
+    const postalCode = sjediste.sifra_zupanije
+      ? getPostalCodeFromZupanija(sjediste.sifra_zupanije, sjediste.sifra_opcine)
+      : ""
+
     return {
       success: true,
-      name: data.tvrtka || "",
-      address: data.adresa || "",
-      city: data.grad || "",
-      postalCode: data.postanskiBroj || "",
-      vatNumber: data.pdvBroj || `HR${oib}`,
+      name,
+      address: street,
+      city,
+      postalCode,
+      vatNumber: `HR${oib}`,
       source: "sudski-registar",
     }
-    */
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        success: false,
+        error: "Sudski registar API timeout",
+      }
+    }
     return {
       success: false,
-      error: "Greška pri pozivanju Sudski Registar API-ja",
+      error: "Greska pri dohvatu iz Sudskog registra",
     }
   }
 }
 
 /**
- * Parse address string into components
- * VIES typically returns: "Street Number, PostalCode City"
+ * Search companies by name in Sudski Registar
  */
-function parseAddress(addressString: string): {
-  street: string
-  city: string
-  postalCode: string
-} {
-  // Try to match pattern: "Street Number, PostalCode City"
-  const match = addressString.match(/^(.+?),\s*(\d{5})\s+(.+)$/)
-  
-  if (match) {
+export async function searchByName(query: string): Promise<OibSearchResult> {
+  if (!query || query.length < 3) {
     return {
-      street: match[1].trim(),
-      postalCode: match[2].trim(),
-      city: match[3].trim(),
+      success: false,
+      error: "Unesite najmanje 3 znaka za pretragu",
     }
   }
 
-  // Try alternative pattern: "Street Number\nPostalCode City"
-  const match2 = addressString.match(/^(.+?)\n(\d{5})\s+(.+)$/)
-  
-  if (match2) {
-    return {
-      street: match2[1].trim(),
-      postalCode: match2[2].trim(),
-      city: match2[3].trim(),
+  try {
+    const token = await getSudskiToken()
+    if (!token) {
+      return {
+        success: false,
+        error: "Sudski registar autentifikacija nije uspjela",
+      }
     }
-  }
 
-  // Fallback: try to extract postal code at least
-  const postalMatch = addressString.match(/\b(\d{5})\b/)
-  if (postalMatch) {
-    const postalCode = postalMatch[1]
-    const parts = addressString.split(postalCode)
-    return {
-      street: parts[0].trim().replace(/,\s*$/, ""),
-      postalCode,
-      city: parts[1]?.trim() || "",
+    // First get company names matching the query
+    const tvrtkeUrl = `${SUDSKI_API_BASE}/tvrtke?limit=100&no_data_error=0`
+
+    const tvrtkeResponse = await fetch(tvrtkeUrl, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json",
+      },
+    })
+
+    if (!tvrtkeResponse.ok) {
+      return {
+        success: false,
+        error: "Greska pri pretrazi Sudskog registra",
+      }
     }
-  }
 
-  // Last resort: return as-is
-  return {
-    street: addressString,
-    city: "",
-    postalCode: "",
+    const tvrtkeData = await tvrtkeResponse.json()
+
+    // Filter by name (case-insensitive)
+    const queryLower = query.toLowerCase()
+    type TvrtkaItem = { mbs: number; ime: string; naznaka_imena: string }
+    const matchingTvrtke = (tvrtkeData as TvrtkaItem[])
+      .filter((t: TvrtkaItem) =>
+        t.ime?.toLowerCase().includes(queryLower) ||
+        t.naznaka_imena?.toLowerCase().includes(queryLower)
+      )
+      .slice(0, 10)
+
+    if (matchingTvrtke.length === 0) {
+      return {
+        success: true,
+        results: [],
+      }
+    }
+
+    // Get OIBs for matching companies from subjekti
+    const subjektiUrl = `${SUDSKI_API_BASE}/subjekti?limit=1000&only_active=1&no_data_error=0`
+
+    const subjektiResponse = await fetch(subjektiUrl, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json",
+      },
+    })
+
+    if (!subjektiResponse.ok) {
+      return {
+        success: false,
+        error: "Greska pri dohvatu podataka",
+      }
+    }
+
+    const subjektiData = await subjektiResponse.json()
+    const mbsToOib = new Map<number, number>()
+
+    type SubjektItem = { mbs: number; oib?: number }
+    for (const s of subjektiData as SubjektItem[]) {
+      if (s.oib) {
+        mbsToOib.set(s.mbs, s.oib)
+      }
+    }
+
+    const results = matchingTvrtke.map((t: TvrtkaItem) => ({
+      name: t.ime,
+      oib: mbsToOib.get(t.mbs)?.toString().padStart(11, "0"),
+      mbs: t.mbs.toString(),
+    }))
+
+    return {
+      success: true,
+      results,
+    }
+  } catch (error) {
+    console.error("Search by name error:", error)
+    return {
+      success: false,
+      error: "Greska pri pretrazi",
+    }
   }
 }
 
 /**
- * Main lookup function
- * Tries VIES first, then Sudski Registar as fallback
+ * Main lookup function - tries VIES first, then Sudski Registar
  */
 export async function lookupOib(oib: string): Promise<OibLookupResult> {
   // Validate OIB format
   if (!validateOib(oib)) {
     return {
       success: false,
-      error: "Neispravan format OIB-a ili kontrolna znamenka",
+      error: "Neispravan OIB - provjerite broj",
     }
   }
 
-  // Try VIES first (covers both d.o.o. and obrt if VAT registered)
+  // Try VIES first (covers VAT-registered entities)
   const viesResult = await lookupVies(oib)
   if (viesResult.success) {
     return viesResult
   }
 
-  // Fallback to Sudski Registar (only d.o.o./j.d.o.o.)
+  // Fallback to Sudski Registar (covers d.o.o. not in VAT system)
   const sudskiResult = await lookupSudskiRegistar(oib)
   if (sudskiResult.success) {
     return sudskiResult
@@ -259,23 +383,78 @@ export async function lookupOib(oib: string): Promise<OibLookupResult> {
   // Both failed
   return {
     success: false,
-    error: "OIB nije pronađen ni u jednom sustavu. Unesite podatke ručno.",
-    source: "manual",
+    error: "OIB nije pronaden - unesite podatke rucno",
   }
 }
 
-export async function searchCompaniesByName(query: string): Promise<OibSearchResult> {
-  void query
-  if (!process.env.SUDSKI_REGISTAR_API_KEY) {
+/**
+ * Parse Croatian address string into components
+ */
+function parseAddress(address: string): { street: string; city: string; postalCode: string } {
+  if (!address) {
+    return { street: "", city: "", postalCode: "" }
+  }
+
+  // Croatian address format: "STREET NUMBER\nPOSTAL CITY" or "STREET NUMBER, POSTAL CITY"
+  const lines = address.split(/[\n,]/).map((l) => l.trim()).filter(Boolean)
+
+  if (lines.length === 0) {
+    return { street: "", city: "", postalCode: "" }
+  }
+
+  const street = lines[0] || ""
+
+  if (lines.length > 1) {
+    // Try to extract postal code (5 digits) and city
+    const cityLine = lines[lines.length - 1]
+    const postalMatch = cityLine.match(/^(\d{5})\s+(.+)$/)
+
+    if (postalMatch) {
+      return {
+        street,
+        postalCode: postalMatch[1],
+        city: postalMatch[2],
+      }
+    }
+
     return {
-      success: false,
-      error: "Sudski registar nije konfiguriran",
+      street,
+      postalCode: "",
+      city: cityLine,
     }
   }
 
-  // Placeholder: replace with real Sudski Registar search implementation once API key/process is available.
-  return {
-    success: false,
-    error: "Pretraga po nazivu nije implementirana (Sudski registar API potreban)",
+  return { street, city: "", postalCode: "" }
+}
+
+/**
+ * Get approximate postal code from zupanija and opcina codes
+ */
+function getPostalCodeFromZupanija(zupanijaId: number, _opcinaId?: number): string {
+  // Croatian postal codes by zupanija (approximate)
+  const zupanijaPostalCodes: Record<number, string> = {
+    1: "31000",  // Osjecko-baranjska
+    2: "33000",  // Viroviticko-podravska
+    3: "40000",  // Medimurska
+    4: "42000",  // Varazdinska
+    5: "43000",  // Bjelovarsko-bilogorska
+    6: "44000",  // Sisacko-moslavacka
+    7: "47000",  // Karlovacka
+    8: "48000",  // Koprivnicko-krizevacka
+    9: "49000",  // Krapinsko-zagorska
+    10: "10000", // Zagrebacka
+    11: "20000", // Dubrovacko-neretvanska
+    12: "21000", // Splitsko-dalmatinska
+    13: "22000", // Sibensko-kninska
+    14: "23000", // Zadarska
+    15: "34000", // Pozesko-slavonska
+    16: "35000", // Brodsko-posavska
+    17: "51000", // Primorsko-goranska
+    18: "52000", // Istarska
+    19: "53000", // Licko-senjska
+    20: "32000", // Vukovarsko-srijemska
+    21: "10000", // Grad Zagreb
   }
+
+  return zupanijaPostalCodes[zupanijaId] || ""
 }
