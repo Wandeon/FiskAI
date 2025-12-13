@@ -6,16 +6,8 @@ import { Label } from '@/components/ui/label'
 import { importBankStatement } from '../actions'
 import { useRouter } from 'next/navigation'
 import type { BankAccount } from '@prisma/client'
-
-type ParsedTransaction = {
-  date: string
-  description: string
-  amount: number
-  balance: number
-  reference?: string
-  counterpartyName?: string
-  counterpartyIban?: string
-}
+import { parseCSV, type ParsedTransaction, type SupportedBank } from '@/lib/banking/csv-parser'
+import { parseCSV, type ParsedTransaction, type SupportedBank } from '@/lib/banking/csv-parser'
 
 type ImportFormProps = {
   accounts: Pick<BankAccount, 'id' | 'name' | 'iban'>[]
@@ -27,8 +19,9 @@ export function ImportForm({ accounts }: ImportFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [selectedAccount, setSelectedAccount] = useState(accounts[0]?.id || '')
+  const [selectedBank, setSelectedBank] = useState<SupportedBank>('generic')
   const [fileName, setFileName] = useState<string | null>(null)
-  const [previewData, setPreviewData] = useState<ParsedTransaction[] | null>(null)
+const [previewData, setPreviewData] = useState<ParsedTransaction[] | null>(null)
 
   function parseCSV(csvText: string): ParsedTransaction[] {
     const lines = csvText.trim().split('\n')
@@ -117,7 +110,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
     reader.onload = (event) => {
       try {
         const csvText = event.target?.result as string
-        const parsed = parseCSV(csvText)
+        const parsed = parseCSV(csvText, selectedBank)
         setPreviewData(parsed)
         setError(null)
       } catch (err) {
@@ -144,6 +137,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
     formData.append('accountId', selectedAccount)
     formData.append('fileName', fileName || 'imported.csv')
     formData.append('transactions', JSON.stringify(previewData))
+    formData.append('bank', selectedBank)
 
     const result = await importBankStatement(formData)
 
@@ -216,6 +210,25 @@ export function ImportForm({ accounts }: ImportFormProps) {
             Odaberite CSV datoteku s bankovnim transakcijama
           </p>
         </div>
+
+        <div>
+          <Label htmlFor="bankName">Banka (format CSV-a)</Label>
+          <select
+            id="bankName"
+            value={selectedBank}
+            onChange={(e) => setSelectedBank(e.target.value as SupportedBank)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            disabled={loading}
+          >
+            <option value="generic">Generički</option>
+            <option value="erste">Erste</option>
+            <option value="raiffeisenbank">Raiffeisenbank</option>
+            <option value="moja-banka">Moja banka</option>
+            <option value="splitska">Splitska</option>
+            <option value="otp">OTP</option>
+          </select>
+          <p className="mt-1 text-xs text-[var(--muted)]">Ispravno parsiranje prema formatu banke.</p>
+        </div>
       </div>
 
       {/* Preview */}
@@ -226,27 +239,27 @@ export function ImportForm({ accounts }: ImportFormProps) {
               Pregled: {previewData.length} transakcija
             </p>
           </div>
-          <div className="overflow-x-auto max-h-96">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 sticky top-0">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                    Datum
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                    Opis
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
-                    Iznos
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
-                    Stanje
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                    Protivna strana
-                  </th>
-                </tr>
-              </thead>
+      <div className="overflow-x-auto max-h-96">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 sticky top-0">
+            <tr>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                Datum
+              </th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                Opis
+              </th>
+              <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
+                Iznos
+              </th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                Ref
+              </th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                Protivna strana
+              </th>
+            </tr>
+          </thead>
               <tbody className="divide-y divide-gray-200">
                 {previewData.slice(0, 100).map((txn, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
@@ -256,22 +269,22 @@ export function ImportForm({ accounts }: ImportFormProps) {
                     <td className="px-3 py-2 text-xs max-w-xs truncate">
                       {txn.description}
                     </td>
-                    <td
-                      className={`px-3 py-2 text-xs text-right font-mono ${
-                        txn.amount >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {txn.amount >= 0 ? '+' : ''}
-                      {txn.amount.toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-right font-mono">
-                      {txn.balance.toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 text-xs max-w-xs truncate">
-                      {txn.counterpartyName || '-'}
-                    </td>
-                  </tr>
-                ))}
+                <td
+                  className={`px-3 py-2 text-xs text-right font-mono ${
+                    txn.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {txn.amount >= 0 ? '+' : ''}
+                  {txn.amount.toFixed(2)}
+                </td>
+                <td className="px-3 py-2 text-xs max-w-[120px] truncate">
+                  {txn.reference || '-'}
+                </td>
+                <td className="px-3 py-2 text-xs max-w-xs truncate">
+                  {txn.counterpartyName || '-'}
+                </td>
+              </tr>
+            ))}
               </tbody>
             </table>
             {previewData.length > 100 && (

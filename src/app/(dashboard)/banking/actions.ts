@@ -164,10 +164,11 @@ const importTransactionSchema = z.object({
   date: z.string().or(z.date()),
   description: z.string(),
   amount: z.number().or(z.string()),
-  balance: z.number().or(z.string()),
+  balance: z.number().or(z.string()).optional(),
   reference: z.string().optional(),
   counterpartyName: z.string().optional(),
   counterpartyIban: z.string().optional(),
+  currency: z.string().optional(),
 })
 
 export async function importBankStatement(formData: FormData) {
@@ -182,6 +183,7 @@ export async function importBankStatement(formData: FormData) {
   const accountId = formData.get('accountId') as string
   const fileName = formData.get('fileName') as string
   const transactionsJson = formData.get('transactions') as string
+  const bank = (formData.get('bank') as string) || 'generic'
 
   if (!accountId || !transactionsJson) {
     return {
@@ -223,7 +225,9 @@ export async function importBankStatement(formData: FormData) {
           date: new Date(txn.date),
           description: txn.description,
           amount: typeof txn.amount === 'string' ? parseFloat(txn.amount) : txn.amount,
-          balance: typeof txn.balance === 'string' ? parseFloat(txn.balance) : txn.balance,
+          balance: txn.balance !== undefined
+            ? (typeof txn.balance === 'string' ? parseFloat(txn.balance) : txn.balance)
+            : 0,
           reference: txn.reference || null,
           counterpartyName: txn.counterpartyName || null,
           counterpartyIban: txn.counterpartyIban || null,
@@ -232,15 +236,17 @@ export async function importBankStatement(formData: FormData) {
       })
     }
 
-    // Update account balance
-    const lastBalance = validatedTransactions[validatedTransactions.length - 1].balance
-    await db.bankAccount.update({
-      where: { id: accountId },
-      data: {
-        currentBalance: typeof lastBalance === 'string' ? parseFloat(lastBalance) : lastBalance,
-        lastSyncAt: new Date(),
-      },
-    })
+    // Update account balance if provided
+    const lastBalance = validatedTransactions[validatedTransactions.length - 1]?.balance
+    if (lastBalance !== undefined) {
+      await db.bankAccount.update({
+        where: { id: accountId },
+        data: {
+          currentBalance: typeof lastBalance === 'string' ? parseFloat(lastBalance) : lastBalance,
+          lastSyncAt: new Date(),
+        },
+      })
+    }
 
     revalidatePath('/banking')
     revalidatePath('/banking/transactions')
