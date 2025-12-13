@@ -2,16 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, Users, Settings, Plus, Receipt, Package, LifeBuoy } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useCapabilities } from "@/hooks/use-capabilities"
-import { useTicketSummary } from "@/hooks/use-ticket-summary"
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Početna" },
   { href: "/e-invoices", icon: FileText, label: "Računi", module: "invoicing" },
-  { href: "/support", icon: LifeBuoy, label: "Podrška" },
   { href: "/contacts", icon: Users, label: "Kontakti" },
   { href: "/settings", icon: Settings, label: "Postavke", module: "settings" },
 ]
@@ -27,7 +24,6 @@ export function BottomNav() {
   const pathname = usePathname()
   const [isQuickOpen, setIsQuickOpen] = useState(false)
   const capabilities = useCapabilities()
-  const { summary } = useTicketSummary()
   const supportBadge = summary?.unreadForMe || summary?.openCount || 0
 
   return (
