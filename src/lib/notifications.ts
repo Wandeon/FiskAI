@@ -1,6 +1,7 @@
 import { db, setTenantContext, getTenantContext } from "@/lib/db"
 import type { NotificationItem, NotificationType } from "@/types/notifications"
-import type { AuditAction, Company, SupportTicketStatus } from "@prisma/client"
+import type { AuditAction, Company } from "@prisma/client"
+import { SupportTicketStatus } from "@prisma/client"
 
 type NotificationCenterContext = {
   userId: string
