@@ -4,6 +4,8 @@ import { setTenantContext } from '@/lib/prisma-extensions'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ConnectButton } from './components/connect-button'
+import { ConnectionBadge } from './components/connection-badge'
 
 export default async function BankingPage() {
   const user = await requireAuth()
@@ -128,7 +130,7 @@ export default async function BankingPage() {
                   </div>
                   <p className="text-sm text-gray-500 font-mono mb-3">{account.iban}</p>
                   <p className="text-sm text-gray-600 mb-3">{account.bankName}</p>
-                  <div className="border-t pt-3">
+                  <div className="border-t pt-3 mb-3">
                     <p className="text-xs text-gray-500">Saldo</p>
                     <p className="text-xl font-bold">
                       {new Intl.NumberFormat('hr-HR', {
@@ -136,6 +138,17 @@ export default async function BankingPage() {
                         currency: account.currency,
                       }).format(Number(account.currentBalance))}
                     </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t">
+                    <ConnectionBadge
+                      status={account.connectionStatus}
+                      expiresAt={account.connectionExpiresAt}
+                    />
+                    <ConnectButton
+                      bankAccountId={account.id}
+                      connectionStatus={account.connectionStatus}
+                      bankName={account.bankName}
+                    />
                   </div>
                 </CardContent>
               </Card>
