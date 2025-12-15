@@ -4,7 +4,7 @@
 
 **Last Updated:** 2025-12-15
 **Total Features:** 108
-**Coverage:** 13% (14/108 documented)
+**Coverage:** 20% (22/108 documented)
 
 ## Registry
 
@@ -27,14 +27,14 @@
 | F013              | VAT Overview                  | Dashboard     | ✅     | /dashboard                         | Medium     | [→](features/dashboard-vat-overview.md)    |
 | F014              | Onboarding Checklist          | Dashboard     | ✅     | /onboarding                        | Medium     | [→](features/dashboard-onboarding.md)      |
 | **INVOICING**     |
-| F015              | Create Invoice                | Invoicing     | ❌     | /invoices/new                      | High       | -                                          |
-| F016              | View Invoices                 | Invoicing     | ❌     | /invoices                          | High       | -                                          |
-| F017              | Edit Invoice                  | Invoicing     | ❌     | /invoices/:id                      | High       | -                                          |
-| F018              | Invoice PDF Generation        | Invoicing     | ❌     | /api/invoices/:id/pdf              | Medium     | -                                          |
-| F019              | Invoice Email Delivery        | Invoicing     | ❌     | API + Actions                      | Medium     | -                                          |
-| F020              | Invoice Filtering             | Invoicing     | ❌     | /invoices                          | Medium     | -                                          |
-| F021              | Mark Invoice as Paid          | Invoicing     | ❌     | /invoices/:id                      | Low        | -                                          |
-| F022              | Convert to Invoice            | Invoicing     | ❌     | Actions                            | Medium     | -                                          |
+| F015              | Create Invoice                | Invoicing     | ✅     | /invoices/new                      | High       | [→](features/invoicing-create.md)          |
+| F016              | View Invoices                 | Invoicing     | ✅     | /invoices                          | High       | [→](features/invoicing-view.md)            |
+| F017              | Edit Invoice                  | Invoicing     | ✅     | /invoices/:id                      | High       | [→](features/invoicing-edit.md)            |
+| F018              | Invoice PDF Generation        | Invoicing     | ✅     | /api/invoices/:id/pdf              | Medium     | [→](features/invoicing-pdf.md)             |
+| F019              | Invoice Email Delivery        | Invoicing     | ✅     | API + Actions                      | Medium     | [→](features/invoicing-email.md)           |
+| F020              | Invoice Filtering             | Invoicing     | ✅     | /invoices                          | Medium     | [→](features/invoicing-filtering.md)       |
+| F021              | Mark Invoice as Paid          | Invoicing     | ✅     | /invoices/:id                      | Low        | [→](features/invoicing-mark-paid.md)       |
+| F022              | Convert to Invoice            | Invoicing     | ✅     | Actions                            | Medium     | [→](features/invoicing-convert.md)         |
 | **E-INVOICING**   |
 | F023              | Create E-Invoice              | E-Invoicing   | ❌     | /e-invoices/new                    | High       | -                                          |
 | F024              | View E-Invoices               | E-Invoicing   | ❌     | /e-invoices                        | Medium     | -                                          |
