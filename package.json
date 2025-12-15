@@ -30,6 +30,7 @@
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "fast-xml-parser": "^4.5.0",
+    "googleapis": "^168.0.0",
     "lucide-react": "^0.468.0",
     "mime-types": "^3.0.2",
     "next": "^15.1.0",
