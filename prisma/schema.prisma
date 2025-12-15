@@ -89,6 +89,18 @@ model Company {
   fiscalEnvironment       FiscalEnv           @default(PROD)
   premisesCode            String              @default("1")
   deviceCode              String              @default("1")
+
+  // Billing/Subscription fields
+  stripeCustomerId              String?   @unique
+  stripeSubscriptionId          String?   @unique
+  subscriptionStatus            String?   @default("trialing")
+  subscriptionPlan              String?   @default("pausalni")
+  subscriptionCurrentPeriodStart DateTime?
+  subscriptionCurrentPeriodEnd   DateTime?
+  invoiceLimit                  Int       @default(50)
+  userLimit                     Int       @default(1)
+  trialEndsAt                   DateTime?
+
   auditLogs               AuditLog[]
   bankAccounts            BankAccount[]
   businessPremises        BusinessPremises[]

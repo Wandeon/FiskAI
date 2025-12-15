@@ -1,27 +1,28 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
+// src/app/api/billing/webhook/route.ts
+// Stripe webhook handler for subscription events
 
-// Minimal billing webhook stub to sync entitlements/legal form.
-// Expected payload: { companyId: string, legalForm?: string, isVatPayer?: boolean, entitlements?: string[] }
-export async function POST(request: Request) {
+import { NextRequest, NextResponse } from 'next/server'
+import { handleStripeWebhook } from '@/lib/billing/stripe'
+import { logger } from '@/lib/logger'
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => null)
-    if (!body?.companyId) {
-      return NextResponse.json({ error: "Missing companyId" }, { status: 400 })
+    const body = await request.text()
+    const signature = request.headers.get('stripe-signature')
+
+    if (!signature) {
+      logger.warn('Stripe webhook received without signature')
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
     }
 
-    await db.company.update({
-      where: { id: body.companyId },
-      data: {
-        legalForm: body.legalForm ?? undefined,
-        isVatPayer: body.isVatPayer ?? undefined,
-        entitlements: Array.isArray(body.entitlements) ? body.entitlements : undefined,
-      },
-    })
+    await handleStripeWebhook(body, signature)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Billing webhook failed", error)
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    logger.error({ error }, 'Stripe webhook processing failed')
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    )
   }
 }

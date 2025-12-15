@@ -15,7 +15,7 @@ function getStripe(): Stripe {
       throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2025-11-17.clover",
       typescript: true,
     });
   }
@@ -244,8 +244,13 @@ async function syncSubscriptionStatus(subscription: Stripe.Subscription): Promis
 
   const updateData: Record<string, unknown> = {
     subscriptionStatus: subscription.status,
-    subscriptionCurrentPeriodStart: new Date(subscription.current_period_start * 1000),
-    subscriptionCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    // Store subscription dates when available
+    subscriptionCurrentPeriodStart: subscription.start_date
+      ? new Date(subscription.start_date * 1000)
+      : null,
+    subscriptionCurrentPeriodEnd: subscription.ended_at
+      ? new Date(subscription.ended_at * 1000)
+      : null,
   };
 
   if (subscription.status === "canceled" || subscription.status === "unpaid") {

@@ -5,6 +5,7 @@ import { requireAuth, requireCompany } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { Prisma, InvoiceType } from '@prisma/client'
 import { getNextInvoiceNumber } from '@/lib/invoice-numbering'
+import { canCreateInvoice, getUsageStats } from '@/lib/billing/stripe'
 
 const Decimal = Prisma.Decimal
 
@@ -35,6 +36,16 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
+
+    // Check invoice limit before creating
+    const canCreate = await canCreateInvoice(company.id)
+    if (!canCreate) {
+      const usage = await getUsageStats(company.id)
+      return {
+        success: false,
+        error: `Dostigli ste mjesečni limit računa (${usage.invoices.used}/${usage.invoices.limit}). Nadogradite plan za više računa.`,
+      }
+    }
 
     // Verify buyer belongs to company
     const buyer = await db.contact.findFirst({
@@ -107,6 +118,16 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
+
+    // Check invoice limit before converting
+    const canCreate = await canCreateInvoice(company.id)
+    if (!canCreate) {
+      const usage = await getUsageStats(company.id)
+      return {
+        success: false,
+        error: `Dostigli ste mjesečni limit računa (${usage.invoices.used}/${usage.invoices.limit}). Nadogradite plan za više računa.`,
+      }
+    }
 
     // Get the source document
     const source = await db.eInvoice.findFirst({

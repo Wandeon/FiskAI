@@ -10,11 +10,27 @@ import { Prisma } from "@prisma/client"
 import { decryptOptionalSecret } from "@/lib/secrets"
 import { getNextInvoiceNumber } from "@/lib/invoice-numbering"
 import { shouldFiscalizeInvoice, queueFiscalRequest } from "@/lib/fiscal/should-fiscalize"
+import { canCreateInvoice, getUsageStats } from "@/lib/billing/stripe"
 const Decimal = Prisma.Decimal
 
 export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
+
+  // Check invoice limit before creating
+  const canCreate = await canCreateInvoice(company.id)
+  if (!canCreate) {
+    const usage = await getUsageStats(company.id)
+    return {
+      error: "Dostigli ste mjesečni limit računa",
+      limitReached: true,
+      usage: {
+        used: usage.invoices.used,
+        limit: usage.invoices.limit,
+        plan: usage.plan,
+      },
+    }
+  }
 
   const validatedFields = eInvoiceSchema.safeParse(formData)
 
