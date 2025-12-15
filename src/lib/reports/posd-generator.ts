@@ -148,7 +148,7 @@ export async function generatePOSD(
     let totalIncome = 0;
     let revenueFromOibCustomers = 0;  // Sales to OIB-obligated customers
     let revenueFromNonOibCustomers = 0; // Sales to non-OIB customers (cash basis)
-    let exemptIncome = 0; // Income exempt from taxation (if any)
+    const exemptIncome = 0; // Income exempt from taxation (if any)
 
     for (const invoice of invoices) {
       const amount = Number(invoice.totalAmount);
@@ -164,7 +164,7 @@ export async function generatePOSD(
     // Calculate expenses
     let totalExpenses = 0;
     let deductibleExpenses = 0;
-    let nonDeductibleExpenses = 0;
+    const nonDeductibleExpenses = 0;
     const categorizedExpenses: Record<string, number> = {};
 
     for (const expense of expenses) {
