@@ -1,36 +1,43 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { db } from '@/lib/db'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
-import { CategoryCards } from '@/components/documents/category-cards'
-import { NewDocumentDropdown } from '@/components/documents/new-document-dropdown'
-import { DocumentsClient } from '@/components/documents/documents-client'
-import { queryUnifiedDocuments, CATEGORY_META, type UnifiedDocument, type DocumentCategory } from '@/lib/documents/unified-query'
-import { cn } from '@/lib/utils'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { db } from "@/lib/db"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ResponsiveTable, type Column } from "@/components/ui/responsive-table"
+import { CategoryCards } from "@/components/documents/category-cards"
+import { NewDocumentDropdown } from "@/components/documents/new-document-dropdown"
+import { DocumentsClient } from "@/components/documents/documents-client"
+import {
+  queryUnifiedDocuments,
+  CATEGORY_META,
+  type UnifiedDocument,
+  type DocumentCategory,
+} from "@/lib/documents/unified-query"
+import { cn } from "@/lib/utils"
+import { FolderOpen, Search } from "lucide-react"
 
 function formatCurrency(value: number, currency: string) {
-  return new Intl.NumberFormat('hr-HR', {
-    style: 'currency',
+  return new Intl.NumberFormat("hr-HR", {
+    style: "currency",
     currency,
   }).format(value)
 }
 
 function formatDate(date: Date) {
-  return new Date(date).toLocaleDateString('hr-HR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+  return new Date(date).toLocaleDateString("hr-HR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   })
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  gray: 'bg-gray-100 text-gray-700',
-  blue: 'bg-blue-100 text-blue-700',
-  green: 'bg-green-100 text-green-700',
-  amber: 'bg-amber-100 text-amber-700',
-  red: 'bg-red-100 text-red-700',
+  gray: "bg-gray-100 text-gray-700",
+  blue: "bg-blue-100 text-blue-700",
+  green: "bg-green-100 text-green-700",
+  amber: "bg-amber-100 text-amber-700",
+  red: "bg-red-100 text-red-700",
 }
 
 export default async function DocumentsPage({
@@ -49,7 +56,7 @@ export default async function DocumentsPage({
   // Fetch bank accounts for the import dropzone
   const bankAccounts = await db.bankAccount.findMany({
     where: { companyId: company.id },
-    orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
     select: {
       id: true,
       name: true,
@@ -61,9 +68,9 @@ export default async function DocumentsPage({
   const pendingJobs = await db.importJob.findMany({
     where: {
       companyId: company.id,
-      status: { in: ['PENDING', 'PROCESSING', 'READY_FOR_REVIEW'] },
+      status: { in: ["PENDING", "PROCESSING", "READY_FOR_REVIEW"] },
     },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { createdAt: "asc" },
     select: {
       id: true,
       originalName: true,
@@ -75,12 +82,18 @@ export default async function DocumentsPage({
     },
   })
 
-  const initialJobs = pendingJobs.map(j => ({
+  const initialJobs = pendingJobs.map((j) => ({
     id: j.id,
     fileName: j.originalName,
-    status: j.status as 'PENDING' | 'PROCESSING' | 'READY_FOR_REVIEW' | 'CONFIRMED' | 'REJECTED' | 'FAILED',
+    status: j.status as
+      | "PENDING"
+      | "PROCESSING"
+      | "READY_FOR_REVIEW"
+      | "CONFIRMED"
+      | "REJECTED"
+      | "FAILED",
     documentType: j.documentType,
-    progress: j.status === 'READY_FOR_REVIEW' ? 100 : j.status === 'PROCESSING' ? 50 : 0,
+    progress: j.status === "READY_FOR_REVIEW" ? 100 : j.status === "PROCESSING" ? 50 : 0,
     error: j.failureReason,
     extractedData: j.extractedData as any,
   }))
@@ -89,7 +102,7 @@ export default async function DocumentsPage({
   const categoryParam = Array.isArray(params.category) ? params.category[0] : params.category
   const searchTerm = Array.isArray(params.search) ? params.search[0] : params.search
   const pageParam = Array.isArray(params.page) ? params.page[0] : params.page
-  const page = parseInt(pageParam || '1')
+  const page = parseInt(pageParam || "1")
 
   const category = categoryParam as DocumentCategory | undefined
 
@@ -105,70 +118,68 @@ export default async function DocumentsPage({
 
   const columns: Column<UnifiedDocument>[] = [
     {
-      key: 'date',
-      label: 'Datum',
-      render: (doc) => (
-        <span className="text-sm text-[var(--muted)]">
-          {formatDate(doc.date)}
-        </span>
-      ),
+      key: "date",
+      label: "Datum",
+      render: (doc) => <span className="text-sm text-[var(--muted)]">{formatDate(doc.date)}</span>,
     },
     {
-      key: 'category',
-      label: 'Vrsta',
+      key: "category",
+      label: "Vrsta",
       render: (doc) => (
-        <span className={cn(
-          'px-2 py-1 rounded-full text-xs font-medium',
-          CATEGORY_META[doc.category].color
-        )}>
+        <span
+          className={cn(
+            "px-2 py-1 rounded-full text-xs font-medium",
+            CATEGORY_META[doc.category].color
+          )}
+        >
           {CATEGORY_META[doc.category].label}
         </span>
       ),
     },
     {
-      key: 'number',
-      label: 'Broj/Naziv',
+      key: "number",
+      label: "Broj/Naziv",
       render: (doc) => (
         <Link href={doc.detailUrl} className="font-medium text-brand-600 hover:text-brand-700">
-          {doc.number.length > 30 ? doc.number.slice(0, 27) + '...' : doc.number}
+          {doc.number.length > 30 ? doc.number.slice(0, 27) + "..." : doc.number}
         </Link>
       ),
     },
     {
-      key: 'counterparty',
-      label: 'Strana',
+      key: "counterparty",
+      label: "Strana",
       render: (doc) => (
-        <span className="text-sm text-[var(--foreground)]">
-          {doc.counterparty || '—'}
-        </span>
+        <span className="text-sm text-[var(--foreground)]">{doc.counterparty || "—"}</span>
       ),
     },
     {
-      key: 'amount',
-      label: 'Iznos',
+      key: "amount",
+      label: "Iznos",
       render: (doc) => (
         <span className="text-sm font-medium text-[var(--foreground)]">
-          {typeof doc.amount === 'number' && doc.currency
+          {typeof doc.amount === "number" && doc.currency
             ? formatCurrency(doc.amount, doc.currency)
             : doc.amount}
         </span>
       ),
     },
     {
-      key: 'status',
-      label: 'Status',
+      key: "status",
+      label: "Status",
       render: (doc) => (
-        <span className={cn(
-          'px-2 py-1 rounded-full text-xs font-medium',
-          STATUS_COLORS[doc.statusColor]
-        )}>
+        <span
+          className={cn(
+            "px-2 py-1 rounded-full text-xs font-medium",
+            STATUS_COLORS[doc.statusColor]
+          )}
+        >
           {doc.status}
         </span>
       ),
     },
     {
-      key: 'actions',
-      label: '',
+      key: "actions",
+      label: "",
       render: (doc) => (
         <Link href={doc.detailUrl} className="text-sm text-brand-600 hover:text-brand-700">
           Pregledaj
@@ -179,9 +190,9 @@ export default async function DocumentsPage({
 
   function buildPaginationLink(newPage: number) {
     const params = new URLSearchParams()
-    params.set('page', String(newPage))
-    if (category) params.set('category', category)
-    if (searchTerm) params.set('search', searchTerm)
+    params.set("page", String(newPage))
+    if (category) params.set("category", category)
+    if (searchTerm) params.set("search", searchTerm)
     return `/documents?${params.toString()}`
   }
 
@@ -197,10 +208,7 @@ export default async function DocumentsPage({
       </div>
 
       {/* Main content with import dropzone and sidebar */}
-      <DocumentsClient
-        bankAccounts={bankAccounts}
-        initialJobs={initialJobs}
-      >
+      <DocumentsClient bankAccounts={bankAccounts} initialJobs={initialJobs}>
         {/* Category filter cards */}
         <CategoryCards counts={counts} activeCategory={category} compact />
 
@@ -225,14 +233,19 @@ export default async function DocumentsPage({
         {/* Table */}
         {documents.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-[var(--muted)] mb-4">
-                {searchTerm ? 'Nema rezultata za pretragu' : 'Nema dokumenata'}
-              </p>
-              {!searchTerm && (
-                <p className="text-sm text-[var(--muted)]">
-                  Uvezite dokumente povlačenjem u polje iznad ili koristeći gumb &quot;Novi dokument&quot;.
-                </p>
+            <CardContent className="py-6">
+              {searchTerm ? (
+                <EmptyState
+                  icon={<Search className="h-8 w-8" />}
+                  title="Nema rezultata za pretragu"
+                  description={`Nismo pronašli dokumente za "${searchTerm}". Pokušajte s drugim pojmom ili uklonite filtre.`}
+                />
+              ) : (
+                <EmptyState
+                  icon={<FolderOpen className="h-8 w-8" />}
+                  title="Nema dokumenata"
+                  description="Svi vaši dokumenti bit će prikazani ovdje. Uvezite račune, ugovore i druge dokumente povlačenjem u polje iznad ili koristeći gumb 'Novi dokument'."
+                />
               )}
             </CardContent>
           </Card>
@@ -250,29 +263,33 @@ export default async function DocumentsPage({
                       {formatDate(doc.date)}
                     </p>
                     <p className="font-semibold text-[var(--foreground)]">
-                      {doc.number.length > 25 ? doc.number.slice(0, 22) + '...' : doc.number}
+                      {doc.number.length > 25 ? doc.number.slice(0, 22) + "..." : doc.number}
                     </p>
-                    <p className="text-sm text-[var(--muted)]">{doc.counterparty || '—'}</p>
+                    <p className="text-sm text-[var(--muted)]">{doc.counterparty || "—"}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-[var(--foreground)]">
-                      {typeof doc.amount === 'number' && doc.currency
+                      {typeof doc.amount === "number" && doc.currency
                         ? formatCurrency(doc.amount, doc.currency)
                         : doc.amount}
                     </p>
-                    <span className={cn(
-                      'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                      CATEGORY_META[doc.category].color
-                    )}>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                        CATEGORY_META[doc.category].color
+                      )}
+                    >
                       {CATEGORY_META[doc.category].label}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className={cn(
-                    'px-2 py-1 rounded-full text-xs font-medium',
-                    STATUS_COLORS[doc.statusColor]
-                  )}>
+                  <span
+                    className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium",
+                      STATUS_COLORS[doc.statusColor]
+                    )}
+                  >
                     {doc.status}
                   </span>
                   <Link

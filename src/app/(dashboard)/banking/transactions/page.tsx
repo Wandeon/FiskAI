@@ -1,24 +1,26 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Prisma, MatchStatus } from '@prisma/client'
-import { ResponsiveTable, type Column } from '@/components/ui/responsive-table'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Prisma, MatchStatus } from "@prisma/client"
+import { ResponsiveTable, type Column } from "@/components/ui/responsive-table"
+import { ArrowLeftRight } from "lucide-react"
 
 const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
-  UNMATCHED: 'Nepovezano',
-  AUTO_MATCHED: 'Automatski povezano',
-  MANUAL_MATCHED: 'Ručno povezano',
-  IGNORED: 'Ignorirano',
+  UNMATCHED: "Nepovezano",
+  AUTO_MATCHED: "Automatski povezano",
+  MANUAL_MATCHED: "Ručno povezano",
+  IGNORED: "Ignorirano",
 }
 
 const MATCH_STATUS_COLORS: Record<MatchStatus, string> = {
-  UNMATCHED: 'bg-orange-100 text-orange-800',
-  AUTO_MATCHED: 'bg-green-100 text-green-800',
-  MANUAL_MATCHED: 'bg-blue-100 text-blue-800',
-  IGNORED: 'bg-gray-100 text-gray-800',
+  UNMATCHED: "bg-orange-100 text-orange-800",
+  AUTO_MATCHED: "bg-green-100 text-green-800",
+  MANUAL_MATCHED: "bg-blue-100 text-blue-800",
+  IGNORED: "bg-gray-100 text-gray-800",
 }
 
 export default async function TransactionsPage({
@@ -41,14 +43,14 @@ export default async function TransactionsPage({
   })
 
   const params = await searchParams
-  const page = parseInt(params.page || '1')
+  const page = parseInt(params.page || "1")
   const pageSize = 50
   const skip = (page - 1) * pageSize
 
   // Get all accounts for filter
   const accounts = await db.bankAccount.findMany({
     where: { companyId: company.id },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   })
 
   // Build filter
@@ -88,7 +90,7 @@ export default async function TransactionsPage({
           select: { id: true, description: true },
         },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
       take: pageSize,
       skip,
     }),
@@ -101,24 +103,20 @@ export default async function TransactionsPage({
 
   const columns: Column<TransactionRow>[] = [
     {
-      key: 'date',
-      label: 'Datum',
+      key: "date",
+      label: "Datum",
       render: (txn) => (
-        <span className="text-sm">
-          {new Date(txn.date).toLocaleDateString('hr-HR')}
-        </span>
+        <span className="text-sm">{new Date(txn.date).toLocaleDateString("hr-HR")}</span>
       ),
     },
     {
-      key: 'bankAccount',
-      label: 'Račun',
-      render: (txn) => (
-        <span className="text-sm text-gray-600">{txn.bankAccount.name}</span>
-      ),
+      key: "bankAccount",
+      label: "Račun",
+      render: (txn) => <span className="text-sm text-gray-600">{txn.bankAccount.name}</span>,
     },
     {
-      key: 'description',
-      label: 'Opis',
+      key: "description",
+      label: "Opis",
       render: (txn) => (
         <div className="max-w-md">
           <div className="text-sm truncate">{txn.description}</div>
@@ -132,22 +130,22 @@ export default async function TransactionsPage({
       ),
     },
     {
-      key: 'amount',
-      label: 'Iznos',
+      key: "amount",
+      label: "Iznos",
       render: (txn) => (
         <span
           className={`font-mono text-sm font-semibold ${
-            Number(txn.amount) >= 0 ? 'text-green-600' : 'text-red-600'
+            Number(txn.amount) >= 0 ? "text-green-600" : "text-red-600"
           }`}
         >
-          {Number(txn.amount) >= 0 ? '+' : ''}
+          {Number(txn.amount) >= 0 ? "+" : ""}
           {formatCurrency(Number(txn.amount), txn.bankAccount.currency)}
         </span>
       ),
     },
     {
-      key: 'balance',
-      label: 'Stanje',
+      key: "balance",
+      label: "Stanje",
       render: (txn) => (
         <span className="font-mono text-sm text-gray-600">
           {formatCurrency(Number(txn.balance), txn.bankAccount.currency)}
@@ -155,15 +153,11 @@ export default async function TransactionsPage({
       ),
     },
     {
-      key: 'matchStatus',
-      label: 'Status',
+      key: "matchStatus",
+      label: "Status",
       render: (txn) => (
         <div>
-          <span
-            className={`text-xs px-2 py-1 rounded ${
-              MATCH_STATUS_COLORS[txn.matchStatus]
-            }`}
-          >
+          <span className={`text-xs px-2 py-1 rounded ${MATCH_STATUS_COLORS[txn.matchStatus]}`}>
             {MATCH_STATUS_LABELS[txn.matchStatus]}
           </span>
           {txn.matchedInvoice && (
@@ -171,17 +165,15 @@ export default async function TransactionsPage({
               Račun: {txn.matchedInvoice.invoiceNumber}
             </div>
           )}
-          {txn.matchedExpense && (
-            <div className="text-xs text-gray-500 mt-1">Trošak</div>
-          )}
+          {txn.matchedExpense && <div className="text-xs text-gray-500 mt-1">Trošak</div>}
         </div>
       ),
     },
     {
-      key: 'actions',
-      label: '',
+      key: "actions",
+      label: "",
       render: (txn) =>
-        txn.matchStatus === 'UNMATCHED' ? (
+        txn.matchStatus === "UNMATCHED" ? (
           <Button variant="outline" size="sm">
             Poveži
           </Button>
@@ -216,7 +208,7 @@ export default async function TransactionsPage({
                 <label className="block text-sm font-medium mb-1">Račun</label>
                 <select
                   name="accountId"
-                  defaultValue={params.accountId || ''}
+                  defaultValue={params.accountId || ""}
                   className="w-full rounded-md border-gray-300 text-sm"
                 >
                   <option value="">Svi računi</option>
@@ -232,7 +224,7 @@ export default async function TransactionsPage({
                 <label className="block text-sm font-medium mb-1">Status povezanosti</label>
                 <select
                   name="status"
-                  defaultValue={params.status || ''}
+                  defaultValue={params.status || ""}
                   className="w-full rounded-md border-gray-300 text-sm"
                 >
                   <option value="">Svi statusi</option>
@@ -249,7 +241,7 @@ export default async function TransactionsPage({
                 <input
                   type="date"
                   name="dateFrom"
-                  defaultValue={params.dateFrom || ''}
+                  defaultValue={params.dateFrom || ""}
                   className="w-full rounded-md border-gray-300 text-sm"
                 />
               </div>
@@ -259,7 +251,7 @@ export default async function TransactionsPage({
                 <input
                   type="date"
                   name="dateTo"
-                  defaultValue={params.dateTo || ''}
+                  defaultValue={params.dateTo || ""}
                   className="w-full rounded-md border-gray-300 text-sm"
                 />
               </div>
@@ -293,7 +285,7 @@ export default async function TransactionsPage({
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500">Nepovezane</p>
             <p className="text-2xl font-bold text-orange-600">
-              {transactions.filter((t) => t.matchStatus === 'UNMATCHED').length}
+              {transactions.filter((t) => t.matchStatus === "UNMATCHED").length}
             </p>
           </CardContent>
         </Card>
@@ -303,8 +295,7 @@ export default async function TransactionsPage({
             <p className="text-2xl font-bold text-green-600">
               {
                 transactions.filter(
-                  (t) =>
-                    t.matchStatus === 'AUTO_MATCHED' || t.matchStatus === 'MANUAL_MATCHED'
+                  (t) => t.matchStatus === "AUTO_MATCHED" || t.matchStatus === "MANUAL_MATCHED"
                 ).length
               }
             </p>
@@ -314,7 +305,7 @@ export default async function TransactionsPage({
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500">Ignorirane</p>
             <p className="text-2xl font-bold text-gray-600">
-              {transactions.filter((t) => t.matchStatus === 'IGNORED').length}
+              {transactions.filter((t) => t.matchStatus === "IGNORED").length}
             </p>
           </CardContent>
         </Card>
@@ -323,11 +314,17 @@ export default async function TransactionsPage({
       {/* Table */}
       {transactions.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-gray-500 mb-4">Nema transakcija</p>
-            <Link href="/banking/import">
-              <Button>Uvezi izvod</Button>
-            </Link>
+          <CardContent className="py-6">
+            <EmptyState
+              icon={<ArrowLeftRight className="h-8 w-8" />}
+              title="Nema transakcija"
+              description="Uvezite bankovni izvod u CSV formatu ili povežite račun za automatski uvoz. Transakcije možete zatim povezati s računima i troškovima."
+              action={
+                <Link href="/banking/import">
+                  <Button>Uvezi izvod</Button>
+                </Link>
+              }
+            />
           </CardContent>
         </Card>
       ) : (
@@ -341,19 +338,23 @@ export default async function TransactionsPage({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase text-[var(--muted)] tracking-wide">
-                    {new Date(txn.date).toLocaleDateString('hr-HR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {new Date(txn.date).toLocaleDateString("hr-HR", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </p>
-                  <p className="font-semibold text-[var(--foreground)]">
-                    {txn.description}
-                  </p>
+                  <p className="font-semibold text-[var(--foreground)]">{txn.description}</p>
                   <p className="text-sm text-[var(--muted)]">{txn.bankAccount.name}</p>
                   {txn.counterpartyName && (
                     <p className="text-xs text-[var(--muted)] mt-1">{txn.counterpartyName}</p>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className={`text-lg font-semibold ${Number(txn.amount) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {Number(txn.amount) >= 0 ? '+' : ''}
+                  <p
+                    className={`text-lg font-semibold ${Number(txn.amount) >= 0 ? "text-green-600" : "text-red-600"}`}
+                  >
+                    {Number(txn.amount) >= 0 ? "+" : ""}
                     {formatCurrency(Number(txn.amount), txn.bankAccount.currency)}
                   </p>
                   <p className="text-xs text-[var(--muted)]">
@@ -363,7 +364,9 @@ export default async function TransactionsPage({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${MATCH_STATUS_COLORS[txn.matchStatus]}`}>
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${MATCH_STATUS_COLORS[txn.matchStatus]}`}
+                  >
                     {MATCH_STATUS_LABELS[txn.matchStatus]}
                   </span>
                   {txn.matchedInvoice && (
@@ -372,10 +375,12 @@ export default async function TransactionsPage({
                     </p>
                   )}
                   {txn.matchedExpense && (
-                    <p className="text-xs text-[var(--muted)]">Trošak: {txn.matchedExpense.description}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      Trošak: {txn.matchedExpense.description}
+                    </p>
                   )}
                 </div>
-                {txn.matchStatus === 'UNMATCHED' && (
+                {txn.matchStatus === "UNMATCHED" && (
                   <Button variant="outline" size="sm">
                     Poveži
                   </Button>
@@ -424,18 +429,18 @@ function buildPaginationLink(
   }
 ) {
   const query = new URLSearchParams()
-  query.set('page', String(page))
-  if (params.accountId) query.set('accountId', params.accountId)
-  if (params.status) query.set('status', params.status)
-  if (params.dateFrom) query.set('dateFrom', params.dateFrom)
-  if (params.dateTo) query.set('dateTo', params.dateTo)
+  query.set("page", String(page))
+  if (params.accountId) query.set("accountId", params.accountId)
+  if (params.status) query.set("status", params.status)
+  if (params.dateFrom) query.set("dateFrom", params.dateFrom)
+  if (params.dateTo) query.set("dateTo", params.dateTo)
   const qs = query.toString()
-  return qs ? `/banking/transactions?${qs}` : '/banking/transactions'
+  return qs ? `/banking/transactions?${qs}` : "/banking/transactions"
 }
 
 function formatCurrency(value: number, currency: string) {
-  return new Intl.NumberFormat('hr-HR', {
-    style: 'currency',
+  return new Intl.NumberFormat("hr-HR", {
+    style: "currency",
     currency,
   }).format(value)
 }

@@ -4,7 +4,9 @@ import { db } from "@/lib/db"
 import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
 import { CreateSupportTicketForm } from "@/components/support/create-support-ticket-form"
+import { MessageCircle } from "lucide-react"
 
 const statusLabels: Record<SupportTicketStatus, string> = {
   OPEN: "Otvoren",
@@ -46,7 +48,9 @@ export default async function SupportPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">Podrška — radite s računovođom unutar aplikacije</p>
+        <p className="text-sm text-muted-foreground">
+          Podrška — radite s računovođom unutar aplikacije
+        </p>
         <h1 className="text-2xl font-bold">Support</h1>
         <p className="text-muted-foreground">
           Otvorite tikete, pratite statuse i komunicirajte s računovođom bez izvoza podataka.
@@ -64,7 +68,12 @@ export default async function SupportPage() {
           </CardHeader>
           <CardContent className="divide-y divide-border p-0">
             {tickets.length === 0 ? (
-              <div className="p-6 text-sm text-muted-foreground">Još nema otvorenih tiketa.</div>
+              <EmptyState
+                icon={<MessageCircle className="h-8 w-8" />}
+                title="Još nema otvorenih tiketa"
+                description="Koristite obrazac desno za komunikaciju s računovođom. Vaši tiketi i odgovori bit će prikazani ovdje."
+                className="py-8"
+              />
             ) : (
               tickets.map((ticket) => (
                 <Link
@@ -79,10 +88,14 @@ export default async function SupportPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>Zadnje ažurirano: {ticket.updatedAt.toLocaleString("hr-HR")}</span>
-                    <span>Assign: {ticket.assignedTo?.name || ticket.assignedTo?.email || "Nije dodijeljeno"}</span>
+                    <span>
+                      Assign:{" "}
+                      {ticket.assignedTo?.name || ticket.assignedTo?.email || "Nije dodijeljeno"}
+                    </span>
                     {ticket.messages[0] && (
                       <span>
-                        Zadnja poruka: {ticket.messages[0].author?.name || ticket.messages[0].author?.email || "—"}
+                        Zadnja poruka:{" "}
+                        {ticket.messages[0].author?.name || ticket.messages[0].author?.email || "—"}
                       </span>
                     )}
                   </div>

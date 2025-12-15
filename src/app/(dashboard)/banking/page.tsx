@@ -1,11 +1,13 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ConnectButton } from './components/connect-button'
-import { ConnectionBadge } from './components/connection-badge'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ConnectButton } from "./components/connect-button"
+import { ConnectionBadge } from "./components/connection-badge"
+import { Landmark, ArrowLeftRight } from "lucide-react"
 
 export default async function BankingPage() {
   const user = await requireAuth()
@@ -19,20 +21,17 @@ export default async function BankingPage() {
   // Fetch bank accounts
   const accounts = await db.bankAccount.findMany({
     where: { companyId: company.id },
-    orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
   })
 
   // Calculate total balance
-  const totalBalance = accounts.reduce(
-    (sum, acc) => sum + Number(acc.currentBalance),
-    0
-  )
+  const totalBalance = accounts.reduce((sum, acc) => sum + Number(acc.currentBalance), 0)
 
   // Get unmatched transactions count
   const unmatchedCount = await db.bankTransaction.count({
     where: {
       companyId: company.id,
-      matchStatus: 'UNMATCHED',
+      matchStatus: "UNMATCHED",
     },
   })
 
@@ -44,7 +43,7 @@ export default async function BankingPage() {
         select: { name: true },
       },
     },
-    orderBy: { date: 'desc' },
+    orderBy: { date: "desc" },
     take: 10,
   })
 
@@ -75,9 +74,9 @@ export default async function BankingPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500 mb-1">Ukupno stanje</p>
             <p className="text-3xl font-bold">
-              {new Intl.NumberFormat('hr-HR', {
-                style: 'currency',
-                currency: 'EUR',
+              {new Intl.NumberFormat("hr-HR", {
+                style: "currency",
+                currency: "EUR",
               }).format(totalBalance)}
             </p>
           </CardContent>
@@ -101,22 +100,30 @@ export default async function BankingPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Bankovni računi</h2>
           <Link href="/banking/accounts">
-            <Button variant="outline" size="sm">Vidi sve</Button>
+            <Button variant="outline" size="sm">
+              Vidi sve
+            </Button>
           </Link>
         </div>
         {accounts.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">Nemate dodanih bankovnih računa</p>
-              <Link href="/banking/accounts">
-                <Button>Dodaj račun</Button>
-              </Link>
+            <CardContent className="py-6">
+              <EmptyState
+                icon={<Landmark className="h-8 w-8" />}
+                title="Nemate dodanih bankovnih računa"
+                description="Povežite svoje bankovne račune za automatski uvoz transakcija i lakše vođenje knjiga. Podržavamo većinu hrvatskih banaka."
+                action={
+                  <Link href="/banking/accounts">
+                    <Button>Dodaj prvi račun</Button>
+                  </Link>
+                }
+              />
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((account) => (
-              <Card key={account.id} className={account.isDefault ? 'ring-2 ring-blue-500' : ''}>
+              <Card key={account.id} className={account.isDefault ? "ring-2 ring-blue-500" : ""}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -133,8 +140,8 @@ export default async function BankingPage() {
                   <div className="border-t pt-3 mb-3">
                     <p className="text-xs text-gray-500">Saldo</p>
                     <p className="text-xl font-bold">
-                      {new Intl.NumberFormat('hr-HR', {
-                        style: 'currency',
+                      {new Intl.NumberFormat("hr-HR", {
+                        style: "currency",
                         currency: account.currency,
                       }).format(Number(account.currentBalance))}
                     </p>
@@ -162,16 +169,24 @@ export default async function BankingPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Nedavne transakcije</h2>
           <Link href="/banking/transactions">
-            <Button variant="outline" size="sm">Vidi sve</Button>
+            <Button variant="outline" size="sm">
+              Vidi sve
+            </Button>
           </Link>
         </div>
         {recentTransactions.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">Nema transakcija</p>
-              <Link href="/banking/import">
-                <Button>Uvezi izvod</Button>
-              </Link>
+            <CardContent className="py-6">
+              <EmptyState
+                icon={<ArrowLeftRight className="h-8 w-8" />}
+                title="Nema transakcija"
+                description="Uvezite bankovni izvod kako biste mogli pratiti prihode i rashode te povezivati transakcije s računima."
+                action={
+                  <Link href="/banking/import">
+                    <Button>Uvezi izvod</Button>
+                  </Link>
+                }
+              />
             </CardContent>
           </Card>
         ) : (
@@ -202,11 +217,9 @@ export default async function BankingPage() {
                     {recentTransactions.map((txn) => (
                       <tr key={txn.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm">
-                          {new Date(txn.date).toLocaleDateString('hr-HR')}
+                          {new Date(txn.date).toLocaleDateString("hr-HR")}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {txn.bankAccount.name}
-                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{txn.bankAccount.name}</td>
                         <td className="px-4 py-3 text-sm">
                           <div className="max-w-xs truncate">{txn.description}</div>
                           {txn.counterpartyName && (
@@ -215,23 +228,22 @@ export default async function BankingPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-mono">
                           <span
-                            className={
-                              Number(txn.amount) >= 0 ? 'text-green-600' : 'text-red-600'
-                            }
+                            className={Number(txn.amount) >= 0 ? "text-green-600" : "text-red-600"}
                           >
-                            {Number(txn.amount) >= 0 ? '+' : ''}
-                            {new Intl.NumberFormat('hr-HR', {
-                              style: 'currency',
-                              currency: 'EUR',
+                            {Number(txn.amount) >= 0 ? "+" : ""}
+                            {new Intl.NumberFormat("hr-HR", {
+                              style: "currency",
+                              currency: "EUR",
                             }).format(Number(txn.amount))}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {txn.matchStatus === 'UNMATCHED' ? (
+                          {txn.matchStatus === "UNMATCHED" ? (
                             <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
                               Nepovezano
                             </span>
-                          ) : txn.matchStatus === 'AUTO_MATCHED' || txn.matchStatus === 'MANUAL_MATCHED' ? (
+                          ) : txn.matchStatus === "AUTO_MATCHED" ||
+                            txn.matchStatus === "MANUAL_MATCHED" ? (
                             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                               Povezano
                             </span>

@@ -3,12 +3,14 @@ import { db } from "@/lib/db"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { unitCodes, vatCategories } from "@/lib/validations/product"
 import { ProductTable } from "@/components/products/product-table"
 import { ProductHealth } from "@/components/products/product-health"
 import { ProductCsvImport } from "@/components/products/product-csv-import"
 import { deriveCapabilities } from "@/lib/capabilities"
 import { redirect } from "next/navigation"
+import { Package } from "lucide-react"
 
 export default async function ProductsPage() {
   const user = await requireAuth()
@@ -28,7 +30,9 @@ export default async function ProductsPage() {
     value: category.code,
     label: category.name,
   }))
-  const vatMap = new Map<string, string>(vatCategories.map((category) => [category.code, category.name]))
+  const vatMap = new Map<string, string>(
+    vatCategories.map((category) => [category.code, category.name])
+  )
 
   const tableProducts = products.map((product) => ({
     id: product.id,
@@ -55,11 +59,17 @@ export default async function ProductsPage() {
 
       {products.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-gray-500 mb-4">Nemate još nijednog proizvoda</p>
-            <Link href="/products/new">
-              <Button>Dodaj prvi proizvod</Button>
-            </Link>
+          <CardContent className="py-6">
+            <EmptyState
+              icon={<Package className="h-8 w-8" />}
+              title="Nemate još nijednog proizvoda"
+              description="Proizvodi i usluge su temelj vaših računa. Dodajte ih ručno ili uvezite iz CSV datoteke."
+              action={
+                <Link href="/products/new">
+                  <Button>Dodaj prvi proizvod</Button>
+                </Link>
+              }
+            />
           </CardContent>
         </Card>
       ) : (

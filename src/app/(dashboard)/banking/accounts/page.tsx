@@ -1,11 +1,13 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { AccountForm } from './account-form'
-import { setDefaultBankAccount, deleteBankAccount } from '../actions'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { AccountForm } from "./account-form"
+import { setDefaultBankAccount, deleteBankAccount } from "../actions"
+import { Landmark } from "lucide-react"
 
 export default async function BankAccountsPage() {
   const user = await requireAuth()
@@ -18,7 +20,7 @@ export default async function BankAccountsPage() {
 
   const accounts = await db.bankAccount.findMany({
     where: { companyId: company.id },
-    orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     include: {
       _count: {
         select: { transactions: true },
@@ -27,14 +29,14 @@ export default async function BankAccountsPage() {
   })
 
   async function handleSetDefault(formData: FormData) {
-    'use server'
-    const accountId = formData.get('accountId') as string
+    "use server"
+    const accountId = formData.get("accountId") as string
     await setDefaultBankAccount(accountId)
   }
 
   async function handleDelete(formData: FormData) {
-    'use server'
-    const accountId = formData.get('accountId') as string
+    "use server"
+    const accountId = formData.get("accountId") as string
     await deleteBankAccount(accountId)
   }
 
@@ -64,17 +66,18 @@ export default async function BankAccountsPage() {
         <h2 className="text-lg font-semibold mb-4">Postojeći računi</h2>
         {accounts.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-500">Nemate dodanih bankovnih računa</p>
+            <CardContent className="py-6">
+              <EmptyState
+                icon={<Landmark className="h-8 w-8" />}
+                title="Nemate dodanih bankovnih računa"
+                description="Koristite obrazac iznad za dodavanje prvog bankovnog računa. Nakon toga možete uvoziti izvode i pratiti transakcije."
+              />
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
             {accounts.map((account) => (
-              <Card
-                key={account.id}
-                className={account.isDefault ? 'ring-2 ring-blue-500' : ''}
-              >
+              <Card key={account.id} className={account.isDefault ? "ring-2 ring-blue-500" : ""}>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -88,19 +91,19 @@ export default async function BankAccountsPage() {
                       </div>
                       <div className="space-y-1 text-sm">
                         <div>
-                          <span className="text-gray-500">IBAN:</span>{' '}
+                          <span className="text-gray-500">IBAN:</span>{" "}
                           <span className="font-mono">{account.iban}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Banka:</span>{' '}
+                          <span className="text-gray-500">Banka:</span>{" "}
                           <span>{account.bankName}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Valuta:</span>{' '}
+                          <span className="text-gray-500">Valuta:</span>{" "}
                           <span>{account.currency}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Transakcija:</span>{' '}
+                          <span className="text-gray-500">Transakcija:</span>{" "}
                           <span>{account._count.transactions}</span>
                         </div>
                       </div>
@@ -109,15 +112,15 @@ export default async function BankAccountsPage() {
                       <div>
                         <p className="text-sm text-gray-500">Trenutno stanje</p>
                         <p className="text-2xl font-bold">
-                          {new Intl.NumberFormat('hr-HR', {
-                            style: 'currency',
+                          {new Intl.NumberFormat("hr-HR", {
+                            style: "currency",
                             currency: account.currency,
                           }).format(Number(account.currentBalance))}
                         </p>
                         {account.lastSyncAt && (
                           <p className="text-xs text-gray-500 mt-1">
-                            Zadnja sinkronizacija:{' '}
-                            {new Date(account.lastSyncAt).toLocaleString('hr-HR')}
+                            Zadnja sinkronizacija:{" "}
+                            {new Date(account.lastSyncAt).toLocaleString("hr-HR")}
                           </p>
                         )}
                       </div>

@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { toast } from '@/lib/toast'
-import { createDevice } from '@/app/actions/premises'
-import type { PaymentDevice } from '@prisma/client'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { toast } from "@/lib/toast"
+import { createDevice } from "@/app/actions/premises"
+import type { PaymentDevice } from "@prisma/client"
 
 interface DevicesListProps {
   premisesId: string
@@ -27,19 +27,19 @@ export function DevicesList({ premisesId, companyId, devices }: DevicesListProps
     const result = await createDevice({
       companyId,
       businessPremisesId: premisesId,
-      code: parseInt(formData.get('code') as string, 10),
-      name: formData.get('name') as string,
-      isDefault: formData.get('isDefault') === 'on',
+      code: parseInt(formData.get("code") as string, 10),
+      name: formData.get("name") as string,
+      isDefault: formData.get("isDefault") === "on",
     })
 
     setIsLoading(false)
 
     if (result.success) {
-      toast.success('Naplatni uređaj je uspješno dodan')
+      toast.success("Naplatni uređaj je uspješno dodan")
       setIsAdding(false)
       router.refresh()
     } else {
-      toast.error(result.error || 'Greška pri dodavanju naplatnog uređaja')
+      toast.error(result.error || "Greška pri dodavanju naplatnog uređaja")
     }
   }
 
@@ -55,9 +55,18 @@ export function DevicesList({ premisesId, companyId, devices }: DevicesListProps
       </div>
 
       {devices.length === 0 && !isAdding ? (
-        <p className="text-sm text-gray-500">
-          Nema naplatnih uređaja. Dodajte prvi uređaj za ovaj poslovni prostor.
-        </p>
+        <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
+          <p className="text-sm text-gray-500">
+            Nema naplatnih uređaja. Svaki poslovni prostor treba barem jedan naplatni uređaj za
+            izdavanje računa.
+          </p>
+          <button
+            onClick={() => setIsAdding(true)}
+            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            + Dodaj prvi uređaj
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
           {devices.map((device) => (
@@ -102,11 +111,7 @@ export function DevicesList({ premisesId, companyId, devices }: DevicesListProps
               />
             </div>
             <div>
-              <Input
-                name="name"
-                required
-                placeholder="Naziv (npr. Blagajna 1)"
-              />
+              <Input name="name" required placeholder="Naziv (npr. Blagajna 1)" />
             </div>
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1 text-sm">
@@ -114,14 +119,9 @@ export function DevicesList({ premisesId, companyId, devices }: DevicesListProps
                 Zadani
               </label>
               <Button type="submit" size="sm" disabled={isLoading}>
-                {isLoading ? '...' : 'Spremi'}
+                {isLoading ? "..." : "Spremi"}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAdding(false)}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={() => setIsAdding(false)}>
                 Odustani
               </Button>
             </div>
