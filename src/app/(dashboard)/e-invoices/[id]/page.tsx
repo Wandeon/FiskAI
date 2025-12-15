@@ -3,6 +3,8 @@ import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { NextSteps } from "@/components/ui/next-steps"
+import { GlossaryTerm } from "@/components/ui/glossary-term"
 import { InvoiceDetailActions } from "./detail-actions"
 
 interface EInvoiceDetailPageProps {
@@ -99,7 +101,9 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
                 <p>OIB: {company.oib}</p>
                 {company.vatNumber && <p>VAT: {company.vatNumber}</p>}
                 <p>{company.address}</p>
-                <p>{company.postalCode} {company.city}</p>
+                <p>
+                  {company.postalCode} {company.city}
+                </p>
                 {company.email && <p>{company.email}</p>}
               </CardContent>
             </Card>
@@ -116,7 +120,9 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
                     {invoice.buyer.vatNumber && <p>VAT: {invoice.buyer.vatNumber}</p>}
                     {invoice.buyer.address && <p>{invoice.buyer.address}</p>}
                     {(invoice.buyer.postalCode || invoice.buyer.city) && (
-                      <p>{invoice.buyer.postalCode} {invoice.buyer.city}</p>
+                      <p>
+                        {invoice.buyer.postalCode} {invoice.buyer.city}
+                      </p>
                     )}
                     {invoice.buyer.email && <p>{invoice.buyer.email}</p>}
                   </>
@@ -138,11 +144,21 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
                   <thead className="border-b bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">#</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Opis</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Kol.</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Cijena</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">PDV</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Iznos</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
+                        Opis
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                        Kol.
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                        Cijena
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                        PDV
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                        Iznos
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -156,9 +172,7 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
                         <td className="px-4 py-3 text-right font-mono">
                           {Number(line.unitPrice).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono">
-                          {Number(line.vatRate)}%
-                        </td>
+                        <td className="px-4 py-3 text-right font-mono">{Number(line.vatRate)}%</td>
                         <td className="px-4 py-3 text-right font-mono font-medium">
                           {(Number(line.netAmount) + Number(line.vatAmount)).toFixed(2)}
                         </td>
@@ -181,15 +195,21 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Neto iznos</span>
-                <span className="font-mono">{Number(invoice.netAmount).toFixed(2)} {invoice.currency}</span>
+                <span className="font-mono">
+                  {Number(invoice.netAmount).toFixed(2)} {invoice.currency}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">PDV</span>
-                <span className="font-mono">{Number(invoice.vatAmount).toFixed(2)} {invoice.currency}</span>
+                <span className="font-mono">
+                  {Number(invoice.vatAmount).toFixed(2)} {invoice.currency}
+                </span>
               </div>
               <div className="border-t pt-3 flex justify-between font-semibold">
                 <span>Ukupno</span>
-                <span className="font-mono">{Number(invoice.totalAmount).toFixed(2)} {invoice.currency}</span>
+                <span className="font-mono">
+                  {Number(invoice.totalAmount).toFixed(2)} {invoice.currency}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -227,18 +247,28 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
           {(invoice.jir || invoice.zki) && (
             <Card>
               <CardHeader>
-                <CardTitle>Fiskalizacija</CardTitle>
+                <CardTitle>
+                  <GlossaryTerm term="fiskalizacija">Fiskalizacija</GlossaryTerm>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 {invoice.jir && (
                   <div>
-                    <p className="text-gray-500 text-xs">JIR</p>
+                    <p className="text-gray-500 text-xs">
+                      <GlossaryTerm term="jir" showIcon={false}>
+                        JIR
+                      </GlossaryTerm>
+                    </p>
                     <p className="font-mono text-xs break-all">{invoice.jir}</p>
                   </div>
                 )}
                 {invoice.zki && (
                   <div>
-                    <p className="text-gray-500 text-xs">ZKI</p>
+                    <p className="text-gray-500 text-xs">
+                      <GlossaryTerm term="zki" showIcon={false}>
+                        ZKI
+                      </GlossaryTerm>
+                    </p>
                     <p className="font-mono text-xs break-all">{invoice.zki}</p>
                   </div>
                 )}
@@ -292,6 +322,46 @@ export default async function EInvoiceDetailPage({ params }: EInvoiceDetailPageP
               )}
             </CardContent>
           </Card>
+
+          {/* Next Steps - contextual guidance */}
+          {invoice.status === "DRAFT" && (
+            <NextSteps
+              title="Što dalje?"
+              steps={[
+                {
+                  label: "Pošalji račun kupcu",
+                  description: "E-mailom ili kao e-račun",
+                  href: `/e-invoices/${invoice.id}`,
+                  completed: false,
+                },
+                {
+                  label: "Preuzmi PDF",
+                  description: "Za ispis ili arhivu",
+                  href: `/api/invoices/${invoice.id}/pdf`,
+                  completed: false,
+                },
+              ]}
+            />
+          )}
+          {invoice.status === "SENT" && !invoice.paidAt && (
+            <NextSteps
+              title="Što dalje?"
+              steps={[
+                {
+                  label: "Označi kao plaćeno",
+                  description: "Kad primiš uplatu",
+                  href: `/e-invoices/${invoice.id}`,
+                  completed: false,
+                },
+                {
+                  label: "Pošalji podsjetnik",
+                  description: "Ako je prošao rok plaćanja",
+                  href: `/e-invoices/${invoice.id}`,
+                  completed: false,
+                },
+              ]}
+            />
+          )}
         </div>
       </div>
     </div>
