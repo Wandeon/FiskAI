@@ -79,7 +79,7 @@ This feature implements passwordless authentication using WebAuthn/Passkeys tech
 
 ## Integrations
 
-- **@simplewebauthn/server** → `src/lib/webauthn.ts:1-203` - Server-side WebAuthn operations
+- **@simplewebauthn/server** → `src/lib/webauthn.ts:1-202` - Server-side WebAuthn operations
 - **@simplewebauthn/browser** → `src/components/settings/passkey-manager.tsx:5` - Browser-side WebAuthn operations
 - WebAuthn API (browser native) - FIDO2/WebAuthn standard compliance
 
@@ -130,7 +130,7 @@ Unsupported browsers display a warning message → `src/components/settings/pass
 ## Evidence Links
 
 1. `src/components/settings/passkey-manager.tsx:1-212` - Complete passkey management UI
-2. `src/lib/webauthn.ts:1-203` - WebAuthn core library implementation
+2. `src/lib/webauthn.ts:1-202` - WebAuthn core library implementation
 3. `src/app/api/webauthn/register/start/route.ts:1-45` - Registration initiation endpoint
 4. `src/app/api/webauthn/register/finish/route.ts:1-70` - Registration verification endpoint
 5. `src/app/api/webauthn/login/start/route.ts:1-54` - Authentication initiation endpoint

@@ -143,7 +143,7 @@ The Auto-Match Transactions feature automatically links bank transactions to inv
 
 ### Score Thresholds
 
-- **Configuration** → `src/lib/banking/reconciliation-config.ts:1-3`
+- **Configuration** → `src/lib/banking/reconciliation-config.ts:1-2`
   - AUTO_MATCH_THRESHOLD: 85 → `src/lib/banking/reconciliation-config.ts:1`
   - PARTIAL_MATCH_THRESHOLD: 70 → `src/lib/banking/reconciliation-config.ts:2`
   - Used by both invoice and expense matching

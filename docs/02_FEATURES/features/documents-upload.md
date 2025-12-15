@@ -15,7 +15,7 @@ Provides a unified document upload system at `/documents` that enables users to 
 | API       | POST /api/import/process | `src/app/api/import/process/route.ts:9-404`            |
 | API       | GET /api/import/jobs/:id | `src/app/api/import/jobs/[id]/route.ts:6-47`           |
 | Storage   | R2 Client                | `src/lib/r2-client.ts:5-67`                            |
-| Detection | Document Type Detection  | `src/lib/import/detect-document-type.ts:19-155`        |
+| Detection | Document Type Detection  | `src/lib/import/detect-document-type.ts:19-154`        |
 
 ## User Flow
 
@@ -53,7 +53,7 @@ Provides a unified document upload system at `/documents` that enables users to 
 
 ## Supported File Formats
 
-The system accepts multiple file formats with automatic type detection -> `src/lib/import/detect-document-type.ts:143-155`:
+The system accepts multiple file formats with automatic type detection -> `src/lib/import/detect-document-type.ts:143-154`:
 
 | Format | MIME Type       | Extensions  | Typical Use Case     | Evidence                                         |
 | ------ | --------------- | ----------- | -------------------- | ------------------------------------------------ |
@@ -588,7 +588,7 @@ const { documents, total, counts } = await queryUnifiedDocuments({
    `src/app/api/import/process/route.ts:9-404`
 
 6. **Document Type Detection** - Intelligent detection from filename, extension, and content
-   `src/lib/import/detect-document-type.ts:19-155`
+   `src/lib/import/detect-document-type.ts:19-154`
 
 7. **R2 Storage Client** - Cloudflare R2 integration for secure file storage
    `src/lib/r2-client.ts:5-67`

@@ -41,7 +41,7 @@ The Expense Categories feature provides a comprehensive category management syst
 | seedDefaultCategories   | Server action for bulk category creation      | `src/app/actions/expense.ts:344-375`                        |
 | deleteExpenseCategory   | Server action for category deletion           | `src/app/actions/expense.ts:307-341`                        |
 | suggestCategory         | AI-powered category suggestion via keywords   | `src/lib/ai/categorize.ts:20-47`                            |
-| suggestCategoryByVendor | AI-powered suggestion based on vendor history | `src/lib/ai/categorize.ts:49-91`                            |
+| suggestCategoryByVendor | AI-powered suggestion based on vendor history | `src/lib/ai/categorize.ts:49-90`                            |
 
 ## Category Structure
 
@@ -224,7 +224,7 @@ The system uses keyword matching to suggest categories → `src/lib/ai/categoriz
 
 ### Vendor-Based Suggestions
 
-The system learns from previous expenses → `src/lib/ai/categorize.ts:49-91`:
+The system learns from previous expenses → `src/lib/ai/categorize.ts:49-90`:
 
 **Logic**:
 
@@ -333,7 +333,7 @@ None - This is a pure internal data management feature with no external API inte
 7. `src/app/(dashboard)/expenses/new/page.tsx:23-26` - Category loading for expense form
 8. `src/app/(dashboard)/expenses/new/expense-form.tsx:212` - Auto-set VAT deductible from category
 9. `src/lib/ai/categorize.ts:5-47` - Keyword-based category suggestions
-10. `src/lib/ai/categorize.ts:49-91` - Vendor-based category suggestions
+10. `src/lib/ai/categorize.ts:49-90` - Vendor-based category suggestions
 11. `src/app/api/ai/suggest-category/route.ts:9-66` - AI suggestion API endpoint
 12. `src/app/(dashboard)/reports/vat/page.tsx:56-61` - VAT deductibility in reporting
 13. `prisma/schema.prisma:376-390` - ExpenseCategory database schema

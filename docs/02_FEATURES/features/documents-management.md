@@ -527,7 +527,7 @@ Mobile-responsive table with card fallback -> `src/components/ui/responsive-tabl
 
 #### File Upload Integration
 
-Multi-format file acceptance -> `src/lib/import/detect-document-type.ts:143-155`
+Multi-format file acceptance -> `src/lib/import/detect-document-type.ts:143-154`
 
 Accepted formats:
 
@@ -783,7 +783,7 @@ Keywords for invoices:
 7. `src/components/import/processing-card.tsx:1-169` - Individual job status card with actions
 8. `src/app/(dashboard)/documents/[id]/page.tsx:1-58` - Smart detail router for all document types
 9. `src/lib/documents/unified-query.ts:1-237` - Unified query and normalization for all document types
-10. `src/lib/import/detect-document-type.ts:1-155` - Automatic document type detection algorithm
+10. `src/lib/import/detect-document-type.ts:1-154` - Automatic document type detection algorithm
 11. `src/app/api/import/upload/route.ts:1-95` - File upload API endpoint with validation
 12. `src/app/api/import/jobs/[id]/route.ts:1-47` - Job status query endpoint
 13. `src/app/api/import/jobs/[id]/confirm/route.ts:1-159` - Job confirmation and data save endpoint

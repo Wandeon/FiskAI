@@ -108,7 +108,7 @@ Enables passwordless authentication using WebAuthn/FIDO2 passkeys stored on user
 ## Evidence Links
 
 1. `src/components/settings/passkey-manager.tsx:1-211` - Complete passkey management UI component
-2. `src/lib/webauthn.ts:1-203` - Core WebAuthn registration and authentication logic
+2. `src/lib/webauthn.ts:1-202` - Core WebAuthn registration and authentication logic
 3. `src/app/api/webauthn/register/start/route.ts:1-44` - Registration initiation endpoint
 4. `src/app/api/webauthn/register/finish/route.ts:1-69` - Registration completion endpoint
 5. `src/app/api/webauthn/login/start/route.ts:1-53` - Authentication initiation endpoint

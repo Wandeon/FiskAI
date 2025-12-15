@@ -157,7 +157,7 @@ Allows users to authenticate and access the FiskAI application using email/passw
 
 ## Evidence Links
 
-1. `src/app/(auth)/login/page.tsx:1-239` - Main login page component with email/password and passkey flows
+1. `src/app/(auth)/login/page.tsx:1-238` - Main login page component with email/password and passkey flows
 2. `src/app/actions/auth.ts:61-98` - Login server action with rate limiting and credential validation
 3. `src/app/actions/auth.ts:213-239` - Passkey login server action
 4. `src/lib/auth.ts:9-116` - NextAuth configuration with credentials provider

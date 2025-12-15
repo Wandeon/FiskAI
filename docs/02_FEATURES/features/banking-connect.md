@@ -50,7 +50,7 @@ Enables automatic bank account synchronization via PSD2-compliant Account Inform
 | ConnectionBadge              | Visual indicator of connection status            | `src/app/(dashboard)/banking/components/connection-badge.tsx` |
 | BankingPage                  | Main dashboard displaying accounts and status    | `src/app/(dashboard)/banking/page.tsx:12-269`                 |
 | connectRoute                 | API handler for initiating connection            | `src/app/api/bank/connect/route.ts:9-102`                     |
-| callbackRoute                | OAuth callback handler for authorization         | `src/app/api/bank/callback/route.ts:8-107`                    |
+| callbackRoute                | OAuth callback handler for authorization         | `src/app/api/bank/callback/route.ts:8-106`                    |
 | disconnectRoute              | API handler for removing connection              | `src/app/api/bank/disconnect/route.ts:8-59`                   |
 | BankSyncProvider             | Provider abstraction interface                   | `src/lib/bank-sync/provider.ts:11-50`                         |
 | gocardlessProvider           | GoCardless API implementation                    | `src/lib/bank-sync/providers/gocardless.ts:91-260`            |
@@ -451,7 +451,7 @@ Configuration in `.env.example:12, 32-40`
 ## Evidence Links
 
 1. `src/app/api/bank/connect/route.ts:9-102` - Connection initiation API endpoint
-2. `src/app/api/bank/callback/route.ts:8-107` - OAuth callback handler and initial sync
+2. `src/app/api/bank/callback/route.ts:8-106` - OAuth callback handler and initial sync
 3. `src/app/api/bank/disconnect/route.ts:8-59` - Disconnection API endpoint
 4. `src/app/(dashboard)/banking/components/connect-button.tsx:1-113` - Connection UI component
 5. `src/app/(dashboard)/banking/components/connection-badge.tsx:1-44` - Status badge component

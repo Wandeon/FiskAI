@@ -182,7 +182,7 @@ Failure cases with specific reason strings for observability.
 
 ## ZKI Calculation
 
-Zaštitni Kod Izdavatelja (Protective Code of Issuer) → `src/lib/e-invoice/zki.ts:1-126`:
+Zaštitni Kod Izdavatelja (Protective Code of Issuer) → `src/lib/e-invoice/zki.ts:1-125`:
 
 ### Input Format
 
@@ -1008,7 +1008,7 @@ Configuration locations:
 1. `src/lib/fiscal/should-fiscalize.ts:1-132` - Fiscalization decision engine and queue management
 2. `src/lib/fiscal/fiscal-pipeline.ts:1-166` - Core pipeline: certificate → sign → submit → parse
 3. `src/lib/fiscal/xml-builder.ts:1-194` - Fiscal XML generation (RacunZahtjev and Storno)
-4. `src/lib/e-invoice/zki.ts:1-126` - ZKI calculation with RSA-SHA256 signature
+4. `src/lib/e-invoice/zki.ts:1-125` - ZKI calculation with RSA-SHA256 signature
 5. `src/lib/fiscal/xml-signer.ts:1-51` - Digital signature with X.509 certificate
 6. `src/lib/fiscal/porezna-client.ts:1-161` - SOAP client for CIS endpoints
 7. `src/app/api/cron/fiscal-processor/route.ts:1-227` - Background processor with retry logic

@@ -252,13 +252,13 @@ None - This is a pure internal admin interface with no external API integrations
 ## Evidence Links
 
 1. `src/app/admin/page.tsx:7-95` - Main admin dashboard with company list
-2. `src/app/admin/[companyId]/page.tsx:17-380` - Company detail page with stats and audit logs
+2. `src/app/admin/[companyId]/page.tsx:17-379` - Company detail page with stats and audit logs
 3. `src/app/admin/layout.tsx:13-45` - Admin layout with authentication guard
 4. `src/app/admin-login/page.tsx:11-89` - Admin login interface
-5. `src/app/api/admin/auth/route.ts:7-31` - Admin authentication API endpoints
+5. `src/app/api/admin/auth/route.ts:7-30` - Admin authentication API endpoints
 6. `src/app/api/admin/companies/[companyId]/audit/route.ts:6-49` - Audit log CSV export API
 7. `src/app/api/admin/support/dashboard/route.ts:32-130` - Support dashboard metrics API
-8. `src/lib/admin.ts:1-21` - Admin utility functions and module labels
+8. `src/lib/admin.ts:1-20` - Admin utility functions and module labels
 9. `prisma/schema.prisma:68-92` - Company model with entitlements and feature flags
 10. `prisma/schema.prisma:132-141` - CompanyUser model for user-company relationships
 11. `prisma/schema.prisma:278-291` - AuditLog model for audit trail

@@ -108,7 +108,7 @@ The system implements comprehensive health monitoring → `src/lib/monitoring/sy
 
 ### Monitoring API Endpoints
 
-**1. Basic Health Check** → `src/app/api/health/route.ts:1-75`:
+**1. Basic Health Check** → `src/app/api/health/route.ts:1-74`:
 
 - **Path**: `/api/health`
 - **Purpose**: Load balancer health checks
@@ -130,7 +130,7 @@ The system implements comprehensive health monitoring → `src/lib/monitoring/sy
   }
   ```
 
-**2. Readiness Probe** → `src/app/api/health/ready/route.ts:1-109`:
+**2. Readiness Probe** → `src/app/api/health/ready/route.ts:1-108`:
 
 - **Path**: `/api/health/ready`
 - **Purpose**: Kubernetes/Docker readiness checks
@@ -264,7 +264,7 @@ Only aggregate counts are shown → `MONITORING_ENDPOINTS.md:217-224`
 
 ### Internal Integration
 
-**Marketing Site** → `src/app/(marketing)/layout.tsx:1-150`:
+**Marketing Site** → `src/app/(marketing)/layout.tsx:1-149`:
 
 - Footer navigation includes status page link
 - Consistent layout and branding
@@ -342,8 +342,8 @@ Only aggregate counts are shown → `MONITORING_ENDPOINTS.md:217-224`
 
 1. `src/app/(marketing)/status/page.tsx:1-145` - Main status page implementation
 2. `src/lib/monitoring/system-health.ts:1-307` - Core health checking and metrics library
-3. `src/app/api/health/route.ts:1-75` - Basic health check endpoint
-4. `src/app/api/health/ready/route.ts:1-109` - Readiness probe endpoint
+3. `src/app/api/health/route.ts:1-74` - Basic health check endpoint
+4. `src/app/api/health/ready/route.ts:1-108` - Readiness probe endpoint
 5. `src/app/api/status/route.ts:1-54` - System status information endpoint
 6. `src/app/(marketing)/layout.tsx:106` - Footer navigation link to status
 7. `src/app/(marketing)/layout.tsx:133` - Footer bottom link to status

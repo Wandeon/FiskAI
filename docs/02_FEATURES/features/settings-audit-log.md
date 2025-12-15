@@ -436,4 +436,4 @@ GET /api/admin/companies/{companyId}/audit?limit=500
 11. `src/app/api/admin/companies/[companyId]/audit/route.ts:6-48` - Admin CSV export endpoint
 12. `prisma/migrations/20251211_add_audit_log/migration.sql:1-31` - Database migration for audit log
 13. `src/lib/navigation.ts:74` - Settings navigation menu entry
-14. `src/lib/db.ts:1-23` - Database client with Prisma extensions
+14. `src/lib/db.ts:1-22` - Database client with Prisma extensions

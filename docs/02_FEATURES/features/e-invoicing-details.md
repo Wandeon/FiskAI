@@ -55,7 +55,7 @@ Provides a comprehensive detail view for individual e-invoices, displaying all i
 | sendEInvoice action   | Server action to send invoice via provider    | `src/app/actions/e-invoice.ts:128-221`                   |
 | deleteEInvoice action | Server action to delete draft invoices        | `src/app/actions/e-invoice.ts:285-307`                   |
 | markInvoiceAsPaid     | Server action to mark invoice as paid         | `src/app/actions/e-invoice.ts:309-346`                   |
-| UBL Generator         | Generates UBL 2.1 XML for e-invoicing         | `src/lib/e-invoice/ubl-generator.ts:97-250`              |
+| UBL Generator         | Generates UBL 2.1 XML for e-invoicing         | `src/lib/e-invoice/ubl-generator.ts:97-190`              |
 
 ## Data
 

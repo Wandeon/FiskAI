@@ -208,10 +208,10 @@ Evidence: `src/lib/auth-utils.ts:12-18`
 3. `src/app/actions/auth.ts:61-103` - Login and logout server actions with rate limiting
 4. `src/lib/auth-utils.ts:1-137` - Session access utilities and auth helpers
 5. `src/app/(dashboard)/layout.tsx:15-19` - Session validation in protected layout
-6. `src/app/(auth)/login/page.tsx:1-239` - Login page with credential and passkey auth
+6. `src/app/(auth)/login/page.tsx:1-238` - Login page with credential and passkey auth
 7. `src/lib/security/rate-limit.ts:1-119` - Rate limiting implementation for login protection
 8. `prisma/schema.prisma:9-23` - User model with session relations
 9. `prisma/schema.prisma:43-48` - Session model for NextAuth
 10. `prisma/schema.prisma:25-40` - Account model for OAuth providers
 11. `src/app/api/capabilities/route.ts:1-21` - Example API route using session validation
-12. `src/middleware.ts:1-34` - Request logging middleware (non-blocking)
+12. `src/middleware.ts:1-33` - Request logging middleware (non-blocking)
