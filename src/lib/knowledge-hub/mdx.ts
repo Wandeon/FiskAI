@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
-import { GuideFrontmatter, BusinessType } from "./types"
+import { GuideFrontmatter, ComparisonFrontmatter, BusinessType } from "./types"
 
 const CONTENT_DIR = path.join(process.cwd(), "content")
 
@@ -12,7 +12,7 @@ export interface GuideContent {
 }
 
 export interface ComparisonContent {
-  frontmatter: GuideFrontmatter
+  frontmatter: ComparisonFrontmatter
   content: string
   slug: string
 }

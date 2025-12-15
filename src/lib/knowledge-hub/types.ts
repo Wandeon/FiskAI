@@ -59,3 +59,10 @@ export interface FAQ {
   question: string
   answer: string
 }
+
+export interface ComparisonFrontmatter {
+  title: string
+  description: string
+  compares: string[] // e.g., ["pausalni", "obrt-dohodak", "jdoo"]
+  decisionContext: string // e.g., "starting-solo", "additional-income"
+}

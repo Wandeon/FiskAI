@@ -13,6 +13,9 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }))
 }
 
+export const dynamicParams = true
+export const dynamic = "force-dynamic"
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const comparison = await getComparisonBySlug(slug)
