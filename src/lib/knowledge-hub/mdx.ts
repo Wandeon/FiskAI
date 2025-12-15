@@ -1,9 +1,11 @@
 import fs from "fs"
+import { promises as fsPromises } from "fs"
 import path from "path"
 import matter from "gray-matter"
 import { GuideFrontmatter, ComparisonFrontmatter, BusinessType } from "./types"
 
 const CONTENT_DIR = path.join(process.cwd(), "content")
+const COMPARISONS_PATH = path.join(process.cwd(), "content", "usporedbe")
 
 export interface GuideContent {
   frontmatter: GuideFrontmatter
@@ -58,16 +60,40 @@ export function getAllGuides(): GuideContent[] {
 
 /**
  * Get all comparison slugs for static generation
- * TODO: Implement in Task 1.2
  */
 export async function getAllComparisonSlugs(): Promise<string[]> {
-  return []
+  try {
+    const files = await fsPromises.readdir(COMPARISONS_PATH)
+    return files.filter((file) => file.endsWith(".mdx")).map((file) => file.replace(/\.mdx$/, ""))
+  } catch {
+    return []
+  }
 }
 
 /**
  * Get comparison content by slug
- * TODO: Implement in Task 1.2
  */
 export async function getComparisonBySlug(slug: string): Promise<ComparisonContent | null> {
-  return null
+  try {
+    const filePath = path.join(COMPARISONS_PATH, `${slug}.mdx`)
+    const fileContent = await fsPromises.readFile(filePath, "utf-8")
+    const { data, content } = matter(fileContent)
+
+    return {
+      slug,
+      frontmatter: data as ComparisonFrontmatter,
+      content,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get all comparisons with frontmatter (for listing)
+ */
+export async function getAllComparisons(): Promise<ComparisonContent[]> {
+  const slugs = await getAllComparisonSlugs()
+  const comparisons = await Promise.all(slugs.map((slug) => getComparisonBySlug(slug)))
+  return comparisons.filter((c): c is ComparisonContent => c !== null)
 }
