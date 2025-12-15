@@ -4,7 +4,7 @@
 
 **Last Updated:** 2025-12-15
 **Total Features:** 108
-**Coverage:** 51% (55/108 documented)
+**Coverage:** 58% (63/108 documented)
 
 ## Registry
 
@@ -74,14 +74,14 @@
 | F054              | Edit Product                  | Products      | ✅     | /products/:id/edit                 | Medium     | [→](features/products-edit.md)             |
 | F055              | Product CSV Import            | Products      | ✅     | /api/products/import               | Medium     | [→](features/products-import.md)           |
 | **REPORTS**       |
-| F056              | KPR Report                    | Reports       | ❌     | /reports/kpr                       | High       | -                                          |
-| F057              | VAT Report                    | Reports       | ❌     | /reports/vat                       | High       | -                                          |
-| F058              | Profit & Loss Report          | Reports       | ❌     | /reports/profit-loss               | High       | -                                          |
-| F059              | Aging Report                  | Reports       | ❌     | /reports/aging                     | Medium     | -                                          |
-| F060              | VAT Threshold Report          | Reports       | ❌     | /reports/vat-threshold             | Medium     | -                                          |
-| F061              | Pausalni Obrt Report          | Reports       | ❌     | /reports/pausalni-obrt             | Medium     | -                                          |
-| F062              | Data Export                   | Reports       | ❌     | /reports/export                    | High       | -                                          |
-| F063              | Accountant Export             | Reports       | ❌     | /api/reports/accountant-export     | Medium     | -                                          |
+| F056              | KPR Report                    | Reports       | ✅     | /reports/kpr                       | High       | [→](features/reports-kpr.md)               |
+| F057              | VAT Report                    | Reports       | ✅     | /reports/vat                       | High       | [→](features/reports-vat.md)               |
+| F058              | Profit & Loss Report          | Reports       | ✅     | /reports/profit-loss               | High       | [→](features/reports-profit-loss.md)       |
+| F059              | Aging Report                  | Reports       | ✅     | /reports/aging                     | Medium     | [→](features/reports-aging.md)             |
+| F060              | VAT Threshold Report          | Reports       | ✅     | /reports/vat-threshold             | Medium     | [→](features/reports-vat-threshold.md)     |
+| F061              | Pausalni Obrt Report          | Reports       | ✅     | /reports/pausalni-obrt             | Medium     | [→](features/reports-pausalni-obrt.md)     |
+| F062              | Data Export                   | Reports       | ✅     | /reports/export                    | High       | [→](features/reports-export.md)            |
+| F063              | Accountant Export             | Reports       | ✅     | /api/reports/accountant-export     | Medium     | [→](features/reports-accountant-export.md) |
 | **FISCALIZATION** |
 | F064              | Fiscalize Invoice             | Fiscalization | ❌     | Actions + CRS                      | High       | -                                          |
 | F065              | Fiscal Certificate Management | Fiscalization | ❌     | /settings/fiscalisation            | High       | -                                          |
