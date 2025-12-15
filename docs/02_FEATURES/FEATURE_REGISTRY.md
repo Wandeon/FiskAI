@@ -4,7 +4,7 @@
 
 **Last Updated:** 2025-12-15
 **Total Features:** 108
-**Coverage:** 20% (22/108 documented)
+**Coverage:** 26% (28/108 documented)
 
 ## Registry
 
@@ -36,12 +36,12 @@
 | F021              | Mark Invoice as Paid          | Invoicing     | ✅     | /invoices/:id                      | Low        | [→](features/invoicing-mark-paid.md)       |
 | F022              | Convert to Invoice            | Invoicing     | ✅     | Actions                            | Medium     | [→](features/invoicing-convert.md)         |
 | **E-INVOICING**   |
-| F023              | Create E-Invoice              | E-Invoicing   | ❌     | /e-invoices/new                    | High       | -                                          |
-| F024              | View E-Invoices               | E-Invoicing   | ❌     | /e-invoices                        | Medium     | -                                          |
-| F025              | E-Invoice Details             | E-Invoicing   | ❌     | /e-invoices/:id                    | Medium     | -                                          |
-| F026              | Send E-Invoice                | E-Invoicing   | ❌     | Actions                            | Medium     | -                                          |
-| F027              | Receive E-Invoice             | E-Invoicing   | ❌     | /api/e-invoices/receive            | Medium     | -                                          |
-| F028              | E-Invoice Compliance Check    | E-Invoicing   | ❌     | /api/compliance/en16931            | Medium     | -                                          |
+| F023              | Create E-Invoice              | E-Invoicing   | ✅     | /e-invoices/new                    | High       | [→](features/e-invoicing-create.md)        |
+| F024              | View E-Invoices               | E-Invoicing   | ✅     | /e-invoices                        | Medium     | [→](features/e-invoicing-view.md)          |
+| F025              | E-Invoice Details             | E-Invoicing   | ✅     | /e-invoices/:id                    | Medium     | [→](features/e-invoicing-details.md)       |
+| F026              | Send E-Invoice                | E-Invoicing   | ✅     | Actions                            | Medium     | [→](features/e-invoicing-send.md)          |
+| F027              | Receive E-Invoice             | E-Invoicing   | ✅     | /api/e-invoices/receive            | Medium     | [→](features/e-invoicing-receive.md)       |
+| F028              | E-Invoice Compliance Check    | E-Invoicing   | ✅     | /api/compliance/en16931            | Medium     | [→](features/e-invoicing-compliance.md)    |
 | **EXPENSES**      |
 | F029              | Create Expense                | Expenses      | ❌     | /expenses/new                      | Medium     | -                                          |
 | F030              | View Expenses                 | Expenses      | ❌     | /expenses                          | High       | -                                          |
