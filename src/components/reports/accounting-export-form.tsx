@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { FileSpreadsheet, Receipt, Archive } from "lucide-react"
+import { FileSpreadsheet, Receipt, Archive, FileText, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,19 +68,39 @@ export function AccountingExportForm() {
         </a>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <a
+          href={buildUrl("/api/reports/accountant-export?format=kpr")}
+          download
+          className="justify-center gap-2 inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        >
+          <BookOpen className="h-4 w-4" />
+          KPR izvoz (CSV)
+        </a>
+        <a
+          href={buildUrl("/api/reports/accountant-export?format=summary")}
+          download
+          className="justify-center gap-2 inline-flex items-center rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        >
+          <FileText className="h-4 w-4" />
+          Sažetak (CSV)
+        </a>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-1">
         <a
           href={buildUrl("/api/exports/season-pack")}
           download
-          className="justify-center gap-2 inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="justify-center gap-2 inline-flex items-center rounded-md border-2 border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         >
-          <Archive className="h-4 w-4" />
-          {"\"Tax season\" paket (ZIP)"}
+          <Archive className="h-5 w-5" />
+          <span className="text-base">Tax Season Paket (ZIP) - SVE ZAJEDNO</span>
         </a>
       </div>
 
       <p className="text-sm text-muted-foreground">
         CSV datoteke uključuju osnovne podatke, PDV, status plaćanja i (za troškove) link na skenirani račun.
+        Tax Season paket sadrži sve datoteke (računi, troškovi, KPR, sažetak) u jednom ZIP-u.
       </p>
     </div>
   )
