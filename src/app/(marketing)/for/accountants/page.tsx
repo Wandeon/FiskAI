@@ -17,7 +17,7 @@ export default function AccountantsPage() {
           Posebno prilagođeno za knjigovođe
         </div>
         <h1 className="text-display text-4xl font-semibold md:text-5xl">
-          Suradnja s klijentima bez <span className="text-blue-700">"donosim fascikl"</span>
+          Suradnja s klijentima bez <span className="text-blue-700">&quot;donosim fascikl&quot;</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
           Vaši klijenti šalju uredne izvozne pakete, vi dobivate točne podatke i smanjujete vrijeme obrade za 70%.
@@ -189,7 +189,7 @@ export default function AccountantsPage() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span>Pristupi po "least privilege" principu</span>
+                <span>Pristupi po &quot;least privilege&quot; principu</span>
               </li>
             </ul>
           </div>
@@ -346,7 +346,7 @@ export default function AccountantsPage() {
               </div>
             </div>
             <blockquote className="text-lg text-[var(--muted)] italic mb-4">
-              "Prije smo primali fotografije računa na WhatsApp. Sada klijenti šalju uredne CSV izvozne pakete. Vrijeme obrade smanjeno za 70%, greške gotovo eliminirane."
+              &quot;Prije smo primali fotografije računa na WhatsApp. Sada klijenti šalju uredne CSV izvozne pakete. Vrijeme obrade smanjeno za 70%, greške gotovo eliminirane.&quot;
             </blockquote>
           </div>
           <div className="space-y-4">

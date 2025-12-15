@@ -32,7 +32,7 @@ export default async function ExportPage() {
         <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="text-base">Što je uključeno</CardTitle>
-            <CardDescription>Kompletni izvoz za "tax season" handoff</CardDescription>
+            <CardDescription>Kompletni izvoz za &quot;tax season&quot; handoff</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>• <strong>Računi</strong>: broj, datumi, kupac, OIB, status, osnovica/PDV/ukupno, plaćeno, reference.</p>

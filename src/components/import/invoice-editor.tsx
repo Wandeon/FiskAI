@@ -314,7 +314,7 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
 
         {data.lineItems.length === 0 && (
           <div className="text-center py-4 text-gray-500 text-sm">
-            Nema stavki. Kliknite "Dodaj" za dodavanje.
+            Nema stavki. Kliknite &quot;Dodaj&quot; za dodavanje.
           </div>
         )}
       </div>

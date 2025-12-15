@@ -8,18 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProgressBar } from '@/components/ui/progress-bar'
-import { 
-  TrendingUp, 
-  AlertTriangle, 
+import {
+  TrendingUp,
+  AlertTriangle,
   Shield,
   Euro,
-  Calendar,
   BarChart3,
   Target,
   Scale,
   CheckCircle,
   XCircle,
-  Clock
+  FileText,
+  Download
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/format'

@@ -20,7 +20,7 @@ export default async function MarketingHomePage() {
                 AI-first računovodstvo koje ostaje u vašim rukama.
               </h1>
               <p className="max-w-xl text-base/7 text-white/85">
-                FiskAI pomaže izdavati račune, skupljati troškove i pripremati podatke za knjigovođu — bez slanja mailova i bez “donosim fascikl”.
+                FiskAI pomaže izdavati račune, skupljati troškove i pripremati podatke za knjigovođu — bez slanja mailova i bez &quot;donosim fascikl&quot;.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -52,7 +52,7 @@ export default async function MarketingHomePage() {
             <div className="space-y-4">
               <Card className="border-white/15 bg-white/10 text-white shadow-none">
                 <CardHeader>
-                  <CardTitle className="text-lg">Što je “uspjeh” u 10 minuta?</CardTitle>
+                  <CardTitle className="text-lg">Što je &quot;uspjeh&quot; u 10 minuta?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-white/85">
                   <div className="flex items-start gap-3">
@@ -151,7 +151,7 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                "Prije sam trošio 5-6 sati mjesečno na administraciju. Sada mi treba sat vremena za sve. Izvoz za knjigovođu je game-changer."
+                &quot;Prije sam trošio 5-6 sati mjesečno na administraciju. Sada mi treba sat vremena za sve. Izvoz za knjigovođu je game-changer.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -174,7 +174,7 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                "Klijenti mi šalju uredne izvozne pakete umjesto fotografija računa. Smanjuje vrijeme obrade za 70% i eliminira greške pri prepisivanju."
+                &quot;Klijenti mi šalju uredne izvozne pakete umjesto fotografija računa. Smanjuje vrijeme obrade za 70% i eliminira greške pri prepisivanju.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -197,7 +197,7 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                "AI OCR za skeniranje računa je nevjerojatan. Uštedio mi je 10-15 sati mjesečno na unosu troškova. Priprema za e-račune je plus za budućnost."
+                &quot;AI OCR za skeniranje računa je nevjerojatan. Uštedio mi je 10-15 sati mjesečno na unosu troškova. Priprema za e-račune je plus za budućnost.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (

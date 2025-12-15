@@ -20,7 +20,7 @@ export default function PausalniObrtPage() {
           Računovodstvo za paušalni obrt koje <span className="text-blue-700">štedi sati</span> mjesečno
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
-          Izradite račune, pratite troškove i pripremite podatke za knjigovođu bez slanja mailova i "donosim fascikl".
+          Izradite račune, pratite troškove i pripremite podatke za knjigovođu bez slanja mailova i &quot;donosim fascikl&quot;.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
@@ -143,7 +143,7 @@ export default function PausalniObrtPage() {
               <Download className="h-6 w-6 text-blue-600 flex-shrink-0" />
               <div>
                 <h3 className="text-xl font-semibold">Izvoz za knjigovođu</h3>
-                <p className="text-sm text-[var(--muted)] mt-1">Bez "donosim fascikl"</p>
+                <p className="text-sm text-[var(--muted)] mt-1">Bez &quot;donosim fascikl&quot;</p>
               </div>
             </div>
             <ul className="space-y-2 text-sm">
@@ -181,7 +181,7 @@ export default function PausalniObrtPage() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span>Izrada "accountant package" za slanje</span>
+                <span>Izrada &quot;accountant package&quot; za slanje</span>
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />

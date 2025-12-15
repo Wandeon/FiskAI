@@ -57,7 +57,7 @@ class MockPrismaClient {
           if (queryExtensions[op]) {
             modelObj[op] = async (args: any) => {
               // Call the extension with the original args
-              let modifiedArgs = { ...args }
+              const modifiedArgs = { ...args }
               const query = async (finalArgs: any) => {
                 // This simulates the actual database query
                 return mockDbQuery(modelName, op, finalArgs)
