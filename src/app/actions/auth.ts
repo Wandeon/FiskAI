@@ -36,6 +36,25 @@ export async function register(formData: z.infer<typeof registerSchema>) {
     },
   })
 
+  // Send welcome email
+  try {
+    const loginUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`
+    const { sendEmail } = await import('@/lib/email')
+    const { WelcomeEmail } = await import('@/lib/email/templates/welcome-email')
+
+    await sendEmail({
+      to: email,
+      subject: 'Dobrodošli u FiskAI!',
+      react: WelcomeEmail({
+        userName: name,
+        loginUrl,
+      }),
+    })
+  } catch (emailError) {
+    // Don't fail registration if email fails
+    console.error('Failed to send welcome email:', emailError)
+  }
+
   return { success: "Account created! Please log in." }
 }
 
