@@ -28,8 +28,11 @@ export const gmailProvider: EmailSyncProvider = {
   },
 
   async exchangeCode(code: string, redirectUri: string): Promise<TokenResult> {
-    const oauth2Client = getOAuth2Client()
-    oauth2Client.redirectUri = redirectUri
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri
+    )
 
     const { tokens } = await oauth2Client.getToken(code)
 
