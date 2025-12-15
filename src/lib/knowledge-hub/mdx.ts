@@ -11,6 +11,12 @@ export interface GuideContent {
   slug: string
 }
 
+export interface ComparisonContent {
+  frontmatter: GuideFrontmatter
+  content: string
+  slug: string
+}
+
 /**
  * Get all guide slugs for static generation
  */
@@ -48,4 +54,20 @@ export function getGuideBySlug(slug: string): GuideContent | null {
 export function getAllGuides(): GuideContent[] {
   const slugs = getGuideSlugs()
   return slugs.map(getGuideBySlug).filter((guide): guide is GuideContent => guide !== null)
+}
+
+/**
+ * Get all comparison slugs for static generation
+ * TODO: Implement in Task 1.2
+ */
+export async function getAllComparisonSlugs(): Promise<string[]> {
+  return []
+}
+
+/**
+ * Get comparison content by slug
+ * TODO: Implement in Task 1.2
+ */
+export async function getComparisonBySlug(slug: string): Promise<ComparisonContent | null> {
+  return null
 }
