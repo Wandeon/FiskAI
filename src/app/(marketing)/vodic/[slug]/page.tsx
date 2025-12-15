@@ -1,6 +1,5 @@
 // src/app/(marketing)/vodic/[slug]/page.tsx
 import { notFound } from "next/navigation"
-import { Suspense } from "react"
 import { MDXRemote } from "next-mdx-remote/rsc"
 import { getGuideBySlug, getGuideSlugs } from "@/lib/knowledge-hub/mdx"
 import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
@@ -10,10 +9,15 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams() {
-  const slugs = getGuideSlugs()
-  return slugs.map((slug) => ({ slug }))
-}
+// Temporarily disabled static generation due to MDX/React compatibility issue
+// TODO: Re-enable once MDX rendering is fixed
+// export async function generateStaticParams() {
+//   const slugs = getGuideSlugs()
+//   return slugs.map((slug) => ({ slug }))
+// }
+
+export const dynamicParams = true
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -44,9 +48,7 @@ export default async function GuidePage({ params }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <article className="prose prose-lg max-w-none">
-        <Suspense fallback={<div>Učitavanje...</div>}>
-          <MDXRemote source={guide.content} components={mdxComponents} />
-        </Suspense>
+        <MDXRemote source={guide.content} components={mdxComponents} />
       </article>
     </div>
   )
