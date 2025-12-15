@@ -37,6 +37,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
+    "@radix-ui/react-slot": "^1.2.4",
     "@react-email/components": "^1.0.1",
     "@react-email/render": "^2.0.0",
     "@react-pdf/renderer": "^4.3.1",

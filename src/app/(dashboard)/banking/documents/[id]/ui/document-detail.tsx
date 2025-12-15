@@ -13,7 +13,7 @@ type StatementWithRelations =
   | null
 
 type Props = {
-  job: ImportJob & { bankAccount: { name: string; iban: string } }
+  job: ImportJob & { bankAccount: { name: string; iban: string } | null }
   statement: StatementWithRelations
 }
 

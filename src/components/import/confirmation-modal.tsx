@@ -20,12 +20,14 @@ const ImageViewer = dynamic(() => import("./pdf-viewer").then((mod) => mod.Image
 interface ConfirmationModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
-  onDiscard: () => void
-  filename: string
-  fileType: "PDF" | "IMAGE"
+  onConfirm: (() => void) | ((jobId: string, data?: unknown) => void)
+  onDiscard?: () => void
+  onReject?: (jobId: string) => void
+  filename?: string
+  fileName?: string // Alternative casing
+  fileType: "PDF" | "IMAGE" | "pdf" | "image"
   fileUrl: string
-  documentType: "BANK_STATEMENT" | "INVOICE"
+  documentType: "BANK_STATEMENT" | "INVOICE" | "EXPENSE" | null
   onDocumentTypeChange?: (type: "BANK_STATEMENT" | "INVOICE") => void
   // Bank statement props
   transactions?: ExtractedTransaction[]
@@ -34,11 +36,16 @@ interface ConfirmationModalProps {
   mathValid?: boolean
   onTransactionsChange?: (transactions: ExtractedTransaction[]) => void
   selectedBankAccount?: string
+  selectedAccountId?: string // Alternative naming
   onBankAccountChange?: (accountId: string) => void
+  onAccountChange?: (accountId: string) => void // Alternative naming
   bankAccounts?: Array<{ id: string; name: string; iban: string }>
   // Invoice props
   invoiceData?: ExtractedInvoice
   onInvoiceDataChange?: (data: ExtractedInvoice) => void
+  // Additional props from import-client
+  jobId?: string
+  extractedData?: unknown
 }
 
 export function ConfirmationModal({
@@ -46,7 +53,9 @@ export function ConfirmationModal({
   onClose,
   onConfirm,
   onDiscard,
+  onReject,
   filename,
+  fileName,
   fileType,
   fileUrl,
   documentType,
@@ -57,15 +66,41 @@ export function ConfirmationModal({
   mathValid = true,
   onTransactionsChange = () => {},
   selectedBankAccount,
+  selectedAccountId,
   onBankAccountChange,
+  onAccountChange,
   bankAccounts = [],
   invoiceData,
   onInvoiceDataChange,
+  jobId,
 }: ConfirmationModalProps) {
+  // Normalize prop names for backward compatibility
+  const displayFilename = filename || fileName || "Untitled"
+  const normalizedFileType = fileType.toUpperCase() as "PDF" | "IMAGE"
+  const normalizedDocType =
+    documentType === "EXPENSE" || documentType === null ? "BANK_STATEMENT" : documentType
+  const bankAccountId = selectedBankAccount || selectedAccountId
+  const handleAccountChange = onBankAccountChange || onAccountChange
+  const handleDiscard = () => {
+    if (onDiscard) {
+      onDiscard()
+    } else if (onReject && jobId) {
+      onReject(jobId)
+    }
+  }
+  const handleConfirm = () => {
+    if (typeof onConfirm === "function") {
+      if (onConfirm.length === 0) {
+        ;(onConfirm as () => void)()
+      } else if (jobId) {
+        ;(onConfirm as (jobId: string, data?: unknown) => void)(jobId, undefined)
+      }
+    }
+  }
   // Determine if confirm should be disabled
   const isInvoiceValid = invoiceData?.mathValid !== false
   const isBankStatementValid = mathValid
-  const canConfirm = documentType === "INVOICE" ? isInvoiceValid : isBankStatementValid
+  const canConfirm = normalizedDocType === "INVOICE" ? isInvoiceValid : isBankStatementValid
   if (!isOpen) return null
 
   return (
@@ -74,9 +109,9 @@ export function ConfirmationModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">{filename}</h2>
+            <h2 className="text-xl font-semibold">{displayFilename}</h2>
             <select
-              value={documentType}
+              value={normalizedDocType}
               onChange={(e) =>
                 onDocumentTypeChange?.(e.target.value as "BANK_STATEMENT" | "INVOICE")
               }
@@ -87,10 +122,10 @@ export function ConfirmationModal({
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onDiscard}>
+            <Button variant="outline" onClick={handleDiscard}>
               Odbaci
             </Button>
-            <Button onClick={onConfirm} disabled={!canConfirm}>
+            <Button onClick={handleConfirm} disabled={!canConfirm}>
               Potvrdi
             </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -100,7 +135,7 @@ export function ConfirmationModal({
         </div>
 
         {/* Math Validation Warning - Bank Statement */}
-        {documentType === "BANK_STATEMENT" && !mathValid && (
+        {normalizedDocType === "BANK_STATEMENT" && !mathValid && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 m-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -116,7 +151,7 @@ export function ConfirmationModal({
         )}
 
         {/* Math Validation Warning - Invoice */}
-        {documentType === "INVOICE" && invoiceData && !invoiceData.mathValid && (
+        {normalizedDocType === "INVOICE" && invoiceData && !invoiceData.mathValid && (
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 m-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
@@ -132,13 +167,13 @@ export function ConfirmationModal({
         )}
 
         {/* Bank Account Context Bar */}
-        {documentType === "BANK_STATEMENT" && bankAccounts.length > 0 && (
+        {normalizedDocType === "BANK_STATEMENT" && bankAccounts.length > 0 && (
           <div className="px-4 py-2 bg-gray-50 border-b">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Bankovni račun:</label>
               <select
-                value={selectedBankAccount || ""}
-                onChange={(e) => onBankAccountChange?.(e.target.value)}
+                value={bankAccountId || ""}
+                onChange={(e) => handleAccountChange?.(e.target.value)}
                 className="border rounded px-3 py-1 text-sm"
               >
                 <option value="">Odaberi račun...</option>
@@ -156,7 +191,7 @@ export function ConfirmationModal({
         <div className="flex-1 flex overflow-hidden">
           {/* Left Side - Document Viewer */}
           <div className="w-1/2 border-r">
-            {fileType === "PDF" ? (
+            {normalizedFileType === "PDF" ? (
               <PdfViewer url={fileUrl} className="h-full" />
             ) : (
               <ImageViewer url={fileUrl} className="h-full" />
@@ -165,7 +200,7 @@ export function ConfirmationModal({
 
           {/* Right Side - Transaction Editor or Invoice Editor */}
           <div className="w-1/2 overflow-hidden">
-            {documentType === "BANK_STATEMENT" ? (
+            {normalizedDocType === "BANK_STATEMENT" ? (
               <TransactionEditor
                 transactions={transactions}
                 openingBalance={openingBalance}

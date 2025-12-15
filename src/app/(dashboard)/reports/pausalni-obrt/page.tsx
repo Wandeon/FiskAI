@@ -37,12 +37,15 @@ export default async function PausalniObrtReportsPage() {
   // Calculate key metrics for paušalni obrt
   const [monthlyTotals, annualSummary, taxSeasonPack, expenseBreakdown, incomeBreakdown] =
     await Promise.all([
-      // Get monthly totals for current year
+      // Get monthly totals for current year (paid invoices have paidAt set)
       db.eInvoice.groupBy({
         where: {
           companyId: company.id,
           direction: "OUTBOUND",
-          status: { in: ["PAID", "FISCALIZED", "SENT"] },
+          OR: [
+            { paidAt: { not: null } },
+            { status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] } },
+          ],
           issueDate: {
             gte: new Date(new Date().getFullYear(), 0, 1),
             lte: new Date(new Date().getFullYear(), 11, 31),
@@ -59,7 +62,10 @@ export default async function PausalniObrtReportsPage() {
         where: {
           companyId: company.id,
           direction: "OUTBOUND",
-          status: { in: ["PAID", "FISCALIZED", "SENT"] },
+          OR: [
+            { paidAt: { not: null } },
+            { status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] } },
+          ],
           issueDate: {
             gte: new Date(new Date().getFullYear(), 0, 1),
             lte: new Date(new Date().getFullYear(), 11, 31),
@@ -126,7 +132,7 @@ export default async function PausalniObrtReportsPage() {
         })
       ),
 
-      // Expense breakdown by category
+      // Expense breakdown by category (note: groupBy doesn't support include)
       db.expense.groupBy({
         where: {
           companyId: company.id,
@@ -139,11 +145,6 @@ export default async function PausalniObrtReportsPage() {
         _sum: {
           totalAmount: true,
         },
-        include: {
-          category: {
-            select: { name: true },
-          },
-        },
       }),
 
       // Income breakdown by month
@@ -151,7 +152,10 @@ export default async function PausalniObrtReportsPage() {
         where: {
           companyId: company.id,
           direction: "OUTBOUND",
-          status: { in: ["PAID", "FISCALIZED", "SENT"] },
+          OR: [
+            { paidAt: { not: null } },
+            { status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] } },
+          ],
           issueDate: {
             gte: new Date(new Date().getFullYear(), 0, 1),
             lte: new Date(new Date().getFullYear(), 11, 31),
@@ -210,7 +214,7 @@ export default async function PausalniObrtReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(Number(annualSummary._sum.totalAmount || 0), "HRK")}
+              {formatCurrency(Number(annualSummary._sum?.totalAmount || 0), "HRK")}
             </div>
             <p className="text-xs text-muted-foreground">{annualSummary._count._all} računa</p>
           </CardContent>

@@ -146,7 +146,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
 
     const result = await importBankStatement(formData)
 
-    if (result.success) {
+    if (result.success && "data" in result) {
       const count = result.data?.count ?? 0
       const message = [`Uspješno uvezeno ${count} transakcija`]
       const autoMatched = result.data?.autoMatchedCount ?? 0

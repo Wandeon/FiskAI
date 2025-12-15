@@ -62,20 +62,18 @@ export default async function AccountantDashboardPage() {
     monthlyRevenue,
     vatThresholdProgress,
   ] = await Promise.all([
-    // Invoices awaiting accountant approval
+    // Invoices awaiting review (sent but not yet delivered/accepted)
     db.eInvoice.count({
       where: {
         companyId: company.id,
         status: { in: ["SENT", "DELIVERED"] },
-        accountantApproved: null, // Not yet reviewed by accountant
       },
     }),
-    // Expenses awaiting accountant review
+    // Expenses awaiting review (pending status)
     db.expense.count({
       where: {
         companyId: company.id,
-        accountantProcessed: false, // Not yet processed by accountant
-        status: "APPROVED", // Only approved expenses need processing
+        status: "PENDING",
       },
     }),
     // Support tickets assigned to accountants
@@ -99,12 +97,12 @@ export default async function AccountantDashboardPage() {
         companyId: company.id,
       },
     }),
-    // Monthly revenue for current month
+    // Monthly revenue for current month (paid invoices)
     db.eInvoice.aggregate({
       where: {
         companyId: company.id,
         direction: "OUTBOUND",
-        status: "PAID",
+        paidAt: { not: null },
         issueDate: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
           lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
@@ -242,7 +240,7 @@ export default async function AccountantDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(Number(monthlyRevenue._sum.totalAmount || 0), "EUR")}
+              {formatCurrency(Number(monthlyRevenue._sum?.totalAmount || 0), "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">
               {new Date().toLocaleString("hr-HR", { month: "long", year: "numeric" })}

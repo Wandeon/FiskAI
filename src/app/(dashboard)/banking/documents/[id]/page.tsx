@@ -44,7 +44,12 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         <div>
           <h1 className="text-2xl font-bold">{job.originalName}</h1>
           <p className="text-sm text-gray-500">
-            Račun: {job.bankAccount.name} ({job.bankAccount.iban}) · Status: {job.status}
+            {job.bankAccount && (
+              <>
+                Račun: {job.bankAccount.name} ({job.bankAccount.iban}) ·{" "}
+              </>
+            )}
+            Status: {job.status}
           </p>
         </div>
         <Link href="/banking/documents">
