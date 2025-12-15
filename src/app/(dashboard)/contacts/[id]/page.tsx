@@ -79,8 +79,8 @@ export default async function ContactOverviewPage({ params }: PageProps) {
   const totalRevenue = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0)
 
   // Paid invoices (have paidAt date)
-  const paidInvoices = invoices.filter(inv => inv.paidAt)
-  const unpaidInvoices = invoices.filter(inv => !inv.paidAt && inv.status !== "DRAFT")
+  const paidInvoices = invoices.filter((inv) => inv.paidAt)
+  const unpaidInvoices = invoices.filter((inv) => !inv.paidAt && inv.status !== "DRAFT")
   const outstandingBalance = unpaidInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0)
 
   // Calculate average payment time
@@ -88,7 +88,7 @@ export default async function ContactOverviewPage({ params }: PageProps) {
   let onTimePayments = 0
   let latePayments = 0
 
-  paidInvoices.forEach(inv => {
+  paidInvoices.forEach((inv) => {
     if (inv.paidAt && inv.issueDate) {
       const paymentDays = Math.floor(
         (new Date(inv.paidAt).getTime() - new Date(inv.issueDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -96,7 +96,9 @@ export default async function ContactOverviewPage({ params }: PageProps) {
       avgPaymentDays += paymentDays
 
       // Consider on-time if paid within due date or within 30 days if no due date
-      const dueDate = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.issueDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const dueDate = inv.dueDate
+        ? new Date(inv.dueDate)
+        : new Date(inv.issueDate.getTime() + 30 * 24 * 60 * 60 * 1000)
       if (new Date(inv.paidAt) <= dueDate) {
         onTimePayments++
       } else {
@@ -109,14 +111,15 @@ export default async function ContactOverviewPage({ params }: PageProps) {
     avgPaymentDays = Math.round(avgPaymentDays / paidInvoices.length)
   }
 
-  const onTimePercentage = paidInvoices.length > 0
-    ? Math.round((onTimePayments / paidInvoices.length) * 100)
-    : 100
+  const onTimePercentage =
+    paidInvoices.length > 0 ? Math.round((onTimePayments / paidInvoices.length) * 100) : 100
 
   // Overdue invoices (unpaid and past due date)
   const now = new Date()
-  const overdueInvoices = unpaidInvoices.filter(inv => {
-    const dueDate = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.issueDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const overdueInvoices = unpaidInvoices.filter((inv) => {
+    const dueDate = inv.dueDate
+      ? new Date(inv.dueDate)
+      : new Date(inv.issueDate.getTime() + 30 * 24 * 60 * 60 * 1000)
     return now > dueDate
   })
 
@@ -127,7 +130,14 @@ export default async function ContactOverviewPage({ params }: PageProps) {
   const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.totalAmount), 0)
 
   // Payment behavior indicator
-  const paymentBehavior = onTimePercentage >= 80 ? "excellent" : onTimePercentage >= 60 ? "good" : onTimePercentage >= 40 ? "fair" : "poor"
+  const paymentBehavior =
+    onTimePercentage >= 80
+      ? "excellent"
+      : onTimePercentage >= 60
+        ? "good"
+        : onTimePercentage >= 40
+          ? "fair"
+          : "poor"
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -141,10 +151,12 @@ export default async function ContactOverviewPage({ params }: PageProps) {
             <div>
               <h1 className="text-2xl font-bold">{contact.name}</h1>
               <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                  isCustomer ? "bg-emerald-100 text-emerald-700" : "bg-purple-100 text-purple-700"
-                )}>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                    isCustomer ? "bg-emerald-100 text-emerald-700" : "bg-purple-100 text-purple-700"
+                  )}
+                >
                   {isCustomer ? "Kupac" : "Dobavljac"}
                 </span>
                 {contact.oib && <span>OIB: {contact.oib}</span>}
@@ -173,13 +185,19 @@ export default async function ContactOverviewPage({ params }: PageProps) {
         <CardContent className="py-4">
           <div className="flex flex-wrap gap-6 text-sm">
             {contact.email && (
-              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-600 hover:text-brand-600">
+              <a
+                href={`mailto:${contact.email}`}
+                className="flex items-center gap-2 text-gray-600 hover:text-brand-600"
+              >
                 <Mail className="h-4 w-4" />
                 {contact.email}
               </a>
             )}
             {contact.phone && (
-              <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-brand-600">
+              <a
+                href={`tel:${contact.phone}`}
+                className="flex items-center gap-2 text-gray-600 hover:text-brand-600"
+              >
                 <Phone className="h-4 w-4" />
                 {contact.phone}
               </a>
@@ -203,7 +221,9 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                 <Euro className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">{isCustomer ? "Ukupni prihod" : "Ukupni troskovi"}</p>
+                <p className="text-sm text-gray-500">
+                  {isCustomer ? "Ukupni prihod" : "Ukupni troskovi"}
+                </p>
                 <p className="text-2xl font-semibold">
                   {formatCurrency(isCustomer ? totalRevenue : totalExpenses)}
                 </p>
@@ -215,15 +235,27 @@ export default async function ContactOverviewPage({ params }: PageProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full",
-                outstandingBalance > 0 ? "bg-amber-100" : "bg-gray-100"
-              )}>
-                <Receipt className={cn("h-5 w-5", outstandingBalance > 0 ? "text-amber-600" : "text-gray-400")} />
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full",
+                  outstandingBalance > 0 ? "bg-amber-100" : "bg-gray-100"
+                )}
+              >
+                <Receipt
+                  className={cn(
+                    "h-5 w-5",
+                    outstandingBalance > 0 ? "text-amber-600" : "text-gray-400"
+                  )}
+                />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Neplaceno</p>
-                <p className={cn("text-2xl font-semibold", outstandingBalance > 0 && "text-amber-600")}>
+                <p
+                  className={cn(
+                    "text-2xl font-semibold",
+                    outstandingBalance > 0 && "text-amber-600"
+                  )}
+                >
                   {formatCurrency(outstandingBalance)}
                 </p>
               </div>
@@ -234,18 +266,30 @@ export default async function ContactOverviewPage({ params }: PageProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full",
-                paymentBehavior === "excellent" ? "bg-emerald-100" :
-                paymentBehavior === "good" ? "bg-blue-100" :
-                paymentBehavior === "fair" ? "bg-amber-100" : "bg-red-100"
-              )}>
-                <Clock className={cn(
-                  "h-5 w-5",
-                  paymentBehavior === "excellent" ? "text-emerald-600" :
-                  paymentBehavior === "good" ? "text-blue-600" :
-                  paymentBehavior === "fair" ? "text-amber-600" : "text-red-600"
-                )} />
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full",
+                  paymentBehavior === "excellent"
+                    ? "bg-emerald-100"
+                    : paymentBehavior === "good"
+                      ? "bg-blue-100"
+                      : paymentBehavior === "fair"
+                        ? "bg-amber-100"
+                        : "bg-red-100"
+                )}
+              >
+                <Clock
+                  className={cn(
+                    "h-5 w-5",
+                    paymentBehavior === "excellent"
+                      ? "text-emerald-600"
+                      : paymentBehavior === "good"
+                        ? "text-blue-600"
+                        : paymentBehavior === "fair"
+                          ? "text-amber-600"
+                          : "text-red-600"
+                  )}
+                />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Prosj. placanje</p>
@@ -290,9 +334,13 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    onTimePercentage >= 80 ? "bg-emerald-500" :
-                    onTimePercentage >= 60 ? "bg-blue-500" :
-                    onTimePercentage >= 40 ? "bg-amber-500" : "bg-red-500"
+                    onTimePercentage >= 80
+                      ? "bg-emerald-500"
+                      : onTimePercentage >= 60
+                        ? "bg-blue-500"
+                        : onTimePercentage >= 40
+                          ? "bg-amber-500"
+                          : "bg-red-500"
                   )}
                   style={{ width: `${onTimePercentage}%` }}
                 />
@@ -315,26 +363,39 @@ export default async function ContactOverviewPage({ params }: PageProps) {
             {overdueInvoices.length > 0 && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{overdueInvoices.length} {overdueInvoices.length === 1 ? "racun" : "racuna"} dospjelo</span>
+                <span>
+                  {overdueInvoices.length} {overdueInvoices.length === 1 ? "racun" : "racuna"}{" "}
+                  dospjelo
+                </span>
               </div>
             )}
 
             {/* Behavior indicator */}
-            <div className={cn(
-              "flex items-center gap-2 p-3 rounded-lg text-sm",
-              paymentBehavior === "excellent" ? "bg-emerald-50 text-emerald-700" :
-              paymentBehavior === "good" ? "bg-blue-50 text-blue-700" :
-              paymentBehavior === "fair" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
-            )}>
+            <div
+              className={cn(
+                "flex items-center gap-2 p-3 rounded-lg text-sm",
+                paymentBehavior === "excellent"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : paymentBehavior === "good"
+                    ? "bg-blue-50 text-blue-700"
+                    : paymentBehavior === "fair"
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-red-50 text-red-700"
+              )}
+            >
               {paymentBehavior === "excellent" || paymentBehavior === "good" ? (
                 <TrendingUp className="h-4 w-4" />
               ) : (
                 <TrendingDown className="h-4 w-4" />
               )}
               <span>
-                {paymentBehavior === "excellent" ? "Odlican platiša" :
-                 paymentBehavior === "good" ? "Dobar platiša" :
-                 paymentBehavior === "fair" ? "Prosjecan platiša" : "Cesto kasni s placanjem"}
+                {paymentBehavior === "excellent"
+                  ? "Odlican platiša"
+                  : paymentBehavior === "good"
+                    ? "Dobar platiša"
+                    : paymentBehavior === "fair"
+                      ? "Prosjecan platiša"
+                      : "Cesto kasni s placanjem"}
               </span>
             </div>
           </CardContent>
@@ -344,7 +405,10 @@ export default async function ContactOverviewPage({ params }: PageProps) {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Nedavni racuni</CardTitle>
-            <Link href={`/e-invoices?contact=${id}`} className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+            <Link
+              href={`/e-invoices?contact=${id}`}
+              className="text-sm text-brand-600 hover:underline flex items-center gap-1"
+            >
               Svi racuni <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -373,10 +437,12 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full",
-                          isPaid ? "bg-emerald-100" : isOverdue ? "bg-red-100" : "bg-gray-100"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex h-8 w-8 items-center justify-center rounded-full",
+                            isPaid ? "bg-emerald-100" : isOverdue ? "bg-red-100" : "bg-gray-100"
+                          )}
+                        >
                           {isPaid ? (
                             <CheckCircle className="h-4 w-4 text-emerald-600" />
                           ) : isOverdue ? (
@@ -394,10 +460,16 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                       </div>
                       <div className="text-right">
                         <p className="font-medium">{formatCurrency(Number(invoice.totalAmount))}</p>
-                        <p className={cn(
-                          "text-xs",
-                          isPaid ? "text-emerald-600" : isOverdue ? "text-red-600" : "text-gray-500"
-                        )}>
+                        <p
+                          className={cn(
+                            "text-xs",
+                            isPaid
+                              ? "text-emerald-600"
+                              : isOverdue
+                                ? "text-red-600"
+                                : "text-gray-500"
+                          )}
+                        >
                           {isPaid ? "Placeno" : isOverdue ? "Dospjelo" : "Ceka placanje"}
                         </p>
                       </div>
@@ -418,12 +490,32 @@ export default async function ContactOverviewPage({ params }: PageProps) {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Nacrti", count: invoices.filter(i => i.status === "DRAFT").length, color: "bg-gray-100 text-gray-600" },
-              { label: "Poslano", count: invoices.filter(i => ["SENT", "DELIVERED", "ACCEPTED"].includes(i.status)).length, color: "bg-blue-100 text-blue-600" },
-              { label: "Placeno", count: paidInvoices.length, color: "bg-emerald-100 text-emerald-600" },
-              { label: "Dospjelo", count: overdueInvoices.length, color: "bg-red-100 text-red-600" },
+              {
+                label: "Nacrti",
+                count: invoices.filter((i) => i.status === "DRAFT").length,
+                color: "bg-gray-100 text-gray-600",
+              },
+              {
+                label: "Poslano",
+                count: invoices.filter((i) => ["SENT", "DELIVERED", "ACCEPTED"].includes(i.status))
+                  .length,
+                color: "bg-blue-100 text-blue-600",
+              },
+              {
+                label: "Placeno",
+                count: paidInvoices.length,
+                color: "bg-emerald-100 text-emerald-600",
+              },
+              {
+                label: "Dospjelo",
+                count: overdueInvoices.length,
+                color: "bg-red-100 text-red-600",
+              },
             ].map((item) => (
-              <div key={item.label} className={cn("p-4 rounded-lg text-center", item.color.split(" ")[0])}>
+              <div
+                key={item.label}
+                className={cn("p-4 rounded-lg text-center", item.color.split(" ")[0])}
+              >
                 <p className={cn("text-3xl font-bold", item.color.split(" ")[1])}>{item.count}</p>
                 <p className="text-sm text-gray-600">{item.label}</p>
               </div>

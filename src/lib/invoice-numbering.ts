@@ -1,4 +1,4 @@
-import { db } from './db'
+import { db } from "./db"
 
 /**
  * Croatian fiscalization invoice number format:
@@ -54,7 +54,7 @@ export async function getNextInvoiceNumber(
       data: {
         companyId,
         code: 1,
-        name: 'Glavni ured',
+        name: "Glavni ured",
         isDefault: true,
         isActive: true,
       },
@@ -69,7 +69,7 @@ export async function getNextInvoiceNumber(
           companyId,
           businessPremisesId: premises.id,
           isDefault: true,
-          isActive: true
+          isActive: true,
         },
       })
 
@@ -80,7 +80,7 @@ export async function getNextInvoiceNumber(
         companyId,
         businessPremisesId: premises.id,
         code: 1,
-        name: 'Naplatni uređaj 1',
+        name: "Naplatni uređaj 1",
         isDefault: true,
         isActive: true,
       },
@@ -147,7 +147,7 @@ export async function previewNextInvoiceNumber(
       data: {
         companyId,
         code: 1,
-        name: 'Glavni ured',
+        name: "Glavni ured",
         isDefault: true,
         isActive: true,
       },
@@ -161,7 +161,7 @@ export async function previewNextInvoiceNumber(
           companyId,
           businessPremisesId: premises.id,
           isDefault: true,
-          isActive: true
+          isActive: true,
         },
       })
 
@@ -171,7 +171,7 @@ export async function previewNextInvoiceNumber(
         companyId,
         businessPremisesId: premises.id,
         code: 1,
-        name: 'Naplatni uređaj 1',
+        name: "Naplatni uređaj 1",
         isDefault: true,
         isActive: true,
       },
@@ -221,7 +221,7 @@ export function parseInvoiceNumber(invoiceNumber: string): {
   premisesCode: number
   deviceCode: number
 } | null {
-  const parts = invoiceNumber.split('-')
+  const parts = invoiceNumber.split("-")
   if (parts.length !== 3) return null
 
   const sequentialNumber = parseInt(parts[0], 10)
@@ -247,7 +247,7 @@ export function parseInternalReference(internalReference: string): {
   premisesCode: number
   deviceCode: number
 } | null {
-  const yearParts = internalReference.split('/')
+  const yearParts = internalReference.split("/")
   if (yearParts.length !== 2) return null
 
   const year = parseInt(yearParts[0], 10)
@@ -270,9 +270,5 @@ export function isValidCroatianInvoiceNumber(invoiceNumber: string): boolean {
   if (!parsed) return false
 
   // All parts must be positive integers
-  return (
-    parsed.sequentialNumber > 0 &&
-    parsed.premisesCode > 0 &&
-    parsed.deviceCode > 0
-  )
+  return parsed.sequentialNumber > 0 && parsed.premisesCode > 0 && parsed.deviceCode > 0
 }

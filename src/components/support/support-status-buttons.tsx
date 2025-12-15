@@ -15,11 +15,11 @@ export function CloseSupportTicketButton({ ticketId }: { ticketId: string }) {
         startTransition(async () => {
           try {
             const res = await fetch(`/api/support/tickets/${ticketId}/status`, {
-              method: 'PATCH',
+              method: "PATCH",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
-              body: JSON.stringify({ status: 'CLOSED' }),
+              body: JSON.stringify({ status: "CLOSED" }),
             })
 
             const data = await res.json()
@@ -52,11 +52,11 @@ export function ReopenSupportTicketButton({ ticketId }: { ticketId: string }) {
         startTransition(async () => {
           try {
             const res = await fetch(`/api/support/tickets/${ticketId}/status`, {
-              method: 'PATCH',
+              method: "PATCH",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
-              body: JSON.stringify({ status: 'OPEN' }),
+              body: JSON.stringify({ status: "OPEN" }),
             })
 
             const data = await res.json()

@@ -1,19 +1,54 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { deriveCapabilities } from '@/lib/capabilities'
-import { redirect } from 'next/navigation'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { deriveCapabilities } from "@/lib/capabilities"
+import { redirect } from "next/navigation"
 
 const REPORTS = [
-  { href: '/reports/vat', title: 'PDV obrazac', description: 'Pregled ulaznog i izlaznog PDV-a', icon: '📊' },
-  { href: '/reports/profit-loss', title: 'Dobit i gubitak', description: 'Prihodi vs rashodi po razdoblju', icon: '📈' },
-  { href: '/reports/aging', title: 'Starost potraživanja', description: 'Pregled dospjelih računa (30/60/90 dana)', icon: '⏰' },
-  { href: '/reports/expenses', title: 'Troškovi po kategoriji', description: 'Analiza rashoda po kategorijama', icon: '💰' },
-  { href: '/reports/revenue', title: 'Prihodi po kupcu', description: 'Analiza prihoda po kupcima', icon: '👥' },
-  { href: '/reports/export', title: 'Izvoz za knjigovođu', description: 'CSV izvoz računa i troškova (datum od-do)', icon: '📦' },
-  { href: '/reports/kpr', title: 'KPR / PO-SD', description: 'Plaćeni računi po mjesecima i PO-SD sažetak', icon: '📘' },
+  {
+    href: "/reports/vat",
+    title: "PDV obrazac",
+    description: "Pregled ulaznog i izlaznog PDV-a",
+    icon: "📊",
+  },
+  {
+    href: "/reports/profit-loss",
+    title: "Dobit i gubitak",
+    description: "Prihodi vs rashodi po razdoblju",
+    icon: "📈",
+  },
+  {
+    href: "/reports/aging",
+    title: "Starost potraživanja",
+    description: "Pregled dospjelih računa (30/60/90 dana)",
+    icon: "⏰",
+  },
+  {
+    href: "/reports/expenses",
+    title: "Troškovi po kategoriji",
+    description: "Analiza rashoda po kategorijama",
+    icon: "💰",
+  },
+  {
+    href: "/reports/revenue",
+    title: "Prihodi po kupcu",
+    description: "Analiza prihoda po kupcima",
+    icon: "👥",
+  },
+  {
+    href: "/reports/export",
+    title: "Izvoz za knjigovođu",
+    description: "CSV izvoz računa i troškova (datum od-do)",
+    icon: "📦",
+  },
+  {
+    href: "/reports/kpr",
+    title: "KPR / PO-SD",
+    description: "Plaćeni računi po mjesecima i PO-SD sažetak",
+    icon: "📘",
+  },
 ]
 
 export default async function ReportsPage() {
@@ -33,18 +68,27 @@ export default async function ReportsPage() {
 
   const [invoiceStats, expenseStats] = await Promise.all([
     db.eInvoice.aggregate({
-      where: { companyId: company.id, issueDate: { gte: startOfMonth, lte: endOfMonth }, status: { not: 'DRAFT' } },
+      where: {
+        companyId: company.id,
+        issueDate: { gte: startOfMonth, lte: endOfMonth },
+        status: { not: "DRAFT" },
+      },
       _sum: { totalAmount: true, vatAmount: true },
       _count: true,
     }),
     db.expense.aggregate({
-      where: { companyId: company.id, date: { gte: startOfMonth, lte: endOfMonth }, status: 'PAID' },
+      where: {
+        companyId: company.id,
+        date: { gte: startOfMonth, lte: endOfMonth },
+        status: "PAID",
+      },
       _sum: { totalAmount: true, vatAmount: true },
       _count: true,
     }),
   ])
 
-  const formatCurrency = (n: number | null) => new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' }).format(n || 0)
+  const formatCurrency = (n: number | null) =>
+    new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR" }).format(n || 0)
 
   return (
     <div className="space-y-6">
@@ -56,25 +100,35 @@ export default async function ReportsPage() {
       {/* Monthly Summary */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sažetak mjeseca ({now.toLocaleDateString('hr-HR', { month: 'long', year: 'numeric' })})</CardTitle>
+          <CardTitle className="text-base">
+            Sažetak mjeseca ({now.toLocaleDateString("hr-HR", { month: "long", year: "numeric" })})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-500">Prihodi</p>
-              <p className="text-xl font-bold text-green-600">{formatCurrency(Number(invoiceStats._sum.totalAmount))}</p>
+              <p className="text-xl font-bold text-green-600">
+                {formatCurrency(Number(invoiceStats._sum.totalAmount))}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Izlazni PDV</p>
-              <p className="text-xl font-bold">{formatCurrency(Number(invoiceStats._sum.vatAmount))}</p>
+              <p className="text-xl font-bold">
+                {formatCurrency(Number(invoiceStats._sum.vatAmount))}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Rashodi</p>
-              <p className="text-xl font-bold text-red-600">{formatCurrency(Number(expenseStats._sum.totalAmount))}</p>
+              <p className="text-xl font-bold text-red-600">
+                {formatCurrency(Number(expenseStats._sum.totalAmount))}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Ulazni PDV</p>
-              <p className="text-xl font-bold">{formatCurrency(Number(expenseStats._sum.vatAmount))}</p>
+              <p className="text-xl font-bold">
+                {formatCurrency(Number(expenseStats._sum.vatAmount))}
+              </p>
             </div>
           </div>
         </CardContent>

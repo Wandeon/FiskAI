@@ -1,4 +1,4 @@
-import { DocumentType } from '@prisma/client'
+import { DocumentType } from "@prisma/client"
 
 export interface DetectionResult {
   type: DocumentType
@@ -7,13 +7,33 @@ export interface DetectionResult {
 }
 
 const BANK_KEYWORDS = [
-  'izvod', 'stanje', 'promet', 'saldo', 'iban', 'swift', 'bic',
-  'transakcij', 'uplat', 'isplat', 'banka', 'račun'
+  "izvod",
+  "stanje",
+  "promet",
+  "saldo",
+  "iban",
+  "swift",
+  "bic",
+  "transakcij",
+  "uplat",
+  "isplat",
+  "banka",
+  "račun",
 ]
 
 const INVOICE_KEYWORDS = [
-  'račun', 'faktura', 'invoice', 'pdv', 'vat', 'oib', 'iznos',
-  'ukupno', 'total', 'dobavljač', 'kupac', 'dospijeće'
+  "račun",
+  "faktura",
+  "invoice",
+  "pdv",
+  "vat",
+  "oib",
+  "iznos",
+  "ukupno",
+  "total",
+  "dobavljač",
+  "kupac",
+  "dospijeće",
 ]
 
 export function detectDocumentType(
@@ -21,90 +41,94 @@ export function detectDocumentType(
   mimeType: string,
   textContent?: string
 ): DetectionResult {
-  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  const ext = fileName.split(".").pop()?.toLowerCase() || ""
   const nameLower = fileName.toLowerCase()
 
   // XML files are almost always bank statements (CAMT.053)
-  if (ext === 'xml') {
+  if (ext === "xml") {
     return {
       type: DocumentType.BANK_STATEMENT,
       confidence: 0.95,
-      reason: 'XML format typically used for CAMT.053 bank statements'
+      reason: "XML format typically used for CAMT.053 bank statements",
     }
   }
 
   // CSV files are typically bank exports
-  if (ext === 'csv') {
+  if (ext === "csv") {
     return {
       type: DocumentType.BANK_STATEMENT,
       confidence: 0.85,
-      reason: 'CSV format typically used for bank transaction exports'
+      reason: "CSV format typically used for bank transaction exports",
     }
   }
 
   // Image files are typically invoices/receipts
-  if (['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(ext)) {
+  if (["jpg", "jpeg", "png", "heic", "webp"].includes(ext)) {
     return {
       type: DocumentType.INVOICE,
       confidence: 0.8,
-      reason: 'Image format typically used for scanned invoices'
+      reason: "Image format typically used for scanned invoices",
     }
   }
 
   // For PDFs, check filename and content
-  if (ext === 'pdf') {
+  if (ext === "pdf") {
     // Check for common Croatian bank statement patterns
     // FSTM = Fina bank statements, commonly used format
     if (/^fstm\d+/i.test(nameLower) || /izvod.*\d{4}/i.test(nameLower)) {
       return {
         type: DocumentType.BANK_STATEMENT,
         confidence: 0.95,
-        reason: 'Filename matches bank statement format (FSTM/Fina)'
+        reason: "Filename matches bank statement format (FSTM/Fina)",
       }
     }
 
     // Common bank statement filename patterns
     if (
-      nameLower.includes('izvod') ||
-      nameLower.includes('statement') ||
-      nameLower.includes('promet') ||
+      nameLower.includes("izvod") ||
+      nameLower.includes("statement") ||
+      nameLower.includes("promet") ||
       /bank.*\d{6,}/.test(nameLower) ||
       /\d{4}-\d{2}.*banka/.test(nameLower)
     ) {
       return {
         type: DocumentType.BANK_STATEMENT,
         confidence: 0.9,
-        reason: 'Filename suggests bank statement'
+        reason: "Filename suggests bank statement",
       }
     }
 
     // Invoice patterns
-    if (nameLower.includes('racun') || nameLower.includes('faktura') || nameLower.includes('invoice')) {
+    if (
+      nameLower.includes("racun") ||
+      nameLower.includes("faktura") ||
+      nameLower.includes("invoice")
+    ) {
       return {
         type: DocumentType.INVOICE,
         confidence: 0.9,
-        reason: 'Filename suggests invoice'
+        reason: "Filename suggests invoice",
       }
     }
 
     // Check text content if available
     if (textContent) {
       const textLower = textContent.toLowerCase()
-      const bankScore = BANK_KEYWORDS.filter(k => textLower.includes(k)).length
-      const invoiceScore = INVOICE_KEYWORDS.filter(k => textLower.includes(k)).length
+      const bankScore = BANK_KEYWORDS.filter((k) => textLower.includes(k)).length
+      const invoiceScore = INVOICE_KEYWORDS.filter((k) => textLower.includes(k)).length
 
       if (bankScore > invoiceScore && bankScore >= 3) {
         return {
           type: DocumentType.BANK_STATEMENT,
           confidence: Math.min(0.5 + bankScore * 0.1, 0.9),
-          reason: `Found ${bankScore} bank-related keywords`
+          reason: `Found ${bankScore} bank-related keywords`,
         }
       }
       if (invoiceScore > bankScore && invoiceScore >= 2) {
         return {
           type: DocumentType.INVOICE,
           confidence: Math.min(0.5 + invoiceScore * 0.1, 0.9),
-          reason: `Found ${invoiceScore} invoice-related keywords`
+          reason: `Found ${invoiceScore} invoice-related keywords`,
         }
       }
     }
@@ -113,7 +137,7 @@ export function detectDocumentType(
     return {
       type: DocumentType.INVOICE,
       confidence: 0.5,
-      reason: 'PDF defaulting to invoice - please verify'
+      reason: "PDF defaulting to invoice - please verify",
     }
   }
 
@@ -121,34 +145,43 @@ export function detectDocumentType(
   return {
     type: DocumentType.INVOICE,
     confidence: 0.3,
-    reason: 'Unknown format - defaulting to invoice'
+    reason: "Unknown format - defaulting to invoice",
   }
 }
 
 export function getMimeTypeFromExtension(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  const ext = fileName.split(".").pop()?.toLowerCase() || ""
   const mimeMap: Record<string, string> = {
-    pdf: 'application/pdf',
-    xml: 'application/xml',
-    csv: 'text/csv',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
-    heic: 'image/heic',
-    webp: 'image/webp',
+    pdf: "application/pdf",
+    xml: "application/xml",
+    csv: "text/csv",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    heic: "image/heic",
+    webp: "image/webp",
   }
-  return mimeMap[ext] || 'application/octet-stream'
+  return mimeMap[ext] || "application/octet-stream"
 }
 
 export const ACCEPTED_FILE_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/xml': ['.xml'],
-  'text/xml': ['.xml'],
-  'text/csv': ['.csv'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png'],
-  'image/heic': ['.heic'],
-  'image/webp': ['.webp'],
+  "application/pdf": [".pdf"],
+  "application/xml": [".xml"],
+  "text/xml": [".xml"],
+  "text/csv": [".csv"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "image/heic": [".heic"],
+  "image/webp": [".webp"],
 }
 
-export const ACCEPTED_EXTENSIONS = ['.pdf', '.xml', '.csv', '.jpg', '.jpeg', '.png', '.heic', '.webp']
+export const ACCEPTED_EXTENSIONS = [
+  ".pdf",
+  ".xml",
+  ".csv",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".heic",
+  ".webp",
+]

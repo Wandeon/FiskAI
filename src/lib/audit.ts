@@ -1,19 +1,19 @@
-import { db } from './db';
-import type { AuditAction } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
+import { db } from "./db"
+import type { AuditAction } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
 
 interface AuditLogParams {
-  companyId: string;
-  userId?: string | null;
-  action: AuditAction;
-  entity: string;
-  entityId: string;
+  companyId: string
+  userId?: string | null
+  action: AuditAction
+  entity: string
+  entityId: string
   changes?: {
-    before?: Record<string, unknown>;
-    after?: Record<string, unknown>;
-  } | null;
-  ipAddress?: string | null;
-  userAgent?: string | null;
+    before?: Record<string, unknown>
+    after?: Record<string, unknown>
+  } | null
+  ipAddress?: string | null
+  userAgent?: string | null
 }
 
 /**
@@ -34,10 +34,10 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
         ipAddress: params.ipAddress ?? null,
         userAgent: params.userAgent ?? null,
       },
-    });
+    })
   } catch (error) {
     // Log error but don't throw - audit should never break main operations
-    console.error('[AuditLog] Failed to log audit event:', error);
+    console.error("[AuditLog] Failed to log audit event:", error)
   }
 }
 
@@ -49,20 +49,20 @@ export function createChanges(
   before: Record<string, unknown>,
   after: Record<string, unknown>
 ): { before: Record<string, unknown>; after: Record<string, unknown> } {
-  const excludeFields = ['updatedAt', 'createdAt', 'id', 'companyId'];
+  const excludeFields = ["updatedAt", "createdAt", "id", "companyId"]
 
-  const changedBefore: Record<string, unknown> = {};
-  const changedAfter: Record<string, unknown> = {};
+  const changedBefore: Record<string, unknown> = {}
+  const changedAfter: Record<string, unknown> = {}
 
   for (const key of Object.keys(after)) {
-    if (excludeFields.includes(key)) continue;
+    if (excludeFields.includes(key)) continue
     if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
-      changedBefore[key] = before[key];
-      changedAfter[key] = after[key];
+      changedBefore[key] = before[key]
+      changedAfter[key] = after[key]
     }
   }
 
-  return { before: changedBefore, after: changedAfter };
+  return { before: changedBefore, after: changedAfter }
 }
 
 /**
@@ -71,16 +71,16 @@ export function createChanges(
  */
 export function getIpFromHeaders(headers: Headers): string | null {
   return (
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    headers.get('x-real-ip') ||
-    headers.get('cf-connecting-ip') ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip") ||
+    headers.get("cf-connecting-ip") ||
     null
-  );
+  )
 }
 
 /**
  * Helper to get user agent from request headers.
  */
 export function getUserAgentFromHeaders(headers: Headers): string | null {
-  return headers.get('user-agent');
+  return headers.get("user-agent")
 }

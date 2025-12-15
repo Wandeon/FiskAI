@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
@@ -13,9 +13,15 @@ interface NotificationCenterProps {
   onOpenChange?: (isOpen: boolean) => void
 }
 
-const glow = "before:absolute before:-inset-px before:rounded-full before:bg-gradient-to-r before:from-brand-500/60 before:via-indigo-500/60 before:to-purple-500/60 before:opacity-0 before:transition before:duration-200 hover:before:opacity-30";
+const glow =
+  "before:absolute before:-inset-px before:rounded-full before:bg-gradient-to-r before:from-brand-500/60 before:via-indigo-500/60 before:to-purple-500/60 before:opacity-0 before:transition before:duration-200 hover:before:opacity-30"
 
-export function NotificationCenter({ items = [], className, badgeCount, onOpenChange }: NotificationCenterProps) {
+export function NotificationCenter({
+  items = [],
+  className,
+  badgeCount,
+  onOpenChange,
+}: NotificationCenterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const count = items.length
@@ -44,7 +50,10 @@ export function NotificationCenter({ items = [], className, badgeCount, onOpenCh
             return next
           })
         }}
-        className={cn("relative flex items-center justify-center rounded-full p-2 text-[var(--muted)] transition-colors focus-ring", glow)}
+        className={cn(
+          "relative flex items-center justify-center rounded-full p-2 text-[var(--muted)] transition-colors focus-ring",
+          glow
+        )}
         aria-label="Obavijesti"
       >
         <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-secondary)]">
@@ -85,7 +94,10 @@ export function NotificationCenter({ items = [], className, badgeCount, onOpenCh
                           </span>
                         )}
                         {item.action && (
-                          <Link href={item.action.href} className="text-brand-600 hover:text-brand-700 font-medium">
+                          <Link
+                            href={item.action.href}
+                            className="text-brand-600 hover:text-brand-700 font-medium"
+                          >
                             {item.action.label}
                           </Link>
                         )}
@@ -97,7 +109,10 @@ export function NotificationCenter({ items = [], className, badgeCount, onOpenCh
             )}
           </div>
           <div className="border-t border-[var(--border)] px-5 py-3 text-center">
-            <Link href="/notifications" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            <Link
+              href="/notifications"
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+            >
               Prikaži sve obavijesti
             </Link>
           </div>
@@ -108,18 +123,27 @@ export function NotificationCenter({ items = [], className, badgeCount, onOpenCh
 }
 
 function NotificationIcon({ type }: { type: NotificationType }) {
-  const base = "flex h-9 w-9 items-center justify-center rounded-full";
+  const base = "flex h-9 w-9 items-center justify-center rounded-full"
   if (type === "success") {
     return (
-      <div className={cn(base, "bg-emerald-50 text-emerald-600")}> <CheckCircle2 className="h-4 w-4" /> </div>
+      <div className={cn(base, "bg-emerald-50 text-emerald-600")}>
+        {" "}
+        <CheckCircle2 className="h-4 w-4" />{" "}
+      </div>
     )
   }
   if (type === "warning") {
     return (
-      <div className={cn(base, "bg-amber-50 text-amber-600")}> <AlertCircle className="h-4 w-4" /> </div>
+      <div className={cn(base, "bg-amber-50 text-amber-600")}>
+        {" "}
+        <AlertCircle className="h-4 w-4" />{" "}
+      </div>
     )
   }
   return (
-    <div className={cn(base, "bg-slate-100 text-slate-600")}> <Bell className="h-4 w-4" /> </div>
+    <div className={cn(base, "bg-slate-100 text-slate-600")}>
+      {" "}
+      <Bell className="h-4 w-4" />{" "}
+    </div>
   )
 }

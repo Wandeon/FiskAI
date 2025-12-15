@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
@@ -33,7 +33,12 @@ const segmentOptions = [
   { value: "NO_DOCUMENTS", label: "Bez e-računa" },
 ] as const
 
-export function ContactFilters({ initialSearch = "", initialType = "ALL", initialSegments = [], view = "list" }: ContactFiltersProps) {
+export function ContactFilters({
+  initialSearch = "",
+  initialType = "ALL",
+  initialSegments = [],
+  view = "list",
+}: ContactFiltersProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -130,7 +135,7 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL", initia
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
             placeholder="Pretraži po nazivu, OIB-u ili emailu..."
             className="w-full rounded-button border border-[var(--border)] bg-[var(--surface)] py-2.5 pl-10 pr-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-colors"
           />
@@ -162,7 +167,9 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL", initia
               className="rounded-button border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--foreground)] focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               {typeOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -263,7 +270,9 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL", initia
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--foreground)]">Spremi filtere</p>
-            <p className="text-xs text-[var(--muted)]">Sačuvajte česte kombinacije (npr. PDV kupci bez e-maila).</p>
+            <p className="text-xs text-[var(--muted)]">
+              Sačuvajte česte kombinacije (npr. PDV kupci bez e-maila).
+            </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <input
@@ -272,7 +281,12 @@ export function ContactFilters({ initialSearch = "", initialType = "ALL", initia
               placeholder="Naziv preseta"
               className="w-full rounded-button border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 sm:w-48"
             />
-            <Button size="sm" variant="outline" onClick={savePreset} disabled={isPending || !presetName.trim()}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={savePreset}
+              disabled={isPending || !presetName.trim()}
+            >
               Spremi
             </Button>
           </div>

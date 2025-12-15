@@ -3,7 +3,11 @@
 
 import { db } from "@/lib/db"
 import { ParsedTransaction } from "./csv-parser"
-import { matchTransactionsToExpenses, getExpenseCandidates, ExpenseCandidate } from "./expense-reconciliation"
+import {
+  matchTransactionsToExpenses,
+  getExpenseCandidates,
+  ExpenseCandidate,
+} from "./expense-reconciliation"
 import { MatchStatus, Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
@@ -61,17 +65,15 @@ export async function runAutoMatchExpenses(params: AutoMatchParams) {
     return { matchedCount: 0, evaluated: 0 }
   }
 
-  const parsedTransactions: (ParsedTransaction & { id: string })[] = transactions.map(
-    (txn) => ({
-      id: txn.id,
-      date: txn.date,
-      amount: Math.abs(Number(txn.amount)), // Make positive for matching
-      description: txn.description,
-      reference: txn.reference || "",
-      type: "debit",
-      currency: txn.bankAccount?.currency || "EUR",
-    })
-  )
+  const parsedTransactions: (ParsedTransaction & { id: string })[] = transactions.map((txn) => ({
+    id: txn.id,
+    date: txn.date,
+    amount: Math.abs(Number(txn.amount)), // Make positive for matching
+    description: txn.description,
+    reference: txn.reference || "",
+    type: "debit",
+    currency: txn.bankAccount?.currency || "EUR",
+  }))
 
   const results = matchTransactionsToExpenses(parsedTransactions, expenses)
   const txMap = new Map(transactions.map((txn) => [txn.id, txn]))
@@ -116,7 +118,11 @@ export async function runAutoMatchExpenses(params: AutoMatchParams) {
       )
 
       logger.info(
-        { transactionId: txn.id, expenseId: result.matchedExpenseId, score: result.confidenceScore },
+        {
+          transactionId: txn.id,
+          expenseId: result.matchedExpenseId,
+          score: result.confidenceScore,
+        },
         "Auto-matched expense to transaction"
       )
     }
@@ -231,10 +237,7 @@ export async function linkTransactionToExpense(
       },
     })
 
-    logger.info(
-      { transactionId, expenseId, userId },
-      "Manually linked expense to transaction"
-    )
+    logger.info({ transactionId, expenseId, userId }, "Manually linked expense to transaction")
 
     revalidatePath("/banking")
     revalidatePath("/banking/transactions")

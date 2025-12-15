@@ -150,7 +150,7 @@ export default async function DashboardPage() {
     },
   ]
 
-  const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'korisniče'
+  const firstName = user.name?.split(" ")[0] || user.email?.split("@")[0] || "korisniče"
 
   const getStatusAggregate = (status: EInvoiceStatus) =>
     statusBuckets.find((bucket) => bucket.status === status)
@@ -184,7 +184,7 @@ export default async function DashboardPage() {
     draftInvoices > 0 && {
       id: "drafts",
       type: "info" as const,
-      title: `${draftInvoices} e-račun${draftInvoices === 1 ? '' : 'a'} čeka slanje`,
+      title: `${draftInvoices} e-račun${draftInvoices === 1 ? "" : "a"} čeka slanje`,
       description: "Dovršite nacrte i pošaljite kupcima.",
       action: { label: "Pregledaj", href: "/e-invoices?status=DRAFT" },
     },
@@ -200,7 +200,7 @@ export default async function DashboardPage() {
     {
       id: "revenue",
       label: "Ukupni prihod",
-      value: `${totalRevenueValue.toLocaleString('hr-HR', { minimumFractionDigits: 2 })} €`,
+      value: `${totalRevenueValue.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} €`,
       icon: <TrendingUp className="h-4 w-4" />,
       change: `Zadnjih ${monthsWindow} mjeseci`,
     },

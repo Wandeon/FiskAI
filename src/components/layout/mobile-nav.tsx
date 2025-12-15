@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -25,12 +25,12 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden"
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = ""
     }
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = ""
     }
   }, [isOpen])
 
@@ -108,10 +108,12 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
                           : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]"
                       )}
                     >
-                      <Icon className={cn(
-                        "h-5 w-5",
-                        isActive ? "text-brand-600 dark:text-brand-400" : "text-[var(--muted)]"
-                      )} />
+                      <Icon
+                        className={cn(
+                          "h-5 w-5",
+                          isActive ? "text-brand-600 dark:text-brand-400" : "text-[var(--muted)]"
+                        )}
+                      />
                       <span className="flex-1">{item.name}</span>
                       {item.badge !== undefined && item.badge > 0 && (
                         <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">

@@ -1,13 +1,13 @@
 // src/app/(dashboard)/reports/vat-threshold/page.tsx
 // VAT threshold monitoring page for Croatian compliance
 
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ProgressBar } from '@/components/ui/progress-bar'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ProgressBar } from "@/components/ui/progress-bar"
 import {
   TrendingUp,
   AlertTriangle,
@@ -19,28 +19,28 @@ import {
   CheckCircle,
   XCircle,
   FileText,
-  Download
-} from 'lucide-react'
-import Link from 'next/link'
-import { formatCurrency } from '@/lib/format'
-import { logger } from '@/lib/logger'
-import { calculateVatThresholdProgress } from '@/lib/reports/kpr-generator'
+  Download,
+} from "lucide-react"
+import Link from "next/link"
+import { formatCurrency } from "@/lib/format"
+import { logger } from "@/lib/logger"
+import { calculateVatThresholdProgress } from "@/lib/reports/kpr-generator"
 
 interface VatThresholdData {
-  annualRevenue: number;
-  vatThreshold: number; // 40,000 EUR
-  percentage: number;
-  status: 'BELOW' | 'WARNING' | 'EXCEEDED';
+  annualRevenue: number
+  vatThreshold: number // 40,000 EUR
+  percentage: number
+  status: "BELOW" | "WARNING" | "EXCEEDED"
   monthlyBreakdown: Array<{
-    month: number;
-    monthName: string;
-    revenue: number;
-    percentageOfThreshold: number;
-  }>;
-  projectedAnnualRevenue: number;
-  remainingUntilThreshold: number;
-  daysLeftInYear: number;
-  estimatedDailyRevenueNeeded: number;
+    month: number
+    monthName: string
+    revenue: number
+    percentageOfThreshold: number
+  }>
+  projectedAnnualRevenue: number
+  remainingUntilThreshold: number
+  daysLeftInYear: number
+  estimatedDailyRevenueNeeded: number
 }
 
 export default async function VatThresholdReportPage() {
@@ -65,54 +65,66 @@ export default async function VatThresholdReportPage() {
       issueDate: {
         gte: new Date(currentYear, 0, 1),
         lte: new Date(currentYear, 11, 31),
-      }
+      },
     },
-    by: ['issueDate'],
+    by: ["issueDate"],
     _sum: {
       totalAmount: true,
-    }
+    },
   })
 
   // Group revenue by month
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
   const monthNames = [
-    'Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj',
-    'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'
+    "Siječanj",
+    "Veljača",
+    "Ožujak",
+    "Travanj",
+    "Svibanj",
+    "Lipanj",
+    "Srpanj",
+    "Kolovoz",
+    "Rujan",
+    "Listopad",
+    "Studeni",
+    "Prosinac",
   ]
 
-  const monthlyBreakdown = months.map(month => {
+  const monthlyBreakdown = months.map((month) => {
     const monthStart = new Date(currentYear, month - 1, 1)
     const monthEnd = new Date(currentYear, month, 0) // Last day of month
-    
+
     const monthRevenue = monthlyRevenue
-      .filter(item => 
-        item.issueDate >= monthStart && 
-        item.issueDate <= monthEnd
-      )
+      .filter((item) => item.issueDate >= monthStart && item.issueDate <= monthEnd)
       .reduce((sum, item) => sum + Number(item._sum.totalAmount!), 0)
 
     return {
       month,
       monthName: monthNames[month - 1],
       revenue: Number(monthRevenue.toFixed(2)),
-      percentageOfThreshold: Number(((monthRevenue / vatThresholdData.vatThreshold) * 100).toFixed(2)),
+      percentageOfThreshold: Number(
+        ((monthRevenue / vatThresholdData.vatThreshold) * 100).toFixed(2)
+      ),
     }
   })
 
   // Calculate projections
   const currentDate = new Date()
-  const daysIntoYear = Math.floor((currentDate.getTime() - new Date(currentYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24))
+  const daysIntoYear = Math.floor(
+    (currentDate.getTime() - new Date(currentYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)
+  )
   const daysInYear = 365 // Simplified for leap year
   const daysLeftInYear = Math.max(0, daysInYear - daysIntoYear)
-  
-  const projectedAnnualRevenue = daysInYear > 0 
-    ? (vatThresholdData.annualRevenue / daysIntoYear) * daysInYear
-    : 0
-  
-  const remainingUntilThreshold = Math.max(0, vatThresholdData.vatThreshold - vatThresholdData.annualRevenue)
-  const estimatedDailyRevenueNeeded = daysLeftInYear > 0 
-    ? remainingUntilThreshold / daysLeftInYear 
-    : 0
+
+  const projectedAnnualRevenue =
+    daysInYear > 0 ? (vatThresholdData.annualRevenue / daysIntoYear) * daysInYear : 0
+
+  const remainingUntilThreshold = Math.max(
+    0,
+    vatThresholdData.vatThreshold - vatThresholdData.annualRevenue
+  )
+  const estimatedDailyRevenueNeeded =
+    daysLeftInYear > 0 ? remainingUntilThreshold / daysLeftInYear : 0
 
   const reportData: VatThresholdData = {
     annualRevenue: vatThresholdData.annualRevenue,
@@ -164,7 +176,7 @@ export default async function VatThresholdReportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(reportData.annualRevenue, 'EUR')}
+              {formatCurrency(reportData.annualRevenue, "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">
               {reportData.percentage.toFixed(2)}% od 40.000 €
@@ -182,11 +194,9 @@ export default async function VatThresholdReportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(reportData.vatThreshold, 'EUR')}
+              {formatCurrency(reportData.vatThreshold, "EUR")}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Prema Zakonu o PDV-u
-            </p>
+            <p className="text-xs text-muted-foreground">Prema Zakonu o PDV-u</p>
           </CardContent>
         </Card>
 
@@ -199,10 +209,12 @@ export default async function VatThresholdReportPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${
-              reportData.remainingUntilThreshold > 0 ? 'text-amber-600' : 'text-green-600'
-            }`}>
-              {formatCurrency(reportData.remainingUntilThreshold, 'EUR')}
+            <div
+              className={`text-2xl font-bold ${
+                reportData.remainingUntilThreshold > 0 ? "text-amber-600" : "text-green-600"
+              }`}
+            >
+              {formatCurrency(reportData.remainingUntilThreshold, "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">
               {reportData.daysLeftInYear} dana preostalo
@@ -219,13 +231,19 @@ export default async function VatThresholdReportPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${
-              reportData.projectedAnnualRevenue >= reportData.vatThreshold ? 'text-red-600' : 'text-purple-600'
-            }`}>
-              {formatCurrency(reportData.projectedAnnualRevenue, 'EUR')}
+            <div
+              className={`text-2xl font-bold ${
+                reportData.projectedAnnualRevenue >= reportData.vatThreshold
+                  ? "text-red-600"
+                  : "text-purple-600"
+              }`}
+            >
+              {formatCurrency(reportData.projectedAnnualRevenue, "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">
-              {reportData.projectedAnnualRevenue >= reportData.vatThreshold ? 'PREKO PRAGA' : 'ISPRAVNO'}
+              {reportData.projectedAnnualRevenue >= reportData.vatThreshold
+                ? "PREKO PRAGA"
+                : "ISPRAVNO"}
             </p>
           </CardContent>
         </Card>
@@ -239,42 +257,40 @@ export default async function VatThresholdReportPage() {
             Napredak prema pragu PDV-a
           </CardTitle>
           <CardDescription>
-            {currentYear} godina - {formatCurrency(reportData.vatThreshold, 'EUR')} prag za obvezu PDV-a
+            {currentYear} godina - {formatCurrency(reportData.vatThreshold, "EUR")} prag za obvezu
+            PDV-a
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Napredak</span>
-              <span className="text-sm font-semibold">
-                {reportData.percentage.toFixed(2)}%
-              </span>
+              <span className="text-sm font-semibold">{reportData.percentage.toFixed(2)}%</span>
             </div>
-            <ProgressBar
-              value={Math.min(reportData.percentage, 100)}
-              className="h-3"
-            />
+            <ProgressBar value={Math.min(reportData.percentage, 100)} className="h-3" />
             <div className="flex justify-between text-sm">
-              <span>{formatCurrency(reportData.annualRevenue, 'EUR')} prihoda</span>
-              <span>{formatCurrency(reportData.vatThreshold, 'EUR')} prag</span>
+              <span>{formatCurrency(reportData.annualRevenue, "EUR")} prihoda</span>
+              <span>{formatCurrency(reportData.vatThreshold, "EUR")} prag</span>
             </div>
 
             <div className="mt-4 pt-4 border-t">
               <h3 className="font-medium mb-2">Status</h3>
-              <Badge 
+              <Badge
                 variant={
-                  reportData.status === 'EXCEEDED' ? 'destructive' :
-                  reportData.status === 'WARNING' ? 'secondary' :
-                  'default'
+                  reportData.status === "EXCEEDED"
+                    ? "destructive"
+                    : reportData.status === "WARNING"
+                      ? "secondary"
+                      : "default"
                 }
                 className="text-sm"
               >
-                {reportData.status === 'EXCEEDED' ? (
+                {reportData.status === "EXCEEDED" ? (
                   <>
                     <XCircle className="h-4 w-4 mr-1" />
                     PREKORAČENO - Obvezan PDV
                   </>
-                ) : reportData.status === 'WARNING' ? (
+                ) : reportData.status === "WARNING" ? (
                   <>
                     <AlertTriangle className="h-4 w-4 mr-1" />
                     POZOR - Blizu praga
@@ -308,19 +324,22 @@ export default async function VatThresholdReportPage() {
               <div key={index} className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">{month.monthName}</span>
-                  <span>{formatCurrency(month.revenue, 'EUR')} ({month.percentageOfThreshold}%)</span>
+                  <span>
+                    {formatCurrency(month.revenue, "EUR")} ({month.percentageOfThreshold}%)
+                  </span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div 
+                  <div
                     className="h-2 rounded-full bg-blue-500"
-                    style={{ 
+                    style={{
                       width: `${Math.min(month.percentageOfThreshold * 2.5, 100)}%`,
-                      backgroundColor: month.percentageOfThreshold >= 100 
-                        ? '#ef4444' // Red if over threshold
-                        : month.percentageOfThreshold >= 85 
-                        ? '#f59e0b' // Amber if approaching
-                        : '#3b82f6' // Blue if normal
-                    }} 
+                      backgroundColor:
+                        month.percentageOfThreshold >= 100
+                          ? "#ef4444" // Red if over threshold
+                          : month.percentageOfThreshold >= 85
+                            ? "#f59e0b" // Amber if approaching
+                            : "#3b82f6", // Blue if normal
+                    }}
                   ></div>
                 </div>
               </div>
@@ -337,13 +356,11 @@ export default async function VatThresholdReportPage() {
               <AlertTriangle className="h-5 w-5" />
               Preporuke
             </CardTitle>
-            <CardDescription>
-              Akcije koje možete poduzeti na temelju statusa
-            </CardDescription>
+            <CardDescription>Akcije koje možete poduzeti na temelju statusa</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {reportData.status === 'EXCEEDED' && (
+              {reportData.status === "EXCEEDED" && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <h4 className="font-medium text-red-800 flex items-center gap-1">
                     <XCircle className="h-4 w-4" />
@@ -358,14 +375,15 @@ export default async function VatThresholdReportPage() {
                 </div>
               )}
 
-              {reportData.status === 'WARNING' && (
+              {reportData.status === "WARNING" && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <h4 className="font-medium text-amber-800 flex items-center gap-1">
                     <AlertTriangle className="h-4 w-4" />
                     Opasna zona
                   </h4>
                   <p className="text-sm text-amber-700 mt-1">
-                    Na putu ste da prekoračite prag od 40.000 €. Procijenjeno {formatCurrency(reportData.projectedAnnualRevenue, 'EUR')}
+                    Na putu ste da prekoračite prag od 40.000 €. Procijenjeno{" "}
+                    {formatCurrency(reportData.projectedAnnualRevenue, "EUR")}
                   </p>
                   <Button variant="outline" size="sm" className="mt-2" asChild>
                     <Link href="/settings?tab=vat">Planiraj promjene</Link>
@@ -373,7 +391,7 @@ export default async function VatThresholdReportPage() {
                 </div>
               )}
 
-              {reportData.status === 'BELOW' && (
+              {reportData.status === "BELOW" && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-medium text-green-800 flex items-center gap-1">
                     <CheckCircle className="h-4 w-4" />
@@ -383,7 +401,8 @@ export default async function VatThresholdReportPage() {
                     Ispod praga PDV-a. Trenutno ste izuzeći od obveze PDV-a.
                   </p>
                   <p className="text-sm text-green-600 mt-1">
-                    Ako nastavite trenutnom stopom, procijenjeno je {formatCurrency(reportData.projectedAnnualRevenue, 'EUR')}
+                    Ako nastavite trenutnom stopom, procijenjeno je{" "}
+                    {formatCurrency(reportData.projectedAnnualRevenue, "EUR")}
                   </p>
                 </div>
               )}
@@ -394,10 +413,11 @@ export default async function VatThresholdReportPage() {
                   Procjena za preostatak godine
                 </h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  Još {formatCurrency(reportData.remainingUntilThreshold, 'EUR')} do praga
+                  Još {formatCurrency(reportData.remainingUntilThreshold, "EUR")} do praga
                 </p>
                 <p className="text-sm text-blue-600">
-                  Trebate {formatCurrency(reportData.estimatedDailyRevenueNeeded, 'EUR')} dnevno za ostvarenje praga do kraja godine (ako želite)
+                  Trebate {formatCurrency(reportData.estimatedDailyRevenueNeeded, "EUR")} dnevno za
+                  ostvarenje praga do kraja godine (ako želite)
                 </p>
               </div>
             </div>
@@ -410,9 +430,7 @@ export default async function VatThresholdReportPage() {
               <Shield className="h-5 w-5" />
               Poslovni savjeti
             </CardTitle>
-            <CardDescription>
-              Informacije za poslovne odluke na temelju praga
-            </CardDescription>
+            <CardDescription>Informacije za poslovne odluke na temelju praga</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

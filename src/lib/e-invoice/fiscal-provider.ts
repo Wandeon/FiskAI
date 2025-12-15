@@ -1,6 +1,6 @@
-import { FiscalProvider, FiscalConfig } from './fiscal-types'
-import { MockFiscalProvider } from './providers/mock-fiscal'
-import { IeRacuniProvider } from './providers/ie-racuni'
+import { FiscalProvider, FiscalConfig } from "./fiscal-types"
+import { MockFiscalProvider } from "./providers/mock-fiscal"
+import { IeRacuniProvider } from "./providers/ie-racuni"
 
 /**
  * Get the configured fiscal provider for Croatian fiscalization
@@ -9,13 +9,13 @@ import { IeRacuniProvider } from './providers/ie-racuni'
  * @returns Configured fiscal provider instance
  */
 export function getFiscalProvider(config?: Partial<FiscalConfig>): FiscalProvider {
-  const providerName = config?.provider || process.env.FISCAL_PROVIDER || 'mock'
+  const providerName = config?.provider || process.env.FISCAL_PROVIDER || "mock"
 
   switch (providerName) {
-    case 'ie-racuni':
+    case "ie-racuni":
       return new IeRacuniProvider(config)
 
-    case 'mock':
+    case "mock":
     default:
       return new MockFiscalProvider()
   }
@@ -37,19 +37,19 @@ export async function testFiscalProvider(config?: Partial<FiscalConfig>): Promis
       return {
         success: connected,
         provider: provider.name,
-        error: connected ? undefined : 'Connection test failed'
+        error: connected ? undefined : "Connection test failed",
       }
     }
 
     return {
       success: true,
-      provider: provider.name
+      provider: provider.name,
     }
   } catch (error) {
     return {
       success: false,
-      provider: 'unknown',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      provider: "unknown",
+      error: error instanceof Error ? error.message : "Unknown error",
     }
   }
 }

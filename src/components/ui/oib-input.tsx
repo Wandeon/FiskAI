@@ -39,58 +39,61 @@ export function OibInput({
   const [progress, setProgress] = useState<string | null>(null)
   const [lastLookupValue, setLastLookupValue] = useState<string | null>(null)
 
-  const performLookup = useCallback(async (oib: string) => {
-    setIsLookingUp(true)
-    setLookupSuccess(false)
-    setLookupError(null)
-    setProgress("Provjeravam VIES…")
-
-    try {
-      const response = await fetch("/api/oib/lookup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ oib }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setLookupSuccess(true)
-        setLookupError(null)
-        setProgress("Pronađeno preko VIES/Sudskog registra")
-        
-        if (onLookupSuccess) {
-          onLookupSuccess({
-            name: result.name,
-            address: result.address,
-            city: result.city,
-            postalCode: result.postalCode,
-            vatNumber: result.vatNumber,
-          })
-        }
-      } else {
-        setLookupSuccess(false)
-        setLookupError(result.error || "Greška pri pretrazi")
-        setProgress(null)
-        
-        if (onLookupError) {
-          onLookupError(result.error || "Greška pri pretrazi")
-        }
-      }
-    } catch {
+  const performLookup = useCallback(
+    async (oib: string) => {
+      setIsLookingUp(true)
       setLookupSuccess(false)
-      setLookupError("Greška pri povezivanju s API-jem")
-      setProgress(null)
-      
-      if (onLookupError) {
-        onLookupError("Greška pri povezivanju s API-jem")
+      setLookupError(null)
+      setProgress("Provjeravam VIES…")
+
+      try {
+        const response = await fetch("/api/oib/lookup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ oib }),
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          setLookupSuccess(true)
+          setLookupError(null)
+          setProgress("Pronađeno preko VIES/Sudskog registra")
+
+          if (onLookupSuccess) {
+            onLookupSuccess({
+              name: result.name,
+              address: result.address,
+              city: result.city,
+              postalCode: result.postalCode,
+              vatNumber: result.vatNumber,
+            })
+          }
+        } else {
+          setLookupSuccess(false)
+          setLookupError(result.error || "Greška pri pretrazi")
+          setProgress(null)
+
+          if (onLookupError) {
+            onLookupError(result.error || "Greška pri pretrazi")
+          }
+        }
+      } catch {
+        setLookupSuccess(false)
+        setLookupError("Greška pri povezivanju s API-jem")
+        setProgress(null)
+
+        if (onLookupError) {
+          onLookupError("Greška pri povezivanju s API-jem")
+        }
+      } finally {
+        setIsLookingUp(false)
       }
-    } finally {
-      setIsLookingUp(false)
-    }
-  }, [onLookupSuccess, onLookupError])
+    },
+    [onLookupSuccess, onLookupError]
+  )
 
   const handleLookup = () => {
     if (!/^\d{11}$/.test(value)) {
@@ -157,15 +160,11 @@ export function OibInput({
         </Button>
       </div>
 
-      {progress && (
-        <p className="text-xs text-blue-700">• {progress} (VIES → Sudski registar)</p>
-      )}
+      {progress && <p className="text-xs text-blue-700">• {progress} (VIES → Sudski registar)</p>}
       {lookupSuccess && !error && (
         <p className="text-xs text-green-600">Pronađeno! Podaci su automatski popunjeni.</p>
       )}
-      {lookupError && !error && (
-        <p className="text-xs text-yellow-600">{lookupError}</p>
-      )}
+      {lookupError && !error && <p className="text-xs text-yellow-600">{lookupError}</p>}
     </div>
   )
 }

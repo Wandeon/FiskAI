@@ -19,12 +19,12 @@ export function AssignSupportTicketButton({
     startTransition(async () => {
       try {
         const res = await fetch(`/api/support/tickets/${ticketId}/assign`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: currentAssigneeId ? null : currentUserId
+            userId: currentAssigneeId ? null : currentUserId,
           }),
         })
 
@@ -35,7 +35,10 @@ export function AssignSupportTicketButton({
           return
         }
 
-        toast.success(currentAssigneeId ? "Maknuta dodjela" : "Tiket preuzet", "Osvježite da vidite promjenu")
+        toast.success(
+          currentAssigneeId ? "Maknuta dodjela" : "Tiket preuzet",
+          "Osvježite da vidite promjenu"
+        )
       } catch (error) {
         toast.error("Greška", "Nije uspjelo dodjeljivanje tiketa")
       }

@@ -19,7 +19,12 @@ export function PlanBadge({ capabilities, className }: PlanBadgeProps) {
     >
       <Shield className="h-4 w-4 text-brand-600" />
       <span>{capabilities.legalForm}</span>
-      <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", capabilities.isVatPayer ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600")}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+          capabilities.isVatPayer ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
+        )}
+      >
         <Percent className="h-3 w-3" />
         {capabilities.isVatPayer ? "PDV" : "Bez PDV"}
       </span>

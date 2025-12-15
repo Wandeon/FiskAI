@@ -8,7 +8,11 @@ interface OnboardingProgressPillProps {
   className?: string
 }
 
-export function OnboardingProgressPill({ completed, total, className }: OnboardingProgressPillProps) {
+export function OnboardingProgressPill({
+  completed,
+  total,
+  className,
+}: OnboardingProgressPillProps) {
   const percent = Math.round((completed / total) * 100)
 
   return (

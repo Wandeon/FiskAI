@@ -55,17 +55,15 @@ export async function runAutoMatchTransactions(params: AutoMatchParams) {
     return { matchedCount: 0, evaluated: 0 }
   }
 
-  const parsedTransactions: (ParsedTransaction & { id: string })[] = positiveTxns.map(
-    (txn) => ({
-      id: txn.id,
-      date: txn.date,
-      amount: Number(txn.amount),
-      description: txn.description,
-      reference: txn.reference || "",
-      type: txn.amount >= 0 ? "credit" : "debit",
-      currency: txn.bankAccount?.currency || "EUR",
-    })
-  )
+  const parsedTransactions: (ParsedTransaction & { id: string })[] = positiveTxns.map((txn) => ({
+    id: txn.id,
+    date: txn.date,
+    amount: Number(txn.amount),
+    description: txn.description,
+    reference: txn.reference || "",
+    type: txn.amount >= 0 ? "credit" : "debit",
+    currency: txn.bankAccount?.currency || "EUR",
+  }))
 
   const results = matchTransactionsToInvoices(parsedTransactions, invoices)
   const txMap = new Map(parsedTransactions.map((txn) => [txn.id, txn]))

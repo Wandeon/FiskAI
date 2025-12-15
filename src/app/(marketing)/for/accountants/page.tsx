@@ -1,10 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, Users, FileText, Download, Shield, BarChart, Clock, TrendingUp } from "lucide-react"
+import {
+  CheckCircle2,
+  Users,
+  FileText,
+  Download,
+  Shield,
+  BarChart,
+  Clock,
+  TrendingUp,
+} from "lucide-react"
 
 export const metadata: Metadata = {
   title: "FiskAI — Za knjigovođe i računovode",
-  description: "Suradnja s klijentima na jednom mjestu: uredni izvozi, audit tragovi i automatizirani prenos podataka.",
+  description:
+    "Suradnja s klijentima na jednom mjestu: uredni izvozi, audit tragovi i automatizirani prenos podataka.",
 }
 
 export default function AccountantsPage() {
@@ -17,10 +27,12 @@ export default function AccountantsPage() {
           Posebno prilagođeno za knjigovođe
         </div>
         <h1 className="text-display text-4xl font-semibold md:text-5xl">
-          Suradnja s klijentima bez <span className="text-blue-700">&quot;donosim fascikl&quot;</span>
+          Suradnja s klijentima bez{" "}
+          <span className="text-blue-700">&quot;donosim fascikl&quot;</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
-          Vaši klijenti šalju uredne izvozne pakete, vi dobivate točne podatke i smanjujete vrijeme obrade za 70%.
+          Vaši klijenti šalju uredne izvozne pakete, vi dobivate točne podatke i smanjujete vrijeme
+          obrade za 70%.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
@@ -49,7 +61,9 @@ export default function AccountantsPage() {
               </div>
               <div>
                 <p className="font-medium">70% manje vremena obrade</p>
-                <p className="text-sm text-[var(--muted)]">Uredni izvozi umjesto fotografija računa</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Uredni izvozi umjesto fotografija računa
+                </p>
               </div>
             </div>
           </div>
@@ -60,7 +74,9 @@ export default function AccountantsPage() {
               </div>
               <div>
                 <p className="font-medium">Točni i verificirani podaci</p>
-                <p className="text-sm text-[var(--muted)]">AI OCR provjera, automatska numeracija računa</p>
+                <p className="text-sm text-[var(--muted)]">
+                  AI OCR provjera, automatska numeracija računa
+                </p>
               </div>
             </div>
           </div>
@@ -71,7 +87,9 @@ export default function AccountantsPage() {
               </div>
               <div>
                 <p className="font-medium">Klijenti ostaju vjerni</p>
-                <p className="text-sm text-[var(--muted)]">Olakšavate im administraciju, oni ostaju kod vas</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Olakšavate im administraciju, oni ostaju kod vas
+                </p>
               </div>
             </div>
           </div>
@@ -80,14 +98,18 @@ export default function AccountantsPage() {
 
       {/* Features grid */}
       <div className="mb-16">
-        <h2 className="text-3xl font-semibold mb-8 text-center">Sve što vam treba za suradnju s klijentima</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">
+          Sve što vam treba za suradnju s klijentima
+        </h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
             <div className="flex items-start gap-3 mb-4">
               <Download className="h-6 w-6 text-blue-600 flex-shrink-0" />
               <div>
                 <h3 className="text-xl font-semibold">Uredni izvozi</h3>
-                <p className="text-sm text-[var(--muted)] mt-1">Standardizirani formati za brzu obradu</p>
+                <p className="text-sm text-[var(--muted)] mt-1">
+                  Standardizirani formati za brzu obradu
+                </p>
               </div>
             </div>
             <ul className="space-y-2 text-sm">
@@ -266,7 +288,9 @@ export default function AccountantsPage() {
               <span className="text-4xl font-bold">0€</span>
               <span className="text-[var(--muted)] ml-2">/ zauvijek</span>
             </div>
-            <p className="text-sm text-[var(--muted)] mt-2">Besplatni pristup za sve certificirane knjigovođe</p>
+            <p className="text-sm text-[var(--muted)] mt-2">
+              Besplatni pristup za sve certificirane knjigovođe
+            </p>
           </div>
           <ul className="space-y-3 text-sm text-left mb-8">
             <li className="flex items-center gap-2">
@@ -304,25 +328,35 @@ export default function AccountantsPage() {
 
       {/* Client onboarding process */}
       <div className="mb-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Kako početi surađivati s klijentima</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center">
+          Kako početi surađivati s klijentima
+        </h2>
         <div className="grid gap-6 md:grid-cols-4">
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">1</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              1
+            </div>
             <p className="font-medium">Registracija</p>
             <p className="text-xs text-[var(--muted)] mt-1">Besplatni račun za knjigovođe</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">2</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              2
+            </div>
             <p className="font-medium">Poziv klijenata</p>
             <p className="text-xs text-[var(--muted)] mt-1">Šaljete pozivnicu iz aplikacije</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">3</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              3
+            </div>
             <p className="font-medium">Klijent koristi FiskAI</p>
             <p className="text-xs text-[var(--muted)] mt-1">Izdaje račune, skenira troškove</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">4</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              4
+            </div>
             <p className="font-medium">Vi dobivate izvoz</p>
             <p className="text-xs text-[var(--muted)] mt-1">Automatski ili na zahtjev</p>
           </div>
@@ -341,12 +375,15 @@ export default function AccountantsPage() {
                 </div>
                 <div>
                   <p className="font-semibold">Ana K.</p>
-                  <p className="text-sm text-[var(--muted)]">Vlasnica računovodstvenog ureda, 15 klijenata</p>
+                  <p className="text-sm text-[var(--muted)]">
+                    Vlasnica računovodstvenog ureda, 15 klijenata
+                  </p>
                 </div>
               </div>
             </div>
             <blockquote className="text-lg text-[var(--muted)] italic mb-4">
-              &quot;Prije smo primali fotografije računa na WhatsApp. Sada klijenti šalju uredne CSV izvozne pakete. Vrijeme obrade smanjeno za 70%, greške gotovo eliminirane.&quot;
+              &quot;Prije smo primali fotografije računa na WhatsApp. Sada klijenti šalju uredne CSV
+              izvozne pakete. Vrijeme obrade smanjeno za 70%, greške gotovo eliminirane.&quot;
             </blockquote>
           </div>
           <div className="space-y-4">
@@ -380,7 +417,7 @@ export default function AccountantsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="mt-1 h-2 w-2 rounded-full bg-green-500" />
-                  <span>Greške {'<'} 1% (AI provjera)</span>
+                  <span>Greške {"<"} 1% (AI provjera)</span>
                 </li>
               </ul>
             </div>
@@ -392,7 +429,8 @@ export default function AccountantsPage() {
       <div className="text-center">
         <h2 className="text-2xl font-semibold mb-4">Spremni za modernu suradnju s klijentima?</h2>
         <p className="text-lg text-[var(--muted)] mb-6 max-w-2xl mx-auto">
-          Pridružite se računovodstvenim uredima koji su digitalizirali suradnju s klijentima i povećali kapacitet bez zapošljavanja.
+          Pridružite se računovodstvenim uredima koji su digitalizirali suradnju s klijentima i
+          povećali kapacitet bez zapošljavanja.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link

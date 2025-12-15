@@ -206,7 +206,9 @@ export function KprPdfDocument({
                 <Text style={styles.col3}>{row.documentNumber || ""}</Text>
                 <Text style={styles.col4}>{row.description || ""}</Text>
                 <Text style={styles.col5}>{row.income > 0 ? formatCurrency(row.income) : ""}</Text>
-                <Text style={styles.col6}>{row.expense > 0 ? formatCurrency(row.expense) : ""}</Text>
+                <Text style={styles.col6}>
+                  {row.expense > 0 ? formatCurrency(row.expense) : ""}
+                </Text>
                 <Text style={styles.col7}>{formatCurrency(row.balance)}</Text>
               </View>
             ))
@@ -216,9 +218,7 @@ export function KprPdfDocument({
                 <Text style={styles.monthHeader}>{getMonthName(monthKey)}</Text>
                 {monthData.rows.map((row, idx) => (
                   <View key={idx} style={idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
-                    <Text style={styles.col1}>
-                      {summary.rows.findIndex((r) => r === row) + 1}
-                    </Text>
+                    <Text style={styles.col1}>{summary.rows.findIndex((r) => r === row) + 1}</Text>
                     <Text style={styles.col2}>{formatDate(row.date)}</Text>
                     <Text style={styles.col3}>{row.documentNumber || ""}</Text>
                     <Text style={styles.col4}>{row.description || ""}</Text>

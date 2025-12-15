@@ -1,10 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, Building2, FileText, Calculator, Shield, Users, BarChart, TrendingUp } from "lucide-react"
+import {
+  CheckCircle2,
+  Building2,
+  FileText,
+  Calculator,
+  Shield,
+  Users,
+  BarChart,
+  TrendingUp,
+} from "lucide-react"
 
 export const metadata: Metadata = {
   title: "FiskAI — Za d.o.o. (društvo s ograničenom odgovornošću)",
-  description: "Napredno računovodstveno rješenje za d.o.o. tvrtke u Hrvatskoj: PDV obračun, e-računi, fiskalizacija, knjigovodstvo i izvještaji.",
+  description:
+    "Napredno računovodstveno rješenje za d.o.o. tvrtke u Hrvatskoj: PDV obračun, e-računi, fiskalizacija, knjigovodstvo i izvještaji.",
 }
 
 export default function DooPage() {
@@ -20,7 +30,8 @@ export default function DooPage() {
           Potpuna računovodstvena platforma za vaš <span className="text-blue-700">d.o.o.</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
-          Od izdavanja računa i PDV obrade do kompletnog knjigovodstva i pripreme za reviziju — sve na jednom mjestu.
+          Od izdavanja računa i PDV obrade do kompletnog knjigovodstva i pripreme za reviziju — sve
+          na jednom mjestu.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
@@ -40,7 +51,9 @@ export default function DooPage() {
 
       {/* Key differentiators */}
       <div className="mb-16 rounded-2xl border border-blue-100 bg-blue-50 p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Zašto d.o.o. tvrtke biraju FiskAI?</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center">
+          Zašto d.o.o. tvrtke biraju FiskAI?
+        </h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -49,7 +62,9 @@ export default function DooPage() {
               </div>
               <div>
                 <p className="font-medium">PDV obrada i JOPPD</p>
-                <p className="text-sm text-[var(--muted)]">Automatski obračun PDV-a i priprema JOPPD obrazaca za plaće.</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Automatski obračun PDV-a i priprema JOPPD obrazaca za plaće.
+                </p>
               </div>
             </div>
           </div>
@@ -60,7 +75,9 @@ export default function DooPage() {
               </div>
               <div>
                 <p className="font-medium">E-računi i fiskalizacija</p>
-                <p className="text-sm text-[var(--muted)]">Potpuna podrška za e-račune (EN 16931) i fiskalizaciju 2.0.</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Potpuna podrška za e-račune (EN 16931) i fiskalizaciju 2.0.
+                </p>
               </div>
             </div>
           </div>
@@ -71,7 +88,9 @@ export default function DooPage() {
               </div>
               <div>
                 <p className="font-medium">Financijski izvještaji</p>
-                <p className="text-sm text-[var(--muted)]">Bilanca, račun dobiti i gubitka, tokovi gotovine.</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Bilanca, račun dobiti i gubitka, tokovi gotovine.
+                </p>
               </div>
             </div>
           </div>
@@ -82,7 +101,9 @@ export default function DooPage() {
               </div>
               <div>
                 <p className="font-medium">Timski pristup</p>
-                <p className="text-sm text-[var(--muted)]">Više korisnika, uloge, odobrenja i audit tragovi.</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Više korisnika, uloge, odobrenja i audit tragovi.
+                </p>
               </div>
             </div>
           </div>
@@ -265,7 +286,9 @@ export default function DooPage() {
 
       {/* Pricing for d.o.o. */}
       <div className="mb-12">
-        <h2 className="text-3xl font-semibold mb-8 text-center">Cijene prilagođene d.o.o. potrebama</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">
+          Cijene prilagođene d.o.o. potrebama
+        </h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl border border-[var(--border)] bg-white p-8">
             <div className="mb-4">
@@ -364,22 +387,34 @@ export default function DooPage() {
         <h2 className="text-2xl font-semibold mb-6 text-center">Implementacija za d.o.o. tvrtke</h2>
         <div className="grid gap-6 md:grid-cols-4">
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">1</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              1
+            </div>
             <p className="font-medium">Onboarding</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Podaci tvrtke, PDV registracija, korisnici</p>
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Podaci tvrtke, PDV registracija, korisnici
+            </p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">2</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              2
+            </div>
             <p className="font-medium">Migracija</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Import postojećih podataka (CSV/Excel)</p>
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Import postojećih podataka (CSV/Excel)
+            </p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">3</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              3
+            </div>
             <p className="font-medium">Obuka</p>
             <p className="text-xs text-[var(--muted)] mt-1">Timsko osposobljavanje (2h)</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">4</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              4
+            </div>
             <p className="font-medium">Pokretanje</p>
             <p className="text-xs text-[var(--muted)] mt-1">Go-live i kontinuirana podrška</p>
           </div>
@@ -409,7 +444,8 @@ export default function DooPage() {
       <div className="text-center">
         <h2 className="text-2xl font-semibold mb-4">Spremni za moderno računovodstvo?</h2>
         <p className="text-lg text-[var(--muted)] mb-6 max-w-2xl mx-auto">
-          Pridružite se d.o.o. tvrtkama koje su digitalizirale svoje računovodstvo i smanjile troškove za 30-50%.
+          Pridružite se d.o.o. tvrtkama koje su digitalizirale svoje računovodstvo i smanjile
+          troškove za 30-50%.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link

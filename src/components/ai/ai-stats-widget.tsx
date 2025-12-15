@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Sparkles, TrendingUp, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Sparkles, TrendingUp, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 
 interface FeedbackStats {
   total: number
@@ -26,16 +26,16 @@ export function AIStatsWidget({ operation, className }: AIStatsWidgetProps) {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const params = new URLSearchParams({ type: 'stats' })
-        if (operation) params.set('operation', operation)
+        const params = new URLSearchParams({ type: "stats" })
+        if (operation) params.set("operation", operation)
 
         const response = await fetch(`/api/ai/feedback?${params}`)
-        if (!response.ok) throw new Error('Failed to fetch stats')
+        if (!response.ok) throw new Error("Failed to fetch stats")
 
         const data = await response.json()
         setStats(data.stats)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load stats')
+        setError(err instanceof Error ? err.message : "Failed to load stats")
       } finally {
         setLoading(false)
       }
@@ -82,17 +82,13 @@ export function AIStatsWidget({ operation, className }: AIStatsWidgetProps) {
 
   const accuracyColor =
     stats.accuracy >= 80
-      ? 'text-green-600'
+      ? "text-green-600"
       : stats.accuracy >= 60
-      ? 'text-yellow-600'
-      : 'text-red-600'
+        ? "text-yellow-600"
+        : "text-red-600"
 
   const accuracyBgColor =
-    stats.accuracy >= 80
-      ? 'bg-green-50'
-      : stats.accuracy >= 60
-      ? 'bg-yellow-50'
-      : 'bg-red-50'
+    stats.accuracy >= 80 ? "bg-green-50" : stats.accuracy >= 60 ? "bg-yellow-50" : "bg-red-50"
 
   return (
     <Card className={className}>
@@ -102,9 +98,9 @@ export function AIStatsWidget({ operation, className }: AIStatsWidgetProps) {
           AI Pouzdanost
           {operation && (
             <Badge variant="secondary" className="text-xs">
-              {operation === 'ocr_receipt' && 'OCR Računi'}
-              {operation === 'ocr_invoice' && 'OCR Fakture'}
-              {operation === 'category_suggestion' && 'Kategorije'}
+              {operation === "ocr_receipt" && "OCR Računi"}
+              {operation === "ocr_invoice" && "OCR Fakture"}
+              {operation === "category_suggestion" && "Kategorije"}
             </Badge>
           )}
         </CardTitle>
@@ -176,8 +172,8 @@ export function CompactAIStats({ operation, className }: CompactAIStatsProps) {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const params = new URLSearchParams({ type: 'stats' })
-        if (operation) params.set('operation', operation)
+        const params = new URLSearchParams({ type: "stats" })
+        if (operation) params.set("operation", operation)
 
         const response = await fetch(`/api/ai/feedback?${params}`)
         if (response.ok) {
@@ -185,7 +181,7 @@ export function CompactAIStats({ operation, className }: CompactAIStatsProps) {
           setStats(data.stats)
         }
       } catch (err) {
-        console.error('Failed to fetch AI stats:', err)
+        console.error("Failed to fetch AI stats:", err)
       }
     }
 
@@ -195,7 +191,7 @@ export function CompactAIStats({ operation, className }: CompactAIStatsProps) {
   if (!stats || stats.total === 0) return null
 
   const variant =
-    stats.accuracy >= 80 ? 'default' : stats.accuracy >= 60 ? 'secondary' : 'destructive'
+    stats.accuracy >= 80 ? "default" : stats.accuracy >= 60 ? "secondary" : "destructive"
 
   return (
     <Badge variant={variant} className={className}>

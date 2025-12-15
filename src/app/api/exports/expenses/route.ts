@@ -126,9 +126,7 @@ export async function GET(request: Request) {
 
   const csv = "\uFEFF" + buildCsv([header, ...rows])
   const rangeLabel =
-    parsed.data.from && parsed.data.to
-      ? `${parsed.data.from}-${parsed.data.to}`
-      : "svi"
+    parsed.data.from && parsed.data.to ? `${parsed.data.from}-${parsed.data.to}` : "svi"
   const filename = `fiskai-troskovi-${rangeLabel}.csv`
 
   return new NextResponse(csv, {

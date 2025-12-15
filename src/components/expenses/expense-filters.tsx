@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
@@ -33,9 +33,7 @@ export function ExpenseFilters({
   const [search, setSearch] = useState(initialSearch)
 
   const hasFilters =
-    statusValues.length > 0 ||
-    categoryValues.length > 0 ||
-    search.trim().length > 0
+    statusValues.length > 0 || categoryValues.length > 0 || search.trim().length > 0
 
   const applyFilters = () => {
     const params = new URLSearchParams()
@@ -126,12 +124,7 @@ function FilterBlock({ label, placeholder, options, value, onChange }: FilterBlo
       <label className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
         {label}
       </label>
-      <MultiSelect
-        options={options}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-      />
+      <MultiSelect options={options} value={value} onChange={onChange} placeholder={placeholder} />
     </div>
   )
 }

@@ -11,17 +11,35 @@ import { ContactType } from "@prisma/client"
 import { CommandPalette } from "@/components/ui/command-palette"
 
 interface PageProps {
-  searchParams: Promise<{ search?: string; type?: string; page?: string; segment?: string | string[]; view?: string }>
+  searchParams: Promise<{
+    search?: string
+    type?: string
+    page?: string
+    segment?: string | string[]
+    view?: string
+  }>
 }
 
 const SEGMENTS = ["VAT_PAYER", "MISSING_EMAIL", "NO_DOCUMENTS"] as const
 
-async function ContactList({ search, type, page, segments }: { search: string; type: string; page: number; segments: string[] }) {
-  const validSegments = segments.filter((segment) => SEGMENTS.includes(segment as typeof SEGMENTS[number]))
+async function ContactList({
+  search,
+  type,
+  page,
+  segments,
+}: {
+  search: string
+  type: string
+  page: number
+  segments: string[]
+}) {
+  const validSegments = segments.filter((segment) =>
+    SEGMENTS.includes(segment as (typeof SEGMENTS)[number])
+  )
   const { contacts, pagination } = await getContactList({
     search,
     type: type as ContactType | "ALL",
-    segments: validSegments as typeof SEGMENTS[number][],
+    segments: validSegments as (typeof SEGMENTS)[number][],
     page,
     limit: 12,
   })
@@ -101,9 +119,7 @@ export default async function ContactsPage({ searchParams }: PageProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Kontakti</h1>
-          <p className="text-sm text-[var(--muted)] mt-1">
-            Upravljajte kupcima i dobavljačima
-          </p>
+          <p className="text-sm text-[var(--muted)] mt-1">Upravljajte kupcima i dobavljačima</p>
         </div>
         <Link href="/contacts/new">
           <Button>
@@ -128,7 +144,12 @@ export default async function ContactsPage({ searchParams }: PageProps) {
       </div>
 
       {/* Filters */}
-      <ContactFilters initialSearch={search} initialType={type} initialSegments={segments} view={view} />
+      <ContactFilters
+        initialSearch={search}
+        initialType={type}
+        initialSegments={segments}
+        view={view}
+      />
 
       {/* Contact List */}
       {view === "board" ? (
@@ -143,7 +164,15 @@ export default async function ContactsPage({ searchParams }: PageProps) {
     </div>
   )
 }
-function QuickFilterButton({ value, current, view }: { value: string; current: string; view: string }) {
+function QuickFilterButton({
+  value,
+  current,
+  view,
+}: {
+  value: string
+  current: string
+  view: string
+}) {
   const isActive = current === value
   let label = "Svi"
   if (value === "CUSTOMER") label = "Kupci"
@@ -168,11 +197,13 @@ async function ContactBoard({
   type: string
   segments: string[]
 }) {
-  const validSegments = segments.filter((segment) => SEGMENTS.includes(segment as typeof SEGMENTS[number]))
+  const validSegments = segments.filter((segment) =>
+    SEGMENTS.includes(segment as (typeof SEGMENTS)[number])
+  )
   const { contacts } = await getContactList({
     search,
     type: type as ContactType | "ALL",
-    segments: validSegments as typeof SEGMENTS[number][],
+    segments: validSegments as (typeof SEGMENTS)[number][],
     page: 1,
     limit: 120,
   })
@@ -197,7 +228,10 @@ async function ContactBoard({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {grouped.map((column) => (
-        <div key={column.key} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]/60 p-4">
+        <div
+          key={column.key}
+          className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]/60 p-4"
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-[var(--foreground)]">{column.label}</p>
             <span className="text-xs text-[var(--muted)]">{column.items.length}</span>
@@ -206,9 +240,7 @@ async function ContactBoard({
             {column.items.length === 0 ? (
               <p className="text-xs text-[var(--muted)]">Nema kontakata</p>
             ) : (
-              column.items.map((contact) => (
-                <ContactCard key={contact.id} contact={contact} />
-              ))
+              column.items.map((contact) => <ContactCard key={contact.id} contact={contact} />)
             )}
           </div>
         </div>
@@ -223,7 +255,9 @@ function ViewToggle({ view }: { view: string }) {
       <Link
         href="/contacts?view=list"
         className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-          view === "list" ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)]"
+          view === "list"
+            ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+            : "text-[var(--muted)]"
         }`}
       >
         <Rows className="h-4 w-4" />
@@ -232,7 +266,9 @@ function ViewToggle({ view }: { view: string }) {
       <Link
         href="/contacts?view=board"
         className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-          view === "board" ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)]"
+          view === "board"
+            ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+            : "text-[var(--muted)]"
         }`}
       >
         <LayoutGrid className="h-4 w-4" />

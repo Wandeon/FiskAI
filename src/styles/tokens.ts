@@ -1,6 +1,14 @@
 export const designTokens = {
   typography: {
-    fontFamily: ["Inter", "Sora", "system-ui", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "sans-serif"],
+    fontFamily: [
+      "Inter",
+      "Sora",
+      "system-ui",
+      "-apple-system",
+      "BlinkMacSystemFont",
+      "'Segoe UI'",
+      "sans-serif",
+    ],
     headingFont: ["Sora", "Inter", "sans-serif"],
     baseSize: "16px",
     lineHeight: {

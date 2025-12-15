@@ -1,14 +1,14 @@
-import OpenAI from 'openai'
-import { ExtractedReceipt, ExtractedInvoice, ExtractionResult } from './types'
-import { trackAIUsage } from './usage-tracking'
+import OpenAI from "openai"
+import { ExtractedReceipt, ExtractedInvoice, ExtractionResult } from "./types"
+import { trackAIUsage } from "./usage-tracking"
 
 // Lazy-load OpenAI client to avoid build errors when API key is not set
 function getOpenAI() {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured')
+    throw new Error("OpenAI API key not configured")
   }
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
   })
 }
 
@@ -55,7 +55,7 @@ export async function extractReceipt(
   text: string,
   companyId?: string
 ): Promise<ExtractionResult<ExtractedReceipt>> {
-  const model = 'gpt-4o-mini'
+  const model = "gpt-4o-mini"
   let inputTokens = 0
   let outputTokens = 0
 
@@ -64,10 +64,10 @@ export async function extractReceipt(
     const response = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: RECEIPT_PROMPT },
-        { role: 'user', content: text }
+        { role: "system", content: RECEIPT_PROMPT },
+        { role: "user", content: text },
       ],
-      response_format: { type: 'json_object' }
+      response_format: { type: "json_object" },
     })
 
     // Track token usage
@@ -79,14 +79,14 @@ export async function extractReceipt(
       if (companyId) {
         await trackAIUsage({
           companyId,
-          operation: 'extract_receipt',
+          operation: "extract_receipt",
           model,
           inputTokens,
           outputTokens,
           success: false,
         })
       }
-      return { success: false, error: 'No response from AI' }
+      return { success: false, error: "No response from AI" }
     }
 
     const data = JSON.parse(content) as ExtractedReceipt
@@ -95,7 +95,7 @@ export async function extractReceipt(
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'extract_receipt',
+        operation: "extract_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -109,7 +109,7 @@ export async function extractReceipt(
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'extract_receipt',
+        operation: "extract_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -119,8 +119,8 @@ export async function extractReceipt(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Extraction failed',
-      rawText: text
+      error: error instanceof Error ? error.message : "Extraction failed",
+      rawText: text,
     }
   }
 }
@@ -129,7 +129,7 @@ export async function extractInvoice(
   text: string,
   companyId?: string
 ): Promise<ExtractionResult<ExtractedInvoice>> {
-  const model = 'gpt-4o-mini'
+  const model = "gpt-4o-mini"
   let inputTokens = 0
   let outputTokens = 0
 
@@ -138,10 +138,10 @@ export async function extractInvoice(
     const response = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: INVOICE_PROMPT },
-        { role: 'user', content: text }
+        { role: "system", content: INVOICE_PROMPT },
+        { role: "user", content: text },
       ],
-      response_format: { type: 'json_object' }
+      response_format: { type: "json_object" },
     })
 
     // Track token usage
@@ -153,14 +153,14 @@ export async function extractInvoice(
       if (companyId) {
         await trackAIUsage({
           companyId,
-          operation: 'extract_invoice',
+          operation: "extract_invoice",
           model,
           inputTokens,
           outputTokens,
           success: false,
         })
       }
-      return { success: false, error: 'No response from AI' }
+      return { success: false, error: "No response from AI" }
     }
 
     const data = JSON.parse(content) as ExtractedInvoice
@@ -169,7 +169,7 @@ export async function extractInvoice(
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'extract_invoice',
+        operation: "extract_invoice",
         model,
         inputTokens,
         outputTokens,
@@ -183,7 +183,7 @@ export async function extractInvoice(
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'extract_invoice',
+        operation: "extract_invoice",
         model,
         inputTokens,
         outputTokens,
@@ -193,8 +193,8 @@ export async function extractInvoice(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Extraction failed',
-      rawText: text
+      error: error instanceof Error ? error.message : "Extraction failed",
+      rawText: text,
     }
   }
 }

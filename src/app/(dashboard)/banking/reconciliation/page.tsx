@@ -43,15 +43,13 @@ export default async function ReconciliationPage() {
         <CardContent className="space-y-3">
           <h2 className="text-lg font-semibold">Kako to radi</h2>
           <p className="text-sm text-gray-600">
-            Svaki CSV automatizirano prolazi kroz parser i uspoređuje se s neplaćenim
-            računima. Računi s konfidentnim podudaranjem (≥85%) automatski se označavaju kao
-            plaćeni. Sve ostalo čeka ovdje za manualnu potvrdu.
+            Svaki CSV automatizirano prolazi kroz parser i uspoređuje se s neplaćenim računima.
+            Računi s konfidentnim podudaranjem (≥85%) automatski se označavaju kao plaćeni. Sve
+            ostalo čeka ovdje za manualnu potvrdu.
           </p>
           <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
             <li>Pokušajte uvesti izvode što češće kako bi AI imao najnovije podatke.</li>
-            <li>
-              Ručno povežite retke s najvišom ocjenom kad AI ne može automatski odlučiti.
-            </li>
+            <li>Ručno povežite retke s najvišom ocjenom kad AI ne može automatski odlučiti.</li>
             <li>Pritisnite „Poveži“ i status će se odmah promijeniti u „Ručno“.</li>
           </ul>
         </CardContent>

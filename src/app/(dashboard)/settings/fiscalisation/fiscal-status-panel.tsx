@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { FiscalRequest, EInvoice } from '@prisma/client'
-import { formatDateTime } from '@/lib/format'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FiscalRequest, EInvoice } from "@prisma/client"
+import { formatDateTime } from "@/lib/format"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -12,23 +12,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import {
-  CheckCircle2,
-  Clock,
-  XCircle,
-  AlertCircle,
-  Loader2,
-  RotateCcw,
-  Skull,
-} from 'lucide-react'
-import { retryFiscalRequestAction } from '@/app/actions/fiscal-certificate'
-import { useState } from 'react'
-import { toast } from 'sonner'
+} from "@/components/ui/table"
+import { CheckCircle2, Clock, XCircle, AlertCircle, Loader2, RotateCcw, Skull } from "lucide-react"
+import { retryFiscalRequestAction } from "@/app/actions/fiscal-certificate"
+import { useState } from "react"
+import { toast } from "sonner"
 
 interface FiscalStatusPanelProps {
   requests: (FiscalRequest & {
-    invoice: Pick<EInvoice, 'invoiceNumber'> | null
+    invoice: Pick<EInvoice, "invoiceNumber"> | null
   })[]
   stats: {
     status: string
@@ -39,38 +31,38 @@ interface FiscalStatusPanelProps {
 const STATUS_CONFIG = {
   QUEUED: {
     icon: Clock,
-    label: 'Queued',
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    badgeVariant: 'secondary' as const,
+    label: "Queued",
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50",
+    badgeVariant: "secondary" as const,
   },
   PROCESSING: {
     icon: Loader2,
-    label: 'Processing',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    badgeVariant: 'default' as const,
+    label: "Processing",
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+    badgeVariant: "default" as const,
   },
   COMPLETED: {
     icon: CheckCircle2,
-    label: 'Completed',
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    badgeVariant: 'secondary' as const,
+    label: "Completed",
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+    badgeVariant: "secondary" as const,
   },
   FAILED: {
     icon: XCircle,
-    label: 'Failed',
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    badgeVariant: 'destructive' as const,
+    label: "Failed",
+    color: "text-red-600",
+    bgColor: "bg-red-50",
+    badgeVariant: "destructive" as const,
   },
   DEAD: {
     icon: Skull,
-    label: 'Dead',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    badgeVariant: 'outline' as const,
+    label: "Dead",
+    color: "text-gray-600",
+    bgColor: "bg-gray-50",
+    badgeVariant: "outline" as const,
   },
 }
 
@@ -82,12 +74,12 @@ export function FiscalStatusPanel({ requests, stats }: FiscalStatusPanelProps) {
     try {
       const result = await retryFiscalRequestAction(requestId)
       if (result.success) {
-        toast.success('Request queued for retry')
+        toast.success("Request queued for retry")
       } else {
-        toast.error(result.error || 'Failed to retry request')
+        toast.error(result.error || "Failed to retry request")
       }
     } catch (error) {
-      toast.error('Failed to retry request')
+      toast.error("Failed to retry request")
     } finally {
       setRetryingId(null)
     }
@@ -129,9 +121,7 @@ export function FiscalStatusPanel({ requests, stats }: FiscalStatusPanelProps) {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">{count}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {config.label}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{config.label}</div>
                   </div>
                 </div>
               </CardContent>
@@ -167,12 +157,10 @@ export function FiscalStatusPanel({ requests, stats }: FiscalStatusPanelProps) {
                 {requests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell className="font-medium">
-                      {request.invoice?.invoiceNumber || 'N/A'}
+                      {request.invoice?.invoiceNumber || "N/A"}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {request.messageType}
-                      </span>
+                      <span className="text-sm text-muted-foreground">{request.messageType}</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -200,8 +188,7 @@ export function FiscalStatusPanel({ requests, stats }: FiscalStatusPanelProps) {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      {(request.status === 'FAILED' ||
-                        request.status === 'DEAD') && (
+                      {(request.status === "FAILED" || request.status === "DEAD") && (
                         <Button
                           variant="outline"
                           size="sm"

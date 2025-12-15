@@ -1,9 +1,9 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 export default async function ProfitLossPage({
   searchParams,
@@ -25,11 +25,19 @@ export default async function ProfitLossPage({
 
   const [invoices, expenses] = await Promise.all([
     db.eInvoice.findMany({
-      where: { companyId: company.id, issueDate: { gte: dateFrom, lte: dateTo }, status: { not: 'DRAFT' } },
+      where: {
+        companyId: company.id,
+        issueDate: { gte: dateFrom, lte: dateTo },
+        status: { not: "DRAFT" },
+      },
       select: { netAmount: true },
     }),
     db.expense.findMany({
-      where: { companyId: company.id, date: { gte: dateFrom, lte: dateTo }, status: { in: ['PAID', 'PENDING'] } },
+      where: {
+        companyId: company.id,
+        date: { gte: dateFrom, lte: dateTo },
+        status: { in: ["PAID", "PENDING"] },
+      },
       select: { netAmount: true },
     }),
   ])
@@ -38,16 +46,21 @@ export default async function ProfitLossPage({
   const costs = expenses.reduce((sum, e) => sum + Number(e.netAmount), 0)
   const profit = revenue - costs
 
-  const formatCurrency = (n: number) => new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' }).format(n)
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR" }).format(n)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dobit i gubitak</h1>
-          <p className="text-gray-500">{dateFrom.toLocaleDateString('hr-HR')} - {dateTo.toLocaleDateString('hr-HR')}</p>
+          <p className="text-gray-500">
+            {dateFrom.toLocaleDateString("hr-HR")} - {dateTo.toLocaleDateString("hr-HR")}
+          </p>
         </div>
-        <Link href="/reports"><Button variant="outline">← Natrag</Button></Link>
+        <Link href="/reports">
+          <Button variant="outline">← Natrag</Button>
+        </Link>
       </div>
 
       <Card>
@@ -55,11 +68,21 @@ export default async function ProfitLossPage({
           <form className="flex gap-4 items-end" method="GET">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Od</label>
-              <input type="date" name="from" defaultValue={dateFrom.toISOString().split('T')[0]} className="rounded-md border-gray-300" />
+              <input
+                type="date"
+                name="from"
+                defaultValue={dateFrom.toISOString().split("T")[0]}
+                className="rounded-md border-gray-300"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Do</label>
-              <input type="date" name="to" defaultValue={dateTo.toISOString().split('T')[0]} className="rounded-md border-gray-300" />
+              <input
+                type="date"
+                name="to"
+                defaultValue={dateTo.toISOString().split("T")[0]}
+                className="rounded-md border-gray-300"
+              />
             </div>
             <Button type="submit">Primijeni</Button>
           </form>
@@ -68,16 +91,34 @@ export default async function ProfitLossPage({
 
       <div className="grid md:grid-cols-3 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-base text-green-600">Prihodi</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold font-mono">{formatCurrency(revenue)}</p><p className="text-sm text-gray-500">{invoices.length} računa</p></CardContent>
+          <CardHeader>
+            <CardTitle className="text-base text-green-600">Prihodi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold font-mono">{formatCurrency(revenue)}</p>
+            <p className="text-sm text-gray-500">{invoices.length} računa</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base text-red-600">Rashodi</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold font-mono">{formatCurrency(costs)}</p><p className="text-sm text-gray-500">{expenses.length} troškova</p></CardContent>
+          <CardHeader>
+            <CardTitle className="text-base text-red-600">Rashodi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold font-mono">{formatCurrency(costs)}</p>
+            <p className="text-sm text-gray-500">{expenses.length} troškova</p>
+          </CardContent>
         </Card>
-        <Card className={profit >= 0 ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}>
-          <CardHeader><CardTitle className="text-base">{profit >= 0 ? 'Dobit' : 'Gubitak'}</CardTitle></CardHeader>
-          <CardContent><p className={`text-3xl font-bold font-mono ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(Math.abs(profit))}</p></CardContent>
+        <Card className={profit >= 0 ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}>
+          <CardHeader>
+            <CardTitle className="text-base">{profit >= 0 ? "Dobit" : "Gubitak"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p
+              className={`text-3xl font-bold font-mono ${profit >= 0 ? "text-green-600" : "text-red-600"}`}
+            >
+              {formatCurrency(Math.abs(profit))}
+            </p>
+          </CardContent>
         </Card>
       </div>
     </div>

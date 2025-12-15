@@ -1,7 +1,15 @@
-'use client'
+"use client"
 
-import { forwardRef, createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import {
+  forwardRef,
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react"
+import { cn } from "@/lib/utils"
 
 interface DropdownMenuContextValue {
   open: boolean
@@ -13,7 +21,7 @@ const DropdownMenuContext = createContext<DropdownMenuContextValue | undefined>(
 function useDropdownMenu() {
   const context = useContext(DropdownMenuContext)
   if (!context) {
-    throw new Error('useDropdownMenu must be used within a DropdownMenu')
+    throw new Error("useDropdownMenu must be used within a DropdownMenu")
   }
   return context
 }
@@ -50,15 +58,15 @@ export const DropdownMenuTrigger = forwardRef<
     </button>
   )
 })
-DropdownMenuTrigger.displayName = 'DropdownMenuTrigger'
+DropdownMenuTrigger.displayName = "DropdownMenuTrigger"
 
 export function DropdownMenuContent({
   children,
-  align = 'start',
+  align = "start",
   className,
 }: {
   children: ReactNode
-  align?: 'start' | 'end'
+  align?: "start" | "end"
   className?: string
 }) {
   const { open, setOpen } = useDropdownMenu()
@@ -72,8 +80,8 @@ export function DropdownMenuContent({
     }
 
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [open, setOpen])
 
@@ -83,8 +91,8 @@ export function DropdownMenuContent({
     <div
       ref={contentRef}
       className={cn(
-        'absolute z-50 mt-2 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 shadow-md',
-        align === 'end' ? 'right-0' : 'left-0',
+        "absolute z-50 mt-2 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 shadow-md",
+        align === "end" ? "right-0" : "left-0",
         className
       )}
     >
@@ -116,8 +124,8 @@ export function DropdownMenuItem({
   return (
     <button
       className={cn(
-        'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100',
-        disabled && 'pointer-events-none opacity-50',
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100",
+        disabled && "pointer-events-none opacity-50",
         className
       )}
       onClick={handleClick}

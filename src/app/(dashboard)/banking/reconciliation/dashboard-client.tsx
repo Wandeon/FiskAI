@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState, useMemo } from 'react'
-import useSWR from 'swr'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { useState, useMemo } from "react"
+import useSWR from "swr"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 
 type AccountOption = {
   id: string
@@ -14,17 +14,17 @@ type AccountOption = {
 }
 
 const statusOptions = [
-  { value: 'UNMATCHED', label: 'Nepovezano' },
-  { value: 'AUTO_MATCHED', label: 'Automatski povezano' },
-  { value: 'MANUAL_MATCHED', label: 'Ručno povezano' },
-  { value: 'IGNORED', label: 'Ignorirano' },
+  { value: "UNMATCHED", label: "Nepovezano" },
+  { value: "AUTO_MATCHED", label: "Automatski povezano" },
+  { value: "MANUAL_MATCHED", label: "Ručno povezano" },
+  { value: "IGNORED", label: "Ignorirano" },
 ]
 
 const fetcher = (url: string) =>
   fetch(url).then(async (res) => {
     if (!res.ok) {
       const payload = await res.json().catch(() => null)
-      throw new Error(payload?.error || 'Greška pri učitavanju podataka')
+      throw new Error(payload?.error || "Greška pri učitavanju podataka")
     }
     return res.json()
   })
@@ -37,11 +37,11 @@ export function ReconciliationDashboard({
   defaultBankAccountId?: string
 }) {
   const [selectedAccount, setSelectedAccount] = useState(
-    defaultBankAccountId || accounts[0]?.id || ''
+    defaultBankAccountId || accounts[0]?.id || ""
   )
-  const [statusFilter, setStatusFilter] = useState('UNMATCHED')
+  const [statusFilter, setStatusFilter] = useState("UNMATCHED")
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
-  const [statusType, setStatusType] = useState<'success' | 'error' | 'info'>('info')
+  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info")
   const [loadingTransactionId, setLoadingTransactionId] = useState<string | null>(null)
 
   const queryKey = useMemo(() => {
@@ -85,41 +85,41 @@ export function ReconciliationDashboard({
   }>(queryKey, fetcher)
 
   const statusCards = [
-    { label: 'Nepovezano', value: data?.summary.unmatched ?? 0 },
-    { label: 'Automatski', value: data?.summary.autoMatched ?? 0 },
-    { label: 'Ručno', value: data?.summary.manualMatched ?? 0 },
-    { label: 'Ignorirano', value: data?.summary.ignored ?? 0 },
+    { label: "Nepovezano", value: data?.summary.unmatched ?? 0 },
+    { label: "Automatski", value: data?.summary.autoMatched ?? 0 },
+    { label: "Ručno", value: data?.summary.manualMatched ?? 0 },
+    { label: "Ignorirano", value: data?.summary.ignored ?? 0 },
   ]
 
   const handleMatch = async (transactionId: string, candidateId: string) => {
     setLoadingTransactionId(transactionId)
     setStatusMessage(null)
     try {
-      const response = await fetch('/api/banking/reconciliation/match', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/banking/reconciliation/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transactionId, invoiceId: candidateId }),
       })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
-        throw new Error(payload?.error || 'Greška pri povezivanju')
+        throw new Error(payload?.error || "Greška pri povezivanju")
       }
 
-      setStatusType('success')
-      setStatusMessage('Transakcija je povezana s računom')
+      setStatusType("success")
+      setStatusMessage("Transakcija je povezana s računom")
       mutate()
     } catch (err) {
-      setStatusType('error')
-      setStatusMessage(err instanceof Error ? err.message : 'Greška pri povezivanju')
+      setStatusType("error")
+      setStatusMessage(err instanceof Error ? err.message : "Greška pri povezivanju")
     } finally {
       setLoadingTransactionId(null)
     }
   }
 
   const formatCurrency = (value: number, currency: string) =>
-    new Intl.NumberFormat('hr-HR', {
-      style: 'currency',
+    new Intl.NumberFormat("hr-HR", {
+      style: "currency",
       currency,
     }).format(value)
 
@@ -190,12 +190,12 @@ export function ReconciliationDashboard({
       {statusMessage && (
         <div
           className={`flex items-center gap-2 rounded border px-4 py-3 text-sm ${
-            statusType === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-red-200 bg-red-50 text-red-800'
+            statusType === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-800"
           }`}
         >
-          {statusType === 'success' ? <CheckCircle /> : <AlertCircle />}
+          {statusType === "success" ? <CheckCircle /> : <AlertCircle />}
           <span>{statusMessage}</span>
         </div>
       )}
@@ -225,35 +225,31 @@ export function ReconciliationDashboard({
                   data.transactions.map((txn) => {
                     const candidate = txn.candidates[0]
                     return (
-                      <tr
-                        key={txn.id}
-                        className="border-b border-slate-100 hover:bg-slate-50"
-                      >
+                      <tr key={txn.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-3 py-2 text-xs">
-                          {new Date(txn.date).toLocaleDateString('hr-HR')}
+                          {new Date(txn.date).toLocaleDateString("hr-HR")}
                         </td>
                         <td className="px-3 py-2">
                           <div className="truncate font-medium">{txn.description}</div>
                           <div className="text-xs text-gray-500">
-                            {txn.reference || txn.counterpartyName || '—'}
+                            {txn.reference || txn.counterpartyName || "—"}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-right font-mono">
                           {formatCurrency(txn.amount, txn.currency)}
                         </td>
                         <td className="px-3 py-2 text-center">
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600"
-                          >
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
                             {txn.confidenceScore}%
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs">
                           {candidate ? (
                             <div>
-                              <div className="font-semibold">{candidate.invoiceNumber || '–'}</div>
+                              <div className="font-semibold">{candidate.invoiceNumber || "–"}</div>
                               <div className="text-gray-500">
-                                {formatCurrency(candidate.totalAmount, txn.currency)} · {candidate.score}%
+                                {formatCurrency(candidate.totalAmount, txn.currency)} ·{" "}
+                                {candidate.score}%
                               </div>
                               <div className="text-gray-400">{candidate.reason}</div>
                             </div>
@@ -270,7 +266,7 @@ export function ReconciliationDashboard({
                             {loadingTransactionId === txn.id ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
-                              'Poveži'
+                              "Poveži"
                             )}
                           </Button>
                         </td>
@@ -287,9 +283,7 @@ export function ReconciliationDashboard({
               </tbody>
             </table>
           </div>
-          {isValidating && (
-            <div className="mt-3 text-xs text-gray-500">Ažuriranje...</div>
-          )}
+          {isValidating && <div className="mt-3 text-xs text-gray-500">Ažuriranje...</div>}
         </CardContent>
       </Card>
     </div>

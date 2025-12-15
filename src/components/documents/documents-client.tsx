@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useState, useCallback, useEffect } from 'react'
-import { CompactDropzone } from './compact-dropzone'
-import { ReportsSidebar } from './reports-sidebar'
-import { ImportJobState } from '@/components/import/processing-card'
-import dynamic from 'next/dynamic'
-import { JobStatus, DocumentType } from '@prisma/client'
+import { useState, useCallback, useEffect } from "react"
+import { CompactDropzone } from "./compact-dropzone"
+import { ReportsSidebar } from "./reports-sidebar"
+import { ImportJobState } from "@/components/import/processing-card"
+import dynamic from "next/dynamic"
+import { JobStatus, DocumentType } from "@prisma/client"
 
 // Dynamic import confirmation modal to avoid SSR issues
 const ConfirmationModal = dynamic(
-  () => import('@/components/import/confirmation-modal').then(mod => mod.ConfirmationModal),
+  () => import("@/components/import/confirmation-modal").then((mod) => mod.ConfirmationModal),
   { ssr: false }
 )
 
@@ -25,16 +25,20 @@ interface DocumentsClientProps {
   children: React.ReactNode
 }
 
-export function DocumentsClient({ bankAccounts, initialJobs = [], children }: DocumentsClientProps) {
+export function DocumentsClient({
+  bankAccounts,
+  initialJobs = [],
+  children,
+}: DocumentsClientProps) {
   const [jobs, setJobs] = useState<ImportJobState[]>(initialJobs)
-  const [selectedAccountId, setSelectedAccountId] = useState<string>(bankAccounts[0]?.id || '')
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(bankAccounts[0]?.id || "")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [modalJob, setModalJob] = useState<ImportJobState | null>(null)
   const [modalData, setModalData] = useState<any>(null)
 
   // Determine if we're in processing mode (have active jobs)
-  const hasActiveJobs = jobs.some(j =>
-    j.status === 'PENDING' || j.status === 'PROCESSING' || j.status === 'READY_FOR_REVIEW'
+  const hasActiveJobs = jobs.some(
+    (j) => j.status === "PENDING" || j.status === "PROCESSING" || j.status === "READY_FOR_REVIEW"
   )
 
   // Auto-open sidebar when there are active jobs
@@ -49,8 +53,8 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
   // Poll for job status updates
   useEffect(() => {
     const pendingIds = jobs
-      .filter(j => j.status === 'PENDING' || j.status === 'PROCESSING')
-      .map(j => j.id)
+      .filter((j) => j.status === "PENDING" || j.status === "PROCESSING")
+      .map((j) => j.id)
 
     if (pendingIds.length === 0) return
 
@@ -60,19 +64,27 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
           const res = await fetch(`/api/import/jobs/${id}`)
           const data = await res.json()
           if (data.success && data.job) {
-            setJobs(prev => prev.map(j =>
-              j.id === id ? {
-                ...j,
-                status: data.job.status,
-                documentType: data.job.documentType,
-                progress: data.job.status === 'READY_FOR_REVIEW' ? 100 :
-                         data.job.status === 'PROCESSING' ? 50 : j.progress,
-                error: data.job.failureReason,
-              } : j
-            ))
+            setJobs((prev) =>
+              prev.map((j) =>
+                j.id === id
+                  ? {
+                      ...j,
+                      status: data.job.status,
+                      documentType: data.job.documentType,
+                      progress:
+                        data.job.status === "READY_FOR_REVIEW"
+                          ? 100
+                          : data.job.status === "PROCESSING"
+                            ? 50
+                            : j.progress,
+                      error: data.job.failureReason,
+                    }
+                  : j
+              )
+            )
           }
         } catch (e) {
-          console.error('Poll failed', e)
+          console.error("Poll failed", e)
         }
       }
     }, 2000)
@@ -80,172 +92,211 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
     return () => clearInterval(interval)
   }, [jobs])
 
-  const handleFilesDropped = useCallback(async (files: File[]) => {
-    // Open sidebar for processing
-    setSidebarOpen(true)
+  const handleFilesDropped = useCallback(
+    async (files: File[]) => {
+      // Open sidebar for processing
+      setSidebarOpen(true)
 
-    for (const file of files) {
-      const tempId = `temp-${Date.now()}-${Math.random()}`
+      for (const file of files) {
+        const tempId = `temp-${Date.now()}-${Math.random()}`
 
-      // Add to queue immediately
-      setJobs(prev => [...prev, {
-        id: tempId,
-        fileName: file.name,
-        status: 'PENDING' as JobStatus,
-        documentType: null,
-        progress: 0,
-        error: null,
-      }])
+        // Add to queue immediately
+        setJobs((prev) => [
+          ...prev,
+          {
+            id: tempId,
+            fileName: file.name,
+            status: "PENDING" as JobStatus,
+            documentType: null,
+            progress: 0,
+            error: null,
+          },
+        ])
 
-      // Upload file
-      const formData = new FormData()
-      formData.append('file', file)
-      if (selectedAccountId) {
-        formData.append('bankAccountId', selectedAccountId)
-      }
-
-      try {
-        const res = await fetch('/api/import/upload', {
-          method: 'POST',
-          body: formData,
-        })
-        const data = await res.json()
-
-        if (data.success) {
-          setJobs(prev => prev.map(j =>
-            j.id === tempId ? {
-              ...j,
-              id: data.jobId,
-              status: 'PROCESSING' as JobStatus,
-              documentType: data.documentType,
-              progress: 25,
-            } : j
-          ))
-        } else {
-          setJobs(prev => prev.map(j =>
-            j.id === tempId ? {
-              ...j,
-              status: 'FAILED' as JobStatus,
-              error: data.error,
-            } : j
-          ))
+        // Upload file
+        const formData = new FormData()
+        formData.append("file", file)
+        if (selectedAccountId) {
+          formData.append("bankAccountId", selectedAccountId)
         }
-      } catch (e) {
-        setJobs(prev => prev.map(j =>
-          j.id === tempId ? {
-            ...j,
-            status: 'FAILED' as JobStatus,
-            error: 'Upload failed',
-          } : j
-        ))
+
+        try {
+          const res = await fetch("/api/import/upload", {
+            method: "POST",
+            body: formData,
+          })
+          const data = await res.json()
+
+          if (data.success) {
+            setJobs((prev) =>
+              prev.map((j) =>
+                j.id === tempId
+                  ? {
+                      ...j,
+                      id: data.jobId,
+                      status: "PROCESSING" as JobStatus,
+                      documentType: data.documentType,
+                      progress: 25,
+                    }
+                  : j
+              )
+            )
+          } else {
+            setJobs((prev) =>
+              prev.map((j) =>
+                j.id === tempId
+                  ? {
+                      ...j,
+                      status: "FAILED" as JobStatus,
+                      error: data.error,
+                    }
+                  : j
+              )
+            )
+          }
+        } catch (e) {
+          setJobs((prev) =>
+            prev.map((j) =>
+              j.id === tempId
+                ? {
+                    ...j,
+                    status: "FAILED" as JobStatus,
+                    error: "Upload failed",
+                  }
+                : j
+            )
+          )
+        }
       }
-    }
-  }, [selectedAccountId])
+    },
+    [selectedAccountId]
+  )
 
-  const handleViewJob = useCallback(async (jobId: string) => {
-    const res = await fetch(`/api/import/jobs/${jobId}`)
-    const data = await res.json()
+  const handleViewJob = useCallback(
+    async (jobId: string) => {
+      const res = await fetch(`/api/import/jobs/${jobId}`)
+      const data = await res.json()
 
-    if (data.success) {
-      const job = jobs.find(j => j.id === jobId)
-      if (job) {
-        setModalJob({ ...job, ...data.job })
-        setModalData(data.job.extractedData)
+      if (data.success) {
+        const job = jobs.find((j) => j.id === jobId)
+        if (job) {
+          setModalJob({ ...job, ...data.job })
+          setModalData(data.job.extractedData)
+        }
       }
-    }
-  }, [jobs])
+    },
+    [jobs]
+  )
 
-  const handleConfirm = useCallback(async (jobId: string, editedData: any) => {
-    const res = await fetch(`/api/import/jobs/${jobId}/confirm`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transactions: editedData.transactions,
-        bankAccountId: selectedAccountId,
-      }),
-    })
+  const handleConfirm = useCallback(
+    async (jobId: string, editedData: any) => {
+      const res = await fetch(`/api/import/jobs/${jobId}/confirm`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactions: editedData.transactions,
+          bankAccountId: selectedAccountId,
+        }),
+      })
 
-    const data = await res.json()
-    if (data.success) {
-      setJobs(prev => prev.map(j =>
-        j.id === jobId ? {
-          ...j,
-          status: 'CONFIRMED' as JobStatus,
-          transactionCount: data.transactionCount,
-        } : j
-      ))
-      setModalJob(null)
-      setModalData(null)
-      // Refresh the page to show new documents
-      window.location.reload()
-    }
-  }, [selectedAccountId])
+      const data = await res.json()
+      if (data.success) {
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === jobId
+              ? {
+                  ...j,
+                  status: "CONFIRMED" as JobStatus,
+                  transactionCount: data.transactionCount,
+                }
+              : j
+          )
+        )
+        setModalJob(null)
+        setModalData(null)
+        // Refresh the page to show new documents
+        window.location.reload()
+      }
+    },
+    [selectedAccountId]
+  )
 
   const handleReject = useCallback(async (jobId: string) => {
-    await fetch(`/api/import/jobs/${jobId}/reject`, { method: 'PUT' })
-    setJobs(prev => prev.map(j =>
-      j.id === jobId ? { ...j, status: 'REJECTED' as JobStatus } : j
-    ))
+    await fetch(`/api/import/jobs/${jobId}/reject`, { method: "PUT" })
+    setJobs((prev) =>
+      prev.map((j) => (j.id === jobId ? { ...j, status: "REJECTED" as JobStatus } : j))
+    )
     setModalJob(null)
     setModalData(null)
   }, [])
 
   const handleRetryJob = useCallback(async (jobId: string) => {
-    setJobs(prev => prev.map(j =>
-      j.id === jobId ? { ...j, status: 'PENDING' as JobStatus, error: null, progress: 0 } : j
-    ))
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === jobId ? { ...j, status: "PENDING" as JobStatus, error: null, progress: 0 } : j
+      )
+    )
 
-    await fetch('/api/import/process', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch("/api/import/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jobId }),
     })
   }, [])
 
   const handleRemoveJob = useCallback((jobId: string) => {
-    setJobs(prev => prev.filter(j => j.id !== jobId))
+    setJobs((prev) => prev.filter((j) => j.id !== jobId))
   }, [])
 
   const handleTypeChange = useCallback(async (jobId: string, newType: DocumentType) => {
     // Optimistically update the UI
-    setJobs(prev => prev.map(j =>
-      j.id === jobId ? { ...j, documentType: newType, status: 'PENDING' as JobStatus, progress: 0 } : j
-    ))
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === jobId
+          ? { ...j, documentType: newType, status: "PENDING" as JobStatus, progress: 0 }
+          : j
+      )
+    )
 
     try {
       const res = await fetch(`/api/import/jobs/${jobId}/type`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentType: newType }),
       })
       const data = await res.json()
 
       if (!data.success) {
         // Revert on failure
-        setJobs(prev => prev.map(j =>
-          j.id === jobId ? { ...j, error: data.error || 'Failed to change type' } : j
-        ))
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === jobId ? { ...j, error: data.error || "Failed to change type" } : j
+          )
+        )
       }
     } catch (e) {
-      console.error('Failed to change document type:', e)
+      console.error("Failed to change document type:", e)
     }
   }, [])
 
   // Handle document type change from the confirmation modal
-  const handleModalTypeChange = useCallback(async (newType: 'BANK_STATEMENT' | 'INVOICE') => {
-    if (!modalJob) return
+  const handleModalTypeChange = useCallback(
+    async (newType: "BANK_STATEMENT" | "INVOICE") => {
+      if (!modalJob) return
 
-    // Close modal while reprocessing
-    setModalJob(null)
-    setModalData(null)
+      // Close modal while reprocessing
+      setModalJob(null)
+      setModalData(null)
 
-    // Trigger type change and reprocessing
-    await handleTypeChange(modalJob.id, newType as DocumentType)
-  }, [modalJob, handleTypeChange])
+      // Trigger type change and reprocessing
+      await handleTypeChange(modalJob.id, newType as DocumentType)
+    },
+    [modalJob, handleTypeChange]
+  )
 
-  const getFileType = (fileName: string): 'PDF' | 'IMAGE' => {
-    const ext = fileName.split('.').pop()?.toLowerCase() || ''
-    return ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(ext) ? 'IMAGE' : 'PDF'
+  const getFileType = (fileName: string): "PDF" | "IMAGE" => {
+    const ext = fileName.split(".").pop()?.toLowerCase() || ""
+    return ["jpg", "jpeg", "png", "heic", "webp"].includes(ext) ? "IMAGE" : "PDF"
   }
 
   return (
@@ -269,7 +320,7 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         mode="processing"
-        processingJobs={jobs.filter(j => j.status !== 'CONFIRMED' && j.status !== 'REJECTED')}
+        processingJobs={jobs.filter((j) => j.status !== "CONFIRMED" && j.status !== "REJECTED")}
         onViewJob={handleViewJob}
         onRetryJob={handleRetryJob}
         onRemoveJob={handleRemoveJob}
@@ -280,13 +331,16 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
       {modalJob && modalData && (
         <ConfirmationModal
           isOpen={true}
-          onClose={() => { setModalJob(null); setModalData(null); }}
+          onClose={() => {
+            setModalJob(null)
+            setModalData(null)
+          }}
           onConfirm={() => handleConfirm(modalJob.id, modalData)}
           onDiscard={() => handleReject(modalJob.id)}
           filename={modalJob.fileName}
           fileType={getFileType(modalJob.fileName)}
           fileUrl={`/api/import/jobs/${modalJob.id}/file`}
-          documentType={modalJob.documentType === 'BANK_STATEMENT' ? 'BANK_STATEMENT' : 'INVOICE'}
+          documentType={modalJob.documentType === "BANK_STATEMENT" ? "BANK_STATEMENT" : "INVOICE"}
           onDocumentTypeChange={handleModalTypeChange}
           // Bank statement props
           transactions={modalData.transactions}
@@ -298,7 +352,7 @@ export function DocumentsClient({ bankAccounts, initialJobs = [], children }: Do
           onBankAccountChange={setSelectedAccountId}
           bankAccounts={bankAccounts}
           // Invoice props - pass the whole modalData as invoice data if it's an invoice
-          invoiceData={modalJob.documentType === 'INVOICE' ? modalData : undefined}
+          invoiceData={modalJob.documentType === "INVOICE" ? modalData : undefined}
           onInvoiceDataChange={(data) => setModalData(data)}
         />
       )}

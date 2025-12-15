@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
 
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const passkeys = await db.webAuthnCredential.findMany({
@@ -20,16 +20,13 @@ export async function GET() {
         lastUsedAt: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
-    });
+    })
 
-    return NextResponse.json({ passkeys });
+    return NextResponse.json({ passkeys })
   } catch (error) {
-    console.error('Get passkeys error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get passkeys' },
-      { status: 500 }
-    );
+    console.error("Get passkeys error:", error)
+    return NextResponse.json({ error: "Failed to get passkeys" }, { status: 500 })
   }
 }

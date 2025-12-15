@@ -24,11 +24,7 @@ export function CompanySwitcher({
   const currentCompany = companies.find((c) => c.id === currentCompanyId)
 
   if (companies.length <= 1) {
-    return (
-      <div className="text-sm text-gray-600">
-        {currentCompany?.name}
-      </div>
-    )
+    return <div className="text-sm text-gray-600">{currentCompany?.name}</div>
   }
 
   const handleSwitch = (companyId: string) => {

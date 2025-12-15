@@ -51,16 +51,10 @@ export function StepContactTax() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold">Kontakt i porezni podaci</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Završite postavljanje tvrtke
-        </p>
+        <p className="mt-1 text-sm text-gray-600">Završite postavljanje tvrtke</p>
       </div>
 
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       <div className="space-y-4">
         <div>

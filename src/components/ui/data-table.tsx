@@ -44,10 +44,7 @@ export function DataTable<T>({
               <th
                 key={column.key}
                 scope="col"
-                className={cn(
-                  "px-4 py-3 text-left font-medium text-gray-700",
-                  column.className
-                )}
+                className={cn("px-4 py-3 text-left font-medium text-gray-700", column.className)}
               >
                 {column.header}
               </th>
@@ -56,15 +53,9 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {data.map((item) => (
-            <tr
-              key={getRowKey(item)}
-              className="border-b last:border-b-0 hover:bg-gray-50"
-            >
+            <tr key={getRowKey(item)} className="border-b last:border-b-0 hover:bg-gray-50">
               {columns.map((column) => (
-                <td
-                  key={column.key}
-                  className={cn("px-4 py-3", column.className)}
-                >
+                <td key={column.key} className={cn("px-4 py-3", column.className)}>
                   {column.cell(item)}
                 </td>
               ))}

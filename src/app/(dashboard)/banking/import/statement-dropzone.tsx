@@ -1,20 +1,27 @@
-'use client'
+"use client"
 
-import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, CheckCircle2, AlertCircle, Loader2, ShieldCheck, TriangleAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import type { BankAccount } from '@prisma/client'
+import { useState, useRef, useEffect } from "react"
+import {
+  UploadCloud,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import type { BankAccount } from "@prisma/client"
 
 type DropzoneProps = {
-  accounts: Pick<BankAccount, 'id' | 'name' | 'iban'>[]
+  accounts: Pick<BankAccount, "id" | "name" | "iban">[]
   lastByAccount: Record<string, { date: string | null; sequenceNumber: number | null }>
 }
 
-type UploadState = 'idle' | 'uploading' | 'success' | 'error'
+type UploadState = "idle" | "uploading" | "success" | "error"
 
 export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? '')
-  const [status, setStatus] = useState<UploadState>('idle')
+  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "")
+  const [status, setStatus] = useState<UploadState>("idle")
   const [message, setMessage] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -24,72 +31,77 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
   const [poller, setPoller] = useState<NodeJS.Timeout | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [needsOverwrite, setNeedsOverwrite] = useState(false)
-  const [step, setStep] = useState<'idle' | 'upload' | 'process' | 'vision' | 'done' | 'error'>('idle')
+  const [step, setStep] = useState<"idle" | "upload" | "process" | "vision" | "done" | "error">(
+    "idle"
+  )
   const [logs, setLogs] = useState<string[]>([])
 
   async function uploadFile(file: File, overwrite = false) {
     if (!accountId) {
-      setStatus('error')
-      setMessage('Odaberite bankovni račun prije uploada')
+      setStatus("error")
+      setMessage("Odaberite bankovni račun prije uploada")
       return
     }
-    if (!['application/pdf', 'application/xml', 'text/xml'].includes(file.type) && !file.name.match(/\.(pdf|xml)$/i)) {
-      setStatus('error')
-      setMessage('Podržani su samo PDF ili XML izvodi')
+    if (
+      !["application/pdf", "application/xml", "text/xml"].includes(file.type) &&
+      !file.name.match(/\.(pdf|xml)$/i)
+    ) {
+      setStatus("error")
+      setMessage("Podržani su samo PDF ili XML izvodi")
       return
     }
 
     const formData = new FormData()
-    formData.append('file', file)
-    formData.append('accountId', accountId)
-    formData.append('overwrite', overwrite ? 'true' : 'false')
+    formData.append("file", file)
+    formData.append("accountId", accountId)
+    formData.append("overwrite", overwrite ? "true" : "false")
 
-    setStatus('uploading')
-    setMessage('Upload u tijeku...')
+    setStatus("uploading")
+    setMessage("Upload u tijeku...")
     setProgressText(null)
     setJobStatus(null)
     setJobId(null)
     setNeedsOverwrite(false)
     setPendingFile(file)
-    setStep('upload')
-    setLogs((prev) => ['Analiza datoteke započeta', ...prev].slice(0, 6))
+    setStep("upload")
+    setLogs((prev) => ["Analiza datoteke započeta", ...prev].slice(0, 6))
 
     try {
-      const res = await fetch('/api/banking/import/upload', {
-        method: 'POST',
+      const res = await fetch("/api/banking/import/upload", {
+        method: "POST",
         body: formData,
       })
       const json = await res.json()
       if (res.status === 409 && json.requiresOverwrite) {
-        setStatus('idle')
+        setStatus("idle")
         setNeedsOverwrite(true)
-        setMessage('Ovaj izvod već postoji. Želite li prepisati?')
+        setMessage("Ovaj izvod već postoji. Želite li prepisati?")
         return
       }
       if (!res.ok || !json.success) {
-        setStatus('error')
-        setMessage(json.error || 'Upload nije uspio')
+        setStatus("error")
+        setMessage(json.error || "Upload nije uspio")
         return
       }
       const newJobId = json.jobId as string
       setJobId(newJobId)
       // Kick off processing in the background (best-effort)
-      fetch('/api/banking/import/process', { method: 'POST' }).catch(() => {
+      fetch("/api/banking/import/process", { method: "POST" }).catch(() => {
         // silent fire-and-forget; processing endpoint will be called by cron/worker too
       })
-      setStatus('success')
-      setMessage('Primljeno! Obrada će se nastaviti u pozadini.')
+      setStatus("success")
+      setMessage("Primljeno! Obrada će se nastaviti u pozadini.")
       setFileName(file.name)
-      setJobStatus('PENDING')
-      setStep('process')
-      setLogs((prev) => ['Učitavanje stranica i ekstrakcija teksta...', ...prev].slice(0, 6))
+      setJobStatus("PENDING")
+      setStep("process")
+      setLogs((prev) => ["Učitavanje stranica i ekstrakcija teksta...", ...prev].slice(0, 6))
       startPolling(newJobId)
     } catch (err) {
       console.error(err)
-      setStatus('error')
-      setMessage('Neuspješan upload')
-      setStep('error')
-      setLogs((prev) => ['Greška pri uploadu', ...prev].slice(0, 6))
+      setStatus("error")
+      setMessage("Neuspješan upload")
+      setStep("error")
+      setLogs((prev) => ["Greška pri uploadu", ...prev].slice(0, 6))
     }
   }
 
@@ -116,38 +128,42 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
         setJobStatus(job.status)
 
         if (job.pagesProcessed && job.pageCount) {
-          setProgressText(`Stranice: ${job.pagesProcessed}/${job.pageCount} · VERIFIED ${job.pagesVerified || 0}${job.pagesNeedsVision ? ` · NEEDS_VISION ${job.pagesNeedsVision}` : ''}`)
-        } else if (job.status === 'PROCESSING') {
-          setProgressText('Obrada u tijeku...')
+          setProgressText(
+            `Stranice: ${job.pagesProcessed}/${job.pageCount} · VERIFIED ${job.pagesVerified || 0}${job.pagesNeedsVision ? ` · NEEDS_VISION ${job.pagesNeedsVision}` : ""}`
+          )
+        } else if (job.status === "PROCESSING") {
+          setProgressText("Obrada u tijeku...")
         }
         if (job.pagesNeedsVision) {
-          setStep('vision')
-          setLogs((prev) => ['Matematičko odstupanje. Pokrećem vizualnu provjeru...', ...prev].slice(0, 6))
+          setStep("vision")
+          setLogs((prev) =>
+            ["Matematičko odstupanje. Pokrećem vizualnu provjeru...", ...prev].slice(0, 6)
+          )
         } else {
-          setStep('process')
+          setStep("process")
         }
 
-        const terminal = ['VERIFIED', 'NEEDS_REVIEW', 'FAILED']
+        const terminal = ["VERIFIED", "NEEDS_REVIEW", "FAILED"]
         if (terminal.includes(job.status)) {
           clearInterval(interval)
           setPoller(null)
-          if (job.status === 'VERIFIED') {
-            setMessage('Izvod je verificiran matematikom.')
-            setStep('done')
-            setLogs((prev) => ['Matematički točno. Završeno.', ...prev].slice(0, 6))
-          } else if (job.status === 'NEEDS_REVIEW') {
-            setMessage('Obrada završena uz odstupanja — potrebno pregledati.')
-            setStep('vision')
-            setLogs((prev) => ['Potrebna ručna provjera.', ...prev].slice(0, 6))
+          if (job.status === "VERIFIED") {
+            setMessage("Izvod je verificiran matematikom.")
+            setStep("done")
+            setLogs((prev) => ["Matematički točno. Završeno.", ...prev].slice(0, 6))
+          } else if (job.status === "NEEDS_REVIEW") {
+            setMessage("Obrada završena uz odstupanja — potrebno pregledati.")
+            setStep("vision")
+            setLogs((prev) => ["Potrebna ručna provjera.", ...prev].slice(0, 6))
           } else {
-            setMessage(job.failureReason || 'Obrada nije uspjela.')
-            setStatus('error')
-            setStep('error')
-            setLogs((prev) => ['Greška u obradi.', ...prev].slice(0, 6))
+            setMessage(job.failureReason || "Obrada nije uspjela.")
+            setStatus("error")
+            setStep("error")
+            setLogs((prev) => ["Greška u obradi.", ...prev].slice(0, 6))
           }
         }
       } catch (error) {
-        console.warn('Polling failed', error)
+        console.warn("Polling failed", error)
       }
     }, 3000)
     setPoller(interval)
@@ -172,16 +188,16 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
   }
 
   const borderColor =
-    status === 'success'
-      ? 'border-green-300 bg-green-50'
-      : status === 'error'
-        ? 'border-red-200 bg-red-50'
-        : 'border-dashed border-gray-300 bg-gradient-to-r from-indigo-50 via-white to-sky-50'
+    status === "success"
+      ? "border-green-300 bg-green-50"
+      : status === "error"
+        ? "border-red-200 bg-red-50"
+        : "border-dashed border-gray-300 bg-gradient-to-r from-indigo-50 via-white to-sky-50"
 
   const last = lastByAccount[accountId]
   const lastLabel = last?.sequenceNumber
-    ? `Posljednji izvod: #${last.sequenceNumber}${last.date ? ` (${new Date(last.date).toLocaleDateString('hr-HR')})` : ''}`
-    : 'Nije pronađen prethodni izvod'
+    ? `Posljednji izvod: #${last.sequenceNumber}${last.date ? ` (${new Date(last.date).toLocaleDateString("hr-HR")})` : ""}`
+    : "Nije pronađen prethodni izvod"
 
   return (
     <div className="space-y-6">
@@ -190,7 +206,9 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
           <div>
             <p className="text-sm uppercase tracking-wide text-slate-200">Uvoz bankovnih izvoda</p>
             <p className="text-lg font-semibold">Povucite PDF ili XML ovdje</p>
-            <p className="text-xs text-slate-200/80 mt-1">Podržano: RBA, ZABA, PBZ (PDF) ili CAMT.053 (XML)</p>
+            <p className="text-xs text-slate-200/80 mt-1">
+              Podržano: RBA, ZABA, PBZ (PDF) ili CAMT.053 (XML)
+            </p>
             <p className="text-xs text-slate-200/80 mt-1">{lastLabel}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -227,26 +245,24 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
         />
 
         <div className="flex flex-col items-center justify-center gap-3 text-center">
-          {status === 'uploading' ? (
+          {status === "uploading" ? (
             <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-          ) : status === 'success' ? (
+          ) : status === "success" ? (
             <CheckCircle2 className="h-10 w-10 text-green-600" />
-          ) : status === 'error' ? (
+          ) : status === "error" ? (
             <AlertCircle className="h-10 w-10 text-red-600" />
           ) : (
             <UploadCloud className="h-10 w-10 text-blue-600" />
           )}
 
           <div>
-            <p className="text-base font-semibold">
-              Povucite i ispustite PDF ili XML izvod ovdje
-            </p>
+            <p className="text-base font-semibold">Povucite i ispustite PDF ili XML izvod ovdje</p>
             <p className="text-xs text-gray-500">
               Digitalni ili skenirani PDF · CAMT XML · max 20 MB
             </p>
           </div>
 
-          <Button variant="outline" onClick={onBrowseClick} disabled={status === 'uploading'}>
+          <Button variant="outline" onClick={onBrowseClick} disabled={status === "uploading"}>
             Odaberi datoteku
           </Button>
 
@@ -259,7 +275,11 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
           {message && (
             <p
               className={`text-xs ${
-                status === 'error' ? 'text-red-600' : status === 'success' ? 'text-green-600' : 'text-gray-600'
+                status === "error"
+                  ? "text-red-600"
+                  : status === "success"
+                    ? "text-green-600"
+                    : "text-gray-600"
               }`}
             >
               {message}
@@ -270,7 +290,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
               <Button
                 size="sm"
                 onClick={() => uploadFile(pendingFile, true)}
-                disabled={status === 'uploading'}
+                disabled={status === "uploading"}
               >
                 Prepiši i nastavi
               </Button>
@@ -291,7 +311,8 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
 
         {jobStatus && (
           <div className="mt-3 text-xs text-gray-700">
-            <span className="font-semibold">Status:</span> {jobStatus} {progressText ? `· ${progressText}` : ''}
+            <span className="font-semibold">Status:</span> {jobStatus}{" "}
+            {progressText ? `· ${progressText}` : ""}
           </div>
         )}
         {logs.length > 0 && (
@@ -311,25 +332,29 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
   )
 }
 
-function ProgressBar({ step }: { step: 'idle' | 'upload' | 'process' | 'vision' | 'done' | 'error' }) {
-  const steps = ['upload', 'process', 'vision', 'done'] as const
-  const labels: Record<typeof steps[number], string> = {
-    upload: 'Upload',
-    process: 'Tekst & Matematika',
-    vision: 'Vision fallback',
-    done: 'Završeno',
+function ProgressBar({
+  step,
+}: {
+  step: "idle" | "upload" | "process" | "vision" | "done" | "error"
+}) {
+  const steps = ["upload", "process", "vision", "done"] as const
+  const labels: Record<(typeof steps)[number], string> = {
+    upload: "Upload",
+    process: "Tekst & Matematika",
+    vision: "Vision fallback",
+    done: "Završeno",
   }
   const activeIndex = Math.max(
     0,
-    steps.findIndex((s) => s === step || (step === 'error' && s === 'process')) ?? 0
+    steps.findIndex((s) => s === step || (step === "error" && s === "process")) ?? 0
   )
-  const percent = ((activeIndex + (step === 'done' ? 0 : 0.5)) / (steps.length - 1)) * 100
+  const percent = ((activeIndex + (step === "done" ? 0 : 0.5)) / (steps.length - 1)) * 100
 
   return (
     <div className="mt-4 space-y-2 rounded-lg border bg-white/70 p-3 shadow-sm">
       <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
         {steps.map((s, idx) => (
-          <span key={s} className={idx <= activeIndex ? 'font-semibold text-gray-900' : ''}>
+          <span key={s} className={idx <= activeIndex ? "font-semibold text-gray-900" : ""}>
             {labels[s]}
           </span>
         ))}
@@ -341,11 +366,11 @@ function ProgressBar({ step }: { step: 'idle' | 'upload' | 'process' | 'vision' 
         />
       </div>
       <div className="text-[11px] text-gray-500">
-        {step === 'upload' && 'Upload u tijeku...'}
-        {step === 'process' && 'Ekstrakcija teksta i matematička provjera.'}
-        {step === 'vision' && 'Vision fallback za stranice s greškama.'}
-        {step === 'done' && 'Verificirano.'}
-        {step === 'error' && 'Obrada nije uspjela. Pokušajte ponovno ili ručno pregledajte.'}
+        {step === "upload" && "Upload u tijeku..."}
+        {step === "process" && "Ekstrakcija teksta i matematička provjera."}
+        {step === "vision" && "Vision fallback za stranice s greškama."}
+        {step === "done" && "Verificirano."}
+        {step === "error" && "Obrada nije uspjela. Pokušajte ponovno ili ručno pregledajte."}
       </div>
     </div>
   )

@@ -49,12 +49,14 @@ async function getSudskiToken(): Promise<string | null> {
   }
 
   try {
-    const credentials = Buffer.from(`${SUDSKI_CLIENT_ID}:${SUDSKI_CLIENT_SECRET}`).toString("base64")
+    const credentials = Buffer.from(`${SUDSKI_CLIENT_ID}:${SUDSKI_CLIENT_SECRET}`).toString(
+      "base64"
+    )
 
     const response = await fetch(SUDSKI_TOKEN_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${credentials}`,
+        Authorization: `Basic ${credentials}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: "grant_type=client_credentials",
@@ -69,7 +71,7 @@ async function getSudskiToken(): Promise<string | null> {
 
     cachedToken = {
       token: data.access_token,
-      expiresAt: Date.now() + (data.expires_in * 1000),
+      expiresAt: Date.now() + data.expires_in * 1000,
     }
 
     return cachedToken.token
@@ -115,7 +117,7 @@ async function lookupVies(oib: string): Promise<OibLookupResult> {
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       signal: controller.signal,
     })
@@ -186,8 +188,8 @@ async function lookupSudskiRegistar(oib: string): Promise<OibLookupResult> {
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Accept": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
       },
       signal: controller.signal,
     })
@@ -292,7 +294,7 @@ export async function lookupOib(oib: string): Promise<OibLookupResult> {
  */
 function extractShortName(fullName: string | undefined): string {
   if (!fullName) return ""
-  
+
   // Common patterns: "NAME - drustvo s ogranicenom odgovornoscu..." or "NAME d.o.o."
   // Split on " - " which typically separates short name from long legal description
   const dashIndex = fullName.indexOf(" - ")
@@ -311,7 +313,7 @@ function extractShortName(fullName: string | undefined): string {
     }
     return shortPart
   }
-  
+
   // If no separator, return as-is but truncate if very long
   if (fullName.length > 60) {
     return fullName.substring(0, 57) + "..."
@@ -325,7 +327,10 @@ function parseAddress(address: string): { street: string; city: string; postalCo
   }
 
   // Croatian address format: "STREET NUMBER\nPOSTAL CITY" or "STREET NUMBER, POSTAL CITY"
-  const lines = address.split(/[\n,]/).map((l) => l.trim()).filter(Boolean)
+  const lines = address
+    .split(/[\n,]/)
+    .map((l) => l.trim())
+    .filter(Boolean)
 
   if (lines.length === 0) {
     return { street: "", city: "", postalCode: "" }
@@ -362,15 +367,15 @@ function parseAddress(address: string): { street: string; city: string; postalCo
 function getPostalCodeFromZupanija(zupanijaId: number, opcinaId?: number): string {
   // Croatian postal codes by zupanija (approximate)
   const zupanijaPostalCodes: Record<number, string> = {
-    1: "31000",  // Osjecko-baranjska
-    2: "33000",  // Viroviticko-podravska
-    3: "40000",  // Medimurska
-    4: "42000",  // Varazdinska
-    5: "43000",  // Bjelovarsko-bilogorska
-    6: "44000",  // Sisacko-moslavacka
-    7: "47000",  // Karlovacka
-    8: "48000",  // Koprivnicko-krizevacka
-    9: "49000",  // Krapinsko-zagorska
+    1: "31000", // Osjecko-baranjska
+    2: "33000", // Viroviticko-podravska
+    3: "40000", // Medimurska
+    4: "42000", // Varazdinska
+    5: "43000", // Bjelovarsko-bilogorska
+    6: "44000", // Sisacko-moslavacka
+    7: "47000", // Karlovacka
+    8: "48000", // Koprivnicko-krizevacka
+    9: "49000", // Krapinsko-zagorska
     10: "10000", // Zagrebacka
     11: "20000", // Dubrovacko-neretvanska
     12: "21000", // Splitsko-dalmatinska

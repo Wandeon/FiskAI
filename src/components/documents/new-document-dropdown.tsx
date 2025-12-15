@@ -1,35 +1,35 @@
-'use client'
+"use client"
 
-import { useState, useRef, useEffect } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ChevronDown, FileText, Mail, Building2, Receipt } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useState, useRef, useEffect } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ChevronDown, FileText, Mail, Building2, Receipt } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const DOCUMENT_OPTIONS = [
   {
-    label: 'Novi račun',
-    href: '/invoices/new?type=INVOICE',
+    label: "Novi račun",
+    href: "/invoices/new?type=INVOICE",
     icon: FileText,
-    description: 'Kreiraj standardni račun',
+    description: "Kreiraj standardni račun",
   },
   {
-    label: 'Novi e-račun',
-    href: '/e-invoices/new',
+    label: "Novi e-račun",
+    href: "/e-invoices/new",
     icon: Mail,
-    description: 'Kreiraj fiskalizirani e-račun',
+    description: "Kreiraj fiskalizirani e-račun",
   },
   {
-    label: 'Uvezi bankovni izvod',
-    href: '/banking/import',
+    label: "Uvezi bankovni izvod",
+    href: "/banking/import",
     icon: Building2,
-    description: 'Učitaj PDF ili XML izvod',
+    description: "Učitaj PDF ili XML izvod",
   },
   {
-    label: 'Novi trošak',
-    href: '/expenses/new',
+    label: "Novi trošak",
+    href: "/expenses/new",
     icon: Receipt,
-    description: 'Evidentiraj trošak',
+    description: "Evidentiraj trošak",
   },
 ]
 
@@ -45,33 +45,27 @@ export function NewDocumentDropdown() {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   // Close dropdown on escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsOpen(false)
       }
     }
 
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
+    document.addEventListener("keydown", handleEscape)
+    return () => document.removeEventListener("keydown", handleEscape)
   }, [])
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className="gap-2"
-      >
+      <Button onClick={() => setIsOpen(!isOpen)} className="gap-2">
         Novi dokument
-        <ChevronDown className={cn(
-          'h-4 w-4 transition-transform',
-          isOpen && 'rotate-180'
-        )} />
+        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
       </Button>
 
       {isOpen && (

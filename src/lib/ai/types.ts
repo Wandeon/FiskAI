@@ -6,7 +6,7 @@ export interface ExtractedReceipt {
   subtotal: number
   vatAmount: number
   total: number
-  paymentMethod?: 'cash' | 'card' | 'transfer'
+  paymentMethod?: "cash" | "card" | "transfer"
   currency: string
   confidence: number // 0-1
 }

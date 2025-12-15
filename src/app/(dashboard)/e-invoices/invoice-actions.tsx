@@ -20,7 +20,10 @@ export function EInvoiceActions({ invoiceId, status, hasProvider }: EInvoiceActi
 
   async function handleSend() {
     if (!hasProvider) {
-      toast.error("Greška", "Molimo konfigurirajte informacijskog posrednika u postavkama prije slanja računa.")
+      toast.error(
+        "Greška",
+        "Molimo konfigurirajte informacijskog posrednika u postavkama prije slanja računa."
+      )
       return
     }
 
@@ -47,7 +50,9 @@ export function EInvoiceActions({ invoiceId, status, hasProvider }: EInvoiceActi
   }
 
   async function handleDelete() {
-    if (!confirm("Jeste li sigurni da želite obrisati ovaj račun? Ova akcija se ne može poništiti.")) {
+    if (
+      !confirm("Jeste li sigurni da želite obrisati ovaj račun? Ova akcija se ne može poništiti.")
+    ) {
       return
     }
 
@@ -88,22 +93,13 @@ export function EInvoiceActions({ invoiceId, status, hasProvider }: EInvoiceActi
       )}
 
       {canSend && (
-        <Button
-          size="sm"
-          onClick={handleSend}
-          disabled={loading}
-        >
+        <Button size="sm" onClick={handleSend} disabled={loading}>
           {loading && action === "send" ? "Slanje..." : "Pošalji"}
         </Button>
       )}
 
       {canDelete && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDelete}
-          disabled={loading}
-        >
+        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}>
           {loading && action === "delete" ? "..." : "Obriši"}
         </Button>
       )}

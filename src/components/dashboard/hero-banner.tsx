@@ -11,7 +11,8 @@ interface HeroBannerProps {
   className?: string
 }
 
-const buttonBaseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-10 px-4 py-2"
+const buttonBaseStyles =
+  "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-10 px-4 py-2"
 
 export function HeroBanner({
   userName,
@@ -23,10 +24,7 @@ export function HeroBanner({
 }: HeroBannerProps) {
   return (
     <div
-      className={cn(
-        "relative overflow-hidden rounded-3xl surface-gradient shadow-glow",
-        className
-      )}
+      className={cn("relative overflow-hidden rounded-3xl surface-gradient shadow-glow", className)}
     >
       <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_60%)]" />
       <div className="relative z-10 flex flex-col gap-6 p-6 sm:p-8">
@@ -35,11 +33,10 @@ export function HeroBanner({
             <Sparkles className="icon-sm" />
             FiskAI asistent
           </div>
-          <h2 className="text-display text-3xl font-semibold">
-            Dobrodošli natrag, {userName}!
-          </h2>
+          <h2 className="text-display text-3xl font-semibold">Dobrodošli natrag, {userName}!</h2>
           <p className="text-sm text-white/80">
-            {companyName} • {contactCount} kontakata • {providerConfigured ? "Posrednik spojen" : "Konfigurirajte posrednika"}
+            {companyName} • {contactCount} kontakata •{" "}
+            {providerConfigured ? "Posrednik spojen" : "Konfigurirajte posrednika"}
           </p>
         </div>
 
@@ -85,7 +82,9 @@ export function HeroBanner({
                   {providerConfigured ? "Spremni za fiskalizaciju" : "Povežite posrednika"}
                 </p>
                 <p className="text-xs text-slate-700">
-                  {providerConfigured ? "E-računi se mogu slati odmah" : "Završite postavke u minutama"}
+                  {providerConfigured
+                    ? "E-računi se mogu slati odmah"
+                    : "Završite postavke u minutama"}
                 </p>
               </div>
             </div>
@@ -103,7 +102,10 @@ export function HeroBanner({
             </Link>
             <Link
               href="mailto:?subject=Poziv%20na%20FiskAI&body=Pridru%C5%BEi%20se%20mojoj%20tvrtki%20na%20FiskAI%20platformi."
-              className={cn(buttonBaseStyles, "border border-white/40 text-white hover:bg-white/10")}
+              className={cn(
+                buttonBaseStyles,
+                "border border-white/40 text-white hover:bg-white/10"
+              )}
             >
               <Users className="icon-md mr-2" />
               Pošalji poziv na email

@@ -1,5 +1,5 @@
-import { db } from '@/lib/db'
-import { logger } from '@/lib/logger'
+import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 export interface SubmitFeedbackInput {
   companyId: string
@@ -7,7 +7,7 @@ export interface SubmitFeedbackInput {
   entityType: string
   entityId: string
   operation: string
-  feedback: 'correct' | 'incorrect' | 'partial'
+  feedback: "correct" | "incorrect" | "partial"
   correction?: Record<string, unknown>
   notes?: string
 }
@@ -45,12 +45,12 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
         feedback: input.feedback,
         entityType: input.entityType,
       },
-      'AI feedback submitted'
+      "AI feedback submitted"
     )
 
     return { success: true, feedback }
   } catch (error) {
-    logger.error({ error, input }, 'Failed to submit AI feedback')
+    logger.error({ error, input }, "Failed to submit AI feedback")
     throw error
   }
 }
@@ -58,10 +58,7 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
 /**
  * Get feedback history for a specific entity
  */
-export async function getFeedbackForEntity(
-  entityType: string,
-  entityId: string
-) {
+export async function getFeedbackForEntity(entityType: string, entityId: string) {
   try {
     const feedback = await db.aIFeedback.findMany({
       where: {
@@ -69,13 +66,13 @@ export async function getFeedbackForEntity(
         entityId,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     })
 
     return feedback
   } catch (error) {
-    logger.error({ error, entityType, entityId }, 'Failed to get feedback')
+    logger.error({ error, entityType, entityId }, "Failed to get feedback")
     throw error
   }
 }
@@ -101,9 +98,9 @@ export async function getFeedbackStats(
     })
 
     const total = feedbackList.length
-    const correct = feedbackList.filter((f) => f.feedback === 'correct').length
-    const incorrect = feedbackList.filter((f) => f.feedback === 'incorrect').length
-    const partial = feedbackList.filter((f) => f.feedback === 'partial').length
+    const correct = feedbackList.filter((f) => f.feedback === "correct").length
+    const incorrect = feedbackList.filter((f) => f.feedback === "incorrect").length
+    const partial = feedbackList.filter((f) => f.feedback === "partial").length
 
     const accuracy = total > 0 ? ((correct + partial * 0.5) / total) * 100 : 0
 
@@ -115,7 +112,7 @@ export async function getFeedbackStats(
       accuracy: Math.round(accuracy * 100) / 100,
     }
   } catch (error) {
-    logger.error({ error, companyId, operation }, 'Failed to get feedback stats')
+    logger.error({ error, companyId, operation }, "Failed to get feedback stats")
     throw error
   }
 }
@@ -123,24 +120,21 @@ export async function getFeedbackStats(
 /**
  * Get recent feedback for analytics/monitoring
  */
-export async function getRecentFeedback(
-  companyId: string,
-  limit: number = 10
-) {
+export async function getRecentFeedback(companyId: string, limit: number = 10) {
   try {
     const feedback = await db.aIFeedback.findMany({
       where: {
         companyId,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       take: limit,
     })
 
     return feedback
   } catch (error) {
-    logger.error({ error, companyId }, 'Failed to get recent feedback')
+    logger.error({ error, companyId }, "Failed to get recent feedback")
     throw error
   }
 }

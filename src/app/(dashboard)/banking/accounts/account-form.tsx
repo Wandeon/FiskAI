@@ -1,24 +1,24 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { createBankAccount } from '../actions'
-import { useRouter } from 'next/navigation'
-import { getBankNameFromIban, isValidCroatianIban, formatIban } from '@/lib/banking/constants'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { createBankAccount } from "../actions"
+import { useRouter } from "next/navigation"
+import { getBankNameFromIban, isValidCroatianIban, formatIban } from "@/lib/banking/constants"
 
 export function AccountForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [iban, setIban] = useState('')
+  const [iban, setIban] = useState("")
   const [ibanError, setIbanError] = useState<string | null>(null)
-  const [bankName, setBankName] = useState('')
-  const [currency, setCurrency] = useState('EUR')
+  const [bankName, setBankName] = useState("")
+  const [currency, setCurrency] = useState("EUR")
 
   function validateIban(value: string) {
-    const cleaned = value.replace(/\s/g, '').toUpperCase()
+    const cleaned = value.replace(/\s/g, "").toUpperCase()
     if (!cleaned) {
       setIbanError(null)
       return cleaned
@@ -26,7 +26,7 @@ export function AccountForm() {
 
     // Validate Croatian IBAN format and checksum
     if (!isValidCroatianIban(cleaned)) {
-      setIbanError('IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki')
+      setIbanError("IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki")
     } else {
       setIbanError(null)
 
@@ -35,22 +35,22 @@ export function AccountForm() {
       if (detectedBankName) {
         setBankName(detectedBankName)
         // Auto-select EUR for Croatian IBANs
-        if (cleaned.startsWith('HR')) {
-          setCurrency('EUR')
+        if (cleaned.startsWith("HR")) {
+          setCurrency("EUR")
         }
       } else {
-        setBankName('')
+        setBankName("")
       }
     }
     return cleaned
   }
 
   function handleIbanChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let value = e.target.value.toUpperCase().replace(/\s/g, '')
+    let value = e.target.value.toUpperCase().replace(/\s/g, "")
 
     // Allow typing but limit to Croatian IBAN format
-    if (value.length > 0 && !value.startsWith('HR')) {
-      value = 'HR' + value
+    if (value.length > 0 && !value.startsWith("HR")) {
+      value = "HR" + value
     }
 
     // Limit to 21 characters (HR + 19 digits)
@@ -62,7 +62,7 @@ export function AccountForm() {
     const formatted = formatIban(value)
 
     setIban(formatted)
-    validateIban(value.replace(/\s/g, ''))
+    validateIban(value.replace(/\s/g, ""))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -74,16 +74,16 @@ export function AccountForm() {
 
     // Add auto-detected bank name if available
     if (bankName) {
-      formData.set('bankName', bankName)
+      formData.set("bankName", bankName)
     }
 
     // Add auto-selected currency
-    formData.set('currency', currency)
+    formData.set("currency", currency)
 
     // Validate IBAN before submit
-    const ibanValue = (formData.get('iban') as string).replace(/\s/g, '')
+    const ibanValue = (formData.get("iban") as string).replace(/\s/g, "")
     if (!isValidCroatianIban(ibanValue)) {
-      setError('IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki')
+      setError("IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki")
       setLoading(false)
       return
     }
@@ -94,11 +94,11 @@ export function AccountForm() {
       router.refresh()
       // Reset form
       e.currentTarget.reset()
-      setIban('')
-      setBankName('')
-      setCurrency('EUR')
+      setIban("")
+      setBankName("")
+      setCurrency("EUR")
     } else {
-      setError(result.error || 'Greška pri dodavanju računa')
+      setError(result.error || "Greška pri dodavanju računa")
     }
 
     setLoading(false)
@@ -135,11 +135,9 @@ export function AccountForm() {
             required
             disabled={loading}
             maxLength={21}
-            className={ibanError ? 'border-red-500' : ''}
+            className={ibanError ? "border-red-500" : ""}
           />
-          {ibanError && (
-            <p className="text-xs text-red-600 mt-1">{ibanError}</p>
-          )}
+          {ibanError && <p className="text-xs text-red-600 mt-1">{ibanError}</p>}
           <p className="text-xs text-gray-500 mt-1">Format: HR + 19 znamenki</p>
         </div>
 
@@ -153,11 +151,9 @@ export function AccountForm() {
             onChange={(e) => setBankName(e.target.value)}
             required
             disabled={loading}
-            className={bankName ? 'bg-blue-50 border-blue-200' : ''}
+            className={bankName ? "bg-blue-50 border-blue-200" : ""}
           />
-          {bankName && (
-            <p className="text-xs text-blue-600 mt-1">Automatski otkriveno iz IBAN-a</p>
-          )}
+          {bankName && <p className="text-xs text-blue-600 mt-1">Automatski otkriveno iz IBAN-a</p>}
         </div>
 
         <div>
@@ -174,7 +170,7 @@ export function AccountForm() {
             <option value="HRK">HRK</option>
             <option value="USD">USD</option>
           </select>
-          {iban.startsWith('HR') && currency === 'EUR' && (
+          {iban.startsWith("HR") && currency === "EUR" && (
             <p className="text-xs text-blue-600 mt-1">Automatski odabrano za hrvatske IBAN-ove</p>
           )}
         </div>
@@ -194,7 +190,7 @@ export function AccountForm() {
       </div>
 
       <Button type="submit" disabled={loading || !!ibanError}>
-        {loading ? 'Dodavanje...' : 'Dodaj račun'}
+        {loading ? "Dodavanje..." : "Dodaj račun"}
       </Button>
     </form>
   )

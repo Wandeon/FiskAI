@@ -1,8 +1,8 @@
 // src/lib/email-sync/providers/index.ts
 
-import type { EmailSyncProvider } from '../provider'
-import { gmailProvider } from './gmail'
-import { microsoftProvider } from './microsoft'
+import type { EmailSyncProvider } from "../provider"
+import { gmailProvider } from "./gmail"
+import { microsoftProvider } from "./microsoft"
 
 const providers: Record<string, EmailSyncProvider> = {
   gmail: gmailProvider,
@@ -20,11 +20,11 @@ export function getEmailProvider(name: string): EmailSyncProvider {
 }
 
 export function isEmailProviderConfigured(name: string): boolean {
-  if (name === 'gmail' || name === 'GMAIL') {
+  if (name === "gmail" || name === "GMAIL") {
     return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
   }
 
-  if (name === 'microsoft' || name === 'MICROSOFT') {
+  if (name === "microsoft" || name === "MICROSOFT") {
     return !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET)
   }
 

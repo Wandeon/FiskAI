@@ -60,7 +60,9 @@ export function InvoicePdfPreview({
           <div className="text-right text-sm text-slate-600">
             <p className="font-semibold text-slate-900">{company.name}</p>
             <p>{company.address}</p>
-            <p>{company.postalCode} {company.city}</p>
+            <p>
+              {company.postalCode} {company.city}
+            </p>
             {company.iban && <p>IBAN: {company.iban}</p>}
           </div>
         </header>
@@ -70,7 +72,9 @@ export function InvoicePdfPreview({
             <p className="text-xs uppercase tracking-wide text-slate-400">Kupac</p>
             <p className="text-lg font-semibold text-slate-900">{buyer?.name || "—"}</p>
             <p>{buyer?.address}</p>
-            <p>{buyer?.postalCode} {buyer?.city}</p>
+            <p>
+              {buyer?.postalCode} {buyer?.city}
+            </p>
             {buyer?.oib && <p>OIB: {buyer.oib}</p>}
           </div>
           <div className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4">
@@ -117,10 +121,15 @@ export function InvoicePdfPreview({
                       {line.description || `Stavka ${index + 1}`}
                     </td>
                     <td className="px-3 py-2 text-right">{line.quantity}</td>
-                    <td className="px-3 py-2 text-right">{net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}</td>
-                    <td className="px-3 py-2 text-right">{vatAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}</td>
+                    <td className="px-3 py-2 text-right">
+                      {net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {vatAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+                    </td>
                     <td className="px-3 py-2 text-right font-semibold text-slate-900">
-                      {(net + vatAmount).toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+                      {(net + vatAmount).toLocaleString("hr-HR", { minimumFractionDigits: 2 })}{" "}
+                      {currency}
                     </td>
                   </tr>
                 )
@@ -132,15 +141,21 @@ export function InvoicePdfPreview({
         <footer className="mt-4 rounded-xl bg-slate-900 text-white p-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-300">Neto</span>
-            <span>{totals.net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}</span>
+            <span>
+              {totals.net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-300">PDV</span>
-            <span>{totals.vat.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}</span>
+            <span>
+              {totals.vat.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+            </span>
           </div>
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Ukupno</span>
-            <span>{totals.total.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}</span>
+            <span>
+              {totals.total.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+            </span>
           </div>
         </footer>
       </div>

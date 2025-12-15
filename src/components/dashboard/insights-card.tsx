@@ -14,7 +14,12 @@ interface Insight {
   icon: ReactNode
 }
 
-export function InsightsCard({ companyName, isVatPayer, contactCount, productCount }: InsightsCardProps) {
+export function InsightsCard({
+  companyName,
+  isVatPayer,
+  contactCount,
+  productCount,
+}: InsightsCardProps) {
   const insights: Insight[] = [
     {
       title: "Pripremite PDV izvještaj",
@@ -55,8 +60,12 @@ export function InsightsCard({ companyName, isVatPayer, contactCount, productCou
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Insighti</p>
-          <h3 className="text-lg font-semibold text-[var(--foreground)]">Što slijedi za {companyName}</h3>
-          <p className="text-sm text-[var(--muted)]">Brze preporuke temeljene na statusu kontakata, PDV-u i katalogu.</p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">
+            Što slijedi za {companyName}
+          </h3>
+          <p className="text-sm text-[var(--muted)]">
+            Brze preporuke temeljene na statusu kontakata, PDV-u i katalogu.
+          </p>
         </div>
       </div>
 
@@ -66,7 +75,9 @@ export function InsightsCard({ companyName, isVatPayer, contactCount, productCou
             key={insight.title}
             className="flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-3"
           >
-            <div className="rounded-full bg-white/70 p-2 shadow-sm dark:bg-[var(--surface)]">{insight.icon}</div>
+            <div className="rounded-full bg-white/70 p-2 shadow-sm dark:bg-[var(--surface)]">
+              {insight.icon}
+            </div>
             <div className="space-y-1">
               <p className="text-sm font-semibold text-[var(--foreground)]">{insight.title}</p>
               <p className="text-sm text-[var(--muted)]">{insight.description}</p>

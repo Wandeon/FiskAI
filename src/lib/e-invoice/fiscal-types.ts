@@ -39,18 +39,18 @@ export interface FiscalItem {
  * Fiscal totals with Croatian VAT rates
  */
 export interface FiscalTotals {
-  net: number       // Total without VAT
-  vat25: number     // VAT at 25% (standard rate)
-  vat13: number     // VAT at 13% (reduced rate)
-  vat5: number      // VAT at 5% (super-reduced rate)
-  vat0: number      // VAT at 0% (exempt)
-  total: number     // Total with VAT
+  net: number // Total without VAT
+  vat25: number // VAT at 25% (standard rate)
+  vat13: number // VAT at 13% (reduced rate)
+  vat5: number // VAT at 5% (super-reduced rate)
+  vat0: number // VAT at 0% (exempt)
+  total: number // Total with VAT
 }
 
 /**
  * Croatian payment method codes (Način plaćanja)
  */
-export type PaymentMethodCode = 'G' | 'K' | 'T' | 'O' | 'C'
+export type PaymentMethodCode = "G" | "K" | "T" | "O" | "C"
 // G = Gotovina (Cash)
 // K = Kartica (Card)
 // T = Transakcijski račun (Bank Transfer)
@@ -62,7 +62,7 @@ export type PaymentMethodCode = 'G' | 'K' | 'T' | 'O' | 'C'
  */
 export interface FiscalResponse {
   success: boolean
-  jir?: string          // JIR (Jedinstveni Identifikator Računa) - Unique Invoice Identifier
+  jir?: string // JIR (Jedinstveni Identifikator Računa) - Unique Invoice Identifier
   error?: string
   rawResponse?: string
   errorCode?: string
@@ -72,7 +72,7 @@ export interface FiscalResponse {
  * Status check response
  */
 export interface StatusResponse {
-  status: 'PENDING' | 'FISCALIZED' | 'ERROR' | 'CANCELLED'
+  status: "PENDING" | "FISCALIZED" | "ERROR" | "CANCELLED"
   jir?: string
   error?: string
   fiscalizedAt?: Date
@@ -103,19 +103,19 @@ export interface FiscalProvider {
  */
 export interface FiscalConfig {
   enabled: boolean
-  provider: 'mock' | 'ie-racuni' | 'fina'
+  provider: "mock" | "ie-racuni" | "fina"
   apiKey?: string
   apiUrl?: string
-  certificatePath?: string    // Path to .pfx certificate
+  certificatePath?: string // Path to .pfx certificate
   certificatePassword?: string
-  sandbox?: boolean           // Use sandbox/test environment
+  sandbox?: boolean // Use sandbox/test environment
 }
 
 /**
  * Business premises for fiscalization
  */
 export interface FiscalPremises {
-  code: string      // Oznaka poslovnog prostora
+  code: string // Oznaka poslovnog prostora
   name: string
   address?: string
   workingTime?: string
@@ -126,7 +126,7 @@ export interface FiscalPremises {
  * Payment device for fiscalization
  */
 export interface FiscalDevice {
-  code: string      // Oznaka naplatnog uređaja
+  code: string // Oznaka naplatnog uređaja
   name: string
   premisesCode: string
   isDefault: boolean

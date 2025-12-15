@@ -47,10 +47,7 @@ export async function createCompany(formData: z.input<typeof companySchema>) {
   redirect("/dashboard")
 }
 
-export async function updateCompany(
-  companyId: string,
-  formData: z.input<typeof companySchema>
-) {
+export async function updateCompany(companyId: string, formData: z.input<typeof companySchema>) {
   const user = await requireAuth()
 
   // Verify user has access to this company
@@ -116,9 +113,7 @@ export async function updateCompanySettings(
     where: { id: companyId },
     data: {
       eInvoiceProvider: data.eInvoiceProvider,
-      eInvoiceApiKeyEncrypted: data.eInvoiceApiKey
-        ? encryptSecret(data.eInvoiceApiKey)
-        : undefined,  // Keep existing if not provided, null clears it
+      eInvoiceApiKeyEncrypted: data.eInvoiceApiKey ? encryptSecret(data.eInvoiceApiKey) : undefined, // Keep existing if not provided, null clears it
     },
   })
 

@@ -28,10 +28,7 @@ function formatDecimal(value: number | string | Prisma.Decimal, decimals: number
   return Number(value).toFixed(decimals)
 }
 
-function generatePartyXml(
-  party: Contact | Company,
-  isSupplier: boolean
-): string {
+function generatePartyXml(party: Contact | Company, isSupplier: boolean): string {
   const oib = "oib" in party ? party.oib : null
   const vatNumber = "vatNumber" in party ? party.vatNumber : null
 

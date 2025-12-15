@@ -1,29 +1,26 @@
 // src/lib/email-sync/providers/gmail.ts
 
-import { google } from 'googleapis'
-import type { EmailSyncProvider } from '../provider'
-import type { TokenResult, MessageBatch, EmailMessage } from '../types'
+import { google } from "googleapis"
+import type { EmailSyncProvider } from "../provider"
+import type { TokenResult, MessageBatch, EmailMessage } from "../types"
 
-const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 function getOAuth2Client() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  )
+  return new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET)
 }
 
 export const gmailProvider: EmailSyncProvider = {
-  name: 'gmail',
+  name: "gmail",
 
   getAuthUrl(redirectUri: string, state: string): string {
     const oauth2Client = getOAuth2Client()
     return oauth2Client.generateAuthUrl({
-      access_type: 'offline',
+      access_type: "offline",
       scope: SCOPES,
       redirect_uri: redirectUri,
       state,
-      prompt: 'consent',
+      prompt: "consent",
     })
   },
 
@@ -37,7 +34,7 @@ export const gmailProvider: EmailSyncProvider = {
     const { tokens } = await oauth2Client.getToken(code)
 
     if (!tokens.refresh_token) {
-      throw new Error('No refresh token received - user may need to revoke and reconnect')
+      throw new Error("No refresh token received - user may need to revoke and reconnect")
     }
 
     return {
@@ -66,11 +63,11 @@ export const gmailProvider: EmailSyncProvider = {
     const oauth2Client = getOAuth2Client()
     oauth2Client.setCredentials({ access_token: accessToken })
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client })
 
     const response = await gmail.users.messages.list({
-      userId: 'me',
-      q: 'has:attachment',
+      userId: "me",
+      q: "has:attachment",
       maxResults: 50,
       pageToken: cursor,
     })
@@ -79,27 +76,27 @@ export const gmailProvider: EmailSyncProvider = {
 
     for (const msg of response.data.messages || []) {
       const detail = await gmail.users.messages.get({
-        userId: 'me',
+        userId: "me",
         id: msg.id!,
-        format: 'metadata',
-        metadataHeaders: ['From', 'Subject', 'Date'],
+        format: "metadata",
+        metadataHeaders: ["From", "Subject", "Date"],
       })
 
       const headers = detail.data.payload?.headers || []
-      const fromHeader = headers.find(h => h.name === 'From')?.value || ''
-      const subjectHeader = headers.find(h => h.name === 'Subject')?.value || ''
-      const dateHeader = headers.find(h => h.name === 'Date')?.value || ''
+      const fromHeader = headers.find((h) => h.name === "From")?.value || ""
+      const subjectHeader = headers.find((h) => h.name === "Subject")?.value || ""
+      const dateHeader = headers.find((h) => h.name === "Date")?.value || ""
 
       // Extract email from "Name <email>" format
       const emailMatch = fromHeader.match(/<([^>]+)>/) || [null, fromHeader]
       const senderEmail = emailMatch[1] || fromHeader
 
       const attachments = (detail.data.payload?.parts || [])
-        .filter(part => part.filename && part.body?.attachmentId)
-        .map(part => ({
+        .filter((part) => part.filename && part.body?.attachmentId)
+        .map((part) => ({
           id: part.body!.attachmentId!,
           filename: part.filename!,
-          mimeType: part.mimeType || 'application/octet-stream',
+          mimeType: part.mimeType || "application/octet-stream",
           sizeBytes: part.body!.size || 0,
         }))
 
@@ -128,21 +125,21 @@ export const gmailProvider: EmailSyncProvider = {
     const oauth2Client = getOAuth2Client()
     oauth2Client.setCredentials({ access_token: accessToken })
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client })
 
     const response = await gmail.users.messages.attachments.get({
-      userId: 'me',
+      userId: "me",
       messageId,
       id: attachmentId,
     })
 
     const data = response.data.data
     if (!data) {
-      throw new Error('No attachment data received')
+      throw new Error("No attachment data received")
     }
 
     // Gmail returns base64url encoded data
-    return Buffer.from(data, 'base64url')
+    return Buffer.from(data, "base64url")
   },
 
   async revokeAccess(accessToken: string): Promise<void> {

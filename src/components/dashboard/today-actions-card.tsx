@@ -65,7 +65,10 @@ export function TodayActionsCard({ alerts, stats, tasks }: TodayActionsCardProps
                 <p className="text-sm font-medium">{alert.title}</p>
                 <p className="text-xs opacity-80">{alert.description}</p>
                 {alert.action && (
-                  <Link href={alert.action.href} className="text-xs font-semibold underline mt-1 inline-flex items-center gap-1">
+                  <Link
+                    href={alert.action.href}
+                    className="text-xs font-semibold underline mt-1 inline-flex items-center gap-1"
+                  >
                     {alert.action.label}
                     <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -78,15 +81,16 @@ export function TodayActionsCard({ alerts, stats, tasks }: TodayActionsCardProps
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {stats.map((stat) => (
-          <div key={stat.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-card">
+          <div
+            key={stat.id}
+            className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-card"
+          >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-brand-50 p-2 text-brand-600">{stat.icon}</div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-[var(--muted)]">{stat.label}</p>
                 <p className="text-lg font-semibold text-[var(--foreground)]">{stat.value}</p>
-                {stat.change && (
-                  <p className="text-xs text-[var(--muted)]">{stat.change}</p>
-                )}
+                {stat.change && <p className="text-xs text-[var(--muted)]">{stat.change}</p>}
               </div>
             </div>
           </div>
@@ -96,7 +100,10 @@ export function TodayActionsCard({ alerts, stats, tasks }: TodayActionsCardProps
       <div className="mt-6">
         <div className="flex items-center justify-between text-sm font-semibold text-[var(--foreground)]">
           <p>Preostali koraci</p>
-          <Link href="/settings" className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
+          <Link
+            href="/settings"
+            className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
+          >
             Pogledaj sve <ArrowRight className="h-3 w-3" />
           </Link>
         </div>

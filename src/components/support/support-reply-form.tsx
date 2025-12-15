@@ -13,12 +13,12 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
     startTransition(async () => {
       try {
         const res = await fetch(`/api/support/tickets/${ticketId}/messages`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            body: body.trim()
+            body: body.trim(),
           }),
         })
 

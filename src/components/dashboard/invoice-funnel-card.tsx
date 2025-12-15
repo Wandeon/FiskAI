@@ -19,9 +19,15 @@ export function InvoiceFunnelCard({ stages }: InvoiceFunnelCardProps) {
     <div className="card p-6">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Lijevak fakturiranja</p>
-          <h3 className="text-lg font-semibold text-[var(--foreground)]">Od nacrta do prihvaćeno</h3>
-          <p className="text-sm text-[var(--muted)]">Pratite gdje zaglave računi i koliko ih stiže do kupca.</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+            Lijevak fakturiranja
+          </p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">
+            Od nacrta do prihvaćeno
+          </h3>
+          <p className="text-sm text-[var(--muted)]">
+            Pratite gdje zaglave računi i koliko ih stiže do kupca.
+          </p>
         </div>
         <div className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
           {conversionRate.toFixed(0)}% prolaznost
@@ -43,7 +49,9 @@ export function InvoiceFunnelCard({ stages }: InvoiceFunnelCardProps) {
               </div>
               <div className="flex items-center gap-1 text-sm font-semibold text-[var(--foreground)]">
                 {stage.value}
-                {index < stages.length - 1 && <ArrowRight className="h-3 w-3 text-[var(--muted)]" />}
+                {index < stages.length - 1 && (
+                  <ArrowRight className="h-3 w-3 text-[var(--muted)]" />
+                )}
               </div>
             </div>
           )

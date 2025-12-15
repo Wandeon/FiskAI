@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { withApiLogging } from '@/lib/api-logging'
-import { logger } from '@/lib/logger'
-import { updateContext } from '@/lib/context'
-import { db } from '@/lib/db'
-import { getUsageLimits } from '@/lib/ai/rate-limiter'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { withApiLogging } from "@/lib/api-logging"
+import { logger } from "@/lib/logger"
+import { updateContext } from "@/lib/context"
+import { db } from "@/lib/db"
+import { getUsageLimits } from "@/lib/ai/rate-limiter"
 
 export const GET = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   updateContext({ userId: session.user.id })
@@ -22,10 +22,7 @@ export const GET = withApiLogging(async (req: NextRequest) => {
     })
 
     if (!companyUser?.company) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
 
     const companyId = companyUser.company.id
@@ -36,9 +33,9 @@ export const GET = withApiLogging(async (req: NextRequest) => {
 
     return NextResponse.json(usageData)
   } catch (error) {
-    logger.error({ error }, 'AI usage fetch error')
+    logger.error({ error }, "AI usage fetch error")
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch usage' },
+      { error: error instanceof Error ? error.message : "Failed to fetch usage" },
       { status: 500 }
     )
   }

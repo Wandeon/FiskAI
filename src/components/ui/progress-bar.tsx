@@ -2,29 +2,29 @@ import { cn } from "@/lib/utils"
 
 interface ProgressBarProps {
   value: number // 0-100
-  size?: 'sm' | 'md' | 'lg'
-  variant?: 'default' | 'success' | 'warning' | 'danger'
+  size?: "sm" | "md" | "lg"
+  variant?: "default" | "success" | "warning" | "danger"
   showLabel?: boolean
   className?: string
 }
 
 const sizeClasses = {
-  sm: 'h-1',
-  md: 'h-2',
-  lg: 'h-3',
+  sm: "h-1",
+  md: "h-2",
+  lg: "h-3",
 }
 
 const variantClasses = {
-  default: 'bg-brand-500',
-  success: 'bg-success-500',
-  warning: 'bg-warning-500',
-  danger: 'bg-danger-500',
+  default: "bg-brand-500",
+  success: "bg-success-500",
+  warning: "bg-warning-500",
+  danger: "bg-danger-500",
 }
 
 export function ProgressBar({
   value,
-  size = 'md',
-  variant = 'default',
+  size = "md",
+  variant = "default",
   showLabel = false,
   className,
 }: ProgressBarProps) {
@@ -38,10 +38,12 @@ export function ProgressBar({
           <span className="font-medium text-[var(--foreground)]">{Math.round(clampedValue)}%</span>
         </div>
       )}
-      <div className={cn(
-        "w-full overflow-hidden rounded-full bg-[var(--surface-secondary)]",
-        sizeClasses[size]
-      )}>
+      <div
+        className={cn(
+          "w-full overflow-hidden rounded-full bg-[var(--surface-secondary)]",
+          sizeClasses[size]
+        )}
+      >
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500 ease-out",

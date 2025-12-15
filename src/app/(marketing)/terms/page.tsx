@@ -11,7 +11,8 @@ export default function TermsPage() {
     <div className="mx-auto max-w-3xl px-4 py-14 md:px-6">
       <h1 className="text-display text-4xl font-semibold">Uvjeti korištenja</h1>
       <p className="mt-4 text-sm text-[var(--muted)]">
-        Zadnja izmjena: {new Date().toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        Zadnja izmjena:{" "}
+        {new Date().toLocaleDateString("hr-HR", { day: "numeric", month: "long", year: "numeric" })}
       </p>
 
       <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
@@ -23,11 +24,24 @@ export default function TermsPage() {
 
       <h2 className="text-display mt-10 text-2xl font-semibold">1. Definicije</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
-        <li><strong>&quot;Usluga&quot;</strong> - FiskAI web aplikacija dostupna na fiskai.app</li>
-        <li><strong>&quot;Mi&quot;, &quot;nas&quot;, &quot;FiskAI&quot;</strong> - FiskAI d.o.o., pružatelj usluge</li>
-        <li><strong>&quot;Korisnik&quot;, &quot;vi&quot;</strong> - fizička ili pravna osoba koja koristi uslugu</li>
-        <li><strong>&quot;Račun&quot;</strong> - korisnički račun kreiran registracijom</li>
-        <li><strong>&quot;Sadržaj&quot;</strong> - svi podaci, dokumenti i informacije koje unesete u uslugu</li>
+        <li>
+          <strong>&quot;Usluga&quot;</strong> - FiskAI web aplikacija dostupna na fiskai.app
+        </li>
+        <li>
+          <strong>&quot;Mi&quot;, &quot;nas&quot;, &quot;FiskAI&quot;</strong> - FiskAI d.o.o.,
+          pružatelj usluge
+        </li>
+        <li>
+          <strong>&quot;Korisnik&quot;, &quot;vi&quot;</strong> - fizička ili pravna osoba koja
+          koristi uslugu
+        </li>
+        <li>
+          <strong>&quot;Račun&quot;</strong> - korisnički račun kreiran registracijom
+        </li>
+        <li>
+          <strong>&quot;Sadržaj&quot;</strong> - svi podaci, dokumenti i informacije koje unesete u
+          uslugu
+        </li>
       </ul>
 
       <h2 className="text-display mt-10 text-2xl font-semibold">2. Opis usluge</h2>
@@ -54,18 +68,34 @@ export default function TermsPage() {
 
       <h2 className="text-display mt-10 text-2xl font-semibold">4. Pretplata i plaćanje</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
-        <li><strong>Probno razdoblje:</strong> 14 dana besplatnog korištenja bez obveze</li>
-        <li><strong>Naplata:</strong> mjesečna pretplata, naplata unaprijed</li>
-        <li><strong>Cijene:</strong> aktualne cijene prikazane su na <Link href="/pricing" className="text-blue-700 hover:underline">stranici cijena</Link></li>
-        <li><strong>PDV:</strong> cijene ne uključuju PDV za hrvatske tvrtke</li>
-        <li><strong>Otkazivanje:</strong> možete otkazati bilo kada, pristup ostaje do kraja plaćenog razdoblja</li>
-        <li><strong>Povrat:</strong> nema automatskog povrata za djelomično korišteno razdoblje</li>
+        <li>
+          <strong>Probno razdoblje:</strong> 14 dana besplatnog korištenja bez obveze
+        </li>
+        <li>
+          <strong>Naplata:</strong> mjesečna pretplata, naplata unaprijed
+        </li>
+        <li>
+          <strong>Cijene:</strong> aktualne cijene prikazane su na{" "}
+          <Link href="/pricing" className="text-blue-700 hover:underline">
+            stranici cijena
+          </Link>
+        </li>
+        <li>
+          <strong>PDV:</strong> cijene ne uključuju PDV za hrvatske tvrtke
+        </li>
+        <li>
+          <strong>Otkazivanje:</strong> možete otkazati bilo kada, pristup ostaje do kraja plaćenog
+          razdoblja
+        </li>
+        <li>
+          <strong>Povrat:</strong> nema automatskog povrata za djelomično korišteno razdoblje
+        </li>
       </ul>
 
       <h2 className="text-display mt-10 text-2xl font-semibold">5. Limiti korištenja</h2>
       <p className="mt-3 text-sm text-[var(--muted)]">
-        Svaki plan ima definirane limite (broj računa mjesečno, broj korisnika, itd.).
-        Limiti su prikazani na stranici cijena. Prekoračenje limita može rezultirati:
+        Svaki plan ima definirane limite (broj računa mjesečno, broj korisnika, itd.). Limiti su
+        prikazani na stranici cijena. Prekoračenje limita može rezultirati:
       </p>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
         <li>Dodatnom naplatom po definiranoj tarifi</li>
@@ -89,13 +119,17 @@ export default function TermsPage() {
         FiskAI koristi umjetnu inteligenciju za pomoć pri unosu podataka. Važno je razumjeti:
       </p>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
-        <li>AI prijedlozi su <strong>samo prijedlozi</strong> - vi donosite konačnu odluku</li>
+        <li>
+          AI prijedlozi su <strong>samo prijedlozi</strong> - vi donosite konačnu odluku
+        </li>
         <li>AI može pogriješiti - uvijek provjerite prijedloge prije potvrde</li>
         <li>AI funkcije su opcionalne i možete ih onemogućiti</li>
         <li>Vi ste odgovorni za konačne podatke u vašim dokumentima</li>
       </ul>
 
-      <h2 className="text-display mt-10 text-2xl font-semibold">8. Fiskalizacija i regulatorne obveze</h2>
+      <h2 className="text-display mt-10 text-2xl font-semibold">
+        8. Fiskalizacija i regulatorne obveze
+      </h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
         <li>FiskAI omogućuje fiskalizaciju računa putem Porezne uprave</li>
         <li>Vi ste odgovorni za ispravnost podataka poslanih na fiskalizaciju</li>
@@ -116,13 +150,16 @@ export default function TermsPage() {
         <li>Ciljna dostupnost: 99.5% mjesečno</li>
         <li>Planirano održavanje najavit ćemo unaprijed (min. 24h)</li>
         <li>U slučaju nedostupnosti, prioritet je sigurnost i integritet podataka</li>
-        <li>Status sustava dostupan na <Link href="/status" className="text-blue-700 hover:underline">/status</Link></li>
+        <li>
+          Status sustava dostupan na{" "}
+          <Link href="/status" className="text-blue-700 hover:underline">
+            /status
+          </Link>
+        </li>
       </ul>
 
       <h2 className="text-display mt-10 text-2xl font-semibold">11. Ograničenje odgovornosti</h2>
-      <p className="mt-3 text-sm text-[var(--muted)]">
-        U maksimalnom opsegu dopuštenom zakonom:
-      </p>
+      <p className="mt-3 text-sm text-[var(--muted)]">U maksimalnom opsegu dopuštenom zakonom:</p>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
         <li>Usluga se pruža &quot;kakva jest&quot; bez garancija bilo koje vrste</li>
         <li>Ne odgovaramo za indirektne, posljedične ili kaznene štete</li>
@@ -133,16 +170,24 @@ export default function TermsPage() {
 
       <h2 className="text-display mt-10 text-2xl font-semibold">12. Prekid ugovora</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--muted)]">
-        <li><strong>Vi možete:</strong> otkazati pretplatu bilo kada putem postavki računa</li>
-        <li><strong>Mi možemo:</strong> suspendirati ili ukinuti račun zbog kršenja uvjeta, neplaćanja ili nezakonitih aktivnosti</li>
-        <li><strong>Nakon prekida:</strong> imat ćete 30 dana za izvoz podataka, nakon čega će biti obrisani (osim zakonski obveznih)</li>
+        <li>
+          <strong>Vi možete:</strong> otkazati pretplatu bilo kada putem postavki računa
+        </li>
+        <li>
+          <strong>Mi možemo:</strong> suspendirati ili ukinuti račun zbog kršenja uvjeta, neplaćanja
+          ili nezakonitih aktivnosti
+        </li>
+        <li>
+          <strong>Nakon prekida:</strong> imat ćete 30 dana za izvoz podataka, nakon čega će biti
+          obrisani (osim zakonski obveznih)
+        </li>
       </ul>
 
       <h2 className="text-display mt-10 text-2xl font-semibold">13. Izmjene uvjeta</h2>
       <p className="mt-3 text-sm text-[var(--muted)]">
-        Možemo izmijeniti ove uvjete uz prethodnu obavijest od najmanje 30 dana.
-        O značajnim promjenama obavijestit ćemo vas emailom. Nastavak korištenja
-        nakon stupanja izmjena na snagu smatra se prihvaćanjem novih uvjeta.
+        Možemo izmijeniti ove uvjete uz prethodnu obavijest od najmanje 30 dana. O značajnim
+        promjenama obavijestit ćemo vas emailom. Nastavak korištenja nakon stupanja izmjena na snagu
+        smatra se prihvaćanjem novih uvjeta.
       </p>
 
       <h2 className="text-display mt-10 text-2xl font-semibold">14. Mjerodavno pravo i sporovi</h2>
@@ -154,23 +199,48 @@ export default function TermsPage() {
 
       <h2 className="text-display mt-10 text-2xl font-semibold">15. Kontakt</h2>
       <div className="mt-3 text-sm text-[var(--muted)]">
-        <p><strong>FiskAI d.o.o.</strong></p>
-        <p>Email: <a href="mailto:info@fiskai.hr" className="text-blue-700 hover:underline">info@fiskai.hr</a></p>
-        <p>Podrška: <a href="mailto:podrska@fiskai.hr" className="text-blue-700 hover:underline">podrska@fiskai.hr</a></p>
+        <p>
+          <strong>FiskAI d.o.o.</strong>
+        </p>
+        <p>
+          Email:{" "}
+          <a href="mailto:info@fiskai.hr" className="text-blue-700 hover:underline">
+            info@fiskai.hr
+          </a>
+        </p>
+        <p>
+          Podrška:{" "}
+          <a href="mailto:podrska@fiskai.hr" className="text-blue-700 hover:underline">
+            podrska@fiskai.hr
+          </a>
+        </p>
         <p>Adresa: [Adresa tvrtke], Zagreb, Hrvatska</p>
       </div>
 
       <div className="mt-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
         <p className="text-sm text-[var(--muted)]">
           <strong>Povezane politike:</strong>{" "}
-          <Link href="/privacy" className="text-blue-700 hover:underline">Politika privatnosti</Link> •
-          <Link href="/cookies" className="text-blue-700 hover:underline ml-2">Politika kolačića</Link> •
-          <Link href="/ai-data-policy" className="text-blue-700 hover:underline ml-2">AI politika</Link> •
-          <Link href="/dpa" className="text-blue-700 hover:underline ml-2">DPA</Link> •
-          <Link href="/security" className="text-blue-700 hover:underline ml-2">Sigurnost</Link>
+          <Link href="/privacy" className="text-blue-700 hover:underline">
+            Politika privatnosti
+          </Link>{" "}
+          •
+          <Link href="/cookies" className="text-blue-700 hover:underline ml-2">
+            Politika kolačića
+          </Link>{" "}
+          •
+          <Link href="/ai-data-policy" className="text-blue-700 hover:underline ml-2">
+            AI politika
+          </Link>{" "}
+          •
+          <Link href="/dpa" className="text-blue-700 hover:underline ml-2">
+            DPA
+          </Link>{" "}
+          •
+          <Link href="/security" className="text-blue-700 hover:underline ml-2">
+            Sigurnost
+          </Link>
         </p>
       </div>
     </div>
   )
 }
-

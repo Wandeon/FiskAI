@@ -41,11 +41,7 @@ export function RevenueTrendCard({ data, className }: RevenueTrendCardProps) {
             change >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
           )}
         >
-          {change >= 0 ? (
-            <TrendingUp className="h-4 w-4" />
-          ) : (
-            <TrendingDown className="h-4 w-4" />
-          )}
+          {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           {Number.isFinite(change) ? `${change.toFixed(1)}%` : "—"}
         </div>
       </div>

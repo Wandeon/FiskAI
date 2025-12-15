@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useEffect, useCallback, ReactNode } from "react"
 import { X } from "lucide-react"
@@ -10,16 +10,16 @@ interface ModalProps {
   title?: string
   description?: string
   children: ReactNode
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: "sm" | "md" | "lg" | "xl"
   showClose?: boolean
   className?: string
 }
 
 const sizes = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
 }
 
 export function Modal({
@@ -28,23 +28,26 @@ export function Modal({
   title,
   description,
   children,
-  size = 'md',
+  size = "md",
   showClose = true,
   className,
 }: ModalProps) {
   // Close on escape key
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    },
+    [onClose]
+  )
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
+      document.addEventListener("keydown", handleEscape)
+      document.body.style.overflow = "hidden"
     }
     return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = ''
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = ""
     }
   }, [isOpen, handleEscape])
 
@@ -63,7 +66,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={title ? "modal-title" : undefined}
         className={cn(
           "relative w-full rounded-card bg-[var(--surface)] shadow-elevated animate-scale-in",
           sizes[size],
@@ -78,9 +81,7 @@ export function Modal({
                 <h2 id="modal-title" className="text-lg font-semibold text-[var(--foreground)]">
                   {title}
                 </h2>
-                {description && (
-                  <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>
-                )}
+                {description && <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>}
               </div>
             )}
             {showClose && (
@@ -96,9 +97,7 @@ export function Modal({
         )}
 
         {/* Content */}
-        <div className="px-6 py-4">
-          {children}
-        </div>
+        <div className="px-6 py-4">{children}</div>
       </div>
     </div>
   )
@@ -112,10 +111,12 @@ interface ModalFooterProps {
 
 export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
-    <div className={cn(
-      "flex justify-end gap-3 border-t border-[var(--border)] px-6 py-4 -mx-6 -mb-4 mt-4 bg-[var(--surface-secondary)] rounded-b-card",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex justify-end gap-3 border-t border-[var(--border)] px-6 py-4 -mx-6 -mb-4 mt-4 bg-[var(--surface-secondary)] rounded-b-card",
+        className
+      )}
+    >
       {children}
     </div>
   )

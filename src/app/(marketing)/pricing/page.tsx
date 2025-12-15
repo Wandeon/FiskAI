@@ -4,7 +4,8 @@ import { CheckCircle2, Shield, Users, FileText, Zap, Globe } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "FiskAI — Cijene i paketi",
-  description: "Transparentne cijene za paušalni obrt, VAT obrt/d.o.o. i knjigovođe. Besplatna proba, bez ugovorne obveze.",
+  description:
+    "Transparentne cijene za paušalni obrt, VAT obrt/d.o.o. i knjigovođe. Besplatna proba, bez ugovorne obveze.",
 }
 
 export default function PricingPage() {
@@ -16,7 +17,8 @@ export default function PricingPage() {
           Transparentne cijene za svaku vrstu poslovanja
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
-          Od paušalnog obrta do d.o.o. tvrtki — cijene koje rastu s vama. Bez skrivenih troškova, bez ugovorne obveze.
+          Od paušalnog obrta do d.o.o. tvrtki — cijene koje rastu s vama. Bez skrivenih troškova,
+          bez ugovorne obveze.
         </p>
         <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-800">
           <Shield className="h-4 w-4" />
@@ -145,9 +147,7 @@ export default function PricingPage() {
               <span className="text-4xl font-bold">199€</span>
               <span className="text-[var(--muted)] ml-2">/ mjesečno</span>
             </div>
-            <p className="text-sm text-[var(--muted)]">
-              Za veće d.o.o. i grupe tvrtki
-            </p>
+            <p className="text-sm text-[var(--muted)]">Za veće d.o.o. i grupe tvrtki</p>
           </div>
           <ul className="space-y-3 mb-8">
             <li className="flex items-start gap-2 text-sm">
@@ -195,7 +195,9 @@ export default function PricingPage() {
               <Users className="h-4 w-4" />
               Besplatno za knjigovođe
             </div>
-            <h2 className="text-2xl font-semibold mb-2">Pridružite se knjigovođama koji koriste FiskAI</h2>
+            <h2 className="text-2xl font-semibold mb-2">
+              Pridružite se knjigovođama koji koriste FiskAI
+            </h2>
             <p className="text-sm text-[var(--muted)]">
               Registrirani knjigovođe dobivaju besplatni pristup za suradnju s klijentima.
             </p>
@@ -275,35 +277,38 @@ export default function PricingPage() {
           <div>
             <h3 className="font-semibold mb-2">Kako funkcionira besplatna proba?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Besplatna proba traje 14 dana za paušalni plan i 30 dana za d.o.o. plan. Ne trebate kreditnu karticu.
-              Nakon probnog razdoblja, automatski prelazite na odabrani plan koji možete otkazati bilo kada.
+              Besplatna proba traje 14 dana za paušalni plan i 30 dana za d.o.o. plan. Ne trebate
+              kreditnu karticu. Nakon probnog razdoblja, automatski prelazite na odabrani plan koji
+              možete otkazati bilo kada.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Što ako premašim limit računa?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Automatski ćemo vas obavijestiti i ponuditi nadogradnju. Paušalni plan ima dodatak od 1€ po računu iznad 50,
-              do maksimalno 200 računa mjesečno. D.O.O. plan ima dodatak od 0,50€ po računu iznad 200.
+              Automatski ćemo vas obavijestiti i ponuditi nadogradnju. Paušalni plan ima dodatak od
+              1€ po računu iznad 50, do maksimalno 200 računa mjesečno. D.O.O. plan ima dodatak od
+              0,50€ po računu iznad 200.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Kako funkcionira otkazivanje?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Možete otkazati bilo kada bez penala. Vaš pristup ostaje aktivan do kraja plaćenog razdoblja.
-              Nakon toga možete izvesti sve svoje podatke u CSV/JSON formatu.
+              Možete otkazati bilo kada bez penala. Vaš pristup ostaje aktivan do kraja plaćenog
+              razdoblja. Nakon toga možete izvesti sve svoje podatke u CSV/JSON formatu.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Postoji li dugoročna obveza?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Ne. Svi planovi su mjesečni bez ugovorne obveze. Nudimo 10% popusta za godišnje plaćanje ako želite.
+              Ne. Svi planovi su mjesečni bez ugovorne obveze. Nudimo 10% popusta za godišnje
+              plaćanje ako želite.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Koje su opcije plaćanja?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Prihvaćamo kartice (Visa, Mastercard, Maestro), PayPal i bankovni transfer za hrvatske tvrtke.
-              Za d.o.o. tvrtke izdajemo račune s PDV-om.
+              Prihvaćamo kartice (Visa, Mastercard, Maestro), PayPal i bankovni transfer za hrvatske
+              tvrtke. Za d.o.o. tvrtke izdajemo račune s PDV-om.
             </p>
           </div>
         </div>
@@ -350,4 +355,3 @@ export default function PricingPage() {
     </div>
   )
 }
-

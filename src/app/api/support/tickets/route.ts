@@ -24,12 +24,13 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const statusParam = searchParams.get("status")
   const allStatuses = Object.values(SupportTicketStatus)
-  const statusFilter =
-    statusParam
-      ?.split(",")
-      .map((s) => s.trim().toUpperCase())
-      .filter((s): s is SupportTicketStatus => allStatuses.includes(s as SupportTicketStatus)) ||
-    [SupportTicketStatus.OPEN, SupportTicketStatus.IN_PROGRESS]
+  const statusFilter = statusParam
+    ?.split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter((s): s is SupportTicketStatus => allStatuses.includes(s as SupportTicketStatus)) || [
+    SupportTicketStatus.OPEN,
+    SupportTicketStatus.IN_PROGRESS,
+  ]
 
   const tickets = await db.supportTicket.findMany({
     where: {

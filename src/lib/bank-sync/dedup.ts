@@ -1,8 +1,8 @@
 // src/lib/bank-sync/dedup.ts
 
-import { db } from '@/lib/db'
-import { Prisma } from '@prisma/client'
-import type { ProviderTransaction } from './types'
+import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
+import type { ProviderTransaction } from "./types"
 
 const Decimal = Prisma.Decimal
 
@@ -16,8 +16,8 @@ interface DedupResult {
  * Calculate similarity between two strings (0-1)
  */
 function stringSimilarity(a: string, b: string): number {
-  const aNorm = a.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const bNorm = b.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const aNorm = a.toLowerCase().replace(/[^a-z0-9]/g, "")
+  const bNorm = b.toLowerCase().replace(/[^a-z0-9]/g, "")
 
   if (aNorm === bNorm) return 1
   if (!aNorm || !bNorm) return 0
@@ -117,7 +117,7 @@ async function findFuzzyDuplicates(
             transactionBId: candidate.id,
             similarityScore: similarity,
             reason: `Sličan datum (±2 dana), isti iznos, opis ${Math.round(similarity * 100)}% sličan`,
-            status: 'PENDING',
+            status: "PENDING",
           },
         })
       }
@@ -159,8 +159,8 @@ export async function processTransactionsWithDedup(
         counterpartyName: txn.counterpartyName,
         counterpartyIban: txn.counterpartyIban,
         externalId: txn.externalId,
-        source: 'AIS_SYNC',
-        matchStatus: 'UNMATCHED',
+        source: "AIS_SYNC",
+        matchStatus: "UNMATCHED",
       },
     })
 
@@ -168,13 +168,13 @@ export async function processTransactionsWithDedup(
 
     // Tier 2: Fuzzy duplicate detection
     const beforeCount = await db.potentialDuplicate.count({
-      where: { companyId, status: 'PENDING' },
+      where: { companyId, status: "PENDING" },
     })
 
     await findFuzzyDuplicates(bankAccountId, companyId, txn, newTxn.id)
 
     const afterCount = await db.potentialDuplicate.count({
-      where: { companyId, status: 'PENDING' },
+      where: { companyId, status: "PENDING" },
     })
 
     result.flaggedForReview += afterCount - beforeCount
@@ -188,7 +188,7 @@ export async function processTransactionsWithDedup(
  */
 export async function resolveDuplicate(
   duplicateId: string,
-  resolution: 'KEEP_BOTH' | 'MERGE' | 'DELETE_NEW',
+  resolution: "KEEP_BOTH" | "MERGE" | "DELETE_NEW",
   userId: string
 ): Promise<void> {
   const duplicate = await db.potentialDuplicate.findUnique({
@@ -196,15 +196,15 @@ export async function resolveDuplicate(
   })
 
   if (!duplicate) {
-    throw new Error('Duplicate not found')
+    throw new Error("Duplicate not found")
   }
 
-  if (resolution === 'DELETE_NEW') {
+  if (resolution === "DELETE_NEW") {
     // Delete the newer transaction (transactionA is always the new one)
     await db.bankTransaction.delete({
       where: { id: duplicate.transactionAId },
     })
-  } else if (resolution === 'MERGE') {
+  } else if (resolution === "MERGE") {
     // Keep transactionB (the original), delete transactionA
     await db.bankTransaction.delete({
       where: { id: duplicate.transactionAId },
@@ -215,7 +215,7 @@ export async function resolveDuplicate(
   await db.potentialDuplicate.update({
     where: { id: duplicateId },
     data: {
-      status: 'RESOLVED',
+      status: "RESOLVED",
       resolution,
       resolvedAt: new Date(),
       resolvedBy: userId,

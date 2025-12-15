@@ -1,16 +1,16 @@
 // src/lib/fiscal/should-fiscalize.ts
-import { db } from '@/lib/db'
-import { EInvoice, Company, PaymentMethod } from '@prisma/client'
+import { db } from "@/lib/db"
+import { EInvoice, Company, PaymentMethod } from "@prisma/client"
 
 export interface FiscalDecision {
   shouldFiscalize: boolean
   reason: string
   certificateId?: string
-  environment?: 'TEST' | 'PROD'
+  environment?: "TEST" | "PROD"
 }
 
 // Payment methods that require fiscalization per Croatian law
-const FISCALIZABLE_PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'CARD']
+const FISCALIZABLE_PAYMENT_METHODS: PaymentMethod[] = ["CASH", "CARD"]
 
 export async function shouldFiscalizeInvoice(
   invoice: EInvoice & { company: Company }
@@ -19,75 +19,75 @@ export async function shouldFiscalizeInvoice(
 
   // 1. Check if company has fiscalisation enabled
   if (!company.fiscalEnabled) {
-    return { shouldFiscalize: false, reason: 'Fiscalisation disabled for company' }
+    return { shouldFiscalize: false, reason: "Fiscalisation disabled for company" }
   }
 
   // 2. Check payment method - only cash-equivalent needs fiscalisation
   // If paymentMethod is not set, skip fiscalization (cannot fiscalize without knowing payment method)
   if (!invoice.paymentMethod) {
-    return { shouldFiscalize: false, reason: 'Payment method not specified' }
+    return { shouldFiscalize: false, reason: "Payment method not specified" }
   }
 
   if (!FISCALIZABLE_PAYMENT_METHODS.includes(invoice.paymentMethod)) {
-    return { shouldFiscalize: false, reason: 'Non-cash payment method' }
+    return { shouldFiscalize: false, reason: "Non-cash payment method" }
   }
 
   // 3. Check if already fiscalized
   if (invoice.jir) {
-    return { shouldFiscalize: false, reason: 'Already fiscalized' }
+    return { shouldFiscalize: false, reason: "Already fiscalized" }
   }
 
   // 4. Check for existing pending request (idempotency)
   const existingRequest = await db.fiscalRequest.findFirst({
     where: {
       invoiceId: invoice.id,
-      messageType: 'RACUN',
-      status: { in: ['QUEUED', 'PROCESSING'] }
-    }
+      messageType: "RACUN",
+      status: { in: ["QUEUED", "PROCESSING"] },
+    },
   })
 
   if (existingRequest) {
-    return { shouldFiscalize: false, reason: 'Request already queued' }
+    return { shouldFiscalize: false, reason: "Request already queued" }
   }
 
   // 5. Determine environment and find certificate
-  const environment = company.fiscalEnvironment || 'PROD'
+  const environment = company.fiscalEnvironment || "PROD"
 
   const certificate = await db.fiscalCertificate.findUnique({
     where: {
       companyId_environment: {
         companyId: company.id,
-        environment
-      }
-    }
+        environment,
+      },
+    },
   })
 
   if (!certificate) {
     return {
       shouldFiscalize: false,
-      reason: `No ${environment} certificate configured`
+      reason: `No ${environment} certificate configured`,
     }
   }
 
-  if (certificate.status !== 'ACTIVE') {
+  if (certificate.status !== "ACTIVE") {
     return {
       shouldFiscalize: false,
-      reason: `Certificate status: ${certificate.status}`
+      reason: `Certificate status: ${certificate.status}`,
     }
   }
 
   if (certificate.certNotAfter < new Date()) {
     return {
       shouldFiscalize: false,
-      reason: 'Certificate expired'
+      reason: "Certificate expired",
     }
   }
 
   return {
     shouldFiscalize: true,
-    reason: 'Meets fiscalisation criteria',
+    reason: "Meets fiscalisation criteria",
     certificateId: certificate.id,
-    environment
+    environment,
   }
 }
 
@@ -105,26 +105,26 @@ export async function queueFiscalRequest(
       companyId_invoiceId_messageType: {
         companyId,
         invoiceId,
-        messageType: 'RACUN'
-      }
+        messageType: "RACUN",
+      },
     },
     create: {
       companyId,
       invoiceId,
       certificateId: decision.certificateId,
-      messageType: 'RACUN',
-      status: 'QUEUED',
+      messageType: "RACUN",
+      status: "QUEUED",
       attemptCount: 0,
       maxAttempts: 5,
-      nextRetryAt: new Date()
+      nextRetryAt: new Date(),
     },
     update: {
-      status: 'QUEUED',
+      status: "QUEUED",
       attemptCount: 0,
       nextRetryAt: new Date(),
       errorCode: null,
-      errorMessage: null
-    }
+      errorMessage: null,
+    },
   })
 
   return request.id

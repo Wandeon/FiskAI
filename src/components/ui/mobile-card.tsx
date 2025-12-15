@@ -25,11 +25,13 @@ export function MobileCard({
   className,
 }: MobileCardProps) {
   const content = (
-    <div className={cn(
-      "flex items-center gap-4 p-4 bg-[var(--surface)] border-b border-[var(--border)] touch-target",
-      (href || onClick) && "active:bg-[var(--surface-secondary)]",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-4 p-4 bg-[var(--surface)] border-b border-[var(--border)] touch-target",
+        (href || onClick) && "active:bg-[var(--surface-secondary)]",
+        className
+      )}
+    >
       {icon && (
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
           {icon}
@@ -41,14 +43,12 @@ export function MobileCard({
           <p className="font-medium text-[var(--foreground)] truncate">{title}</p>
           {badge}
         </div>
-        {subtitle && (
-          <p className="text-sm text-[var(--muted)] truncate">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-sm text-[var(--muted)] truncate">{subtitle}</p>}
       </div>
 
       {value && (
         <div className="flex-shrink-0 text-right">
-          {typeof value === 'string' ? (
+          {typeof value === "string" ? (
             <p className="font-semibold text-[var(--foreground)]">{value}</p>
           ) : (
             value
@@ -56,9 +56,7 @@ export function MobileCard({
         </div>
       )}
 
-      {(href || onClick) && (
-        <ChevronRight className="h-5 w-5 flex-shrink-0 text-[var(--muted)]" />
-      )}
+      {(href || onClick) && <ChevronRight className="h-5 w-5 flex-shrink-0 text-[var(--muted)]" />}
     </div>
   )
 
@@ -67,7 +65,11 @@ export function MobileCard({
   }
 
   if (onClick) {
-    return <button onClick={onClick} className="w-full text-left">{content}</button>
+    return (
+      <button onClick={onClick} className="w-full text-left">
+        {content}
+      </button>
+    )
   }
 
   return content

@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
 // src/app/(dashboard)/settings/email/components/connection-list.tsx
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Mail, Trash2, RefreshCw } from 'lucide-react'
-import type { EmailConnection, EmailImportRule } from '@prisma/client'
-import { ImportRulesSection } from './import-rules'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Mail, Trash2, RefreshCw } from "lucide-react"
+import type { EmailConnection, EmailImportRule } from "@prisma/client"
+import { ImportRulesSection } from "./import-rules"
 
 type ConnectionWithRules = EmailConnection & {
   importRules: EmailImportRule[]
@@ -25,25 +25,25 @@ export function EmailConnectionList({ connections }: EmailConnectionListProps) {
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
 
   async function handleDisconnect(connectionId: string) {
-    if (!confirm('Are you sure you want to disconnect this email account?')) {
+    if (!confirm("Are you sure you want to disconnect this email account?")) {
       return
     }
 
     setDisconnecting(connectionId)
     try {
       const response = await fetch(`/api/email/${connectionId}/disconnect`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Disconnect failed')
+        throw new Error(data.error || "Disconnect failed")
       }
 
       router.refresh()
     } catch (error) {
-      console.error('Disconnect error:', error)
-      alert(error instanceof Error ? error.message : 'Disconnect failed')
+      console.error("Disconnect error:", error)
+      alert(error instanceof Error ? error.message : "Disconnect failed")
     } finally {
       setDisconnecting(null)
     }
@@ -78,9 +78,7 @@ export function EmailConnectionList({ connections }: EmailConnectionListProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge
-                variant={connection.status === 'CONNECTED' ? 'default' : 'destructive'}
-              >
+              <Badge variant={connection.status === "CONNECTED" ? "default" : "destructive"}>
                 {connection.status}
               </Badge>
               <Button
@@ -100,15 +98,10 @@ export function EmailConnectionList({ connections }: EmailConnectionListProps) {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground mb-4">
-              Last synced:{' '}
-              {connection.lastSyncAt
-                ? new Date(connection.lastSyncAt).toLocaleString()
-                : 'Never'}
+              Last synced:{" "}
+              {connection.lastSyncAt ? new Date(connection.lastSyncAt).toLocaleString() : "Never"}
             </div>
-            <ImportRulesSection
-              connectionId={connection.id}
-              rules={connection.importRules}
-            />
+            <ImportRulesSection connectionId={connection.id} rules={connection.importRules} />
           </CardContent>
         </Card>
       ))}

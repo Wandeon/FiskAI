@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
@@ -12,7 +12,7 @@ import {
   ChevronDown,
   Settings,
   User,
-  HelpCircle
+  HelpCircle,
 } from "lucide-react"
 import { LogoutButton } from "./logout-button"
 import { NotificationCenter } from "@/components/ui/notification-center"
@@ -33,15 +33,15 @@ export function QuickActions({ className }: QuickActionsProps) {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const actions = [
-    { name: 'Novi račun', href: '/invoices/new', icon: FileText },
-    { name: 'Novi e-račun', href: '/e-invoices/new', icon: FileText },
-    { name: 'Novi kontakt', href: '/contacts/new', icon: Users },
-    { name: 'Novi proizvod', href: '/products/new', icon: Package },
+    { name: "Novi račun", href: "/invoices/new", icon: FileText },
+    { name: "Novi e-račun", href: "/e-invoices/new", icon: FileText },
+    { name: "Novi kontakt", href: "/contacts/new", icon: Users },
+    { name: "Novi proizvod", href: "/products/new", icon: Package },
   ]
 
   return (
@@ -173,13 +173,18 @@ export function UserMenu({ user, className }: UserMenuProps) {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const initials = user.name
-    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : user.email?.slice(0, 2).toUpperCase() || 'U'
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user.email?.slice(0, 2).toUpperCase() || "U"
 
   return (
     <div ref={ref} className={cn("relative", className)}>
@@ -190,7 +195,7 @@ export function UserMenu({ user, className }: UserMenuProps) {
         {user.image ? (
           <Image
             src={user.image}
-            alt={user.name || 'User'}
+            alt={user.name || "User"}
             width={32}
             height={32}
             className="h-8 w-8 rounded-full object-cover"
@@ -200,13 +205,20 @@ export function UserMenu({ user, className }: UserMenuProps) {
             {initials}
           </div>
         )}
-        <ChevronDown className={cn("h-4 w-4 text-[var(--muted)] hidden sm:block transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-[var(--muted)] hidden sm:block transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
       </button>
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-60 rounded-2xl surface-glass border-white/10 shadow-glow animate-scale-in z-50">
           <div className="border-b border-white/10 px-4 py-3">
-            <p className="font-semibold text-[var(--foreground)] truncate">{user.name || 'Korisnik'}</p>
+            <p className="font-semibold text-[var(--foreground)] truncate">
+              {user.name || "Korisnik"}
+            </p>
             <p className="text-sm text-[var(--muted)] truncate">{user.email}</p>
           </div>
           <div className="p-1">
@@ -252,19 +264,28 @@ interface CompanyStatusProps {
   className?: string
 }
 
-export function CompanyStatus({ companyName, isConnected = false, draftCount = 0, className }: CompanyStatusProps) {
+export function CompanyStatus({
+  companyName,
+  isConnected = false,
+  draftCount = 0,
+  className,
+}: CompanyStatusProps) {
   return (
-    <div className={cn("flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-1.5", className)}>
-      <div className={cn(
-        "h-2 w-2 rounded-full",
-        isConnected ? "bg-success-500" : "bg-warning-500"
-      )} />
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-1.5",
+        className
+      )}
+    >
+      <div
+        className={cn("h-2 w-2 rounded-full", isConnected ? "bg-success-500" : "bg-warning-500")}
+      />
       <span className="text-sm font-medium text-[var(--foreground)] truncate max-w-[120px]">
         {companyName}
       </span>
       {draftCount > 0 && (
         <span className="rounded-full bg-warning-100 px-2 py-0.5 text-xs font-medium text-warning-700">
-          {draftCount} nacrt{draftCount === 1 ? '' : draftCount < 5 ? 'a' : 'a'}
+          {draftCount} nacrt{draftCount === 1 ? "" : draftCount < 5 ? "a" : "a"}
         </span>
       )}
     </div>

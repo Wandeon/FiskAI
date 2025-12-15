@@ -1,21 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import {
-  submitFeedback,
-  getFeedbackStats,
-  getRecentFeedback,
-} from '@/lib/ai/feedback'
-import { withApiLogging } from '@/lib/api-logging'
-import { updateContext } from '@/lib/context'
-import { logger } from '@/lib/logger'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { submitFeedback, getFeedbackStats, getRecentFeedback } from "@/lib/ai/feedback"
+import { withApiLogging } from "@/lib/api-logging"
+import { updateContext } from "@/lib/context"
+import { logger } from "@/lib/logger"
+import { z } from "zod"
 
 const feedbackSchema = z.object({
   entityType: z.string().min(1),
   entityId: z.string().min(1),
-  operation: z.enum(['ocr_receipt', 'ocr_invoice', 'category_suggestion']),
-  feedback: z.enum(['correct', 'incorrect', 'partial']),
+  operation: z.enum(["ocr_receipt", "ocr_invoice", "category_suggestion"]),
+  feedback: z.enum(["correct", "incorrect", "partial"]),
   correction: z.record(z.unknown()).optional(),
   notes: z.string().optional(),
 })
@@ -27,7 +23,7 @@ const feedbackSchema = z.object({
 export const POST = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   updateContext({ userId: session.user.id })
@@ -39,7 +35,7 @@ export const POST = withApiLogging(async (req: NextRequest) => {
     const validation = feedbackSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.format() },
+        { error: "Invalid input", details: validation.error.format() },
         { status: 400 }
       )
     }
@@ -53,7 +49,7 @@ export const POST = withApiLogging(async (req: NextRequest) => {
     })
 
     if (!companyUser?.company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 })
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
 
     updateContext({ companyId: companyUser.company.id })
@@ -72,9 +68,9 @@ export const POST = withApiLogging(async (req: NextRequest) => {
 
     return NextResponse.json(result)
   } catch (error) {
-    logger.error({ error }, 'Failed to submit AI feedback')
+    logger.error({ error }, "Failed to submit AI feedback")
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to submit feedback' },
+      { error: error instanceof Error ? error.message : "Failed to submit feedback" },
       { status: 500 }
     )
   }
@@ -87,7 +83,7 @@ export const POST = withApiLogging(async (req: NextRequest) => {
 export const GET = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   updateContext({ userId: session.user.id })
@@ -100,17 +96,17 @@ export const GET = withApiLogging(async (req: NextRequest) => {
     })
 
     if (!companyUser?.company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 })
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
 
     updateContext({ companyId: companyUser.company.id })
 
     const { searchParams } = new URL(req.url)
-    const type = searchParams.get('type') || 'stats'
-    const operation = searchParams.get('operation') || undefined
-    const limit = parseInt(searchParams.get('limit') || '10', 10)
+    const type = searchParams.get("type") || "stats"
+    const operation = searchParams.get("operation") || undefined
+    const limit = parseInt(searchParams.get("limit") || "10", 10)
 
-    if (type === 'recent') {
+    if (type === "recent") {
       const feedback = await getRecentFeedback(companyUser.company.id, limit)
       return NextResponse.json({ feedback })
     }
@@ -119,9 +115,9 @@ export const GET = withApiLogging(async (req: NextRequest) => {
     const stats = await getFeedbackStats(companyUser.company.id, operation)
     return NextResponse.json({ stats })
   } catch (error) {
-    logger.error({ error }, 'Failed to get AI feedback')
+    logger.error({ error }, "Failed to get AI feedback")
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get feedback' },
+      { error: error instanceof Error ? error.message : "Failed to get feedback" },
       { status: 500 }
     )
   }

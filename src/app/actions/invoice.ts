@@ -1,11 +1,15 @@
-'use server'
+"use server"
 
-import { db } from '@/lib/db'
-import { requireAuth, requireCompanyWithContext, requireCompanyWithPermission } from '@/lib/auth-utils'
-import { revalidatePath } from 'next/cache'
-import { Prisma, InvoiceType } from '@prisma/client'
-import { getNextInvoiceNumber } from '@/lib/invoice-numbering'
-import { canCreateInvoice, getUsageStats } from '@/lib/billing/stripe'
+import { db } from "@/lib/db"
+import {
+  requireAuth,
+  requireCompanyWithContext,
+  requireCompanyWithPermission,
+} from "@/lib/auth-utils"
+import { revalidatePath } from "next/cache"
+import { Prisma, InvoiceType } from "@prisma/client"
+import { getNextInvoiceNumber } from "@/lib/invoice-numbering"
+import { canCreateInvoice, getUsageStats } from "@/lib/billing/stripe"
 
 const Decimal = Prisma.Decimal
 
@@ -53,7 +57,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
       })
 
       if (!buyer) {
-        return { success: false, error: 'Kupac nije pronađen' }
+        return { success: false, error: "Kupac nije pronađen" }
       }
 
       // Generate invoice number
@@ -75,7 +79,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
           unitPrice,
           netAmount,
           vatRate,
-          vatCategory: line.vatCategory || 'S',
+          vatCategory: line.vatCategory || "S",
           vatAmount,
         }
       })
@@ -88,29 +92,29 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
       const invoice = await db.eInvoice.create({
         data: {
           type: input.type,
-          direction: 'OUTBOUND',
+          direction: "OUTBOUND",
           invoiceNumber: numbering.invoiceNumber,
           internalReference: numbering.internalReference,
           buyerId: input.buyerId,
           issueDate: input.issueDate,
           dueDate: input.dueDate,
-          currency: input.currency || 'EUR',
+          currency: input.currency || "EUR",
           notes: input.notes,
           netAmount,
           vatAmount,
           totalAmount,
-          status: 'DRAFT',
+          status: "DRAFT",
           lines: { create: lineItems },
         },
         include: { lines: true, buyer: true },
       })
 
-      revalidatePath('/invoices')
+      revalidatePath("/invoices")
       return { success: true, data: invoice }
     })
   } catch (error) {
-    console.error('Failed to create invoice:', error)
-    return { success: false, error: 'Greška pri kreiranju dokumenta' }
+    console.error("Failed to create invoice:", error)
+    return { success: false, error: "Greška pri kreiranju dokumenta" }
   }
 }
 
@@ -136,11 +140,11 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
       })
 
       if (!source) {
-        return { success: false, error: 'Dokument nije pronađen' }
+        return { success: false, error: "Dokument nije pronađen" }
       }
 
-      if (source.type !== 'QUOTE' && source.type !== 'PROFORMA') {
-        return { success: false, error: 'Samo ponude i predračuni mogu biti pretvoreni u račune' }
+      if (source.type !== "QUOTE" && source.type !== "PROFORMA") {
+        return { success: false, error: "Samo ponude i predračuni mogu biti pretvoreni u račune" }
       }
 
       // Generate new invoice number
@@ -149,8 +153,8 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
       // Create new invoice from source
       const invoice = await db.eInvoice.create({
         data: {
-          type: 'INVOICE',
-          direction: 'OUTBOUND',
+          type: "INVOICE",
+          direction: "OUTBOUND",
           invoiceNumber: numbering.invoiceNumber,
           internalReference: numbering.internalReference,
           buyerId: source.buyerId,
@@ -161,7 +165,7 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
           netAmount: source.netAmount,
           vatAmount: source.vatAmount,
           totalAmount: source.totalAmount,
-          status: 'DRAFT',
+          status: "DRAFT",
           convertedFromId: source.id,
           lines: {
             create: source.lines.map((line) => ({
@@ -180,13 +184,13 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
         include: { lines: true, buyer: true },
       })
 
-      revalidatePath('/invoices')
+      revalidatePath("/invoices")
       revalidatePath(`/invoices/${source.id}`)
       return { success: true, data: invoice }
     })
   } catch (error) {
-    console.error('Failed to convert to invoice:', error)
-    return { success: false, error: 'Greška pri pretvaranju u račun' }
+    console.error("Failed to convert to invoice:", error)
+    return { success: false, error: "Greška pri pretvaranju u račun" }
   }
 }
 
@@ -199,11 +203,11 @@ export async function updateInvoice(
 
     return requireCompanyWithContext(user.id!, async () => {
       const existing = await db.eInvoice.findFirst({
-        where: { id, status: 'DRAFT' },
+        where: { id, status: "DRAFT" },
       })
 
       if (!existing) {
-        return { success: false, error: 'Dokument nije pronađen ili nije nacrt' }
+        return { success: false, error: "Dokument nije pronađen ili nije nacrt" }
       }
 
       const updateData: Prisma.EInvoiceUpdateInput = {}
@@ -235,7 +239,7 @@ export async function updateInvoice(
             unitPrice,
             netAmount,
             vatRate,
-            vatCategory: line.vatCategory || 'S',
+            vatCategory: line.vatCategory || "S",
             vatAmount,
           }
         })
@@ -256,13 +260,13 @@ export async function updateInvoice(
         include: { lines: true, buyer: true },
       })
 
-      revalidatePath('/invoices')
+      revalidatePath("/invoices")
       revalidatePath(`/invoices/${id}`)
       return { success: true, data: invoice }
     })
   } catch (error) {
-    console.error('Failed to update invoice:', error)
-    return { success: false, error: 'Greška pri ažuriranju dokumenta' }
+    console.error("Failed to update invoice:", error)
+    return { success: false, error: "Greška pri ažuriranju dokumenta" }
   }
 }
 
@@ -270,13 +274,13 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithPermission(user.id!, 'invoice:delete', async () => {
+    return requireCompanyWithPermission(user.id!, "invoice:delete", async () => {
       const invoice = await db.eInvoice.findFirst({
-        where: { id, status: 'DRAFT' },
+        where: { id, status: "DRAFT" },
       })
 
       if (!invoice) {
-        return { success: false, error: 'Samo nacrte je moguće obrisati' }
+        return { success: false, error: "Samo nacrte je moguće obrisati" }
       }
 
       // Check if this invoice was converted to something
@@ -285,23 +289,26 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
       })
 
       if (converted) {
-        return { success: false, error: 'Nije moguće obrisati dokument koji je pretvoren u drugi dokument' }
+        return {
+          success: false,
+          error: "Nije moguće obrisati dokument koji je pretvoren u drugi dokument",
+        }
       }
 
       await db.eInvoice.delete({ where: { id } })
 
-      revalidatePath('/invoices')
+      revalidatePath("/invoices")
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to delete invoice:', error)
+    console.error("Failed to delete invoice:", error)
 
     // Check if this is a permission error
-    if (error instanceof Error && error.message.includes('Permission denied')) {
-      return { success: false, error: 'Nemate dopuštenje za brisanje dokumenata' }
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return { success: false, error: "Nemate dopuštenje za brisanje dokumenata" }
     }
 
-    return { success: false, error: 'Greška pri brisanju dokumenta' }
+    return { success: false, error: "Greška pri brisanju dokumenta" }
   }
 }
 
@@ -314,7 +321,7 @@ export async function getInvoice(id: string) {
       include: {
         buyer: true,
         seller: true,
-        lines: { orderBy: { lineNumber: 'asc' } },
+        lines: { orderBy: { lineNumber: "asc" } },
         convertedFrom: true,
         convertedTo: true,
       },
@@ -341,7 +348,7 @@ export async function getInvoices(options?: {
     const invoices = await db.eInvoice.findMany({
       where,
       include: { buyer: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit + 1,
       ...(options?.cursor && { cursor: { id: options.cursor }, skip: 1 }),
     })

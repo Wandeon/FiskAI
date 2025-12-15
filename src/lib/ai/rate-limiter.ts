@@ -1,15 +1,15 @@
-import { logger } from '@/lib/logger'
-import { db } from '@/lib/db'
-import { getUsageThisMonth } from './usage-tracking'
+import { logger } from "@/lib/logger"
+import { db } from "@/lib/db"
+import { getUsageThisMonth } from "./usage-tracking"
 
 /**
  * Rate limit configuration per subscription plan
  */
 export type AIOperation =
-  | 'ocr_receipt'
-  | 'extract_receipt'
-  | 'extract_invoice'
-  | 'categorize_expense'
+  | "ocr_receipt"
+  | "extract_receipt"
+  | "extract_invoice"
+  | "categorize_expense"
 
 /**
  * Rate limits per plan (monthly limits)
@@ -134,13 +134,10 @@ export async function checkRateLimit(
     // First check in-memory rate limiter (per-minute)
     const shortTermCheck = inMemoryLimiter.check(companyId)
     if (!shortTermCheck.allowed) {
-      logger.warn(
-        { companyId, operation },
-        'Rate limit exceeded (short-term)'
-      )
+      logger.warn({ companyId, operation }, "Rate limit exceeded (short-term)")
       return {
         allowed: false,
-        reason: 'Too many requests. Please wait a moment.',
+        reason: "Too many requests. Please wait a moment.",
         retryAfter: shortTermCheck.retryAfter,
       }
     }
@@ -157,12 +154,12 @@ export async function checkRateLimit(
     if (!company) {
       return {
         allowed: false,
-        reason: 'Company not found',
+        reason: "Company not found",
       }
     }
 
     // Get plan limits
-    const plan = company.subscriptionPlan || 'default'
+    const plan = company.subscriptionPlan || "default"
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.default
 
     // Get current month usage
@@ -177,7 +174,7 @@ export async function checkRateLimit(
           current: usage.totalCalls,
           limit: limits.totalCalls,
         },
-        'Monthly call limit exceeded'
+        "Monthly call limit exceeded"
       )
       return {
         allowed: false,
@@ -199,7 +196,7 @@ export async function checkRateLimit(
           current: usage.totalCostCents,
           limit: limits.totalCostCents,
         },
-        'Monthly cost limit exceeded'
+        "Monthly cost limit exceeded"
       )
       return {
         allowed: false,
@@ -225,7 +222,7 @@ export async function checkRateLimit(
             current: operationUsage,
             limit: operationLimit,
           },
-          'Per-operation limit exceeded'
+          "Per-operation limit exceeded"
         )
         return {
           allowed: false,
@@ -250,7 +247,7 @@ export async function checkRateLimit(
     }
   } catch (error) {
     // On error, allow the request but log the error
-    logger.error({ error, companyId, operation }, 'Rate limit check failed')
+    logger.error({ error, companyId, operation }, "Rate limit check failed")
     return { allowed: true }
   }
 }
@@ -269,10 +266,7 @@ export async function getUsageLimits(companyId: string): Promise<{
     totalCalls: number
     totalTokens: number
     totalCostCents: number
-    byOperation: Record<
-      string,
-      { calls: number; tokens: number; costCents: number }
-    >
+    byOperation: Record<string, { calls: number; tokens: number; costCents: number }>
   }
   remaining: {
     calls: number
@@ -287,7 +281,7 @@ export async function getUsageLimits(companyId: string): Promise<{
     },
   })
 
-  const plan = company?.subscriptionPlan || 'default'
+  const plan = company?.subscriptionPlan || "default"
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.default
 
   // Get current month usage

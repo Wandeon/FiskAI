@@ -95,6 +95,7 @@ The tests use Node.js's built-in test runner with `tsx` for TypeScript support. 
 The tests use a custom `MockPrismaClient` that simulates Prisma's extension API. This allows testing the middleware logic without a real database connection.
 
 Key features of the mock:
+
 - Implements Prisma's `$extends()` API
 - Supports all CRUD operations: findMany, findFirst, findUnique, create, update, delete, etc.
 - Supports bulk operations: createMany, updateMany, deleteMany
@@ -115,6 +116,7 @@ The tests validate the multi-tenant isolation architecture defined in `/home/adm
 ### Tenant-Scoped Models
 
 The following models are automatically filtered by `companyId`:
+
 - Contact
 - Product
 - EInvoice
@@ -141,6 +143,7 @@ The following models are automatically filtered by `companyId`:
 ### Middleware Operations Covered
 
 All Prisma operations are intercepted and secured:
+
 - **Read**: findMany, findFirst, findUnique
 - **Write**: create, update, delete
 - **Bulk**: createMany, updateMany, deleteMany
@@ -201,6 +204,7 @@ To integrate these tests into CI/CD:
 ### Tests Fail to Import Modules
 
 Ensure `tsx` is installed:
+
 ```bash
 npm install --save-dev tsx --legacy-peer-deps
 ```
@@ -208,6 +212,7 @@ npm install --save-dev tsx --legacy-peer-deps
 ### Type Errors
 
 Ensure TypeScript and types are up to date:
+
 ```bash
 npm install --save-dev @types/node typescript
 ```

@@ -6,7 +6,7 @@ import type {
   ProviderBalance,
   ConnectionResult,
   CreateConnectionResult,
-} from './types'
+} from "./types"
 
 export interface BankSyncProvider {
   name: string
@@ -33,10 +33,7 @@ export interface BankSyncProvider {
   /**
    * Fetch transactions since a given date
    */
-  fetchTransactions(
-    providerAccountId: string,
-    since: Date
-  ): Promise<ProviderTransaction[]>
+  fetchTransactions(providerAccountId: string, since: Date): Promise<ProviderTransaction[]>
 
   /**
    * Fetch current balance

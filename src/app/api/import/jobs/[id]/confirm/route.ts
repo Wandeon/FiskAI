@@ -1,13 +1,10 @@
-import { NextResponse } from 'next/server'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { Prisma } from '@prisma/client'
+import { NextResponse } from "next/server"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { Prisma } from "@prisma/client"
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
   const { id } = await params
@@ -21,19 +18,19 @@ export async function PUT(
   const job = await db.importJob.findUnique({ where: { id } })
 
   if (!job || job.companyId !== company.id) {
-    return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+    return NextResponse.json({ error: "Job not found" }, { status: 404 })
   }
 
-  if (job.status !== 'READY_FOR_REVIEW') {
-    return NextResponse.json({ error: 'Job not ready for confirmation' }, { status: 400 })
+  if (job.status !== "READY_FOR_REVIEW") {
+    return NextResponse.json({ error: "Job not ready for confirmation" }, { status: 400 })
   }
 
-  if (job.documentType === 'BANK_STATEMENT') {
+  if (job.documentType === "BANK_STATEMENT") {
     // Handle bank statement confirmation
     const { transactions, bankAccountId } = body
 
     if (!bankAccountId) {
-      return NextResponse.json({ error: 'Bank account required' }, { status: 400 })
+      return NextResponse.json({ error: "Bank account required" }, { status: 400 })
     }
 
     // Write transactions to database
@@ -43,13 +40,13 @@ export async function PUT(
           companyId: company.id,
           bankAccountId,
           date: new Date(t.date),
-          description: t.description || '',
+          description: t.description || "",
           amount: new Prisma.Decimal(Math.abs(t.amount)),
           balance: new Prisma.Decimal(0),
           reference: t.reference || null,
           counterpartyName: t.counterpartyName || null,
           counterpartyIban: t.counterpartyIban || null,
-          matchStatus: 'UNMATCHED',
+          matchStatus: "UNMATCHED",
           confidenceScore: 0,
         })),
       })
@@ -59,7 +56,7 @@ export async function PUT(
     await db.importJob.update({
       where: { id },
       data: {
-        status: 'CONFIRMED',
+        status: "CONFIRMED",
         bankAccountId,
       },
     })
@@ -68,7 +65,7 @@ export async function PUT(
       success: true,
       transactionCount: transactions?.length || 0,
     })
-  } else if (job.documentType === 'INVOICE') {
+  } else if (job.documentType === "INVOICE") {
     // Handle invoice confirmation - store as Expense
     const { vendor, invoice, lineItems, subtotal, taxAmount, totalAmount, currency, payment } = body
 
@@ -84,7 +81,7 @@ export async function PUT(
       vendorContact = await db.contact.create({
         data: {
           companyId: company.id,
-          type: 'SUPPLIER',
+          type: "SUPPLIER",
           name: vendor.name,
           oib: vendor.oib || null,
           address: vendor.address || null,
@@ -94,15 +91,15 @@ export async function PUT(
 
     // Find or create default expense category for imported invoices
     let category = await db.expenseCategory.findFirst({
-      where: { companyId: company.id, code: 'IMPORTED' },
+      where: { companyId: company.id, code: "IMPORTED" },
     })
 
     if (!category) {
       category = await db.expenseCategory.create({
         data: {
           companyId: company.id,
-          name: 'Uvezeni računi',
-          code: 'IMPORTED',
+          name: "Uvezeni računi",
+          code: "IMPORTED",
           vatDeductibleDefault: true,
         },
       })
@@ -112,8 +109,10 @@ export async function PUT(
     const lineItemsDesc = (lineItems || [])
       .map((item: any) => item.description)
       .filter(Boolean)
-      .join(', ')
-    const description = lineItemsDesc || `Račun ${invoice?.number || 'N/A'} - ${vendor?.name || 'Nepoznati dobavljač'}`
+      .join(", ")
+    const description =
+      lineItemsDesc ||
+      `Račun ${invoice?.number || "N/A"} - ${vendor?.name || "Nepoznati dobavljač"}`
 
     // Create the Expense record
     const expense = await db.expense.create({
@@ -128,8 +127,8 @@ export async function PUT(
         vatAmount: new Prisma.Decimal(taxAmount || 0),
         totalAmount: new Prisma.Decimal(totalAmount || 0),
         vatDeductible: true,
-        currency: currency || 'EUR',
-        status: 'PENDING',
+        currency: currency || "EUR",
+        status: "PENDING",
         receiptUrl: job.storagePath, // Link to the uploaded document
         notes: JSON.stringify({
           invoiceNumber: invoice?.number,
@@ -144,16 +143,16 @@ export async function PUT(
     // Update job status
     await db.importJob.update({
       where: { id },
-      data: { status: 'CONFIRMED' },
+      data: { status: "CONFIRMED" },
     })
 
     return NextResponse.json({
       success: true,
       expenseId: expense.id,
-      invoiceNumber: invoice?.number || 'N/A',
+      invoiceNumber: invoice?.number || "N/A",
     })
   }
 
   // Unknown document type
-  return NextResponse.json({ error: 'Unknown document type' }, { status: 400 })
+  return NextResponse.json({ error: "Unknown document type" }, { status: 400 })
 }

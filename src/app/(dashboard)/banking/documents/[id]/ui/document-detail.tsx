@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import type { ImportJob, Statement, StatementPage, Transaction } from '@prisma/client'
-import { Loader2, CheckCircle2, AlertTriangle, Eye } from 'lucide-react'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import type { ImportJob, Statement, StatementPage, Transaction } from "@prisma/client"
+import { Loader2, CheckCircle2, AlertTriangle, Eye } from "lucide-react"
 
 type StatementWithRelations =
   | (Statement & {
@@ -17,11 +17,11 @@ type Props = {
   statement: StatementWithRelations
 }
 
-function getFileType(fileName: string): 'pdf' | 'image' | 'other' {
-  const ext = fileName.split('.').pop()?.toLowerCase() || ''
-  if (ext === 'pdf') return 'pdf'
-  if (['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(ext)) return 'image'
-  return 'other'
+function getFileType(fileName: string): "pdf" | "image" | "other" {
+  const ext = fileName.split(".").pop()?.toLowerCase() || ""
+  if (ext === "pdf") return "pdf"
+  if (["jpg", "jpeg", "png", "heic", "webp"].includes(ext)) return "image"
+  return "other"
 }
 
 export function DocumentDetail({ job, statement }: Props) {
@@ -35,8 +35,8 @@ export function DocumentDetail({ job, statement }: Props) {
     setMessage(null)
     try {
       const res = await fetch(`/api/banking/import/jobs/${job.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transactions: transactions.map((t) => ({
             id: t.id,
@@ -51,12 +51,12 @@ export function DocumentDetail({ job, statement }: Props) {
       })
       const json = await res.json()
       if (!res.ok || !json.success) {
-        setMessage(json.error || 'Spremanje nije uspjelo')
+        setMessage(json.error || "Spremanje nije uspjelo")
       } else {
-        setMessage('Spremljeno. Označite kao verificirano ako je točno.')
+        setMessage("Spremljeno. Označite kao verificirano ako je točno.")
       }
     } catch (e) {
-      setMessage('Spremanje nije uspjelo')
+      setMessage("Spremanje nije uspjelo")
     } finally {
       setSaving(false)
     }
@@ -65,11 +65,11 @@ export function DocumentDetail({ job, statement }: Props) {
   async function markVerified() {
     await save()
     await fetch(`/api/banking/import/jobs/${job.id}/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'VERIFIED' }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "VERIFIED" }),
     })
-    setMessage('Označeno kao verificirano.')
+    setMessage("Označeno kao verificirano.")
   }
 
   return (
@@ -79,7 +79,7 @@ export function DocumentDetail({ job, statement }: Props) {
           <Eye className="h-4 w-4" />
           Izvorni dokument
         </div>
-        {fileType === 'pdf' ? (
+        {fileType === "pdf" ? (
           <object
             data={`/api/banking/import/jobs/${job.id}/file`}
             type="application/pdf"
@@ -87,7 +87,7 @@ export function DocumentDetail({ job, statement }: Props) {
           >
             <p className="p-4 text-sm text-gray-500">PDF pregled nije dostupan.</p>
           </object>
-        ) : fileType === 'image' ? (
+        ) : fileType === "image" ? (
           <div className="w-full h-[75vh] flex items-center justify-center bg-gray-100 overflow-auto p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -105,7 +105,7 @@ export function DocumentDetail({ job, statement }: Props) {
 
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
-          {job.status === 'VERIFIED' ? (
+          {job.status === "VERIFIED" ? (
             <CheckCircle2 className="h-5 w-5 text-green-600" />
           ) : (
             <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -148,7 +148,7 @@ export function DocumentDetail({ job, statement }: Props) {
                   <td className="px-3 py-2">
                     <textarea
                       className="w-full border rounded px-2 py-1 text-xs min-h-[60px]"
-                      value={t.description ?? ''}
+                      value={t.description ?? ""}
                       onChange={(e) =>
                         setTransactions((prev) => {
                           const copy = [...prev]
@@ -162,7 +162,7 @@ export function DocumentDetail({ job, statement }: Props) {
                     <input
                       type="text"
                       className="w-full border rounded px-2 py-1 text-xs"
-                      value={t.reference ?? ''}
+                      value={t.reference ?? ""}
                       onChange={(e) =>
                         setTransactions((prev) => {
                           const copy = [...prev]
@@ -194,7 +194,7 @@ export function DocumentDetail({ job, statement }: Props) {
 
         <div className="flex items-center gap-2">
           <Button onClick={save} disabled={saving} size="sm">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Spremi promjene'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Spremi promjene"}
           </Button>
           <Button onClick={markVerified} variant="secondary" size="sm" disabled={saving}>
             Označi kao verificirano

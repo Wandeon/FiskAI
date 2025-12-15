@@ -17,15 +17,15 @@ export function CreateSupportTicketForm() {
     e.preventDefault()
     startTransition(async () => {
       try {
-        const res = await fetch('/api/support/tickets', {
-          method: 'POST',
+        const res = await fetch("/api/support/tickets", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             title: title.trim(),
             body: body?.trim(),
-            priority
+            priority,
           }),
         })
 

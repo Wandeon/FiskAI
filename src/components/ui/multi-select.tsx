@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -16,7 +16,12 @@ interface MultiSelectProps {
   placeholder?: string
 }
 
-export function MultiSelect({ options, value, onChange, placeholder = "Odaberite" }: MultiSelectProps) {
+export function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "Odaberite",
+}: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const toggleOption = (option: MultiSelectOption) => {

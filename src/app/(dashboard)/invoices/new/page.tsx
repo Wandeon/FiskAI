@@ -1,17 +1,17 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { InvoiceForm } from './invoice-form'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { InvoiceForm } from "./invoice-form"
 
 const TYPE_LABELS: Record<string, string> = {
-  INVOICE: 'Račun',
-  E_INVOICE: 'E-Račun',
-  QUOTE: 'Ponuda',
-  PROFORMA: 'Predračun',
-  CREDIT_NOTE: 'Odobrenje',
-  DEBIT_NOTE: 'Terećenje',
+  INVOICE: "Račun",
+  E_INVOICE: "E-Račun",
+  QUOTE: "Ponuda",
+  PROFORMA: "Predračun",
+  CREDIT_NOTE: "Odobrenje",
+  DEBIT_NOTE: "Terećenje",
 }
 
 export default async function NewInvoicePage({
@@ -32,18 +32,18 @@ export default async function NewInvoicePage({
   const contacts = await db.contact.findMany({
     where: { companyId: company.id },
     select: { id: true, name: true, oib: true },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   })
 
   // Get products for quick add
   const products = await db.product.findMany({
     where: { companyId: company.id, isActive: true },
     select: { id: true, name: true, price: true, vatRate: true, unit: true },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   })
 
-  const type = params.type || 'INVOICE'
-  const title = TYPE_LABELS[type] || 'Dokument'
+  const type = params.type || "INVOICE"
+  const title = TYPE_LABELS[type] || "Dokument"
 
   return (
     <div className="space-y-6">
@@ -57,11 +57,7 @@ export default async function NewInvoicePage({
         </Link>
       </div>
 
-      <InvoiceForm
-        type={type}
-        contacts={contacts}
-        products={products}
-      />
+      <InvoiceForm type={type} contacts={contacts} products={products} />
     </div>
   )
 }

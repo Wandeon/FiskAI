@@ -38,13 +38,13 @@ export async function register(formData: z.infer<typeof registerSchema>) {
 
   // Send welcome email
   try {
-    const loginUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`
-    const { sendEmail } = await import('@/lib/email')
-    const { WelcomeEmail } = await import('@/lib/email/templates/welcome-email')
+    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+    const { sendEmail } = await import("@/lib/email")
+    const { WelcomeEmail } = await import("@/lib/email/templates/welcome-email")
 
     await sendEmail({
       to: email,
-      subject: 'Dobrodošli u FiskAI!',
+      subject: "Dobrodošli u FiskAI!",
       react: WelcomeEmail({
         userName: name,
         loginUrl,
@@ -52,7 +52,7 @@ export async function register(formData: z.infer<typeof registerSchema>) {
     })
   } catch (emailError) {
     // Don't fail registration if email fails
-    console.error('Failed to send welcome email:', emailError)
+    console.error("Failed to send welcome email:", emailError)
   }
 
   return { success: "Account created! Please log in." }
@@ -69,7 +69,7 @@ export async function login(formData: z.infer<typeof loginSchema>) {
 
   // Rate limiting for login attempts
   const identifier = `login_${email.toLowerCase()}`
-  const rateLimitResult = checkRateLimit(identifier, 'LOGIN')
+  const rateLimitResult = checkRateLimit(identifier, "LOGIN")
 
   if (!rateLimitResult.allowed) {
     // Don't reveal that account exists or rate limit status
@@ -105,7 +105,7 @@ export async function logout() {
 export async function requestPasswordReset(email: string) {
   // Rate limiting for password reset attempts
   const identifier = `password_reset_${email.toLowerCase()}`
-  const rateLimitResult = checkRateLimit(identifier, 'PASSWORD_RESET')
+  const rateLimitResult = checkRateLimit(identifier, "PASSWORD_RESET")
 
   if (!rateLimitResult.allowed) {
     // Always return success to prevent information leakage and rate limit detection
@@ -124,9 +124,9 @@ export async function requestPasswordReset(email: string) {
     }
 
     // Generate secure random token
-    const crypto = await import('crypto')
+    const crypto = await import("crypto")
     const tokenBytes = crypto.randomBytes(32)
-    const token = tokenBytes.toString('hex')
+    const token = tokenBytes.toString("hex")
 
     // Token expires in 1 hour
     const expiresAt = new Date()
@@ -147,14 +147,14 @@ export async function requestPasswordReset(email: string) {
     })
 
     // Send password reset email
-    const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${token}`
+    const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`
 
-    const { sendEmail } = await import('@/lib/email')
-    const { PasswordResetEmail } = await import('@/lib/email/templates/password-reset-email')
+    const { sendEmail } = await import("@/lib/email")
+    const { PasswordResetEmail } = await import("@/lib/email/templates/password-reset-email")
 
     await sendEmail({
       to: user.email,
-      subject: 'Resetiranje lozinke - FiskAI',
+      subject: "Resetiranje lozinke - FiskAI",
       react: PasswordResetEmail({
         resetLink,
         userName: user.name || undefined,
@@ -163,7 +163,7 @@ export async function requestPasswordReset(email: string) {
 
     return { success: true }
   } catch (error) {
-    console.error('Password reset request error:', error)
+    console.error("Password reset request error:", error)
     // Still return success to prevent information leakage
     return { success: true }
   }
@@ -178,7 +178,7 @@ export async function resetPassword(token: string, newPassword: string) {
     })
 
     if (!resetToken) {
-      return { error: 'Token je nevažeći ili je istekao' }
+      return { error: "Token je nevažeći ili je istekao" }
     }
 
     if (new Date() > resetToken.expiresAt) {
@@ -186,7 +186,7 @@ export async function resetPassword(token: string, newPassword: string) {
       await db.passwordResetToken.delete({
         where: { id: resetToken.id },
       })
-      return { error: 'Token je istekao. Molimo zatražite novo resetiranje lozinke.' }
+      return { error: "Token je istekao. Molimo zatražite novo resetiranje lozinke." }
     }
 
     // Hash the new password
@@ -203,10 +203,10 @@ export async function resetPassword(token: string, newPassword: string) {
       where: { id: resetToken.id },
     })
 
-    return { success: 'Lozinka je uspješno resetirana. Možete se prijaviti s novom lozinkom.' }
+    return { success: "Lozinka je uspješno resetirana. Možete se prijaviti s novom lozinkom." }
   } catch (error) {
-    console.error('Password reset error:', error)
-    return { error: 'Došlo je do greške prilikom resetiranja lozinke' }
+    console.error("Password reset error:", error)
+    return { error: "Došlo je do greške prilikom resetiranja lozinke" }
   }
 }
 

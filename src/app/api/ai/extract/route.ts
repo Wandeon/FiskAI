@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { extractFromImage } from '@/lib/ai/ocr'
-import { extractReceipt } from '@/lib/ai/extract'
-import { withApiLogging } from '@/lib/api-logging'
-import { logger } from '@/lib/logger'
-import { updateContext } from '@/lib/context'
-import { db } from '@/lib/db'
-import { checkRateLimit } from '@/lib/ai/rate-limiter'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { extractFromImage } from "@/lib/ai/ocr"
+import { extractReceipt } from "@/lib/ai/extract"
+import { withApiLogging } from "@/lib/api-logging"
+import { logger } from "@/lib/logger"
+import { updateContext } from "@/lib/context"
+import { db } from "@/lib/db"
+import { checkRateLimit } from "@/lib/ai/rate-limiter"
 
 export const POST = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   updateContext({ userId: session.user?.id ?? undefined })
@@ -19,15 +19,12 @@ export const POST = withApiLogging(async (req: NextRequest) => {
   try {
     // Get company ID
     const companyUser = await db.companyUser.findFirst({
-      where: { userId: session.user?.id ?? '', isDefault: true },
+      where: { userId: session.user?.id ?? "", isDefault: true },
       include: { company: true },
     })
 
     if (!companyUser?.company) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
 
     const companyId = companyUser.company.id
@@ -37,17 +34,14 @@ export const POST = withApiLogging(async (req: NextRequest) => {
     const { image, text } = body
 
     // Check rate limits before processing
-    const operation = image ? 'ocr_receipt' : 'extract_receipt'
+    const operation = image ? "ocr_receipt" : "extract_receipt"
     const rateLimitCheck = await checkRateLimit(companyId, operation)
 
     if (!rateLimitCheck.allowed) {
-      logger.warn(
-        { companyId, operation, reason: rateLimitCheck.reason },
-        'Rate limit exceeded'
-      )
+      logger.warn({ companyId, operation, reason: rateLimitCheck.reason }, "Rate limit exceeded")
       return NextResponse.json(
         {
-          error: rateLimitCheck.reason || 'Rate limit exceeded',
+          error: rateLimitCheck.reason || "Rate limit exceeded",
           usage: rateLimitCheck.usage,
           retryAfter: rateLimitCheck.retryAfter,
         },
@@ -57,7 +51,7 @@ export const POST = withApiLogging(async (req: NextRequest) => {
 
     // Process the request with companyId for tracking
     if (image) {
-      const base64Image = image.replace(/^data:image\/\w+;base64,/, '')
+      const base64Image = image.replace(/^data:image\/\w+;base64,/, "")
       const result = await extractFromImage(base64Image, companyId)
       return NextResponse.json({
         ...result,
@@ -73,11 +67,11 @@ export const POST = withApiLogging(async (req: NextRequest) => {
       })
     }
 
-    return NextResponse.json({ error: 'No input provided' }, { status: 400 })
+    return NextResponse.json({ error: "No input provided" }, { status: 400 })
   } catch (error) {
-    logger.error({ error }, 'AI extraction error')
+    logger.error({ error }, "AI extraction error")
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Extraction failed' },
+      { error: error instanceof Error ? error.message : "Extraction failed" },
       { status: 500 }
     )
   }

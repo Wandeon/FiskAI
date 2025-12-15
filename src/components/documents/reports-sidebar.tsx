@@ -1,28 +1,58 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { X, BarChart3, FileText, Clock, TrendingUp, Users, Download, BookOpen, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ProcessingCard, ImportJobState } from '@/components/import/processing-card'
+import { useState } from "react"
+import Link from "next/link"
+import {
+  X,
+  BarChart3,
+  FileText,
+  Clock,
+  TrendingUp,
+  Users,
+  Download,
+  BookOpen,
+  ChevronRight,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ProcessingCard, ImportJobState } from "@/components/import/processing-card"
 
 const REPORTS = [
-  { href: '/reports/vat', title: 'PDV obrazac', description: 'Ulazni i izlazni PDV', icon: BarChart3 },
-  { href: '/reports/profit-loss', title: 'Dobit i gubitak', description: 'Prihodi vs rashodi', icon: TrendingUp },
-  { href: '/reports/aging', title: 'Starost potraživanja', description: 'Dospjeli računi', icon: Clock },
-  { href: '/reports/kpr', title: 'KPR / PO-SD', description: 'Plaćeni računi', icon: BookOpen },
-  { href: '/reports/export', title: 'Izvoz podataka', description: 'CSV za računovođu', icon: Download },
+  {
+    href: "/reports/vat",
+    title: "PDV obrazac",
+    description: "Ulazni i izlazni PDV",
+    icon: BarChart3,
+  },
+  {
+    href: "/reports/profit-loss",
+    title: "Dobit i gubitak",
+    description: "Prihodi vs rashodi",
+    icon: TrendingUp,
+  },
+  {
+    href: "/reports/aging",
+    title: "Starost potraživanja",
+    description: "Dospjeli računi",
+    icon: Clock,
+  },
+  { href: "/reports/kpr", title: "KPR / PO-SD", description: "Plaćeni računi", icon: BookOpen },
+  {
+    href: "/reports/export",
+    title: "Izvoz podataka",
+    description: "CSV za računovođu",
+    icon: Download,
+  },
 ]
 
 interface ReportsSidebarProps {
   isOpen: boolean
   onClose: () => void
-  mode: 'reports' | 'processing'
+  mode: "reports" | "processing"
   processingJobs?: ImportJobState[]
   onViewJob?: (jobId: string) => void
   onRetryJob?: (jobId: string) => void
   onRemoveJob?: (jobId: string) => void
-  onTypeChange?: (jobId: string, newType: import('@prisma/client').DocumentType) => void
+  onTypeChange?: (jobId: string, newType: import("@prisma/client").DocumentType) => void
 }
 
 export function ReportsSidebar({
@@ -35,45 +65,37 @@ export function ReportsSidebar({
   onRemoveJob,
   onTypeChange,
 }: ReportsSidebarProps) {
-  const readyJobs = processingJobs.filter(j => j.status === 'READY_FOR_REVIEW')
+  const readyJobs = processingJobs.filter((j) => j.status === "READY_FOR_REVIEW")
   const firstReadyId = readyJobs[0]?.id
 
   return (
     <>
       {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 bg-black/20 z-40 lg:hidden" onClick={onClose} />}
 
       {/* Sidebar */}
       <div
         className={`
           fixed right-0 top-0 h-full w-80 bg-white border-l border-gray-200 shadow-xl z-50
           transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+          ${isOpen ? "translate-x-0" : "translate-x-full"}
           lg:relative lg:transform-none lg:shadow-none lg:z-auto
-          ${isOpen ? 'lg:w-80' : 'lg:w-0 lg:border-0 lg:overflow-hidden'}
+          ${isOpen ? "lg:w-80" : "lg:w-0 lg:border-0 lg:overflow-hidden"}
         `}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-gray-900">
-            {mode === 'reports' ? 'Izvještaji' : 'Uvoz dokumenata'}
+            {mode === "reports" ? "Izvještaji" : "Uvoz dokumenata"}
           </h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg lg:hidden"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg lg:hidden">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
-          {mode === 'reports' ? (
+          {mode === "reports" ? (
             <div className="space-y-2">
               {REPORTS.map((report) => {
                 const Icon = report.icon
@@ -115,14 +137,15 @@ export function ReportsSidebar({
               ) : (
                 <>
                   <p className="text-xs text-gray-500 mb-3">
-                    {processingJobs.length} {processingJobs.length === 1 ? 'dokument' : 'dokumenata'} u redu
+                    {processingJobs.length}{" "}
+                    {processingJobs.length === 1 ? "dokument" : "dokumenata"} u redu
                   </p>
-                  {processingJobs.map(job => (
+                  {processingJobs.map((job) => (
                     <ProcessingCard
                       key={job.id}
                       job={{
                         ...job,
-                        queuePosition: readyJobs.findIndex(j => j.id === job.id) + 1 || undefined,
+                        queuePosition: readyJobs.findIndex((j) => j.id === job.id) + 1 || undefined,
                         totalInQueue: readyJobs.length || undefined,
                       }}
                       onView={onViewJob || (() => {})}

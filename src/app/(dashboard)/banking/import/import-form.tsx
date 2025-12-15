@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useState, type ChangeEvent } from 'react'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { importBankStatement } from '../actions'
-import { useRouter } from 'next/navigation'
-import type { BankAccount } from '@prisma/client'
-import type { SupportedBank } from '@/lib/banking/csv-parser'
+import { useState, type ChangeEvent } from "react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { importBankStatement } from "../actions"
+import { useRouter } from "next/navigation"
+import type { BankAccount } from "@prisma/client"
+import type { SupportedBank } from "@/lib/banking/csv-parser"
 
 type ImportFormProps = {
-  accounts: Pick<BankAccount, 'id' | 'name' | 'iban'>[]
+  accounts: Pick<BankAccount, "id" | "name" | "iban">[]
 }
 
 type PreviewTransaction = {
@@ -27,35 +27,31 @@ export function ImportForm({ accounts }: ImportFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [selectedAccount, setSelectedAccount] = useState(accounts[0]?.id || '')
-  const [selectedBank, setSelectedBank] = useState<SupportedBank>('generic')
+  const [selectedAccount, setSelectedAccount] = useState(accounts[0]?.id || "")
+  const [selectedBank, setSelectedBank] = useState<SupportedBank>("generic")
   const [fileName, setFileName] = useState<string | null>(null)
   const [previewData, setPreviewData] = useState<PreviewTransaction[] | null>(null)
 
   function parseCSV(csvText: string): PreviewTransaction[] {
-    const lines = csvText.trim().split('\n')
+    const lines = csvText.trim().split("\n")
     if (lines.length < 2) {
-      throw new Error('CSV datoteka je prazna ili nema podataka')
+      throw new Error("CSV datoteka je prazna ili nema podataka")
     }
 
     // Parse header
-    const header = lines[0].split(',').map((h) => h.trim().toLowerCase())
-    const dateIndex = header.findIndex((h) => h === 'datum' || h === 'date')
-    const descIndex = header.findIndex((h) => h === 'opis' || h === 'description')
-    const amountIndex = header.findIndex((h) => h === 'iznos' || h === 'amount')
-    const balanceIndex = header.findIndex((h) => h === 'stanje' || h === 'balance')
-    const refIndex = header.findIndex((h) => h === 'referenca' || h === 'reference')
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase())
+    const dateIndex = header.findIndex((h) => h === "datum" || h === "date")
+    const descIndex = header.findIndex((h) => h === "opis" || h === "description")
+    const amountIndex = header.findIndex((h) => h === "iznos" || h === "amount")
+    const balanceIndex = header.findIndex((h) => h === "stanje" || h === "balance")
+    const refIndex = header.findIndex((h) => h === "referenca" || h === "reference")
     const counterpartyIndex = header.findIndex(
-      (h) => h === 'protivna_strana' || h === 'counterparty'
+      (h) => h === "protivna_strana" || h === "counterparty"
     )
-    const ibanIndex = header.findIndex(
-      (h) => h === 'protivni_iban' || h === 'counterparty_iban'
-    )
+    const ibanIndex = header.findIndex((h) => h === "protivni_iban" || h === "counterparty_iban")
 
     if (dateIndex === -1 || descIndex === -1 || amountIndex === -1 || balanceIndex === -1) {
-      throw new Error(
-        'CSV datoteka mora sadržavati stupce: datum, opis, iznos, stanje'
-      )
+      throw new Error("CSV datoteka mora sadržavati stupce: datum, opis, iznos, stanje")
     }
 
     // Parse data rows
@@ -64,7 +60,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
       const line = lines[i].trim()
       if (!line) continue
 
-      const values = line.split(',').map((v) => v.trim())
+      const values = line.split(",").map((v) => v.trim())
 
       const transaction: PreviewTransaction = {
         date: values[dateIndex],
@@ -97,7 +93,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
     }
 
     if (transactions.length === 0) {
-      throw new Error('Nema valjanih transakcija u datoteci')
+      throw new Error("Nema valjanih transakcija u datoteci")
     }
 
     return transactions
@@ -123,7 +119,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
         setPreviewData(parsed)
         setError(null)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Greška pri parsiranju CSV datoteke')
+        setError(err instanceof Error ? err.message : "Greška pri parsiranju CSV datoteke")
         setPreviewData(null)
       }
     }
@@ -134,7 +130,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
     e.preventDefault()
 
     if (!previewData || previewData.length === 0) {
-      setError('Nema podataka za uvoz')
+      setError("Nema podataka za uvoz")
       return
     }
 
@@ -143,10 +139,10 @@ export function ImportForm({ accounts }: ImportFormProps) {
     setSuccess(null)
 
     const formData = new FormData()
-    formData.append('accountId', selectedAccount)
-    formData.append('fileName', fileName || 'imported.csv')
-    formData.append('transactions', JSON.stringify(previewData))
-    formData.append('bank', selectedBank)
+    formData.append("accountId", selectedAccount)
+    formData.append("fileName", fileName || "imported.csv")
+    formData.append("transactions", JSON.stringify(previewData))
+    formData.append("bank", selectedBank)
 
     const result = await importBankStatement(formData)
 
@@ -157,19 +153,19 @@ export function ImportForm({ accounts }: ImportFormProps) {
       if (autoMatched > 0) {
         message.push(`AI je automatski povezao ${autoMatched} transakcija`)
       }
-      setSuccess(message.join(' · '))
+      setSuccess(message.join(" · "))
       setPreviewData(null)
       setFileName(null)
       // Reset file input
-      const fileInput = document.getElementById('csvFile') as HTMLInputElement
-      if (fileInput) fileInput.value = ''
+      const fileInput = document.getElementById("csvFile") as HTMLInputElement
+      if (fileInput) fileInput.value = ""
 
       // Redirect to transactions page after success
       setTimeout(() => {
-        router.push('/banking/transactions')
+        router.push("/banking/transactions")
       }, 2000)
     } else {
-      setError(result.error || 'Greška pri uvozu transakcija')
+      setError(result.error || "Greška pri uvozu transakcija")
     }
 
     setLoading(false)
@@ -240,7 +236,9 @@ export function ImportForm({ accounts }: ImportFormProps) {
             <option value="splitska">Splitska</option>
             <option value="otp">OTP</option>
           </select>
-          <p className="mt-1 text-xs text-[var(--muted)]">Ispravno parsiranje prema formatu banke.</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Ispravno parsiranje prema formatu banke.
+          </p>
         </div>
       </div>
 
@@ -248,56 +246,44 @@ export function ImportForm({ accounts }: ImportFormProps) {
       {previewData && previewData.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-4 py-2 border-b">
-            <p className="text-sm font-semibold">
-              Pregled: {previewData.length} transakcija
-            </p>
+            <p className="text-sm font-semibold">Pregled: {previewData.length} transakcija</p>
           </div>
-      <div className="overflow-x-auto max-h-96">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 sticky top-0">
-            <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                Datum
-              </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                Opis
-              </th>
-              <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
-                Iznos
-              </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                Ref
-              </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
-                Protivna strana
-              </th>
-            </tr>
-          </thead>
+          <div className="overflow-x-auto max-h-96">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-100 sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Datum</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Opis</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">Iznos</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Ref</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                    Protivna strana
+                  </th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-gray-200">
                 {previewData.slice(0, 100).map((txn, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     <td className="px-3 py-2 text-xs">
-                      {new Date(txn.date).toLocaleDateString('hr-HR')}
+                      {new Date(txn.date).toLocaleDateString("hr-HR")}
+                    </td>
+                    <td className="px-3 py-2 text-xs max-w-xs truncate">{txn.description}</td>
+                    <td
+                      className={`px-3 py-2 text-xs text-right font-mono ${
+                        txn.amount >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {txn.amount >= 0 ? "+" : ""}
+                      {txn.amount.toFixed(2)}
+                    </td>
+                    <td className="px-3 py-2 text-xs max-w-[120px] truncate">
+                      {txn.reference || "-"}
                     </td>
                     <td className="px-3 py-2 text-xs max-w-xs truncate">
-                      {txn.description}
+                      {txn.counterpartyName || "-"}
                     </td>
-                <td
-                  className={`px-3 py-2 text-xs text-right font-mono ${
-                    txn.amount >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {txn.amount >= 0 ? '+' : ''}
-                  {txn.amount.toFixed(2)}
-                </td>
-                <td className="px-3 py-2 text-xs max-w-[120px] truncate">
-                  {txn.reference || '-'}
-                </td>
-                <td className="px-3 py-2 text-xs max-w-xs truncate">
-                  {txn.counterpartyName || '-'}
-                </td>
-              </tr>
-            ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
             {previewData.length > 100 && (
@@ -311,7 +297,7 @@ export function ImportForm({ accounts }: ImportFormProps) {
 
       {previewData && previewData.length > 0 && (
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Uvoz u tijeku...' : `Uvezi ${previewData.length} transakcija`}
+          {loading ? "Uvoz u tijeku..." : `Uvezi ${previewData.length} transakcija`}
         </Button>
       )}
     </form>

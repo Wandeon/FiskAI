@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { ThumbsUp, ThumbsDown, AlertCircle, MessageSquare, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { clsx } from 'clsx'
+import { useState } from "react"
+import { ThumbsUp, ThumbsDown, AlertCircle, MessageSquare, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { clsx } from "clsx"
 
 export interface AIFeedbackProps {
   entityType: string
   entityId: string
-  operation: 'ocr_receipt' | 'ocr_invoice' | 'category_suggestion'
+  operation: "ocr_receipt" | "ocr_invoice" | "category_suggestion"
   confidence?: number
   className?: string
   compact?: boolean
@@ -27,21 +27,21 @@ export function AIFeedback({
 }: AIFeedbackProps) {
   const [feedbackGiven, setFeedbackGiven] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
-  const [notes, setNotes] = useState('')
+  const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedFeedback, setSelectedFeedback] = useState<
-    'correct' | 'incorrect' | 'partial' | null
+    "correct" | "incorrect" | "partial" | null
   >(null)
 
   const submitFeedback = async (
-    feedback: 'correct' | 'incorrect' | 'partial',
+    feedback: "correct" | "incorrect" | "partial",
     includeNotes: boolean = false
   ) => {
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/ai/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           entityType,
           entityId,
@@ -52,23 +52,23 @@ export function AIFeedback({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to submit feedback')
+        throw new Error("Failed to submit feedback")
       }
 
       setFeedbackGiven(true)
       setShowNotes(false)
-      setNotes('')
+      setNotes("")
       onFeedbackSubmitted?.()
     } catch (error) {
-      console.error('Failed to submit feedback:', error)
+      console.error("Failed to submit feedback:", error)
     } finally {
       setIsSubmitting(false)
       setSelectedFeedback(null)
     }
   }
 
-  const handleFeedbackClick = (feedback: 'correct' | 'incorrect' | 'partial') => {
-    if (feedback === 'incorrect' || feedback === 'partial') {
+  const handleFeedbackClick = (feedback: "correct" | "incorrect" | "partial") => {
+    if (feedback === "incorrect" || feedback === "partial") {
       setSelectedFeedback(feedback)
       setShowNotes(true)
     } else {
@@ -84,13 +84,13 @@ export function AIFeedback({
 
   const handleNotesCancel = () => {
     setShowNotes(false)
-    setNotes('')
+    setNotes("")
     setSelectedFeedback(null)
   }
 
   if (feedbackGiven) {
     return (
-      <div className={clsx('text-sm text-green-600', className)}>
+      <div className={clsx("text-sm text-green-600", className)}>
         Hvala na povratnoj informaciji!
       </div>
     )
@@ -98,15 +98,10 @@ export function AIFeedback({
 
   if (showNotes) {
     return (
-      <div className={clsx('space-y-2 p-3 border rounded-lg bg-gray-50', className)}>
+      <div className={clsx("space-y-2 p-3 border rounded-lg bg-gray-50", className)}>
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Što je bilo pogrešno?</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleNotesCancel}
-            disabled={isSubmitting}
-          >
+          <Button variant="ghost" size="sm" onClick={handleNotesCancel} disabled={isSubmitting}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -119,12 +114,8 @@ export function AIFeedback({
           disabled={isSubmitting}
         />
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={handleNotesSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Šaljem...' : 'Pošalji'}
+          <Button size="sm" onClick={handleNotesSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Šaljem..." : "Pošalji"}
           </Button>
           <Button
             variant="outline"
@@ -145,13 +136,11 @@ export function AIFeedback({
 
   if (compact) {
     return (
-      <div className={clsx('flex items-center gap-2', className)}>
-        {confidence !== undefined && (
-          <AIConfidenceBadge confidence={confidence} />
-        )}
+      <div className={clsx("flex items-center gap-2", className)}>
+        {confidence !== undefined && <AIConfidenceBadge confidence={confidence} />}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => handleFeedbackClick('correct')}
+            onClick={() => handleFeedbackClick("correct")}
             disabled={isSubmitting}
             className="p-1 text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50"
             title="Točno"
@@ -159,7 +148,7 @@ export function AIFeedback({
             <ThumbsUp className="h-4 w-4" />
           </button>
           <button
-            onClick={() => handleFeedbackClick('incorrect')}
+            onClick={() => handleFeedbackClick("incorrect")}
             disabled={isSubmitting}
             className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
             title="Netočno"
@@ -167,7 +156,7 @@ export function AIFeedback({
             <ThumbsDown className="h-4 w-4" />
           </button>
           <button
-            onClick={() => handleFeedbackClick('partial')}
+            onClick={() => handleFeedbackClick("partial")}
             disabled={isSubmitting}
             className="p-1 text-gray-400 hover:text-orange-600 transition-colors disabled:opacity-50"
             title="Prijavi problem"
@@ -180,23 +169,19 @@ export function AIFeedback({
   }
 
   return (
-    <div className={clsx('space-y-2', className)}>
+    <div className={clsx("space-y-2", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">
-            Je li AI dobro prepoznao?
-          </span>
+          <span className="text-sm text-gray-600">Je li AI dobro prepoznao?</span>
         </div>
-        {confidence !== undefined && (
-          <AIConfidenceBadge confidence={confidence} />
-        )}
+        {confidence !== undefined && <AIConfidenceBadge confidence={confidence} />}
       </div>
       <div className="flex gap-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleFeedbackClick('correct')}
+          onClick={() => handleFeedbackClick("correct")}
           disabled={isSubmitting}
           className="flex-1"
         >
@@ -206,7 +191,7 @@ export function AIFeedback({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleFeedbackClick('partial')}
+          onClick={() => handleFeedbackClick("partial")}
           disabled={isSubmitting}
           className="flex-1"
         >
@@ -216,7 +201,7 @@ export function AIFeedback({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleFeedbackClick('incorrect')}
+          onClick={() => handleFeedbackClick("incorrect")}
           disabled={isSubmitting}
           className="flex-1"
         >
@@ -233,24 +218,16 @@ export interface AIConfidenceBadgeProps {
   className?: string
 }
 
-export function AIConfidenceBadge({
-  confidence,
-  className,
-}: AIConfidenceBadgeProps) {
+export function AIConfidenceBadge({ confidence, className }: AIConfidenceBadgeProps) {
   const percentage = Math.round(confidence * 100)
-  const variant =
-    percentage >= 80
-      ? 'default'
-      : percentage >= 60
-      ? 'secondary'
-      : 'destructive'
+  const variant = percentage >= 80 ? "default" : percentage >= 60 ? "secondary" : "destructive"
 
   const label =
     percentage >= 80
-      ? 'Visoka pouzdanost'
+      ? "Visoka pouzdanost"
       : percentage >= 60
-      ? 'Srednja pouzdanost'
-      : 'Niska pouzdanost'
+        ? "Srednja pouzdanost"
+        : "Niska pouzdanost"
 
   return (
     <Badge variant={variant} className={className}>

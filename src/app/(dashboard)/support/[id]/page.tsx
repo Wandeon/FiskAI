@@ -7,7 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { SupportReplyForm } from "@/components/support/support-reply-form"
 import { AssignSupportTicketButton } from "@/components/support/support-assign-button"
-import { CloseSupportTicketButton, ReopenSupportTicketButton } from "@/components/support/support-status-buttons"
+import {
+  CloseSupportTicketButton,
+  ReopenSupportTicketButton,
+} from "@/components/support/support-status-buttons"
 
 type PageProps = {
   params: { id: string }
@@ -61,7 +64,9 @@ export default async function SupportDetailPage({ params }: PageProps) {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Badge variant="secondary">{statusLabels[ticket.status]}</Badge>
           <Badge variant="outline">{priorityLabels[ticket.priority]}</Badge>
-          <span className="text-muted-foreground">Kreirao: {ticket.createdBy?.name || ticket.createdBy?.email || "—"}</span>
+          <span className="text-muted-foreground">
+            Kreirao: {ticket.createdBy?.name || ticket.createdBy?.email || "—"}
+          </span>
           <span className="text-muted-foreground">
             Dodijeljeno: {ticket.assignedTo?.name || ticket.assignedTo?.email || "Nije dodijeljeno"}
           </span>
@@ -91,7 +96,10 @@ export default async function SupportDetailPage({ params }: PageProps) {
           ) : (
             <div className="space-y-3">
               {ticket.messages.map((message) => (
-                <div key={message.id} className="rounded-xl border border-border bg-muted/40 px-3 py-2">
+                <div
+                  key={message.id}
+                  className="rounded-xl border border-border bg-muted/40 px-3 py-2"
+                >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{message.author?.name || message.author?.email || "Nepoznato"}</span>
                     <span>{message.createdAt.toLocaleString("hr-HR")}</span>

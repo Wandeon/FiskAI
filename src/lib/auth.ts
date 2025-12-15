@@ -28,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Rate limiting for login attempts
         const identifier = `login_${credentials.email.toLowerCase()}`
-        const rateLimitResult = checkRateLimit(identifier, 'LOGIN')
+        const rateLimitResult = checkRateLimit(identifier, "LOGIN")
 
         if (!rateLimitResult.allowed) {
           console.log(`Rate limited login attempt for ${credentials.email}`)
@@ -61,10 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        const passwordMatch = await bcrypt.compare(
-          password,
-          user.passwordHash
-        )
+        const passwordMatch = await bcrypt.compare(password, user.passwordHash)
 
         if (!passwordMatch) {
           // The failed attempt is already tracked by checkRateLimit

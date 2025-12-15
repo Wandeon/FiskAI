@@ -55,9 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Determine filename range label
     const rangeLabel =
-      parsed.data.from && parsed.data.to
-        ? `${parsed.data.from}-${parsed.data.to}`
-        : "all"
+      parsed.data.from && parsed.data.to ? `${parsed.data.from}-${parsed.data.to}` : "all"
 
     // Create ZIP archive
     const archive = archiver("zip", {
@@ -109,10 +107,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Season pack export error:", error)
-    return NextResponse.json(
-      { error: "Neuspješan izvoz tax season paketa" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Neuspješan izvoz tax season paketa" }, { status: 500 })
   }
 }
 
@@ -184,8 +179,12 @@ function createReadme(
   lines.push("-".repeat(70))
   lines.push("")
 
-  lines.push(`Prihodi (bruto):    ${exportData.totals.totalIncomeGross.toFixed(2).padStart(12)} EUR`)
-  lines.push(`Rashodi (bruto):    ${exportData.totals.totalExpensesGross.toFixed(2).padStart(12)} EUR`)
+  lines.push(
+    `Prihodi (bruto):    ${exportData.totals.totalIncomeGross.toFixed(2).padStart(12)} EUR`
+  )
+  lines.push(
+    `Rashodi (bruto):    ${exportData.totals.totalExpensesGross.toFixed(2).padStart(12)} EUR`
+  )
   lines.push(`                    ${"-".repeat(18)}`)
   lines.push(`Neto rezultat:      ${exportData.totals.netProfit.toFixed(2).padStart(12)} EUR`)
   lines.push("")

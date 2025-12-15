@@ -1,7 +1,7 @@
-import { redirect, notFound } from 'next/navigation'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
+import { redirect, notFound } from "next/navigation"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -26,7 +26,7 @@ export default async function DocumentDetailRouter({ params }: PageProps) {
   })
 
   if (invoice && invoice.companyId === company.id) {
-    if (invoice.type === 'E_INVOICE') {
+    if (invoice.type === "E_INVOICE") {
       redirect(`/e-invoices/${id}`)
     } else {
       redirect(`/invoices/${id}`)

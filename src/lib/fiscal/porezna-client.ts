@@ -1,9 +1,9 @@
 // src/lib/fiscal/porezna-client.ts
-import { parseStringPromise } from 'xml2js'
+import { parseStringPromise } from "xml2js"
 
 const ENDPOINTS = {
-  TEST: 'https://cistest.apis-it.hr:8449/FiskalizacijaServiceTest',
-  PROD: 'https://cis.porezna-uprava.hr:8449/FiskalizacijaService'
+  TEST: "https://cistest.apis-it.hr:8449/FiskalizacijaServiceTest",
+  PROD: "https://cis.porezna-uprava.hr:8449/FiskalizacijaService",
 }
 
 export interface PoreznaResponse {
@@ -24,7 +24,7 @@ export interface PoreznaError {
 
 export async function submitToPorezna(
   signedXml: string,
-  environment: 'TEST' | 'PROD'
+  environment: "TEST" | "PROD"
 ): Promise<PoreznaResponse> {
   const endpoint = ENDPOINTS[environment]
   const soapEnvelope = buildSoapEnvelope(signedXml)
@@ -34,13 +34,13 @@ export async function submitToPorezna(
 
   try {
     const response = await fetch(endpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/soap+xml; charset=utf-8',
-        'SOAPAction': 'http://www.apis-it.hr/fin/2012/types/f73/FiskalizacijaService/Racun'
+        "Content-Type": "application/soap+xml; charset=utf-8",
+        SOAPAction: "http://www.apis-it.hr/fin/2012/types/f73/FiskalizacijaService/Racun",
       },
       body: soapEnvelope,
-      signal: controller.signal
+      signal: controller.signal,
     })
 
     clearTimeout(timeout)
@@ -50,7 +50,7 @@ export async function submitToPorezna(
       const error: PoreznaError = {
         httpStatus: response.status,
         message: `HTTP ${response.status}`,
-        body: responseText
+        body: responseText,
       }
       throw error
     }
@@ -59,9 +59,9 @@ export async function submitToPorezna(
   } catch (error) {
     clearTimeout(timeout)
 
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (error instanceof Error && error.name === "AbortError") {
       const timeoutError: PoreznaError = {
-        message: 'Request timeout after 30s'
+        message: "Request timeout after 30s",
       }
       throw timeoutError
     }
@@ -84,7 +84,7 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
     const parsed = await parseStringPromise(xml, {
       explicitArray: false,
       ignoreAttrs: false,
-      tagNameProcessors: [stripNamespace]
+      tagNameProcessors: [stripNamespace],
     })
 
     const envelope = parsed.Envelope
@@ -95,9 +95,9 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
       const fault = body.Fault
       return {
         success: false,
-        errorCode: fault.Code?.Value || 'SOAP_FAULT',
-        errorMessage: fault.Reason?.Text || 'Unknown SOAP error',
-        rawResponse: xml
+        errorCode: fault.Code?.Value || "SOAP_FAULT",
+        errorMessage: fault.Reason?.Text || "Unknown SOAP error",
+        rawResponse: xml,
       }
     }
 
@@ -106,9 +106,9 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
     if (!odgovor) {
       return {
         success: false,
-        errorCode: 'INVALID_RESPONSE',
-        errorMessage: 'No RacunOdgovor in response',
-        rawResponse: xml
+        errorCode: "INVALID_RESPONSE",
+        errorMessage: "No RacunOdgovor in response",
+        rawResponse: xml,
       }
     }
 
@@ -121,7 +121,7 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
         success: false,
         errorCode: firstError.SifraGreske,
         errorMessage: firstError.PorukaGreske,
-        rawResponse: xml
+        rawResponse: xml,
       }
     }
 
@@ -132,9 +132,9 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
     if (!jir) {
       return {
         success: false,
-        errorCode: 'NO_JIR',
-        errorMessage: 'Response missing JIR',
-        rawResponse: xml
+        errorCode: "NO_JIR",
+        errorMessage: "Response missing JIR",
+        rawResponse: xml,
       }
     }
 
@@ -142,19 +142,19 @@ async function parsePoreznaResponse(xml: string): Promise<PoreznaResponse> {
       success: true,
       jir,
       zki,
-      rawResponse: xml
+      rawResponse: xml,
     }
   } catch (parseError) {
     return {
       success: false,
-      errorCode: 'PARSE_ERROR',
+      errorCode: "PARSE_ERROR",
       errorMessage: `Failed to parse response: ${parseError}`,
-      rawResponse: xml
+      rawResponse: xml,
     }
   }
 }
 
 function stripNamespace(name: string): string {
-  const idx = name.indexOf(':')
+  const idx = name.indexOf(":")
   return idx >= 0 ? name.substring(idx + 1) : name
 }

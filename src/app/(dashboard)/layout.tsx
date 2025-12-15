@@ -7,11 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { BottomNav } from "@/components/layout/bottom-nav"
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: ReactNode
-}) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await auth()
 
   if (!session?.user) {
@@ -49,11 +45,8 @@ export default async function DashboardLayout({
 
         {/* Main Content - add bottom padding for mobile FAB */}
         <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6">
-          <div className="mx-auto w-full max-w-6xl">
-            {children}
-          </div>
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
-
       </div>
 
       {/* Mobile bottom navigation */}

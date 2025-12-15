@@ -1,16 +1,24 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { FiscalCertificate } from '@prisma/client'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Shield, ShieldCheck, ShieldAlert, Upload, Trash2, FileKey, AlertTriangle } from 'lucide-react'
-import { deleteCertificateAction } from '@/app/actions/fiscal-certificate'
-import { CertificateUploadDialog } from './certificate-upload-dialog'
+import { useState } from "react"
+import { FiscalCertificate } from "@prisma/client"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Upload,
+  Trash2,
+  FileKey,
+  AlertTriangle,
+} from "lucide-react"
+import { deleteCertificateAction } from "@/app/actions/fiscal-certificate"
+import { CertificateUploadDialog } from "./certificate-upload-dialog"
 
 interface CertificateCardProps {
-  environment: 'TEST' | 'PROD'
+  environment: "TEST" | "PROD"
   certificate: FiscalCertificate | null
   companyOib: string
 }
@@ -27,11 +35,11 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
       if (result.success) {
         setShowDeleteDialog(false)
       } else {
-        alert(result.error || 'Failed to delete certificate')
+        alert(result.error || "Failed to delete certificate")
       }
     } catch (error) {
-      console.error('Delete error:', error)
-      alert('Failed to delete certificate')
+      console.error("Delete error:", error)
+      alert("Failed to delete certificate")
     } finally {
       setIsDeleting(false)
     }
@@ -49,29 +57,33 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
               {getStatusIcon(status)}
               <div>
                 <CardTitle className="text-lg">
-                  {environment === 'TEST' ? 'Test Certificate' : 'Production Certificate'}
+                  {environment === "TEST" ? "Test Certificate" : "Production Certificate"}
                 </CardTitle>
                 <CardDescription>
-                  {environment === 'TEST'
-                    ? 'For testing fiscalisation on FINA test environment'
-                    : 'For live fiscalisation with Croatian Tax Authority'}
+                  {environment === "TEST"
+                    ? "For testing fiscalisation on FINA test environment"
+                    : "For live fiscalisation with Croatian Tax Authority"}
                 </CardDescription>
               </div>
             </div>
             {status && (
               <Badge
                 variant={
-                  status === 'active' ? 'default' :
-                  status === 'expired' || status === 'revoked' ? 'destructive' :
-                  'secondary'
+                  status === "active"
+                    ? "default"
+                    : status === "expired" || status === "revoked"
+                      ? "destructive"
+                      : "secondary"
                 }
                 className={
-                  status === 'active' ? 'bg-green-600 hover:bg-green-700' :
-                  status === 'expiring-soon' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                  undefined
+                  status === "active"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : status === "expiring-soon"
+                      ? "bg-yellow-600 hover:bg-yellow-700"
+                      : undefined
                 }
               >
-                {status.replace('-', ' ').toUpperCase()}
+                {status.replace("-", " ").toUpperCase()}
               </Badge>
             )}
           </div>
@@ -87,8 +99,8 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
                   <div className="flex-1">
                     <p className="font-medium text-yellow-900">OIB Mismatch</p>
                     <p className="text-yellow-700 mt-1">
-                      Certificate OIB ({certificate.oibExtracted}) does not match company OIB ({companyOib}).
-                      Fiscalisation will fail unless OIBs match.
+                      Certificate OIB ({certificate.oibExtracted}) does not match company OIB (
+                      {companyOib}). Fiscalisation will fail unless OIBs match.
                     </p>
                   </div>
                 </div>
@@ -108,12 +120,16 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
 
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="text-gray-500">Serial</div>
-                  <div className="col-span-2 font-medium font-mono text-xs">{certificate.certSerial}</div>
+                  <div className="col-span-2 font-medium font-mono text-xs">
+                    {certificate.certSerial}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="text-gray-500">Valid From</div>
-                  <div className="col-span-2 font-medium">{formatDate(certificate.certNotBefore)}</div>
+                  <div className="col-span-2 font-medium">
+                    {formatDate(certificate.certNotBefore)}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-sm">
@@ -121,12 +137,12 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
                   <div className="col-span-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{formatDate(certificate.certNotAfter)}</span>
-                      {status === 'expiring-soon' && (
+                      {status === "expiring-soon" && (
                         <span className="text-xs text-yellow-600">
                           ({daysUntil(certificate.certNotAfter)} days remaining)
                         </span>
                       )}
-                      {status === 'expired' && (
+                      {status === "expired" && (
                         <span className="text-xs text-red-600">
                           (expired {Math.abs(daysUntil(certificate.certNotAfter))} days ago)
                         </span>
@@ -138,7 +154,9 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
                 {certificate.lastUsedAt && (
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div className="text-gray-500">Last Used</div>
-                    <div className="col-span-2 font-medium">{formatDateTime(certificate.lastUsedAt)}</div>
+                    <div className="col-span-2 font-medium">
+                      {formatDateTime(certificate.lastUsedAt)}
+                    </div>
                   </div>
                 )}
               </div>
@@ -173,7 +191,8 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
                 </div>
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                No certificate uploaded for {environment === 'TEST' ? 'test' : 'production'} environment
+                No certificate uploaded for {environment === "TEST" ? "test" : "production"}{" "}
+                environment
               </p>
               <Button
                 variant="default"
@@ -202,8 +221,8 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold mb-2">Delete Certificate?</h3>
             <p className="text-sm text-gray-600 mb-4">
-              This will permanently delete the {environment === 'TEST' ? 'test' : 'production'} certificate.
-              You will need to upload a new certificate to fiscalize invoices.
+              This will permanently delete the {environment === "TEST" ? "test" : "production"}{" "}
+              certificate. You will need to upload a new certificate to fiscalize invoices.
             </p>
             <div className="flex gap-2 justify-end">
               <Button
@@ -213,12 +232,8 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
               >
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
               </Button>
             </div>
           </div>
@@ -230,33 +245,33 @@ export function CertificateCard({ environment, certificate, companyOib }: Certif
 
 // Helper Functions
 
-type CertificateStatus = 'active' | 'expired' | 'expiring-soon' | 'pending' | 'revoked' | null
+type CertificateStatus = "active" | "expired" | "expiring-soon" | "pending" | "revoked" | null
 
 function getCertificateStatus(certificate: FiscalCertificate | null): CertificateStatus {
   if (!certificate) return null
 
-  if (certificate.status === 'REVOKED') return 'revoked'
-  if (certificate.status === 'PENDING') return 'pending'
+  if (certificate.status === "REVOKED") return "revoked"
+  if (certificate.status === "PENDING") return "pending"
 
   const now = new Date()
   const expiryDate = new Date(certificate.certNotAfter)
   const daysRemaining = daysUntil(expiryDate)
 
-  if (expiryDate < now) return 'expired'
-  if (daysRemaining <= 30) return 'expiring-soon'
-  if (certificate.status === 'ACTIVE') return 'active'
+  if (expiryDate < now) return "expired"
+  if (daysRemaining <= 30) return "expiring-soon"
+  if (certificate.status === "ACTIVE") return "active"
 
   return null
 }
 
 function getStatusIcon(status: CertificateStatus) {
   switch (status) {
-    case 'active':
+    case "active":
       return <ShieldCheck className="h-5 w-5 text-green-600" />
-    case 'expiring-soon':
+    case "expiring-soon":
       return <ShieldAlert className="h-5 w-5 text-yellow-600" />
-    case 'expired':
-    case 'revoked':
+    case "expired":
+    case "revoked":
       return <ShieldAlert className="h-5 w-5 text-red-600" />
     default:
       return <Shield className="h-5 w-5 text-gray-400" />
@@ -264,27 +279,27 @@ function getStatusIcon(status: CertificateStatus) {
 }
 
 function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   })
 }
 
 function formatDateTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   })
 }
 
 function daysUntil(date: Date | string): number {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === "string" ? new Date(date) : date
   const now = new Date()
   const diff = d.getTime() - now.getTime()
   return Math.ceil(diff / (1000 * 60 * 60 * 24))

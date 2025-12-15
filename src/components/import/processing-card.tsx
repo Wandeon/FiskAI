@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { FileText, CheckCircle2, AlertCircle, Loader2, X, Eye, RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { DocumentType, JobStatus } from '@prisma/client'
+import { FileText, CheckCircle2, AlertCircle, Loader2, X, Eye, RotateCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DocumentType, JobStatus } from "@prisma/client"
 
 export interface ImportJobState {
   id: string
@@ -26,37 +26,46 @@ interface ProcessingCardProps {
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; icon: typeof Loader2 }> = {
-  PENDING: { label: 'U redu čekanja...', color: 'text-gray-500', icon: Loader2 },
-  PROCESSING: { label: 'Obrada...', color: 'text-blue-600', icon: Loader2 },
-  READY_FOR_REVIEW: { label: 'Spreman za pregled', color: 'text-amber-600', icon: Eye },
-  CONFIRMED: { label: 'Potvrđeno', color: 'text-green-600', icon: CheckCircle2 },
-  REJECTED: { label: 'Odbijeno', color: 'text-gray-400', icon: X },
-  VERIFIED: { label: 'Verificirano', color: 'text-green-600', icon: CheckCircle2 },
-  NEEDS_REVIEW: { label: 'Potreban pregled', color: 'text-amber-600', icon: AlertCircle },
-  FAILED: { label: 'Greška', color: 'text-red-600', icon: AlertCircle },
+  PENDING: { label: "U redu čekanja...", color: "text-gray-500", icon: Loader2 },
+  PROCESSING: { label: "Obrada...", color: "text-blue-600", icon: Loader2 },
+  READY_FOR_REVIEW: { label: "Spreman za pregled", color: "text-amber-600", icon: Eye },
+  CONFIRMED: { label: "Potvrđeno", color: "text-green-600", icon: CheckCircle2 },
+  REJECTED: { label: "Odbijeno", color: "text-gray-400", icon: X },
+  VERIFIED: { label: "Verificirano", color: "text-green-600", icon: CheckCircle2 },
+  NEEDS_REVIEW: { label: "Potreban pregled", color: "text-amber-600", icon: AlertCircle },
+  FAILED: { label: "Greška", color: "text-red-600", icon: AlertCircle },
 }
 
 const DOC_TYPE_LABELS: Record<DocumentType, string> = {
-  BANK_STATEMENT: 'Bankovni izvod',
-  INVOICE: 'Račun',
-  EXPENSE: 'Trošak',
+  BANK_STATEMENT: "Bankovni izvod",
+  INVOICE: "Račun",
+  EXPENSE: "Trošak",
 }
 
-export function ProcessingCard({ job, onView, onRetry, onRemove, onTypeChange, isCurrentForReview }: ProcessingCardProps) {
+export function ProcessingCard({
+  job,
+  onView,
+  onRetry,
+  onRemove,
+  onTypeChange,
+  isCurrentForReview,
+}: ProcessingCardProps) {
   const config = STATUS_CONFIG[job.status]
   const StatusIcon = config.icon
-  const isProcessing = job.status === 'PENDING' || job.status === 'PROCESSING'
-  const canView = job.status === 'READY_FOR_REVIEW'
-  const canRetry = job.status === 'FAILED'
-  const isDone = job.status === 'CONFIRMED' || job.status === 'REJECTED'
-  const canChangeType = job.status === 'READY_FOR_REVIEW' || job.status === 'FAILED'
+  const isProcessing = job.status === "PENDING" || job.status === "PROCESSING"
+  const canView = job.status === "READY_FOR_REVIEW"
+  const canRetry = job.status === "FAILED"
+  const isDone = job.status === "CONFIRMED" || job.status === "REJECTED"
+  const canChangeType = job.status === "READY_FOR_REVIEW" || job.status === "FAILED"
 
   return (
-    <div className={`
+    <div
+      className={`
       rounded-lg border p-4 transition-all
-      ${isCurrentForReview ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 bg-white'}
-      ${isDone ? 'opacity-60' : ''}
-    `}>
+      ${isCurrentForReview ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200" : "border-gray-200 bg-white"}
+      ${isDone ? "opacity-60" : ""}
+    `}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="flex-shrink-0 mt-0.5">
@@ -67,13 +76,11 @@ export function ProcessingCard({ job, onView, onRetry, onRemove, onTypeChange, i
               {job.fileName}
             </p>
             {job.documentType && !canChangeType && (
-              <p className="text-xs text-gray-500 mt-0.5">
-                {DOC_TYPE_LABELS[job.documentType]}
-              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{DOC_TYPE_LABELS[job.documentType]}</p>
             )}
             {canChangeType && onTypeChange && (
               <select
-                value={job.documentType || 'INVOICE'}
+                value={job.documentType || "INVOICE"}
                 onChange={(e) => onTypeChange(job.id, e.target.value as DocumentType)}
                 className="mt-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500"
                 onClick={(e) => e.stopPropagation()}
@@ -112,10 +119,8 @@ export function ProcessingCard({ job, onView, onRetry, onRemove, onTypeChange, i
       {/* Status */}
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <StatusIcon className={`h-4 w-4 ${config.color} ${isProcessing ? 'animate-spin' : ''}`} />
-          <span className={`text-xs font-medium ${config.color}`}>
-            {config.label}
-          </span>
+          <StatusIcon className={`h-4 w-4 ${config.color} ${isProcessing ? "animate-spin" : ""}`} />
+          <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
         </div>
 
         {job.queuePosition && job.totalInQueue && job.totalInQueue > 1 && canView && (
@@ -126,38 +131,23 @@ export function ProcessingCard({ job, onView, onRetry, onRemove, onTypeChange, i
       </div>
 
       {/* Error message */}
-      {job.error && (
-        <p className="mt-2 text-xs text-red-600 line-clamp-2">
-          {job.error}
-        </p>
-      )}
+      {job.error && <p className="mt-2 text-xs text-red-600 line-clamp-2">{job.error}</p>}
 
       {/* Transaction count for confirmed */}
-      {job.status === 'CONFIRMED' && job.transactionCount !== undefined && (
-        <p className="mt-2 text-xs text-green-600">
-          {job.transactionCount} transakcija uvezeno
-        </p>
+      {job.status === "CONFIRMED" && job.transactionCount !== undefined && (
+        <p className="mt-2 text-xs text-green-600">{job.transactionCount} transakcija uvezeno</p>
       )}
 
       {/* Actions */}
       <div className="mt-3 flex gap-2">
         {canView && (
-          <Button
-            size="sm"
-            onClick={() => onView(job.id)}
-            className="flex-1"
-          >
+          <Button size="sm" onClick={() => onView(job.id)} className="flex-1">
             <Eye className="h-4 w-4 mr-1" />
             Pregledaj
           </Button>
         )}
         {canRetry && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onRetry(job.id)}
-            className="flex-1"
-          >
+          <Button size="sm" variant="outline" onClick={() => onRetry(job.id)} className="flex-1">
             <RotateCcw className="h-4 w-4 mr-1" />
             Pokušaj ponovo
           </Button>

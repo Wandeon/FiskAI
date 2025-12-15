@@ -96,9 +96,9 @@ export async function processNextImportJob() {
           companyId: job.companyId,
           bankAccountId: job.bankAccountId,
           createdAt: {
-            gte: new Date(Date.now() - 60 * 1000) // Last minute (this import run)
-          }
-        }
+            gte: new Date(Date.now() - 60 * 1000), // Last minute (this import run)
+          },
+        },
       })
       await db.bankImport.create({
         data: {
@@ -109,7 +109,7 @@ export async function processNextImportJob() {
           transactionCount: transactions,
           importedAt: new Date(),
           importedBy: job.userId,
-        }
+        },
       })
     }
     return { status: "ok", jobId: job.id }
@@ -122,14 +122,22 @@ export async function processNextImportJob() {
         failureReason: error instanceof Error ? error.message : "Unknown error",
       },
     })
-    return { status: "error", jobId: job.id, error: error instanceof Error ? error.message : "Unknown error" }
+    return {
+      status: "error",
+      jobId: job.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
   }
 }
 
 async function handleXml(jobId: string) {
   const job = await db.importJob.findUniqueOrThrow({ where: { id: jobId } })
   const xmlBuffer = await fs.readFile(job.storagePath, "utf-8")
-  const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true, parseAttributeValue: true })
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    parseTagValue: true,
+    parseAttributeValue: true,
+  })
   const parsed = parser.parse(xmlBuffer)
 
   const stmt =
@@ -213,9 +221,7 @@ async function handleXml(jobId: string) {
           details?.RltdPties?.UltmtDbtr?.Nm ||
           null
         const iban =
-          details?.RltdPties?.CdtrAcct?.Id?.IBAN ||
-          details?.RltdPties?.DbtrAcct?.Id?.IBAN ||
-          null
+          details?.RltdPties?.CdtrAcct?.Id?.IBAN || details?.RltdPties?.DbtrAcct?.Id?.IBAN || null
         const description = entry?.AddtlNtryInf || details?.RmtInf?.Ustrd || ""
 
         return {
@@ -228,7 +234,7 @@ async function handleXml(jobId: string) {
           reference: ref,
           counterpartyName: counterparty,
           counterpartyIban: iban,
-          matchStatus: 'UNMATCHED',
+          matchStatus: "UNMATCHED",
           confidenceScore: 0,
         }
       }),
@@ -351,13 +357,13 @@ async function handlePdf(jobId: string) {
           companyId: job.companyId,
           bankAccountId: job.bankAccountId,
           date: new Date(t.date),
-          description: t.description || '',
+          description: t.description || "",
           amount: new Prisma.Decimal(t.amount),
           balance: new Prisma.Decimal(0), // Will be calculated later
           reference: t.reference || null,
           counterpartyName: t.payee || null,
           counterpartyIban: t.counterpartyIban || null,
-          matchStatus: 'UNMATCHED',
+          matchStatus: "UNMATCHED",
           confidenceScore: 0,
         })),
       })
@@ -392,7 +398,9 @@ async function callWorkhorseModel(pageText: string): Promise<Omit<ParsedPage, "p
         payee: t.payee ?? null,
         description: t.description ?? null,
         amount: Number(t.amount),
-        direction: (t.direction === "INCOMING" ? "INCOMING" : "OUTGOING") as ("INCOMING" | "OUTGOING"),
+        direction: (t.direction === "INCOMING" ? "INCOMING" : "OUTGOING") as
+          | "INCOMING"
+          | "OUTGOING",
         reference: t.reference ?? null,
         counterpartyIban: t.counterpartyIban ?? null,
       }))
@@ -431,12 +439,18 @@ async function extractPdfTextPerPage(buffer: Buffer): Promise<string[]> {
     // Fallback: try to extract text with a simpler approach
     try {
       // Simple fallback for testing - extract any text from buffer
-      const bufferStr = buffer.toString('utf8', 0, Math.min(buffer.length, 10000))
-      const textLines = bufferStr.split('\n').filter(line =>
-        line.trim() && !line.startsWith('%') && !line.includes('obj') && !line.includes('endobj')
-      )
+      const bufferStr = buffer.toString("utf8", 0, Math.min(buffer.length, 10000))
+      const textLines = bufferStr
+        .split("\n")
+        .filter(
+          (line) =>
+            line.trim() &&
+            !line.startsWith("%") &&
+            !line.includes("obj") &&
+            !line.includes("endobj")
+        )
       if (textLines.length > 0) {
-        return [textLines.join(' ')]
+        return [textLines.join(" ")]
       }
     } catch (fallbackError) {
       console.error("[extractPdfTextPerPage] fallback also failed:", fallbackError)
@@ -482,7 +496,10 @@ async function tryRepairPageWithVision({
               content: [
                 { type: "text", text: "RAW_PAGE_TEXT:\n" + pageText },
                 { type: "text", text: "PREVIOUS_JSON:\n" + JSON.stringify(previousJson) },
-                { type: "image_url", image_url: { url: `data:application/pdf;base64,${pdfBase64}` } },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:application/pdf;base64,${pdfBase64}` },
+                },
               ],
             },
           ],
@@ -542,14 +559,20 @@ async function tryRepairPageWithVision({
         payee: t.payee ?? null,
         description: t.description ?? null,
         amount: Number(t.amount),
-        direction: (t.direction === "INCOMING" ? "INCOMING" : "OUTGOING") as ("INCOMING" | "OUTGOING"),
+        direction: (t.direction === "INCOMING" ? "INCOMING" : "OUTGOING") as
+          | "INCOMING"
+          | "OUTGOING",
         reference: t.reference ?? null,
         counterpartyIban: t.counterpartyIban ?? null,
       }))
     : []
   return {
-    pageStartBalance: parsed.pageStartBalance !== null ? Number(parsed.pageStartBalance) : previousJson.pageStartBalance,
-    pageEndBalance: parsed.pageEndBalance !== null ? Number(parsed.pageEndBalance) : previousJson.pageEndBalance,
+    pageStartBalance:
+      parsed.pageStartBalance !== null
+        ? Number(parsed.pageStartBalance)
+        : previousJson.pageStartBalance,
+    pageEndBalance:
+      parsed.pageEndBalance !== null ? Number(parsed.pageEndBalance) : previousJson.pageEndBalance,
     transactions,
     metadata: parsed.metadata,
   }

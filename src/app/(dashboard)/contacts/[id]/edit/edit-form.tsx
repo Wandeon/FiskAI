@@ -22,9 +22,33 @@ interface EditContactFormProps {
 
 // EU country codes for VAT lookup
 const EU_COUNTRIES = [
-  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR",
-  "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
-  "SE", "SI", "SK"
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "EL",
+  "ES",
+  "FI",
+  "FR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
 ]
 
 export function EditContactForm({ contact }: EditContactFormProps) {
@@ -111,7 +135,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
     if (data.city) setValue("city", data.city)
     if (data.postalCode) setValue("postalCode", data.postalCode)
     if (data.vatNumber) setValue("vatNumber", data.vatNumber)
-    
+
     toast.success("Pronađeno!", "Podaci o tvrtki su automatski popunjeni")
   }
 
@@ -121,11 +145,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white shadow-sm">
         <section className="grid gap-4 p-6 md:grid-cols-2">
@@ -146,9 +166,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
               <option value="SUPPLIER">Dobavljač</option>
               <option value="BOTH">Kupac i dobavljač</option>
             </select>
-            {errors.type && (
-              <p className="text-sm text-red-500">{errors.type.message}</p>
-            )}
+            {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -213,7 +231,9 @@ export function EditContactForm({ contact }: EditContactFormProps) {
               </label>
               <Input
                 {...register("vatNumber")}
-                placeholder={isEuCustomer ? `${countryValue}123456789` : "Porezni identifikacijski broj"}
+                placeholder={
+                  isEuCustomer ? `${countryValue}123456789` : "Porezni identifikacijski broj"
+                }
               />
               {isEuCustomer && (
                 <p className="text-xs text-gray-500">
@@ -269,14 +289,8 @@ export function EditContactForm({ contact }: EditContactFormProps) {
           {isLocalCustomer && (
             <div className="space-y-2">
               <label className="text-sm font-medium">PDV ID</label>
-              <Input
-                {...register("vatNumber")}
-                placeholder="HR12345678901"
-                disabled
-              />
-              <p className="text-xs text-gray-500">
-                Automatski popunjeno iz OIB-a (HR + OIB)
-              </p>
+              <Input {...register("vatNumber")} placeholder="HR12345678901" disabled />
+              <p className="text-xs text-gray-500">Automatski popunjeno iz OIB-a (HR + OIB)</p>
             </div>
           )}
         </section>
@@ -284,15 +298,14 @@ export function EditContactForm({ contact }: EditContactFormProps) {
         <section className="grid gap-4 p-6 md:grid-cols-2">
           <div className="md:col-span-2">
             <h2 className="text-lg font-semibold text-[var(--foreground)]">Adresa</h2>
-            <p className="text-sm text-[var(--muted)]">Poštanski broj i grad se povezuju automatski kad je moguće</p>
+            <p className="text-sm text-[var(--muted)]">
+              Poštanski broj i grad se povezuju automatski kad je moguće
+            </p>
           </div>
 
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium">Ulica i broj</label>
-            <Input
-              {...register("address")}
-              placeholder="Ulica i kućni broj"
-            />
+            <Input {...register("address")} placeholder="Ulica i kućni broj" />
           </div>
 
           <div className="space-y-2">
@@ -339,10 +352,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Telefon</label>
-            <Input
-              {...register("phone")}
-              placeholder="+385 1 234 5678"
-            />
+            <Input {...register("phone")} placeholder="+385 1 234 5678" />
           </div>
         </section>
       </div>

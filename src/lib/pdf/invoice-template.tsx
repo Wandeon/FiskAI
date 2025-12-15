@@ -1,12 +1,5 @@
-import React from 'react'
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Image,
-} from '@react-pdf/renderer'
+import React from "react"
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer"
 
 // Type definitions
 type InvoiceData = {
@@ -64,24 +57,24 @@ const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
-    fontFamily: 'Helvetica',
+    fontFamily: "Helvetica",
   },
   header: {
     marginBottom: 20,
   },
   companyName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   companyInfo: {
     fontSize: 9,
-    color: '#666',
+    color: "#666",
     lineHeight: 1.5,
   },
   invoiceTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
   },
@@ -94,31 +87,31 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 15,
   },
   column: {
-    width: '48%',
+    width: "48%",
   },
   partyBox: {
     padding: 10,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 4,
   },
   partyName: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   partyInfo: {
     fontSize: 9,
-    color: '#666',
+    color: "#666",
     lineHeight: 1.5,
   },
   table: {
@@ -126,49 +119,49 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#333',
-    color: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#333",
+    color: "#fff",
     padding: 8,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 9,
   },
   tableRow: {
-    flexDirection: 'row',
-    borderBottom: '1px solid #ddd',
+    flexDirection: "row",
+    borderBottom: "1px solid #ddd",
     padding: 8,
     fontSize: 9,
   },
   tableRowAlt: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
-  col1: { width: '5%' },
-  col2: { width: '35%' },
-  col3: { width: '10%', textAlign: 'right' },
-  col4: { width: '12%', textAlign: 'right' },
-  col5: { width: '10%', textAlign: 'right' },
-  col6: { width: '15%', textAlign: 'right' },
-  col7: { width: '13%', textAlign: 'right' },
+  col1: { width: "5%" },
+  col2: { width: "35%" },
+  col3: { width: "10%", textAlign: "right" },
+  col4: { width: "12%", textAlign: "right" },
+  col5: { width: "10%", textAlign: "right" },
+  col6: { width: "15%", textAlign: "right" },
+  col7: { width: "13%", textAlign: "right" },
   totalsSection: {
     marginTop: 20,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   totalsBox: {
-    width: '50%',
+    width: "50%",
   },
   totalsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 5,
-    borderBottom: '1px solid #ddd',
+    borderBottom: "1px solid #ddd",
   },
   totalsRowTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 8,
-    borderTop: '2px solid #333',
+    borderTop: "2px solid #333",
     marginTop: 5,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 12,
   },
   totalsLabel: {
@@ -176,23 +169,23 @@ const styles = StyleSheet.create({
   },
   totalsValue: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   footer: {
     marginTop: 30,
     paddingTop: 15,
-    borderTop: '1px solid #ddd',
+    borderTop: "1px solid #ddd",
   },
   barcodeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginTop: 10,
   },
   barcodeBox: {
     width: 120,
     height: 120,
-    border: '1px solid #ddd',
+    border: "1px solid #ddd",
     padding: 4,
   },
   barcodeLabel: {
@@ -204,38 +197,38 @@ const styles = StyleSheet.create({
   },
   footerTitle: {
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 3,
   },
   footerText: {
     fontSize: 8,
-    color: '#666',
+    color: "#666",
     lineHeight: 1.5,
   },
   fiscalInfo: {
     marginTop: 15,
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 4,
   },
   fiscalLabel: {
     fontSize: 8,
-    color: '#666',
+    color: "#666",
     marginBottom: 2,
   },
   fiscalValue: {
     fontSize: 8,
-    fontFamily: 'Courier',
+    fontFamily: "Courier",
   },
   notes: {
     marginTop: 15,
     padding: 10,
-    backgroundColor: '#fffbea',
+    backgroundColor: "#fffbea",
     borderRadius: 4,
   },
   notesTitle: {
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   notesText: {
@@ -246,8 +239,8 @@ const styles = StyleSheet.create({
 
 // Format currency
 const formatCurrency = (amount: number, currency: string) => {
-  return new Intl.NumberFormat('hr-HR', {
-    style: 'currency',
+  return new Intl.NumberFormat("hr-HR", {
+    style: "currency",
     currency,
     minimumFractionDigits: 2,
   }).format(amount)
@@ -255,7 +248,7 @@ const formatCurrency = (amount: number, currency: string) => {
 
 // Format date
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('hr-HR').format(new Date(date))
+  return new Intl.DateTimeFormat("hr-HR").format(new Date(date))
 }
 
 // Main component
@@ -272,12 +265,8 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
             {seller.address}, {seller.postalCode} {seller.city}
           </Text>
           <Text style={styles.companyInfo}>OIB: {seller.oib}</Text>
-          {seller.email && (
-            <Text style={styles.companyInfo}>Email: {seller.email}</Text>
-          )}
-          {seller.phone && (
-            <Text style={styles.companyInfo}>Tel: {seller.phone}</Text>
-          )}
+          {seller.email && <Text style={styles.companyInfo}>Email: {seller.email}</Text>}
+          {seller.phone && <Text style={styles.companyInfo}>Tel: {seller.phone}</Text>}
         </View>
 
         {/* Invoice title */}
@@ -306,9 +295,7 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
             <Text style={styles.sectionTitle}>Izdavatelj</Text>
             <View style={styles.partyBox}>
               <Text style={styles.partyName}>{seller.name}</Text>
-              <Text style={styles.partyInfo}>
-                {seller.address}
-              </Text>
+              <Text style={styles.partyInfo}>{seller.address}</Text>
               <Text style={styles.partyInfo}>
                 {seller.postalCode} {seller.city}
               </Text>
@@ -321,17 +308,13 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
             {buyer ? (
               <View style={styles.partyBox}>
                 <Text style={styles.partyName}>{buyer.name}</Text>
-                {buyer.address && (
-                  <Text style={styles.partyInfo}>{buyer.address}</Text>
-                )}
+                {buyer.address && <Text style={styles.partyInfo}>{buyer.address}</Text>}
                 {(buyer.postalCode || buyer.city) && (
                   <Text style={styles.partyInfo}>
                     {buyer.postalCode} {buyer.city}
                   </Text>
                 )}
-                {buyer.oib && (
-                  <Text style={styles.partyInfo}>OIB: {buyer.oib}</Text>
-                )}
+                {buyer.oib && <Text style={styles.partyInfo}>OIB: {buyer.oib}</Text>}
               </View>
             ) : (
               <View style={styles.partyBox}>
@@ -354,24 +337,14 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
           </View>
 
           {lines.map((line, index) => (
-            <View
-              key={index}
-              style={[
-                styles.tableRow,
-                index % 2 === 1 ? styles.tableRowAlt : {},
-              ]}
-            >
+            <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
               <Text style={styles.col1}>{line.lineNumber}</Text>
               <Text style={styles.col2}>{line.description}</Text>
               <Text style={styles.col3}>{line.quantity}</Text>
               <Text style={styles.col4}>{line.unit}</Text>
-              <Text style={styles.col5}>
-                {formatCurrency(line.unitPrice, invoice.currency)}
-              </Text>
+              <Text style={styles.col5}>{formatCurrency(line.unitPrice, invoice.currency)}</Text>
               <Text style={styles.col6}>{line.vatRate}%</Text>
-              <Text style={styles.col7}>
-                {formatCurrency(line.netAmount, invoice.currency)}
-              </Text>
+              <Text style={styles.col7}>{formatCurrency(line.netAmount, invoice.currency)}</Text>
             </View>
           ))}
         </View>
@@ -435,7 +408,7 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
                   <Text style={styles.footerTitle}>Podaci za plaćanje</Text>
                   <Text style={styles.footerText}>IBAN: {seller.iban}</Text>
                   <Text style={styles.footerText}>
-                    Model: HR01, Poziv na broj: {invoice.invoiceNumber.replace(/[^0-9]/g, '')}
+                    Model: HR01, Poziv na broj: {invoice.invoiceNumber.replace(/[^0-9]/g, "")}
                   </Text>
                 </View>
               )}

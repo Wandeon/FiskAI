@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { X, Check, RotateCcw, Wand2, Loader2 } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from "react"
+import { X, Check, RotateCcw, Wand2, Loader2 } from "lucide-react"
 
 interface DocumentScannerProps {
   onCapture: (file: File) => void
@@ -9,12 +9,12 @@ interface DocumentScannerProps {
   initialFile?: File
 }
 
-type FilterType = 'original' | 'enhanced' | 'bw'
+type FilterType = "original" | "enhanced" | "bw"
 
 export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentScannerProps) {
   const [image, setImage] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
-  const [filter, setFilter] = useState<FilterType>('enhanced')
+  const [filter, setFilter] = useState<FilterType>("enhanced")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const originalImageRef = useRef<HTMLImageElement | null>(null)
 
@@ -41,7 +41,7 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
     if (!image || !canvasRef.current || !originalImageRef.current) return
 
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext("2d")
     if (!ctx) return
 
     const img = originalImageRef.current
@@ -55,13 +55,13 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
     // Draw original image
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-    if (filter === 'original') return
+    if (filter === "original") return
 
     // Get image data for processing
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const data = imageData.data
 
-    if (filter === 'enhanced') {
+    if (filter === "enhanced") {
       // Enhanced: Increase contrast and brightness for document look
       const contrast = 1.4
       const brightness = 20
@@ -70,7 +70,7 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
         data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - 128) * contrast + 128 + brightness))
         data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - 128) * contrast + 128 + brightness))
       }
-    } else if (filter === 'bw') {
+    } else if (filter === "bw") {
       // Black & White with adaptive thresholding simulation
       // First convert to grayscale
       for (let i = 0; i < data.length; i += 4) {
@@ -98,16 +98,20 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
 
     setProcessing(true)
 
-    canvasRef.current.toBlob(async (blob) => {
-      if (!blob) {
-        setProcessing(false)
-        return
-      }
+    canvasRef.current.toBlob(
+      async (blob) => {
+        if (!blob) {
+          setProcessing(false)
+          return
+        }
 
-      // Create file from blob with applied filter
-      const file = new File([blob], `scan-${Date.now()}.jpg`, { type: 'image/jpeg' })
-      onCapture(file)
-    }, 'image/jpeg', 0.9)
+        // Create file from blob with applied filter
+        const file = new File([blob], `scan-${Date.now()}.jpg`, { type: "image/jpeg" })
+        onCapture(file)
+      },
+      "image/jpeg",
+      0.9
+    )
   }, [onCapture])
 
   // If we have initialFile but no image yet, show loading
@@ -135,10 +139,7 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
         )}
 
         {image && !processing && (
-          <canvas
-            ref={canvasRef}
-            className="max-w-full max-h-full object-contain rounded-lg"
-          />
+          <canvas ref={canvasRef} className="max-w-full max-h-full object-contain rounded-lg" />
         )}
       </div>
 
@@ -147,32 +148,26 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
         <div className="p-4 bg-black/80">
           <div className="flex justify-center gap-3">
             <button
-              onClick={() => setFilter('original')}
+              onClick={() => setFilter("original")}
               className={`px-4 py-2 rounded-full text-sm ${
-                filter === 'original'
-                  ? 'bg-white text-black'
-                  : 'bg-white/20 text-white'
+                filter === "original" ? "bg-white text-black" : "bg-white/20 text-white"
               }`}
             >
               Original
             </button>
             <button
-              onClick={() => setFilter('enhanced')}
+              onClick={() => setFilter("enhanced")}
               className={`px-4 py-2 rounded-full text-sm flex items-center gap-1 ${
-                filter === 'enhanced'
-                  ? 'bg-white text-black'
-                  : 'bg-white/20 text-white'
+                filter === "enhanced" ? "bg-white text-black" : "bg-white/20 text-white"
               }`}
             >
               <Wand2 className="h-4 w-4" />
               Poboljšano
             </button>
             <button
-              onClick={() => setFilter('bw')}
+              onClick={() => setFilter("bw")}
               className={`px-4 py-2 rounded-full text-sm ${
-                filter === 'bw'
-                  ? 'bg-white text-black'
-                  : 'bg-white/20 text-white'
+                filter === "bw" ? "bg-white text-black" : "bg-white/20 text-white"
               }`}
             >
               C/B
@@ -185,10 +180,7 @@ export function DocumentScanner({ onCapture, onClose, initialFile }: DocumentSca
       {image && !processing && (
         <div className="p-4 pb-8 bg-black/80 safe-area-bottom">
           <div className="flex justify-center gap-8">
-            <button
-              onClick={onClose}
-              className="flex flex-col items-center gap-1 text-white"
-            >
+            <button onClick={onClose} className="flex flex-col items-center gap-1 text-white">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <RotateCcw className="h-6 w-6" />
               </div>

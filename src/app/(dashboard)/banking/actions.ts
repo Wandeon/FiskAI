@@ -1,20 +1,21 @@
-'use server'
+"use server"
 
-import { db, runWithTenant } from '@/lib/db'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
-import { runAutoMatchTransactions } from '@/lib/banking/reconciliation-service'
+import { db, runWithTenant } from "@/lib/db"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import { runAutoMatchTransactions } from "@/lib/banking/reconciliation-service"
 
 const createBankAccountSchema = z.object({
-  name: z.string().min(1, 'Naziv je obavezan'),
-  iban: z.string()
-    .transform((val) => val.replace(/\s/g, '').toUpperCase())
+  name: z.string().min(1, "Naziv je obavezan"),
+  iban: z
+    .string()
+    .transform((val) => val.replace(/\s/g, "").toUpperCase())
     .refine((val) => /^HR\d{19}$/.test(val), {
-      message: 'IBAN mora biti u formatu HR + 19 znamenki',
+      message: "IBAN mora biti u formatu HR + 19 znamenki",
     }),
-  bankName: z.string().min(1, 'Naziv banke je obavezan'),
-  currency: z.string().default('EUR'),
+  bankName: z.string().min(1, "Naziv banke je obavezan"),
+  currency: z.string().default("EUR"),
   isDefault: z.boolean().optional().default(false),
 })
 
@@ -23,11 +24,11 @@ export async function createBankAccount(formData: FormData) {
   const company = await requireCompany(user.id!)
 
   const data = {
-    name: formData.get('name'),
-    iban: formData.get('iban'),
-    bankName: formData.get('bankName'),
-    currency: formData.get('currency') || 'EUR',
-    isDefault: formData.get('isDefault') === 'on',
+    name: formData.get("name"),
+    iban: formData.get("iban"),
+    bankName: formData.get("bankName"),
+    currency: formData.get("currency") || "EUR",
+    isDefault: formData.get("isDefault") === "on",
   }
 
   const validation = createBankAccountSchema.safeParse(data)
@@ -64,24 +65,24 @@ export async function createBankAccount(formData: FormData) {
         },
       })
 
-      revalidatePath('/banking')
-      revalidatePath('/banking/accounts')
+      revalidatePath("/banking")
+      revalidatePath("/banking/accounts")
 
       return {
         success: true,
         data: account,
       }
     } catch (error) {
-      console.error('[createBankAccount] Error:', error)
-      if ((error as { code?: string }).code === 'P2002') {
+      console.error("[createBankAccount] Error:", error)
+      if ((error as { code?: string }).code === "P2002") {
         return {
           success: false,
-          error: 'Račun s ovim IBAN-om već postoji',
+          error: "Račun s ovim IBAN-om već postoji",
         }
       }
       return {
         success: false,
-        error: 'Greška pri kreiranju računa',
+        error: "Greška pri kreiranju računa",
       }
     }
   })
@@ -101,7 +102,7 @@ export async function deleteBankAccount(accountId: string) {
       if (transactionCount > 0) {
         return {
           success: false,
-          error: 'Ne možete obrisati račun koji ima transakcije',
+          error: "Ne možete obrisati račun koji ima transakcije",
         }
       }
 
@@ -109,15 +110,15 @@ export async function deleteBankAccount(accountId: string) {
         where: { id: accountId },
       })
 
-      revalidatePath('/banking')
-      revalidatePath('/banking/accounts')
+      revalidatePath("/banking")
+      revalidatePath("/banking/accounts")
 
       return { success: true }
     } catch (error) {
-      console.error('[deleteBankAccount] Error:', error)
+      console.error("[deleteBankAccount] Error:", error)
       return {
         success: false,
-        error: 'Greška pri brisanju računa',
+        error: "Greška pri brisanju računa",
       }
     }
   })
@@ -141,15 +142,15 @@ export async function setDefaultBankAccount(accountId: string) {
         data: { isDefault: true },
       })
 
-      revalidatePath('/banking')
-      revalidatePath('/banking/accounts')
+      revalidatePath("/banking")
+      revalidatePath("/banking/accounts")
 
       return { success: true }
     } catch (error) {
-      console.error('[setDefaultBankAccount] Error:', error)
+      console.error("[setDefaultBankAccount] Error:", error)
       return {
         success: false,
-        error: 'Greška pri postavljanju zadanog računa',
+        error: "Greška pri postavljanju zadanog računa",
       }
     }
   })
@@ -171,14 +172,14 @@ export async function importBankStatement(formData: FormData) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
-  const accountId = formData.get('accountId') as string
-  const fileName = formData.get('fileName') as string
-  const transactionsJson = formData.get('transactions') as string
+  const accountId = formData.get("accountId") as string
+  const fileName = formData.get("fileName") as string
+  const transactionsJson = formData.get("transactions") as string
 
   if (!accountId || !transactionsJson) {
     return {
       success: false,
-      error: 'Nedostaju podaci',
+      error: "Nedostaju podaci",
     }
   }
 
@@ -187,34 +188,44 @@ export async function importBankStatement(formData: FormData) {
       const transactions = JSON.parse(transactionsJson)
 
       // Validate all transactions
-      console.log('[importBankStatement] Parsing transactions:', transactions.length, 'items')
+      console.log("[importBankStatement] Parsing transactions:", transactions.length, "items")
 
-      const validatedTransactions = transactions.map((t: Record<string, unknown>, index: number) => {
-        // Ensure amount and balance are numbers
-        const processed = {
-          ...t,
-          accountId,
-          amount: typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount,
-          balance: t.balance !== undefined
-            ? (typeof t.balance === 'string' ? parseFloat(t.balance) : t.balance)
-            : 0
-        }
+      const validatedTransactions = transactions.map(
+        (t: Record<string, unknown>, index: number) => {
+          // Ensure amount and balance are numbers
+          const processed = {
+            ...t,
+            accountId,
+            amount: typeof t.amount === "string" ? parseFloat(t.amount) : t.amount,
+            balance:
+              t.balance !== undefined
+                ? typeof t.balance === "string"
+                  ? parseFloat(t.balance)
+                  : t.balance
+                : 0,
+          }
 
-        const validation = importTransactionSchema.safeParse(processed)
-        if (!validation.success) {
-          console.error(`[importBankStatement] Transaction ${index} validation failed:`, validation.error.issues)
-          throw new Error(`Invalid transaction at row ${index + 1}: ${validation.error.issues[0].message}`)
+          const validation = importTransactionSchema.safeParse(processed)
+          if (!validation.success) {
+            console.error(
+              `[importBankStatement] Transaction ${index} validation failed:`,
+              validation.error.issues
+            )
+            throw new Error(
+              `Invalid transaction at row ${index + 1}: ${validation.error.issues[0].message}`
+            )
+          }
+          return validation.data
         }
-        return validation.data
-      })
+      )
 
       // Create import record
       const importRecord = await db.bankImport.create({
         data: {
           companyId: company.id,
           bankAccountId: accountId,
-          fileName: fileName || 'imported.csv',
-          format: 'CSV',
+          fileName: fileName || "imported.csv",
+          format: "CSV",
           transactionCount: validatedTransactions.length,
           importedBy: user.id!,
         },
@@ -228,14 +239,17 @@ export async function importBankStatement(formData: FormData) {
             bankAccountId: accountId,
             date: new Date(txn.date),
             description: txn.description,
-            amount: typeof txn.amount === 'string' ? parseFloat(txn.amount) : txn.amount,
-            balance: txn.balance !== undefined
-              ? (typeof txn.balance === 'string' ? parseFloat(txn.balance) : txn.balance)
-              : 0,
+            amount: typeof txn.amount === "string" ? parseFloat(txn.amount) : txn.amount,
+            balance:
+              txn.balance !== undefined
+                ? typeof txn.balance === "string"
+                  ? parseFloat(txn.balance)
+                  : txn.balance
+                : 0,
             reference: txn.reference || null,
             counterpartyName: txn.counterpartyName || null,
             counterpartyIban: txn.counterpartyIban || null,
-            matchStatus: 'UNMATCHED',
+            matchStatus: "UNMATCHED",
             confidenceScore: 0,
           },
         })
@@ -247,7 +261,7 @@ export async function importBankStatement(formData: FormData) {
         await db.bankAccount.update({
           where: { id: accountId },
           data: {
-            currentBalance: typeof lastBalance === 'string' ? parseFloat(lastBalance) : lastBalance,
+            currentBalance: typeof lastBalance === "string" ? parseFloat(lastBalance) : lastBalance,
             lastSyncAt: new Date(),
           },
         })
@@ -259,8 +273,8 @@ export async function importBankStatement(formData: FormData) {
         userId: user.id!,
       })
 
-      revalidatePath('/banking')
-      revalidatePath('/banking/transactions')
+      revalidatePath("/banking")
+      revalidatePath("/banking/transactions")
 
       return {
         success: true,
@@ -272,10 +286,10 @@ export async function importBankStatement(formData: FormData) {
         },
       }
     } catch (error) {
-      console.error('[importBankStatement] Error:', error)
+      console.error("[importBankStatement] Error:", error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Greška pri uvozu izvoda',
+        error: error instanceof Error ? error.message : "Greška pri uvozu izvoda",
       }
     }
   })

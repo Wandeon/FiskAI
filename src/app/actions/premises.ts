@@ -1,7 +1,7 @@
-'use server'
+"use server"
 
-import { db } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { db } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 interface CreatePremisesInput {
   companyId: string
@@ -29,7 +29,7 @@ export async function createPremises(input: CreatePremisesInput): Promise<Action
   try {
     // Validate code is positive
     if (input.code < 1) {
-      return { success: false, error: 'Kod mora biti pozitivan broj' }
+      return { success: false, error: "Kod mora biti pozitivan broj" }
     }
 
     // Check for duplicate code
@@ -65,22 +65,22 @@ export async function createPremises(input: CreatePremisesInput): Promise<Action
       },
     })
 
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true, data: premises }
   } catch (error) {
-    console.error('Failed to create premises:', error)
-    return { success: false, error: 'Greška pri stvaranju poslovnog prostora' }
+    console.error("Failed to create premises:", error)
+    return { success: false, error: "Greška pri stvaranju poslovnog prostora" }
   }
 }
 
 export async function updatePremises(
   id: string,
-  input: Partial<Omit<CreatePremisesInput, 'companyId'>>
+  input: Partial<Omit<CreatePremisesInput, "companyId">>
 ): Promise<ActionResult> {
   try {
     const existing = await db.businessPremises.findUnique({ where: { id } })
     if (!existing) {
-      return { success: false, error: 'Poslovni prostor nije pronađen' }
+      return { success: false, error: "Poslovni prostor nije pronađen" }
     }
 
     // Check for duplicate code if code is being changed
@@ -111,11 +111,11 @@ export async function updatePremises(
       data: input,
     })
 
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true, data: premises }
   } catch (error) {
-    console.error('Failed to update premises:', error)
-    return { success: false, error: 'Greška pri ažuriranju poslovnog prostora' }
+    console.error("Failed to update premises:", error)
+    return { success: false, error: "Greška pri ažuriranju poslovnog prostora" }
   }
 }
 
@@ -129,7 +129,7 @@ export async function deletePremises(id: string): Promise<ActionResult> {
     if (deviceCount > 0) {
       return {
         success: false,
-        error: 'Nije moguće obrisati poslovni prostor koji ima naplatne uređaje',
+        error: "Nije moguće obrisati poslovni prostor koji ima naplatne uređaje",
       }
     }
 
@@ -141,17 +141,17 @@ export async function deletePremises(id: string): Promise<ActionResult> {
     if (sequenceCount > 0) {
       return {
         success: false,
-        error: 'Nije moguće obrisati poslovni prostor koji ima povijesne račune',
+        error: "Nije moguće obrisati poslovni prostor koji ima povijesne račune",
       }
     }
 
     await db.businessPremises.delete({ where: { id } })
 
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true }
   } catch (error) {
-    console.error('Failed to delete premises:', error)
-    return { success: false, error: 'Greška pri brisanju poslovnog prostora' }
+    console.error("Failed to delete premises:", error)
+    return { success: false, error: "Greška pri brisanju poslovnog prostora" }
   }
 }
 
@@ -159,7 +159,7 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
   try {
     // Validate code is positive
     if (input.code < 1) {
-      return { success: false, error: 'Kod mora biti pozitivan broj' }
+      return { success: false, error: "Kod mora biti pozitivan broj" }
     }
 
     // Check for duplicate code within premises
@@ -173,7 +173,10 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
     })
 
     if (existing) {
-      return { success: false, error: `Naplatni uređaj s kodom ${input.code} već postoji u ovom poslovnom prostoru` }
+      return {
+        success: false,
+        error: `Naplatni uređaj s kodom ${input.code} već postoji u ovom poslovnom prostoru`,
+      }
     }
 
     // If this should be default, unset other defaults first
@@ -195,22 +198,22 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
       },
     })
 
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true, data: device }
   } catch (error) {
-    console.error('Failed to create device:', error)
-    return { success: false, error: 'Greška pri stvaranju naplatnog uređaja' }
+    console.error("Failed to create device:", error)
+    return { success: false, error: "Greška pri stvaranju naplatnog uređaja" }
   }
 }
 
 export async function updateDevice(
   id: string,
-  input: Partial<Omit<CreateDeviceInput, 'companyId' | 'businessPremisesId'>>
+  input: Partial<Omit<CreateDeviceInput, "companyId" | "businessPremisesId">>
 ): Promise<ActionResult> {
   try {
     const existing = await db.paymentDevice.findUnique({ where: { id } })
     if (!existing) {
-      return { success: false, error: 'Naplatni uređaj nije pronađen' }
+      return { success: false, error: "Naplatni uređaj nije pronađen" }
     }
 
     // Check for duplicate code if code is being changed
@@ -245,22 +248,22 @@ export async function updateDevice(
       data: input,
     })
 
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true, data: device }
   } catch (error) {
-    console.error('Failed to update device:', error)
-    return { success: false, error: 'Greška pri ažuriranju naplatnog uređaja' }
+    console.error("Failed to update device:", error)
+    return { success: false, error: "Greška pri ažuriranju naplatnog uređaja" }
   }
 }
 
 export async function deleteDevice(id: string): Promise<ActionResult> {
   try {
     await db.paymentDevice.delete({ where: { id } })
-    revalidatePath('/settings/premises')
+    revalidatePath("/settings/premises")
     return { success: true }
   } catch (error) {
-    console.error('Failed to delete device:', error)
-    return { success: false, error: 'Greška pri brisanju naplatnog uređaja' }
+    console.error("Failed to delete device:", error)
+    return { success: false, error: "Greška pri brisanju naplatnog uređaja" }
   }
 }
 

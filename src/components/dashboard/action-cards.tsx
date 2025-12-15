@@ -2,7 +2,8 @@ import Link from "next/link"
 import { Brain, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const buttonBaseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-10 px-4 py-2 mt-4 w-full"
+const buttonBaseStyles =
+  "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-10 px-4 py-2 mt-4 w-full"
 
 export function ActionCards() {
   return (
@@ -14,7 +15,9 @@ export function ActionCards() {
           </div>
           <div>
             <p className="text-sm font-semibold text-[var(--foreground)]">FiskAI asistent</p>
-            <p className="text-sm text-[var(--muted)]">Pitaj bilo što o financijama, računima ili zakonima</p>
+            <p className="text-sm text-[var(--muted)]">
+              Pitaj bilo što o financijama, računima ili zakonima
+            </p>
           </div>
         </div>
         <Link
@@ -31,13 +34,20 @@ export function ActionCards() {
             <UserCog className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[var(--foreground)]">Workspace za računovođu</p>
-            <p className="text-sm text-[var(--muted)]">Vanjski računovođa radi direktno u FiskAI, bez eksportanja</p>
+            <p className="text-sm font-semibold text-[var(--foreground)]">
+              Workspace za računovođu
+            </p>
+            <p className="text-sm text-[var(--muted)]">
+              Vanjski računovođa radi direktno u FiskAI, bez eksportanja
+            </p>
           </div>
         </div>
         <Link
           href="/accountant"
-          className={cn(buttonBaseStyles, "border border-emerald-100 bg-white text-emerald-600 hover:bg-emerald-50")}
+          className={cn(
+            buttonBaseStyles,
+            "border border-emerald-100 bg-white text-emerald-600 hover:bg-emerald-50"
+          )}
         >
           Otvori workspace
         </Link>

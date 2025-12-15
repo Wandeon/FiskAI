@@ -67,83 +67,51 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       {success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
-          {success}
-        </div>
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">{success}</div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium">Naziv tvrtke *</label>
-          <Input
-            {...register("name")}
-            error={errors.name?.message}
-          />
+          <Input {...register("name")} error={errors.name?.message} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">OIB *</label>
-          <Input
-            {...register("oib")}
-            error={errors.oib?.message}
-            disabled
-            className="bg-gray-50"
-          />
+          <Input {...register("oib")} error={errors.oib?.message} disabled className="bg-gray-50" />
           <p className="text-xs text-gray-500">OIB se ne može mijenjati nakon kreiranja tvrtke</p>
         </div>
 
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Adresa *</label>
-          <Input
-            {...register("address")}
-            error={errors.address?.message}
-          />
+          <Input {...register("address")} error={errors.address?.message} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Poštanski broj *</label>
-          <Input
-            {...register("postalCode")}
-            error={errors.postalCode?.message}
-          />
+          <Input {...register("postalCode")} error={errors.postalCode?.message} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Grad *</label>
-          <Input
-            {...register("city")}
-            error={errors.city?.message}
-          />
+          <Input {...register("city")} error={errors.city?.message} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Email</label>
-          <Input
-            type="email"
-            {...register("email")}
-            error={errors.email?.message}
-          />
+          <Input type="email" {...register("email")} error={errors.email?.message} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Telefon</label>
-          <Input
-            {...register("phone")}
-          />
+          <Input {...register("phone")} />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">IBAN</label>
-          <Input
-            {...register("iban")}
-            placeholder="HR1234567890123456789"
-          />
+          <Input {...register("iban")} placeholder="HR1234567890123456789" />
         </div>
 
         <div className="space-y-2">

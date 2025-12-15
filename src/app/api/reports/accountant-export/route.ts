@@ -55,9 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Determine filename range label
     const rangeLabel =
-      parsed.data.from && parsed.data.to
-        ? `${parsed.data.from}-${parsed.data.to}`
-        : "all"
+      parsed.data.from && parsed.data.to ? `${parsed.data.from}-${parsed.data.to}` : "all"
 
     // Generate response based on format
     switch (parsed.data.format) {
@@ -99,9 +97,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Accountant export error:", error)
-    return NextResponse.json(
-      { error: "Neuspješan izvoz za knjigovođu" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Neuspješan izvoz za knjigovođu" }, { status: 500 })
   }
 }

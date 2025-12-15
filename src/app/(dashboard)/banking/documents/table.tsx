@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Loader2, Trash2, Eye } from 'lucide-react'
-import Link from 'next/link'
-import type { ImportJob, BankAccount } from '@prisma/client'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Trash2, Eye } from "lucide-react"
+import Link from "next/link"
+import type { ImportJob, BankAccount } from "@prisma/client"
 
 type JobWithAccount = ImportJob & {
-  bankAccount: Pick<BankAccount, 'name' | 'iban'>
+  bankAccount: Pick<BankAccount, "name" | "iban">
 }
 
 type Props = {
@@ -21,10 +21,10 @@ export function DocumentsTable({ jobs: initialJobs }: Props) {
   async function handleDelete(id: string) {
     setDeleting(id)
     try {
-      const res = await fetch(`/api/banking/import/jobs/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/banking/import/jobs/${id}`, { method: "DELETE" })
       const json = await res.json()
       if (!res.ok || !json.success) {
-        alert(json.error || 'Brisanje nije uspjelo')
+        alert(json.error || "Brisanje nije uspjelo")
       } else {
         setJobs((prev) => prev.filter((j) => j.id !== id))
       }
@@ -42,12 +42,24 @@ export function DocumentsTable({ jobs: initialJobs }: Props) {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datoteka</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Račun</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stranice</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploadano</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Datoteka
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Račun
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Stranice
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Uploadano
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              Akcije
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -61,13 +73,13 @@ export function DocumentsTable({ jobs: initialJobs }: Props) {
               <td className="px-4 py-3 text-xs">
                 <span
                   className={`px-2 py-1 rounded ${
-                    job.status === 'VERIFIED'
-                      ? 'bg-green-100 text-green-700'
-                      : job.status === 'NEEDS_REVIEW'
-                        ? 'bg-amber-100 text-amber-700'
-                        : job.status === 'FAILED'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-blue-100 text-blue-700'
+                    job.status === "VERIFIED"
+                      ? "bg-green-100 text-green-700"
+                      : job.status === "NEEDS_REVIEW"
+                        ? "bg-amber-100 text-amber-700"
+                        : job.status === "FAILED"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-blue-100 text-blue-700"
                   }`}
                 >
                   {job.status}
@@ -78,10 +90,10 @@ export function DocumentsTable({ jobs: initialJobs }: Props) {
               </td>
               <td className="px-4 py-3 text-xs text-gray-700">
                 {job.pagesProcessed ?? 0}
-                {job.pagesFailed ? ` · failed ${job.pagesFailed}` : ''}
+                {job.pagesFailed ? ` · failed ${job.pagesFailed}` : ""}
               </td>
               <td className="px-4 py-3 text-xs text-gray-700">
-                {new Date(job.createdAt).toLocaleString('hr-HR')}
+                {new Date(job.createdAt).toLocaleString("hr-HR")}
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="flex items-center justify-end gap-1">

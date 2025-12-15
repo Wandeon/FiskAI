@@ -1,17 +1,17 @@
 // src/app/(dashboard)/accountant/page.tsx
 // Accountant dashboard page providing comprehensive overview for accountants
 
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { 
-  FileText, 
-  TrendingUp, 
-  AlertTriangle, 
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  FileText,
+  TrendingUp,
+  AlertTriangle,
   Calendar,
   Archive,
   FileArchive,
@@ -37,11 +37,11 @@ import {
   Trash2,
   RefreshCw,
   Filter,
-  Search
-} from 'lucide-react'
-import { formatCurrency } from '@/lib/format'
-import { logger } from '@/lib/logger'
-import { calculateVatThresholdProgress } from '@/lib/reports/kpr-generator'
+  Search,
+} from "lucide-react"
+import { formatCurrency } from "@/lib/format"
+import { logger } from "@/lib/logger"
+import { calculateVatThresholdProgress } from "@/lib/reports/kpr-generator"
 
 export default async function AccountantDashboardPage() {
   const user = await requireAuth()
@@ -68,7 +68,7 @@ export default async function AccountantDashboardPage() {
         companyId: company.id,
         status: { in: ["SENT", "DELIVERED"] },
         accountantApproved: null, // Not yet reviewed by accountant
-      }
+      },
     }),
     // Expenses awaiting accountant review
     db.expense.count({
@@ -76,7 +76,7 @@ export default async function AccountantDashboardPage() {
         companyId: company.id,
         accountantProcessed: false, // Not yet processed by accountant
         status: "APPROVED", // Only approved expenses need processing
-      }
+      },
     }),
     // Support tickets assigned to accountants
     db.supportTicket.count({
@@ -84,20 +84,20 @@ export default async function AccountantDashboardPage() {
         companyId: company.id,
         assignedToId: user.id!, // Assigned to this accountant
         status: { in: ["OPEN", "IN_PROGRESS"] },
-      }
+      },
     }),
     // Total invoices
     db.eInvoice.count({
       where: {
         companyId: company.id,
         direction: "OUTBOUND",
-      }
+      },
     }),
     // Total expenses
     db.expense.count({
       where: {
         companyId: company.id,
-      }
+      },
     }),
     // Monthly revenue for current month
     db.eInvoice.aggregate({
@@ -108,19 +108,19 @@ export default async function AccountantDashboardPage() {
         issueDate: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
           lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
-        }
+        },
       },
       _sum: {
         totalAmount: true,
-      }
+      },
     }),
     // VAT threshold progress (using the function we created)
-    calculateVatThresholdProgress(company.id, new Date().getFullYear()).catch(() => ({ 
-      annualRevenue: 0, 
-      vatThreshold: 40000, 
-      percentage: 0, 
-      status: "BELOW" 
-    }))
+    calculateVatThresholdProgress(company.id, new Date().getFullYear()).catch(() => ({
+      annualRevenue: 0,
+      vatThreshold: 40000,
+      percentage: 0,
+      status: "BELOW",
+    })),
   ])
 
   return (
@@ -166,12 +166,14 @@ export default async function AccountantDashboardPage() {
               </span>
             </div>
             <div className="w-full bg-muted rounded-full h-2.5">
-              <div 
+              <div
                 className={`h-2.5 rounded-full ${
-                  vatThresholdProgress.status === 'EXCEEDED' ? 'bg-red-500' :
-                  vatThresholdProgress.status === 'WARNING' ? 'bg-amber-500' :
-                  'bg-blue-500'
-                }`} 
+                  vatThresholdProgress.status === "EXCEEDED"
+                    ? "bg-red-500"
+                    : vatThresholdProgress.status === "WARNING"
+                      ? "bg-amber-500"
+                      : "bg-blue-500"
+                }`}
                 style={{ width: `${Math.min(vatThresholdProgress.percentage, 100)}%` }}
               ></div>
             </div>
@@ -179,15 +181,20 @@ export default async function AccountantDashboardPage() {
               <span>{formatCurrency(vatThresholdProgress.annualRevenue, "EUR")}</span>
               <span>{formatCurrency(vatThresholdProgress.vatThreshold, "EUR")}</span>
             </div>
-            <Badge 
+            <Badge
               variant={
-                vatThresholdProgress.status === 'EXCEEDED' ? 'destructive' :
-                vatThresholdProgress.status === 'WARNING' ? 'secondary' :
-                'default'
+                vatThresholdProgress.status === "EXCEEDED"
+                  ? "destructive"
+                  : vatThresholdProgress.status === "WARNING"
+                    ? "secondary"
+                    : "default"
               }
             >
-              {vatThresholdProgress.status === 'EXCEEDED' ? 'PREKORAČENO' : 
-               vatThresholdProgress.status === 'WARNING' ? 'POZOR' : 'ISPRAVNO'}
+              {vatThresholdProgress.status === "EXCEEDED"
+                ? "PREKORAČENO"
+                : vatThresholdProgress.status === "WARNING"
+                  ? "POZOR"
+                  : "ISPRAVNO"}
             </Badge>
           </div>
         </CardContent>
@@ -238,7 +245,7 @@ export default async function AccountantDashboardPage() {
               {formatCurrency(Number(monthlyRevenue._sum.totalAmount || 0), "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">
-              {new Date().toLocaleString('hr-HR', { month: 'long', year: 'numeric' })}
+              {new Date().toLocaleString("hr-HR", { month: "long", year: "numeric" })}
             </p>
           </CardContent>
         </Card>

@@ -1,33 +1,33 @@
 // src/lib/email-sync/providers/microsoft.ts
 
-import { ConfidentialClientApplication } from '@azure/msal-node'
-import { Client } from '@microsoft/microsoft-graph-client'
-import type { EmailSyncProvider } from '../provider'
-import type { TokenResult, MessageBatch, EmailMessage } from '../types'
+import { ConfidentialClientApplication } from "@azure/msal-node"
+import { Client } from "@microsoft/microsoft-graph-client"
+import type { EmailSyncProvider } from "../provider"
+import type { TokenResult, MessageBatch, EmailMessage } from "../types"
 
-const SCOPES = ['Mail.Read', 'offline_access']
+const SCOPES = ["Mail.Read", "offline_access"]
 
 function getMsalClient() {
   return new ConfidentialClientApplication({
     auth: {
       clientId: process.env.MICROSOFT_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      authority: 'https://login.microsoftonline.com/common',
+      authority: "https://login.microsoftonline.com/common",
     },
   })
 }
 
 export const microsoftProvider: EmailSyncProvider = {
-  name: 'microsoft',
+  name: "microsoft",
 
   getAuthUrl(redirectUri: string, state: string): string {
     const params = new URLSearchParams({
       client_id: process.env.MICROSOFT_CLIENT_ID!,
-      response_type: 'code',
+      response_type: "code",
       redirect_uri: redirectUri,
-      scope: SCOPES.join(' '),
+      scope: SCOPES.join(" "),
       state,
-      prompt: 'consent',
+      prompt: "consent",
     })
     return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`
   },
@@ -42,7 +42,7 @@ export const microsoftProvider: EmailSyncProvider = {
     })
 
     if (!result) {
-      throw new Error('Failed to exchange code for tokens')
+      throw new Error("Failed to exchange code for tokens")
     }
 
     // Get refresh token via token cache
@@ -75,9 +75,9 @@ export const microsoftProvider: EmailSyncProvider = {
       account: {
         homeAccountId,
         tenantId,
-        environment: 'login.microsoftonline.com',
-        username: '',
-        localAccountId: '',
+        environment: "login.microsoftonline.com",
+        username: "",
+        localAccountId: "",
       },
     })
 
@@ -95,10 +95,10 @@ export const microsoftProvider: EmailSyncProvider = {
     })
 
     let request = client
-      .api('/me/messages')
-      .filter('hasAttachments eq true')
-      .select('id,receivedDateTime,from,subject')
-      .expand('attachments($select=id,name,contentType,size)')
+      .api("/me/messages")
+      .filter("hasAttachments eq true")
+      .select("id,receivedDateTime,from,subject")
+      .expand("attachments($select=id,name,contentType,size)")
       .top(50)
 
     if (cursor) {
@@ -110,19 +110,19 @@ export const microsoftProvider: EmailSyncProvider = {
     const messages: EmailMessage[] = (response.value || []).map((msg: any) => ({
       id: msg.id,
       receivedAt: new Date(msg.receivedDateTime),
-      senderEmail: msg.from?.emailAddress?.address || '',
-      subject: msg.subject || '',
+      senderEmail: msg.from?.emailAddress?.address || "",
+      subject: msg.subject || "",
       attachments: (msg.attachments || []).map((att: any) => ({
         id: att.id,
         filename: att.name,
-        mimeType: att.contentType || 'application/octet-stream',
+        mimeType: att.contentType || "application/octet-stream",
         sizeBytes: att.size || 0,
       })),
     }))
 
     return {
       messages,
-      nextCursor: response['@odata.nextLink'],
+      nextCursor: response["@odata.nextLink"],
     }
   },
 
@@ -135,15 +135,13 @@ export const microsoftProvider: EmailSyncProvider = {
       authProvider: (done) => done(null, accessToken),
     })
 
-    const response = await client
-      .api(`/me/messages/${messageId}/attachments/${attachmentId}`)
-      .get()
+    const response = await client.api(`/me/messages/${messageId}/attachments/${attachmentId}`).get()
 
     if (!response.contentBytes) {
-      throw new Error('No attachment content received')
+      throw new Error("No attachment content received")
     }
 
-    return Buffer.from(response.contentBytes, 'base64')
+    return Buffer.from(response.contentBytes, "base64")
   },
 
   async revokeAccess(_accessToken: string): Promise<void> {

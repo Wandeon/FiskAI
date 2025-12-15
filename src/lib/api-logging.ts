@@ -1,6 +1,6 @@
-import { NextRequest } from 'next/server'
-import { runWithContext } from './context'
-import { logger } from './logger'
+import { NextRequest } from "next/server"
+import { runWithContext } from "./context"
+import { logger } from "./logger"
 
 type RouteHandler = (request: NextRequest) => Promise<Response>
 
@@ -14,7 +14,7 @@ type RouteHandler = (request: NextRequest) => Promise<Response>
  */
 export function withApiLogging(handler: RouteHandler): RouteHandler {
   return async (request: NextRequest) => {
-    const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID()
+    const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID()
     const startedAt = Date.now()
 
     return runWithContext(
@@ -33,18 +33,18 @@ export function withApiLogging(handler: RouteHandler): RouteHandler {
               status: response.status,
               durationMs,
             },
-            'API request completed'
+            "API request completed"
           )
 
           // Ensure response has request ID header
-          if (!response.headers.has('x-request-id')) {
-            response.headers.set('x-request-id', requestId)
+          if (!response.headers.has("x-request-id")) {
+            response.headers.set("x-request-id", requestId)
           }
 
           return response
         } catch (error) {
           const durationMs = Date.now() - startedAt
-          logger.error({ error, durationMs }, 'API request failed')
+          logger.error({ error, durationMs }, "API request failed")
           throw error
         }
       }

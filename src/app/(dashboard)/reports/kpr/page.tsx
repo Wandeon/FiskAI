@@ -52,7 +52,10 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
   }
 
   const summary = await fetchKpr(company.id, from, to)
-  const rangeParams = buildRange({ from: from?.toISOString().slice(0, 10), to: to?.toISOString().slice(0, 10) })
+  const rangeParams = buildRange({
+    from: from?.toISOString().slice(0, 10),
+    to: to?.toISOString().slice(0, 10),
+  })
   const csvUrl = `/api/reports/kpr${rangeParams}`
   const pdfUrl = `/api/reports/kpr/pdf${rangeParams}`
   const excelUrl = `/api/reports/kpr/excel${rangeParams}`
@@ -64,7 +67,8 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
         <p className="text-sm text-muted-foreground">Paušalni obrt — knjiga prometa / PO-SD</p>
         <h1 className="text-2xl font-bold">KPR i PO-SD</h1>
         <p className="text-muted-foreground">
-          Pregled uplaćenih računa po mjesecima i sažetak za PO-SD. Podaci su dostupni unutar aplikacije; izvoz je opcionalan.
+          Pregled uplaćenih računa po mjesecima i sažetak za PO-SD. Podaci su dostupni unutar
+          aplikacije; izvoz je opcionalan.
         </p>
       </div>
 
@@ -116,9 +120,13 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
                       <tbody>
                         {group.rows.map((r, idx) => (
                           <tr key={idx} className="border-t border-border/80">
-                            <td className="px-3 py-2 text-muted-foreground">{summary.rows.indexOf(r) + 1}</td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {summary.rows.indexOf(r) + 1}
+                            </td>
                             <td className="px-3 py-2">{fmt(r.date)}</td>
-                            <td className="px-3 py-2 font-mono text-xs text-foreground">{r.documentNumber}</td>
+                            <td className="px-3 py-2 font-mono text-xs text-foreground">
+                              {r.documentNumber}
+                            </td>
                             <td className="px-3 py-2 text-muted-foreground">{r.description}</td>
                             <td className="px-3 py-2 text-right text-green-600">
                               {r.income > 0 ? formatCurrency(r.income) : "—"}
@@ -126,7 +134,9 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
                             <td className="px-3 py-2 text-right text-red-600">
                               {r.expense > 0 ? formatCurrency(r.expense) : "—"}
                             </td>
-                            <td className="px-3 py-2 text-right font-semibold">{formatCurrency(r.balance)}</td>
+                            <td className="px-3 py-2 text-right font-semibold">
+                              {formatCurrency(r.balance)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -151,35 +161,51 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
             </div>
 
             <div className="space-y-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-green-700">Primitak (Prihod)</p>
-              <p className="text-2xl font-bold text-green-700">{formatCurrency(summary.totalIncome)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                Primitak (Prihod)
+              </p>
+              <p className="text-2xl font-bold text-green-700">
+                {formatCurrency(summary.totalIncome)}
+              </p>
             </div>
 
             <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-red-700">Izdatak (Trošak)</p>
-              <p className="text-2xl font-bold text-red-700">{formatCurrency(summary.totalExpense)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                Izdatak (Trošak)
+              </p>
+              <p className="text-2xl font-bold text-red-700">
+                {formatCurrency(summary.totalExpense)}
+              </p>
             </div>
 
-            <div className={`space-y-2 rounded-lg border px-3 py-2 ${
-              summary.netIncome >= 0
-                ? "border-blue-200 bg-blue-50"
-                : "border-orange-200 bg-orange-50"
-            }`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${
-                summary.netIncome >= 0 ? "text-blue-700" : "text-orange-700"
-              }`}>
+            <div
+              className={`space-y-2 rounded-lg border px-3 py-2 ${
+                summary.netIncome >= 0
+                  ? "border-blue-200 bg-blue-50"
+                  : "border-orange-200 bg-orange-50"
+              }`}
+            >
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  summary.netIncome >= 0 ? "text-blue-700" : "text-orange-700"
+                }`}
+              >
                 Neto {summary.netIncome >= 0 ? "Dobit" : "Gubitak"}
               </p>
-              <p className={`text-2xl font-bold ${
-                summary.netIncome >= 0 ? "text-blue-700" : "text-orange-700"
-              }`}>
+              <p
+                className={`text-2xl font-bold ${
+                  summary.netIncome >= 0 ? "text-blue-700" : "text-orange-700"
+                }`}
+              >
                 {formatCurrency(Math.abs(summary.netIncome))}
               </p>
             </div>
 
             {summary.byQuarter && Object.keys(summary.byQuarter).length > 0 && (
               <div className="space-y-2 border-t pt-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Kvartalni pregled</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Kvartalni pregled
+                </p>
                 {Object.entries(summary.byQuarter).map(([quarter, data]) => (
                   <div key={quarter} className="flex items-center justify-between text-xs">
                     <span className="font-medium">{quarter}</span>
@@ -192,7 +218,9 @@ export default async function KprPage({ searchParams }: { searchParams?: SearchP
             )}
 
             <div className="space-y-2 border-t pt-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Izvoz izvješća</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Izvoz izvješća
+              </p>
               <div className="flex flex-col gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={pdfUrl}>

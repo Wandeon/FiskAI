@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useTransition } from "react"
 import { UploadCloud, CheckCircle2, AlertCircle, FileText } from "lucide-react"
@@ -99,12 +99,13 @@ export function ProductCsvImport({ onParsed }: ProductCsvImportProps) {
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold text-[var(--foreground)]">Uvoz proizvoda (CSV)</p>
-          <p className="text-xs text-[var(--muted)]">Stupci: name, sku, unit, price, vatRate. Podaci se još ne spremaju na server (pregled lokalno).</p>
+          <p className="text-xs text-[var(--muted)]">
+            Stupci: name, sku, unit, price, vatRate. Podaci se još ne spremaju na server (pregled
+            lokalno).
+          </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <label
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:border-brand-200"
-            >
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:border-brand-200">
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -118,7 +119,8 @@ export function ProductCsvImport({ onParsed }: ProductCsvImportProps) {
               type="button"
               variant="outline"
               onClick={() => {
-                const example = "name,sku,unit,price,vatRate\nUsluga konsaltinga,CONS-001,h,80,25\nLicenca softvera,LIC-2025,kom,250,25"
+                const example =
+                  "name,sku,unit,price,vatRate\nUsluga konsaltinga,CONS-001,h,80,25\nLicenca softvera,LIC-2025,kom,250,25"
                 const blob = new Blob([example], { type: "text/csv;charset=utf-8;" })
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
@@ -139,9 +141,18 @@ export function ProductCsvImport({ onParsed }: ProductCsvImportProps) {
                 {error}
               </span>
             ) : (
-              <span className={cn("inline-flex items-center gap-1", rowCount > 0 ? "text-emerald-600" : "text-[var(--muted)]")}>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1",
+                  rowCount > 0 ? "text-emerald-600" : "text-[var(--muted)]"
+                )}
+              >
                 <CheckCircle2 className="h-4 w-4" />
-                {rowCount > 0 ? `${rowCount} redaka učitano` : fileName ? fileName : "Nije odabran CSV"}
+                {rowCount > 0
+                  ? `${rowCount} redaka učitano`
+                  : fileName
+                    ? fileName
+                    : "Nije odabran CSV"}
               </span>
             )}
           </div>

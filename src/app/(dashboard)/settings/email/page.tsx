@@ -1,11 +1,11 @@
 // src/app/(dashboard)/settings/email/page.tsx
 
-import { redirect } from 'next/navigation'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { EmailConnectionList } from './components/connection-list'
-import { ConnectEmailButton } from './components/connect-button'
+import { redirect } from "next/navigation"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { EmailConnectionList } from "./components/connection-list"
+import { ConnectEmailButton } from "./components/connect-button"
 
 export default async function EmailSettingsPage({
   searchParams,
@@ -13,7 +13,7 @@ export default async function EmailSettingsPage({
   searchParams: Promise<{ success?: string; error?: string }>
 }) {
   const user = await requireAuth()
-  if (!user.id) redirect('/login')
+  if (!user.id) redirect("/login")
 
   const company = await requireCompany(user.id)
   setTenantContext({ companyId: company.id, userId: user.id })
@@ -24,7 +24,7 @@ export default async function EmailSettingsPage({
       importRules: true,
       _count: { select: { attachments: true } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   })
 
   const params = await searchParams
@@ -41,7 +41,7 @@ export default async function EmailSettingsPage({
         <ConnectEmailButton />
       </div>
 
-      {params.success === 'connected' && (
+      {params.success === "connected" && (
         <div className="rounded-md bg-green-50 p-4 text-green-800">
           Email connected successfully! Set up import rules below.
         </div>
@@ -49,7 +49,7 @@ export default async function EmailSettingsPage({
 
       {params.error && (
         <div className="rounded-md bg-red-50 p-4 text-red-800">
-          Connection failed: {params.error.replace(/_/g, ' ')}
+          Connection failed: {params.error.replace(/_/g, " ")}
         </div>
       )}
 

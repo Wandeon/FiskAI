@@ -1,14 +1,11 @@
 // src/app/api/email/rules/[id]/route.ts
 
-import { NextResponse } from 'next/server'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
+import { NextResponse } from "next/server"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
@@ -21,7 +18,7 @@ export async function PUT(
     })
 
     if (!rule) {
-      return NextResponse.json({ error: 'Rule not found' }, { status: 404 })
+      return NextResponse.json({ error: "Rule not found" }, { status: 404 })
     }
 
     const { senderEmail, senderDomain, subjectContains, filenameContains, isActive } =
@@ -40,15 +37,12 @@ export async function PUT(
 
     return NextResponse.json({ rule: updated })
   } catch (error) {
-    console.error('[email/rules] PUT error:', error)
-    return NextResponse.json({ error: 'Failed to update rule' }, { status: 500 })
+    console.error("[email/rules] PUT error:", error)
+    return NextResponse.json({ error: "Failed to update rule" }, { status: 500 })
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
@@ -61,14 +55,14 @@ export async function DELETE(
     })
 
     if (!rule) {
-      return NextResponse.json({ error: 'Rule not found' }, { status: 404 })
+      return NextResponse.json({ error: "Rule not found" }, { status: 404 })
     }
 
     await db.emailImportRule.delete({ where: { id } })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[email/rules] DELETE error:', error)
-    return NextResponse.json({ error: 'Failed to delete rule' }, { status: 500 })
+    console.error("[email/rules] DELETE error:", error)
+    return NextResponse.json({ error: "Failed to delete rule" }, { status: 500 })
   }
 }

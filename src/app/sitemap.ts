@@ -10,7 +10,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getBaseUrl()
   const now = new Date()
 
-  const routes = ["/", "/features", "/pricing", "/about", "/contact", "/security", "/privacy", "/terms", "/dpa", "/cookies", "/ai-data-policy", "/status"]
+  const routes = [
+    "/",
+    "/features",
+    "/pricing",
+    "/about",
+    "/contact",
+    "/security",
+    "/privacy",
+    "/terms",
+    "/dpa",
+    "/cookies",
+    "/ai-data-policy",
+    "/status",
+  ]
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: now,
@@ -18,4 +31,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route === "/" ? 1 : 0.7,
   }))
 }
-

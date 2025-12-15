@@ -105,7 +105,9 @@ function NumberInput({
       onChange={handleChange}
       onFocus={handleFocus}
       onBlur={handleBlur}
-      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur() }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur()
+      }}
     />
   )
 }
@@ -130,9 +132,9 @@ function AutoResizeTextarea({
   useEffect(() => {
     const textarea = textareaRef.current
     if (textarea) {
-      textarea.style.height = 'auto'
+      textarea.style.height = "auto"
       const newHeight = Math.max(44, textarea.scrollHeight)
-      textarea.style.height = newHeight + 'px'
+      textarea.style.height = newHeight + "px"
 
       // Check if multiline (height > single line ~48px)
       const isMultiline = newHeight > 50
@@ -151,7 +153,7 @@ function AutoResizeTextarea({
       placeholder={placeholder}
       rows={1}
       className={className}
-      style={{ resize: 'none', overflow: 'hidden' }}
+      style={{ resize: "none", overflow: "hidden" }}
     />
   )
 }
@@ -169,7 +171,7 @@ export function LineItemTable({
   const [multilineRows, setMultilineRows] = useState<Record<number, boolean>>({})
 
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
+    amount.toLocaleString("hr-HR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
 
   const suggestions = useMemo(() => {
     if (!searchTerm.trim()) return []
@@ -199,14 +201,16 @@ export function LineItemTable({
   }
 
   const handleMultilineChange = useCallback((index: number, isMultiline: boolean) => {
-    setMultilineRows(prev => {
+    setMultilineRows((prev) => {
       if (prev[index] === isMultiline) return prev
       return { ...prev, [index]: isMultiline }
     })
   }, [])
 
-  const inputBase = "w-full h-full bg-transparent border-0 px-3 py-3 text-[13px] outline-none focus:bg-blue-50/50 placeholder:text-gray-400 transition-colors"
-  const numberInputBase = "w-full h-full bg-transparent border-0 px-3 py-3 text-[13px] outline-none focus:bg-blue-50/50 text-right tabular-nums transition-colors"
+  const inputBase =
+    "w-full h-full bg-transparent border-0 px-3 py-3 text-[13px] outline-none focus:bg-blue-50/50 placeholder:text-gray-400 transition-colors"
+  const numberInputBase =
+    "w-full h-full bg-transparent border-0 px-3 py-3 text-[13px] outline-none focus:bg-blue-50/50 text-right tabular-nums transition-colors"
 
   return (
     <div className="overflow-hidden rounded-card border border-[var(--border)] bg-white">
@@ -214,11 +218,23 @@ export function LineItemTable({
         <thead>
           <tr className="bg-gray-50 text-[12px] font-medium text-gray-500">
             <th className="text-left px-3 py-2.5 border-b border-[var(--border)]">Opis</th>
-            <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[80px]">Kol.</th>
-            <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[80px]">Jed.</th>
-            <th className="text-right px-3 py-2.5 border-b border-l border-[var(--border)] w-[100px]">Cijena</th>
-            {showVat && <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[70px]">PDV</th>}
-            <th className="text-right px-3 py-2.5 border-b border-l border-[var(--border)] w-[110px]">Ukupno</th>
+            <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[80px]">
+              Kol.
+            </th>
+            <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[80px]">
+              Jed.
+            </th>
+            <th className="text-right px-3 py-2.5 border-b border-l border-[var(--border)] w-[100px]">
+              Cijena
+            </th>
+            {showVat && (
+              <th className="text-center px-3 py-2.5 border-b border-l border-[var(--border)] w-[70px]">
+                PDV
+              </th>
+            )}
+            <th className="text-right px-3 py-2.5 border-b border-l border-[var(--border)] w-[110px]">
+              Ukupno
+            </th>
             <th className="w-[44px] border-b border-l border-[var(--border)]"></th>
           </tr>
         </thead>
@@ -230,13 +246,13 @@ export function LineItemTable({
             const isActiveSuggestions = searchIndex === index && suggestions.length > 0
             const isMultiline = multilineRows[index] || false
             // When multiline: align-top, otherwise: align-middle
-            const cellAlign = isMultiline ? 'align-top' : 'align-middle'
+            const cellAlign = isMultiline ? "align-top" : "align-middle"
 
             return (
               <tr
                 key={index}
                 className={`text-[13px] hover:bg-gray-50/50 transition-colors ${
-                  index > 0 ? 'border-t border-[var(--border)]' : ''
+                  index > 0 ? "border-t border-[var(--border)]" : ""
                 }`}
               >
                 {/* Description - always align-top */}
@@ -270,7 +286,8 @@ export function LineItemTable({
                           >
                             <div className="text-sm font-medium text-gray-900">{s.name}</div>
                             <div className="text-xs text-gray-500">
-                              {s.price.toLocaleString('hr-HR', { minimumFractionDigits: 2 })} € • {unitLabels[s.unit] || "kom"} • PDV {s.vatRate}%
+                              {s.price.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} € •{" "}
+                              {unitLabels[s.unit] || "kom"} • PDV {s.vatRate}%
                             </div>
                           </li>
                         ))}
@@ -332,7 +349,9 @@ export function LineItemTable({
                 )}
 
                 {/* Total */}
-                <td className={`px-3 py-3 text-right font-semibold text-gray-900 tabular-nums whitespace-nowrap border-l border-[var(--border)] ${cellAlign}`}>
+                <td
+                  className={`px-3 py-3 text-right font-semibold text-gray-900 tabular-nums whitespace-nowrap border-l border-[var(--border)] ${cellAlign}`}
+                >
                   {formatCurrency(total)}
                 </td>
 

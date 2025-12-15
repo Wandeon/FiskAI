@@ -9,11 +9,28 @@ interface ProductHealthProps {
   zeroPriceCount: number
 }
 
-export function ProductHealth({ total, inactiveCount, missingSkuCount, zeroPriceCount }: ProductHealthProps) {
+export function ProductHealth({
+  total,
+  inactiveCount,
+  missingSkuCount,
+  zeroPriceCount,
+}: ProductHealthProps) {
   const issues = [
-    { label: "Bez šifre", value: missingSkuCount, hint: "Dodajte šifru radi lakše pretrage i uvoza." },
-    { label: "Cijena = 0", value: zeroPriceCount, hint: "Unesite prodajnu cijenu ili označite kao uslugu bez naplate." },
-    { label: "Neaktivni", value: inactiveCount, hint: "Aktivirajte proizvode koje koristite u ponudama." },
+    {
+      label: "Bez šifre",
+      value: missingSkuCount,
+      hint: "Dodajte šifru radi lakše pretrage i uvoza.",
+    },
+    {
+      label: "Cijena = 0",
+      value: zeroPriceCount,
+      hint: "Unesite prodajnu cijenu ili označite kao uslugu bez naplate.",
+    },
+    {
+      label: "Neaktivni",
+      value: inactiveCount,
+      hint: "Aktivirajte proizvode koje koristite u ponudama.",
+    },
   ]
 
   const hasIssues = issues.some((issue) => issue.value > 0)
@@ -26,7 +43,9 @@ export function ProductHealth({ total, inactiveCount, missingSkuCount, zeroPrice
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Zdravlje kataloga</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+              Zdravlje kataloga
+            </p>
             <p className="text-sm text-[var(--muted)]">
               {hasIssues
                 ? "Dovršite podatke da bi ponude i e-računi bili točni."
@@ -63,8 +82,7 @@ export function ProductHealth({ total, inactiveCount, missingSkuCount, zeroPrice
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                  <CheckCircle2 className="h-3 w-3" />
-                  0
+                  <CheckCircle2 className="h-3 w-3" />0
                 </span>
               )}
             </div>

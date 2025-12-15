@@ -20,7 +20,7 @@ export function QuickStats({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Ukupni prihod"
-        value={`${totalRevenue.toLocaleString('hr-HR', { minimumFractionDigits: 2 })} €`}
+        value={`${totalRevenue.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} €`}
         icon={<TrendingUp className="h-5 w-5" />}
         className="sm:col-span-2 lg:col-span-1"
       />
@@ -30,16 +30,8 @@ export function QuickStats({
         description={draftCount > 0 ? `${draftCount} u nacrtu` : undefined}
         icon={<FileText className="h-5 w-5" />}
       />
-      <StatCard
-        title="Kontakti"
-        value={contactCount}
-        icon={<Users className="h-5 w-5" />}
-      />
-      <StatCard
-        title="Proizvodi"
-        value={productCount}
-        icon={<Package className="h-5 w-5" />}
-      />
+      <StatCard title="Kontakti" value={contactCount} icon={<Users className="h-5 w-5" />} />
+      <StatCard title="Proizvodi" value={productCount} icon={<Package className="h-5 w-5" />} />
     </div>
   )
 }

@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { toast } from '@/lib/toast'
-import { createExpenseCategory } from '@/app/actions/expense'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { toast } from "@/lib/toast"
+import { createExpenseCategory } from "@/app/actions/expense"
 
 export function CategoryForm() {
   const router = useRouter()
@@ -17,18 +17,18 @@ export function CategoryForm() {
     setIsLoading(true)
 
     const result = await createExpenseCategory({
-      code: formData.get('code') as string,
-      name: formData.get('name') as string,
-      vatDeductibleDefault: formData.get('vatDeductible') === 'on',
+      code: formData.get("code") as string,
+      name: formData.get("name") as string,
+      vatDeductibleDefault: formData.get("vatDeductible") === "on",
     })
 
     setIsLoading(false)
     if (result.success) {
-      toast.success('Kategorija je dodana')
+      toast.success("Kategorija je dodana")
       router.refresh()
       ;(e.target as HTMLFormElement).reset()
     } else {
-      toast.error(result.error || 'Greška')
+      toast.error(result.error || "Greška")
     }
   }
 
@@ -44,7 +44,9 @@ export function CategoryForm() {
         <input type="checkbox" name="vatDeductible" defaultChecked className="rounded" />
         PDV priznati
       </label>
-      <Button type="submit" disabled={isLoading}>{isLoading ? '...' : 'Dodaj'}</Button>
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? "..." : "Dodaj"}
+      </Button>
     </form>
   )
 }

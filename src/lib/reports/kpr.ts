@@ -160,30 +160,33 @@ export async function fetchKpr(companyId: string, from?: Date, to?: Date): Promi
   }, {})
 
   // Group by quarter
-  const byQuarter = Object.entries(byMonth).reduce<Record<string, QuarterlyKprSummary>>((acc, [monthKey, monthData]) => {
-    if (monthKey === "unknown") return acc
+  const byQuarter = Object.entries(byMonth).reduce<Record<string, QuarterlyKprSummary>>(
+    (acc, [monthKey, monthData]) => {
+      if (monthKey === "unknown") return acc
 
-    const [year, month] = monthKey.split("-")
-    const quarter = Math.ceil(parseInt(month) / 3)
-    const quarterKey = `${year}-Q${quarter}`
+      const [year, month] = monthKey.split("-")
+      const quarter = Math.ceil(parseInt(month) / 3)
+      const quarterKey = `${year}-Q${quarter}`
 
-    if (!acc[quarterKey]) {
-      acc[quarterKey] = {
-        months: {},
-        totalIncome: 0,
-        totalExpense: 0,
-        netIncome: 0,
-        period: quarterKey,
+      if (!acc[quarterKey]) {
+        acc[quarterKey] = {
+          months: {},
+          totalIncome: 0,
+          totalExpense: 0,
+          netIncome: 0,
+          period: quarterKey,
+        }
       }
-    }
 
-    acc[quarterKey].months[monthKey] = monthData
-    acc[quarterKey].totalIncome += monthData.totalIncome
-    acc[quarterKey].totalExpense += monthData.totalExpense
-    acc[quarterKey].netIncome += monthData.netIncome
+      acc[quarterKey].months[monthKey] = monthData
+      acc[quarterKey].totalIncome += monthData.totalIncome
+      acc[quarterKey].totalExpense += monthData.totalExpense
+      acc[quarterKey].netIncome += monthData.netIncome
 
-    return acc
-  }, {})
+      return acc
+    },
+    {}
+  )
 
   // Legacy compatibility
   const totalNet = incomeRows.reduce((sum, r) => sum + (r.netAmount || 0), 0)
@@ -243,7 +246,15 @@ export function kprToCsv(summary: KprSummary): string {
 
 // Legacy CSV export for backwards compatibility
 export function kprToCsvLegacy(summary: KprSummary): string {
-  const header = ["Datum plaćanja", "Datum izdavanja", "Broj računa", "Kupac", "Osnovica", "PDV", "Ukupno"].join(",")
+  const header = [
+    "Datum plaćanja",
+    "Datum izdavanja",
+    "Broj računa",
+    "Kupac",
+    "Osnovica",
+    "PDV",
+    "Ukupno",
+  ].join(",")
   const lines = summary.rows
     .filter((r) => r.type === "INCOME")
     .map((r) =>
@@ -302,7 +313,7 @@ function formatDate(date: Date | null): string {
 }
 
 function escapeCsv(value: string): string {
-  if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     return `"${value.replace(/"/g, '""')}"`
   }
   return value

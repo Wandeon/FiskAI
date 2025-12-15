@@ -32,9 +32,9 @@ export function ContactCard({ contact }: ContactCardProps) {
 
   // Generate initials from name
   const initials = contact.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
     .toUpperCase()
     .slice(0, 2)
 
@@ -59,9 +59,16 @@ export function ContactCard({ contact }: ContactCardProps) {
                   {contact.name}
                 </Link>
               </h3>
-              {contact.oib && <p className="text-sm text-[var(--muted)] font-mono">{contact.oib}</p>}
+              {contact.oib && (
+                <p className="text-sm text-[var(--muted)] font-mono">{contact.oib}</p>
+              )}
             </div>
-            <span className={cn("flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium", type.className)}>
+            <span
+              className={cn(
+                "flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                type.className
+              )}
+            >
               {type.label}
             </span>
           </div>
@@ -104,7 +111,9 @@ export function ContactCard({ contact }: ContactCardProps) {
       <div className="space-y-3 border-t border-[var(--border)] px-4 py-3 bg-[var(--surface-secondary)]">
         <div className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
           <FileText className="h-4 w-4" />
-          <span>{invoiceCount} {invoiceCount === 1 ? 'račun' : invoiceCount < 5 ? 'računa' : 'računa'}</span>
+          <span>
+            {invoiceCount} {invoiceCount === 1 ? "račun" : invoiceCount < 5 ? "računa" : "računa"}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

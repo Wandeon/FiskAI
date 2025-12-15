@@ -72,7 +72,7 @@ const TENANT_MODELS = [
   "BusinessPremises",
   "PaymentDevice",
   "InvoiceSequence",
-  "CompanyUser" // Protect access to company-user relationships
+  "CompanyUser", // Protect access to company-user relationships
 ] as const
 
 // Models to audit (exclude AuditLog itself to prevent infinite loops)
@@ -88,9 +88,9 @@ const AUDITED_MODELS = [
   "BusinessPremises",
   "PaymentDevice",
   "InvoiceSequence",
-  "SupportTicket"
+  "SupportTicket",
 ] as const
-type AuditedModel = typeof AUDITED_MODELS[number]
+type AuditedModel = (typeof AUDITED_MODELS)[number]
 
 // Audit queue to avoid blocking main operations
 interface AuditQueueItem {
@@ -175,7 +175,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
       $allModels: {
         async findMany({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -185,7 +185,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async findFirst({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -197,7 +197,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           // For findUnique, we verify after fetch instead of modifying where
           const result = await query(args)
           const context = getTenantContext()
-          if (context && result && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (
+            context &&
+            result &&
+            TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])
+          ) {
             if ((result as { companyId?: string }).companyId !== context.companyId) {
               return null // Hide records from other tenants
             }
@@ -206,7 +210,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async create({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.data = {
               ...args.data,
               companyId: context.companyId,
@@ -215,7 +219,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           const result = await query(args)
 
           // Audit logging for create operations
-          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+          if (
+            AUDITED_MODELS.includes(model as AuditedModel) &&
+            result &&
+            typeof result === "object"
+          ) {
             queueAuditLog(prismaBase, model, "CREATE", result as Record<string, unknown>)
           }
 
@@ -223,7 +231,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async update({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -232,7 +240,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           const result = await query(args)
 
           // Audit logging for update operations
-          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+          if (
+            AUDITED_MODELS.includes(model as AuditedModel) &&
+            result &&
+            typeof result === "object"
+          ) {
             queueAuditLog(prismaBase, model, "UPDATE", result as Record<string, unknown>)
           }
 
@@ -240,7 +252,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async delete({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -249,7 +261,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           const result = await query(args)
 
           // Audit logging for delete operations
-          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+          if (
+            AUDITED_MODELS.includes(model as AuditedModel) &&
+            result &&
+            typeof result === "object"
+          ) {
             queueAuditLog(prismaBase, model, "DELETE", result as Record<string, unknown>)
           }
 
@@ -258,7 +274,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         // === Missing operations for full tenant isolation ===
         async createMany({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             // Add companyId to each record being created
             if (Array.isArray(args.data)) {
               args.data = args.data.map((item: Record<string, unknown>) => ({
@@ -276,7 +292,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async updateMany({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -286,7 +302,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async deleteMany({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -296,7 +312,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async upsert({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             // Add tenant filter to where clause
             args.where = {
               ...args.where,
@@ -312,7 +328,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           const result = await query(args)
 
           // Audit logging for upsert operations
-          if (AUDITED_MODELS.includes(model as AuditedModel) && result && typeof result === "object") {
+          if (
+            AUDITED_MODELS.includes(model as AuditedModel) &&
+            result &&
+            typeof result === "object"
+          ) {
             queueAuditLog(prismaBase, model, "UPDATE", result as Record<string, unknown>)
           }
 
@@ -320,7 +340,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async count({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -330,7 +350,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async aggregate({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -340,7 +360,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async groupBy({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as typeof TENANT_MODELS[number])) {
+          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,

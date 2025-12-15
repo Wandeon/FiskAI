@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode } from "react"
 
 export interface Column<T> {
   key: string
@@ -19,7 +19,7 @@ export function ResponsiveTable<T>({
   data,
   renderCard,
   getRowKey,
-  className = '',
+  className = "",
 }: ResponsiveTableProps<T>) {
   return (
     <div className={className}>
@@ -60,7 +60,7 @@ export function ResponsiveTable<T>({
                   >
                     {column.render
                       ? column.render(item)
-                      : String((item as Record<string, unknown>)[column.key] ?? '')}
+                      : String((item as Record<string, unknown>)[column.key] ?? "")}
                   </td>
                 ))}
               </tr>

@@ -5,65 +5,65 @@
  * functions to check if a user has permission to perform an action.
  */
 
-import { db } from '@/lib/db'
-import { Role } from '@prisma/client'
+import { db } from "@/lib/db"
+import { Role } from "@prisma/client"
 
 /**
  * Permission matrix mapping actions to allowed roles
  */
 export const PERMISSIONS = {
   // Invoice permissions
-  'invoice:create': ['OWNER', 'ADMIN', 'MEMBER'],
-  'invoice:read': ['OWNER', 'ADMIN', 'MEMBER', 'ACCOUNTANT', 'VIEWER'],
-  'invoice:update': ['OWNER', 'ADMIN', 'MEMBER'],
-  'invoice:delete': ['OWNER', 'ADMIN'],
+  "invoice:create": ["OWNER", "ADMIN", "MEMBER"],
+  "invoice:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "invoice:update": ["OWNER", "ADMIN", "MEMBER"],
+  "invoice:delete": ["OWNER", "ADMIN"],
 
   // Expense permissions
-  'expense:create': ['OWNER', 'ADMIN', 'MEMBER'],
-  'expense:read': ['OWNER', 'ADMIN', 'MEMBER', 'ACCOUNTANT', 'VIEWER'],
-  'expense:update': ['OWNER', 'ADMIN', 'MEMBER'],
-  'expense:delete': ['OWNER', 'ADMIN'],
+  "expense:create": ["OWNER", "ADMIN", "MEMBER"],
+  "expense:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "expense:update": ["OWNER", "ADMIN", "MEMBER"],
+  "expense:delete": ["OWNER", "ADMIN"],
 
   // Contact permissions
-  'contact:create': ['OWNER', 'ADMIN', 'MEMBER'],
-  'contact:read': ['OWNER', 'ADMIN', 'MEMBER', 'ACCOUNTANT', 'VIEWER'],
-  'contact:update': ['OWNER', 'ADMIN', 'MEMBER'],
-  'contact:delete': ['OWNER', 'ADMIN'],
+  "contact:create": ["OWNER", "ADMIN", "MEMBER"],
+  "contact:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "contact:update": ["OWNER", "ADMIN", "MEMBER"],
+  "contact:delete": ["OWNER", "ADMIN"],
 
   // Product permissions
-  'product:create': ['OWNER', 'ADMIN', 'MEMBER'],
-  'product:read': ['OWNER', 'ADMIN', 'MEMBER', 'ACCOUNTANT', 'VIEWER'],
-  'product:update': ['OWNER', 'ADMIN', 'MEMBER'],
-  'product:delete': ['OWNER', 'ADMIN'],
+  "product:create": ["OWNER", "ADMIN", "MEMBER"],
+  "product:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "product:update": ["OWNER", "ADMIN", "MEMBER"],
+  "product:delete": ["OWNER", "ADMIN"],
 
   // Company settings
-  'settings:read': ['OWNER', 'ADMIN', 'ACCOUNTANT'],
-  'settings:update': ['OWNER', 'ADMIN'],
-  'billing:manage': ['OWNER'],
+  "settings:read": ["OWNER", "ADMIN", "ACCOUNTANT"],
+  "settings:update": ["OWNER", "ADMIN"],
+  "billing:manage": ["OWNER"],
 
   // User management
-  'users:invite': ['OWNER', 'ADMIN'],
-  'users:remove': ['OWNER', 'ADMIN'],
-  'users:update_role': ['OWNER'],
+  "users:invite": ["OWNER", "ADMIN"],
+  "users:remove": ["OWNER", "ADMIN"],
+  "users:update_role": ["OWNER"],
 
   // Reports
-  'reports:read': ['OWNER', 'ADMIN', 'ACCOUNTANT', 'VIEWER'],
-  'reports:export': ['OWNER', 'ADMIN', 'ACCOUNTANT'],
+  "reports:read": ["OWNER", "ADMIN", "ACCOUNTANT", "VIEWER"],
+  "reports:export": ["OWNER", "ADMIN", "ACCOUNTANT"],
 
   // Bank accounts
-  'bank_account:create': ['OWNER', 'ADMIN'],
-  'bank_account:read': ['OWNER', 'ADMIN', 'ACCOUNTANT', 'VIEWER'],
-  'bank_account:update': ['OWNER', 'ADMIN'],
-  'bank_account:delete': ['OWNER', 'ADMIN'],
+  "bank_account:create": ["OWNER", "ADMIN"],
+  "bank_account:read": ["OWNER", "ADMIN", "ACCOUNTANT", "VIEWER"],
+  "bank_account:update": ["OWNER", "ADMIN"],
+  "bank_account:delete": ["OWNER", "ADMIN"],
 
   // Fiscal/Certificate management
-  'fiscal:manage': ['OWNER', 'ADMIN'],
+  "fiscal:manage": ["OWNER", "ADMIN"],
 
   // Expense categories
-  'expense_category:create': ['OWNER', 'ADMIN'],
-  'expense_category:read': ['OWNER', 'ADMIN', 'MEMBER', 'ACCOUNTANT', 'VIEWER'],
-  'expense_category:update': ['OWNER', 'ADMIN'],
-  'expense_category:delete': ['OWNER', 'ADMIN'],
+  "expense_category:create": ["OWNER", "ADMIN"],
+  "expense_category:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "expense_category:update": ["OWNER", "ADMIN"],
+  "expense_category:delete": ["OWNER", "ADMIN"],
 } as const
 
 export type Permission = keyof typeof PERMISSIONS
@@ -129,7 +129,7 @@ export async function requirePermission(
   if (!allowed) {
     const role = await getUserRole(userId, companyId)
     throw new Error(
-      `Permission denied: User with role ${role ?? 'NONE'} does not have permission '${permission}'`
+      `Permission denied: User with role ${role ?? "NONE"} does not have permission '${permission}'`
     )
   }
 }

@@ -70,7 +70,9 @@ export default async function AdminCompanyPage({ params, searchParams }: PagePro
   ])
 
   const featureFlags =
-    company.featureFlags && !Array.isArray(company.featureFlags) && typeof company.featureFlags === "object"
+    company.featureFlags &&
+    !Array.isArray(company.featureFlags) &&
+    typeof company.featureFlags === "object"
       ? Object.entries(company.featureFlags as Record<string, string | number | boolean>)
       : []
 
@@ -203,10 +205,15 @@ export default async function AdminCompanyPage({ params, searchParams }: PagePro
           </div>
           {featureFlags.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Feature flags</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                Feature flags
+              </p>
               <div className="space-y-1 text-xs text-[var(--foreground)]">
                 {featureFlags.map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between rounded-lg border border-[var(--border)] px-2 py-1">
+                  <div
+                    key={key}
+                    className="flex items-center justify-between rounded-lg border border-[var(--border)] px-2 py-1"
+                  >
                     <span className="font-semibold">{key}</span>
                     <span className="text-[var(--muted)]">{String(value)}</span>
                   </div>
@@ -251,7 +258,9 @@ export default async function AdminCompanyPage({ params, searchParams }: PagePro
             <tbody className="divide-y divide-[var(--border)] text-sm">
               {companyUsers.map((member) => (
                 <tr key={member.id}>
-                  <td className="px-3 py-2 font-semibold text-[var(--foreground)]">{member.user?.name || "—"}</td>
+                  <td className="px-3 py-2 font-semibold text-[var(--foreground)]">
+                    {member.user?.name || "—"}
+                  </td>
                   <td className="px-3 py-2 text-[var(--muted)]">{member.user?.email}</td>
                   <td className="px-3 py-2">
                     <span className="rounded-full bg-[var(--surface-secondary)] px-2 py-0.5 text-xs font-semibold text-[var(--muted)]">
@@ -335,7 +344,9 @@ export default async function AdminCompanyPage({ params, searchParams }: PagePro
                   const author = log.userId ? userLookup.get(log.userId) : null
                   return (
                     <tr key={log.id}>
-                      <td className="px-3 py-2 font-semibold text-[var(--foreground)]">{log.action}</td>
+                      <td className="px-3 py-2 font-semibold text-[var(--foreground)]">
+                        {log.action}
+                      </td>
                       <td className="px-3 py-2 text-[var(--muted)]">
                         {log.entity} {log.entityId ? `#${log.entityId.slice(0, 8)}` : ""}
                       </td>

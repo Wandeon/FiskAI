@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import Image from 'next/image'
-import { Camera, Upload, X, Check, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { AIFeedback } from '@/components/ai/ai-feedback'
-import { ExtractedReceipt } from '@/lib/ai/types'
+import { useState, useRef } from "react"
+import Image from "next/image"
+import { Camera, Upload, X, Check, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { AIFeedback } from "@/components/ai/ai-feedback"
+import { ExtractedReceipt } from "@/lib/ai/types"
 
 interface ExtractedReceiptWithUrl extends ExtractedReceipt {
   receiptUrl?: string
@@ -49,16 +49,16 @@ export function ReceiptScannerWithFeedback({
       const base64 = await fileToBase64(file)
 
       // Call extraction API
-      const response = await fetch('/api/ai/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 })
+      const response = await fetch("/api/ai/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Extraction failed')
+        throw new Error(result.error || "Extraction failed")
       }
 
       if (result.success && result.data) {
@@ -66,10 +66,10 @@ export function ReceiptScannerWithFeedback({
         let receiptUrl: string | undefined
         try {
           const formData = new FormData()
-          formData.append('file', file)
+          formData.append("file", file)
 
-          const uploadResponse = await fetch('/api/receipts/upload', {
-            method: 'POST',
+          const uploadResponse = await fetch("/api/receipts/upload", {
+            method: "POST",
             body: formData,
           })
 
@@ -78,17 +78,17 @@ export function ReceiptScannerWithFeedback({
             receiptUrl = uploadResult.receiptUrl
           }
         } catch (uploadError) {
-          console.warn('Receipt upload failed:', uploadError)
+          console.warn("Receipt upload failed:", uploadError)
         }
 
         const extractedWithUrl = { ...result.data, receiptUrl }
         setExtractedData(extractedWithUrl)
         setShowFeedback(true)
       } else {
-        throw new Error(result.error || 'Failed to extract data')
+        throw new Error(result.error || "Failed to extract data")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Processing failed')
+      setError(err instanceof Error ? err.message : "Processing failed")
     } finally {
       setIsProcessing(false)
     }
@@ -127,8 +127,8 @@ export function ReceiptScannerWithFeedback({
     setCurrentFile(null)
     setExtractedData(null)
     setShowFeedback(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (cameraInputRef.current) cameraInputRef.current.value = ""
     onCancel?.()
   }
 
@@ -186,7 +186,7 @@ export function ReceiptScannerWithFeedback({
             operation="ocr_receipt"
             confidence={extractedData.confidence}
             onFeedbackSubmitted={() => {
-              console.log('Feedback submitted for receipt extraction')
+              console.log("Feedback submitted for receipt extraction")
             }}
           />
         )}
@@ -234,19 +234,10 @@ export function ReceiptScannerWithFeedback({
 
         {preview && !isProcessing && !error && (
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={handleCancel}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={handleCancel}>
               Poništi
             </Button>
-            <Button
-              type="button"
-              className="flex-1"
-              onClick={handleConfirm}
-            >
+            <Button type="button" className="flex-1" onClick={handleConfirm}>
               <Check className="h-4 w-4 mr-2" />
               Potvrdi
             </Button>

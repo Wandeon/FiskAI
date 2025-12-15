@@ -1,10 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, FileText, Calculator, Shield, Download, Users, Clock, TrendingUp } from "lucide-react"
+import {
+  CheckCircle2,
+  FileText,
+  Calculator,
+  Shield,
+  Download,
+  Users,
+  Clock,
+  TrendingUp,
+} from "lucide-react"
 
 export const metadata: Metadata = {
   title: "FiskAI — Za paušalni obrt",
-  description: "AI-first računovodstveni asistent posebno prilagođen za paušalni obrt u Hrvatskoj. Izdavanje računa, praćenje troškova i izvozi za knjigovođu.",
+  description:
+    "AI-first računovodstveni asistent posebno prilagođen za paušalni obrt u Hrvatskoj. Izdavanje računa, praćenje troškova i izvozi za knjigovođu.",
 }
 
 export default function PausalniObrtPage() {
@@ -17,10 +27,12 @@ export default function PausalniObrtPage() {
           Posebno prilagođeno za paušalni obrt
         </div>
         <h1 className="text-display text-4xl font-semibold md:text-5xl">
-          Računovodstvo za paušalni obrt koje <span className="text-blue-700">štedi sati</span> mjesečno
+          Računovodstvo za paušalni obrt koje <span className="text-blue-700">štedi sati</span>{" "}
+          mjesečno
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
-          Izradite račune, pratite troškove i pripremite podatke za knjigovođu bez slanja mailova i &quot;donosim fascikl&quot;.
+          Izradite račune, pratite troškove i pripremite podatke za knjigovođu bez slanja mailova i
+          &quot;donosim fascikl&quot;.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
@@ -80,7 +92,9 @@ export default function PausalniObrtPage() {
 
       {/* Features grid */}
       <div className="mb-16">
-        <h2 className="text-3xl font-semibold mb-8 text-center">Sve što vam treba za paušalni obrt</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">
+          Sve što vam treba za paušalni obrt
+        </h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
             <div className="flex items-start gap-3 mb-4">
@@ -201,22 +215,30 @@ export default function PausalniObrtPage() {
         <h2 className="text-2xl font-semibold mb-6 text-center">Vaš mjesečni radni tok s FiskAI</h2>
         <div className="grid gap-6 md:grid-cols-4">
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">1</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              1
+            </div>
             <p className="font-medium">Izdajte račune</p>
             <p className="text-xs text-[var(--muted)] mt-1">Klijentima preko emaila</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">2</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              2
+            </div>
             <p className="font-medium">Skenirajte troškove</p>
             <p className="text-xs text-[var(--muted)] mt-1">AI prepoznavanje podataka</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">3</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              3
+            </div>
             <p className="font-medium">Označite plaćeno</p>
             <p className="text-xs text-[var(--muted)] mt-1">Kada stigne uplata</p>
           </div>
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">4</div>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
+              4
+            </div>
             <p className="font-medium">Izvezite za knjigovođu</p>
             <p className="text-xs text-[var(--muted)] mt-1">Jedan klik za izvoz</p>
           </div>
@@ -237,7 +259,9 @@ export default function PausalniObrtPage() {
               <span className="text-4xl font-bold">39€</span>
               <span className="text-[var(--muted)] ml-2">/ mjesečno</span>
             </div>
-            <p className="text-sm text-[var(--muted)] mt-2">Bez ugovorne obveze • Možete otkazati bilo kada</p>
+            <p className="text-sm text-[var(--muted)] mt-2">
+              Bez ugovorne obveze • Možete otkazati bilo kada
+            </p>
           </div>
           <ul className="space-y-3 text-sm text-left mb-8">
             <li className="flex items-center gap-2">
@@ -280,29 +304,30 @@ export default function PausalniObrtPage() {
           <div>
             <h3 className="font-semibold mb-2">Može li moj knjigovođa koristiti FiskAI?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Da! Možete pozvati svog knjigovođu u FiskAI kao besplatnog korisnika. On će moći pregledavati vaše podatke,
-              izraditi izvještaje i komunicirati s vama direktno kroz platformu.
+              Da! Možete pozvati svog knjigovođu u FiskAI kao besplatnog korisnika. On će moći
+              pregledavati vaše podatke, izraditi izvještaje i komunicirati s vama direktno kroz
+              platformu.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Što ako premašim 50 računa mjesečno?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Automatski ćemo vas obavijestiti i ponuditi nadogradnju na plan s više računa. Paušalni plan ima dodatak
-              od 1€ po računu iznad 50, do maksimalno 200 računa mjesečno.
+              Automatski ćemo vas obavijestiti i ponuditi nadogradnju na plan s više računa.
+              Paušalni plan ima dodatak od 1€ po računu iznad 50, do maksimalno 200 računa mjesečno.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Kako izgleda izvoz za knjigovođu?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Dobivate ZIP datoteku koja sadrži: CSV s računima (broj, datum, klijent, iznos, PDV), CSV s troškovima,
-              PDF kopije svih računa, i preglednu tablicu po mjesecima/kvartalima.
+              Dobivate ZIP datoteku koja sadrži: CSV s računima (broj, datum, klijent, iznos, PDV),
+              CSV s troškovima, PDF kopije svih računa, i preglednu tablicu po mjesecima/kvartalima.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Je li potrebna dugoročna obveza?</h3>
             <p className="text-sm text-[var(--muted)]">
-              Ne. Možete koristiti FiskAI mjesec dana i otkazati bez penala. Također nudimo 14-dnevnu besplatnu probu
-              da isprobate sve funkcije.
+              Ne. Možete koristiti FiskAI mjesec dana i otkazati bez penala. Također nudimo
+              14-dnevnu besplatnu probu da isprobate sve funkcije.
             </p>
           </div>
         </div>
@@ -324,7 +349,8 @@ export default function PausalniObrtPage() {
       <div className="mt-12 text-center">
         <h2 className="text-2xl font-semibold mb-4">Spremni za probu?</h2>
         <p className="text-lg text-[var(--muted)] mb-6 max-w-2xl mx-auto">
-          Pridružite se drugim paušalnim obrtnicima koji su već smanjili vrijeme potrošeno na računovodstvo za 80%.
+          Pridružite se drugim paušalnim obrtnicima koji su već smanjili vrijeme potrošeno na
+          računovodstvo za 80%.
         </p>
         <Link
           href="/register"

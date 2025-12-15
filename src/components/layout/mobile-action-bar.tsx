@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { ReactNode } from "react"
 import { cn } from "@/lib/utils"
@@ -17,9 +17,7 @@ export function MobileActionBar({ children, className }: MobileActionBarProps) {
         className
       )}
     >
-      <div className="flex gap-3">
-        {children}
-      </div>
+      <div className="flex gap-3">{children}</div>
     </div>
   )
 }

@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { suggestCategory, suggestCategoryByVendor } from '@/lib/ai/categorize'
-import { db } from '@/lib/db'
-import { withApiLogging } from '@/lib/api-logging'
-import { updateContext } from '@/lib/context'
-import { logger } from '@/lib/logger'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { suggestCategory, suggestCategoryByVendor } from "@/lib/ai/categorize"
+import { db } from "@/lib/db"
+import { withApiLogging } from "@/lib/api-logging"
+import { updateContext } from "@/lib/context"
+import { logger } from "@/lib/logger"
 
 export const POST = withApiLogging(async (req: NextRequest) => {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   updateContext({ userId: session.user.id })
@@ -20,14 +20,11 @@ export const POST = withApiLogging(async (req: NextRequest) => {
 
     const companyUser = await db.companyUser.findFirst({
       where: { userId: session.user.id, isDefault: true },
-      include: { company: true }
+      include: { company: true },
     })
 
     if (!companyUser?.company) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
 
     const companyId = companyUser.company.id
@@ -57,9 +54,9 @@ export const POST = withApiLogging(async (req: NextRequest) => {
 
     return NextResponse.json({ suggestions: uniqueSuggestions })
   } catch (error) {
-    logger.error({ error }, 'Category suggestion error')
+    logger.error({ error }, "Category suggestion error")
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Suggestion failed' },
+      { error: error instanceof Error ? error.message : "Suggestion failed" },
       { status: 500 }
     )
   }

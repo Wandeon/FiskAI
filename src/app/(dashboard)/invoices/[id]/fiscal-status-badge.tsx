@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { toast } from '@/lib/toast'
-import { manualFiscalizeAction } from '@/app/actions/fiscal-certificate'
-import { CheckCircle2, Clock, AlertCircle, XCircle, Send } from 'lucide-react'
-import type { EInvoice, FiscalRequest } from '@prisma/client'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "@/lib/toast"
+import { manualFiscalizeAction } from "@/app/actions/fiscal-certificate"
+import { CheckCircle2, Clock, AlertCircle, XCircle, Send } from "lucide-react"
+import type { EInvoice, FiscalRequest } from "@prisma/client"
 
 interface FiscalStatusBadgeProps {
   invoice: EInvoice & {
@@ -37,7 +37,7 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
           {invoice.zki && <div className="font-mono truncate max-w-xs">ZKI: {invoice.zki}</div>}
           {invoice.fiscalizedAt && (
             <div className="mt-1">
-              Fiskalizirano: {new Date(invoice.fiscalizedAt).toLocaleString('hr-HR')}
+              Fiskalizirano: {new Date(invoice.fiscalizedAt).toLocaleString("hr-HR")}
             </div>
           )}
         </div>
@@ -47,35 +47,30 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
 
   // Check fiscal request status
   if (latestRequest) {
-    if (latestRequest.status === 'QUEUED') {
+    if (latestRequest.status === "QUEUED") {
       return (
         <div className="space-y-2">
           <Badge variant="secondary">
-            <Clock className="w-3 h-3 mr-1" />
-            U redu čekanja
+            <Clock className="w-3 h-3 mr-1" />U redu čekanja
           </Badge>
-          <div className="text-xs text-muted-foreground">
-            Čeka fiskalizaciju...
-          </div>
+          <div className="text-xs text-muted-foreground">Čeka fiskalizaciju...</div>
         </div>
       )
     }
 
-    if (latestRequest.status === 'PROCESSING') {
+    if (latestRequest.status === "PROCESSING") {
       return (
         <div className="space-y-2">
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1 animate-spin" />
             Procesira se
           </Badge>
-          <div className="text-xs text-muted-foreground">
-            Fiskalizacija u tijeku...
-          </div>
+          <div className="text-xs text-muted-foreground">Fiskalizacija u tijeku...</div>
         </div>
       )
     }
 
-    if (latestRequest.status === 'FAILED' || latestRequest.status === 'DEAD') {
+    if (latestRequest.status === "FAILED" || latestRequest.status === "DEAD") {
       return (
         <div className="space-y-2">
           <Badge variant="destructive">
@@ -99,7 +94,7 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
             onClick={handleManualFiscalize}
             disabled={isManualizing}
           >
-            {isManualizing ? 'Slanje...' : 'Pokušaj ponovno'}
+            {isManualizing ? "Slanje..." : "Pokušaj ponovno"}
           </Button>
         </div>
       )
@@ -107,10 +102,7 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
   }
 
   // No fiscalization yet - show manual button if conditions met
-  const canManuallyFiscalize =
-    hasCertificate &&
-    invoice.status !== 'DRAFT' &&
-    !invoice.jir
+  const canManuallyFiscalize = hasCertificate && invoice.status !== "DRAFT" && !invoice.jir
 
   if (canManuallyFiscalize) {
     return (
@@ -126,23 +118,21 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
           disabled={isManualizing}
         >
           <Send className="w-4 h-4 mr-2" />
-          {isManualizing ? 'Slanje...' : 'Fiskaliziraj'}
+          {isManualizing ? "Slanje..." : "Fiskaliziraj"}
         </Button>
       </div>
     )
   }
 
   // No certificate or draft invoice
-  if (!hasCertificate && invoice.status !== 'DRAFT') {
+  if (!hasCertificate && invoice.status !== "DRAFT") {
     return (
       <div className="space-y-2">
         <Badge variant="outline">
           <AlertCircle className="w-3 h-3 mr-1" />
           Nije fiskalizirano
         </Badge>
-        <div className="text-xs text-muted-foreground">
-          Certifikat nije konfiguriran
-        </div>
+        <div className="text-xs text-muted-foreground">Certifikat nije konfiguriran</div>
       </div>
     )
   }
@@ -150,17 +140,17 @@ export function FiscalStatusBadge({ invoice, hasCertificate }: FiscalStatusBadge
   return null
 
   async function handleManualFiscalize() {
-    if (!confirm('Fiskalizirati ovaj račun?')) return
+    if (!confirm("Fiskalizirati ovaj račun?")) return
     setIsManualizing(true)
 
     const result = await manualFiscalizeAction(invoice.id)
     setIsManualizing(false)
 
     if (result.success) {
-      toast.success('Fiskalizacija je dodana u red čekanja')
+      toast.success("Fiskalizacija je dodana u red čekanja")
       router.refresh()
     } else {
-      toast.error(result.error || 'Greška pri fiskalizaciji')
+      toast.error(result.error || "Greška pri fiskalizaciji")
     }
   }
 }

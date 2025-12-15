@@ -12,11 +12,23 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/features", "/pricing", "/about", "/contact", "/security", "/privacy", "/terms", "/dpa", "/cookies", "/ai-data-policy", "/status"],
+        allow: [
+          "/",
+          "/features",
+          "/pricing",
+          "/about",
+          "/contact",
+          "/security",
+          "/privacy",
+          "/terms",
+          "/dpa",
+          "/cookies",
+          "/ai-data-policy",
+          "/status",
+        ],
         disallow: ["/admin", "/api", "/dashboard", "/invoices", "/expenses", "/settings"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }
 }
-

@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback } from "react"
 
 interface ConfirmState {
   isOpen: boolean
@@ -12,12 +12,12 @@ interface ConfirmState {
 export function useConfirm() {
   const [state, setState] = useState<ConfirmState>({
     isOpen: false,
-    title: '',
+    title: "",
     onConfirm: () => {},
   })
   const [loading, setLoading] = useState(false)
 
-  const confirm = useCallback((options: Omit<ConfirmState, 'isOpen'>) => {
+  const confirm = useCallback((options: Omit<ConfirmState, "isOpen">) => {
     setState({
       isOpen: true,
       ...options,
@@ -28,7 +28,7 @@ export function useConfirm() {
     setLoading(true)
     try {
       await state.onConfirm()
-      setState(s => ({ ...s, isOpen: false }))
+      setState((s) => ({ ...s, isOpen: false }))
     } finally {
       setLoading(false)
     }
@@ -36,7 +36,7 @@ export function useConfirm() {
 
   const handleClose = useCallback(() => {
     if (!loading) {
-      setState(s => ({ ...s, isOpen: false }))
+      setState((s) => ({ ...s, isOpen: false }))
     }
   }, [loading])
 

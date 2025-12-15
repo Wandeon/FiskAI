@@ -1,18 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser, getCurrentCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { updateContext, runWithContext } from '@/lib/context'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { renderToBuffer } from '@react-pdf/renderer'
-import { InvoicePDFDocument } from '@/lib/pdf/invoice-template'
-import { logger } from '@/lib/logger'
+import { NextRequest, NextResponse } from "next/server"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { updateContext, runWithContext } from "@/lib/context"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { renderToBuffer } from "@react-pdf/renderer"
+import { InvoicePDFDocument } from "@/lib/pdf/invoice-template"
+import { logger } from "@/lib/logger"
 import { generateInvoiceBarcodeDataUrl } from "@/lib/barcode"
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID()
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID()
   const startedAt = Date.now()
 
   return runWithContext(
@@ -26,14 +23,14 @@ export async function GET(
         const user = await getCurrentUser()
 
         if (!user) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         updateContext({ userId: user.id! })
 
         const company = await getCurrentCompany(user.id!)
         if (!company) {
-          return NextResponse.json({ error: 'Company not found' }, { status: 404 })
+          return NextResponse.json({ error: "Company not found" }, { status: 404 })
         }
 
         updateContext({ companyId: company.id })
@@ -54,13 +51,13 @@ export async function GET(
             buyer: true,
             seller: true,
             lines: {
-              orderBy: { lineNumber: 'asc' },
+              orderBy: { lineNumber: "asc" },
             },
           },
         })
 
         if (!invoice) {
-          return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+          return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
         }
 
         // Use company as seller if seller contact is not set
@@ -106,14 +103,16 @@ export async function GET(
             phone: sellerData.phone || company.phone,
             iban: company.iban, // Always use company IBAN
           },
-          buyer: invoice.buyer ? {
-            name: invoice.buyer.name,
-            oib: invoice.buyer.oib,
-            address: invoice.buyer.address,
-            city: invoice.buyer.city,
-            postalCode: invoice.buyer.postalCode,
-            country: invoice.buyer.country,
-          } : null,
+          buyer: invoice.buyer
+            ? {
+                name: invoice.buyer.name,
+                oib: invoice.buyer.oib,
+                address: invoice.buyer.address,
+                city: invoice.buyer.city,
+                postalCode: invoice.buyer.postalCode,
+                country: invoice.buyer.country,
+              }
+            : null,
           lines: invoice.lines.map((line) => ({
             lineNumber: line.lineNumber,
             description: line.description,
@@ -145,21 +144,21 @@ export async function GET(
         const pdfBuffer = await renderToBuffer(doc)
 
         const durationMs = Date.now() - startedAt
-        logger.info({ status: 200, durationMs, invoiceId: id }, 'PDF generated successfully')
+        logger.info({ status: 200, durationMs, invoiceId: id }, "PDF generated successfully")
 
         // Return PDF with proper headers
         const response = new NextResponse(Buffer.from(pdfBuffer), {
           headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="racun-${invoice.invoiceNumber.replace(/\//g, '-')}.pdf"`,
-            'x-request-id': requestId,
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename="racun-${invoice.invoiceNumber.replace(/\//g, "-")}.pdf"`,
+            "x-request-id": requestId,
           },
         })
 
         return response
       } catch (error) {
         const durationMs = Date.now() - startedAt
-        logger.error({ error, durationMs }, 'PDF generation failed')
+        logger.error({ error, durationMs }, "PDF generation failed")
         throw error
       }
     }

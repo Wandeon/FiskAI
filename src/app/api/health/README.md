@@ -3,15 +3,18 @@
 ## Endpoints
 
 ### 1. Basic Health Check
+
 - **URL:** `/api/health`
 - **Purpose:** Load balancer health checks
 - **Returns:** 200 (healthy) or 503 (unhealthy)
 
 **Checks:**
+
 - Database connectivity
 - Memory usage (<95%)
 
 **Example Response:**
+
 ```json
 {
   "status": "healthy",
@@ -25,16 +28,19 @@
 ```
 
 ### 2. Readiness Probe
+
 - **URL:** `/api/health/ready`
 - **Purpose:** Kubernetes/Docker readiness checks
 - **Returns:** 200 (ready) or 503 (not ready)
 
 **Checks:**
+
 - Database connectivity (<5000ms latency)
 - Memory usage (<90%)
 - Minimum uptime (5 seconds)
 
 **Example Response:**
+
 ```json
 {
   "status": "ready",
@@ -50,17 +56,20 @@
 ```
 
 ### 3. Status Information
+
 - **URL:** `/api/status`
 - **Purpose:** System status for monitoring dashboards
 - **Returns:** Always 200
 
 **Provides:**
+
 - Version information
 - Uptime statistics
 - System information
 - Memory statistics
 
 **Example Response:**
+
 ```json
 {
   "status": "operational",
@@ -87,18 +96,19 @@
 
 ## Key Differences
 
-| Feature | /api/health | /api/health/ready | /api/status |
-|---------|-------------|-------------------|-------------|
-| Purpose | Load balancer | K8s readiness | Monitoring |
-| DB Check | Yes | Yes (strict) | No |
-| Memory Check | Yes (95%) | Yes (90%) | Info only |
-| Uptime Check | No | Yes (5s min) | Info only |
-| Can Return 503 | Yes | Yes | No |
-| Response Time | <100ms | <200ms | <50ms |
+| Feature        | /api/health   | /api/health/ready | /api/status |
+| -------------- | ------------- | ----------------- | ----------- |
+| Purpose        | Load balancer | K8s readiness     | Monitoring  |
+| DB Check       | Yes           | Yes (strict)      | No          |
+| Memory Check   | Yes (95%)     | Yes (90%)         | Info only   |
+| Uptime Check   | No            | Yes (5s min)      | Info only   |
+| Can Return 503 | Yes           | Yes               | No          |
+| Response Time  | <100ms        | <200ms            | <50ms       |
 
 ## Security
 
 All endpoints are **unauthenticated** by design:
+
 - No sensitive data exposed
 - No credentials or secrets
 - Safe for public monitoring tools

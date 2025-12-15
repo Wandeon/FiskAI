@@ -17,13 +17,20 @@ export interface Capabilities {
 }
 
 // Partial company type for deriveCapabilities - only needs fields we actually use
-type PartialCompany = Pick<Company, 'isVatPayer'> & {
+type PartialCompany = Pick<Company, "isVatPayer"> & {
   legalForm?: string | null
   entitlements?: unknown
   featureFlags?: unknown
 }
 
-const defaultEntitlements: ModuleKey[] = ["invoicing", "eInvoicing", "expenses", "banking", "reports", "settings"]
+const defaultEntitlements: ModuleKey[] = [
+  "invoicing",
+  "eInvoicing",
+  "expenses",
+  "banking",
+  "reports",
+  "settings",
+]
 
 export function deriveCapabilities(company: PartialCompany | null): Capabilities {
   const legalForm = (company?.legalForm as LegalForm) || "DOO"
@@ -40,7 +47,8 @@ export function deriveCapabilities(company: PartialCompany | null): Capabilities
     settings: { enabled: entitlements.includes("settings") },
   }
 
-  const requireVatFields = isVatPayer || legalForm === "OBRT_VAT" || legalForm === "DOO" || legalForm === "JDOO"
+  const requireVatFields =
+    isVatPayer || legalForm === "OBRT_VAT" || legalForm === "DOO" || legalForm === "JDOO"
   const allowReverseCharge = isVatPayer
   const requireOib = legalForm === "DOO" || legalForm === "JDOO"
 

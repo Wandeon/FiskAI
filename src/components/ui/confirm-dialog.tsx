@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { ReactNode } from "react"
 import { AlertTriangle, Info, CheckCircle2, Loader2 } from "lucide-react"
@@ -6,7 +6,7 @@ import { Modal, ModalFooter } from "./modal"
 import { Button } from "./button"
 import { cn } from "@/lib/utils"
 
-type Variant = 'danger' | 'warning' | 'info' | 'success'
+type Variant = "danger" | "warning" | "info" | "success"
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -24,27 +24,27 @@ interface ConfirmDialogProps {
 const variantConfig = {
   danger: {
     icon: AlertTriangle,
-    iconBg: 'bg-danger-100',
-    iconColor: 'text-danger-600',
-    buttonClass: 'bg-danger-600 hover:bg-danger-700 text-white',
+    iconBg: "bg-danger-100",
+    iconColor: "text-danger-600",
+    buttonClass: "bg-danger-600 hover:bg-danger-700 text-white",
   },
   warning: {
     icon: AlertTriangle,
-    iconBg: 'bg-warning-100',
-    iconColor: 'text-warning-600',
-    buttonClass: 'bg-warning-600 hover:bg-warning-700 text-white',
+    iconBg: "bg-warning-100",
+    iconColor: "text-warning-600",
+    buttonClass: "bg-warning-600 hover:bg-warning-700 text-white",
   },
   info: {
     icon: Info,
-    iconBg: 'bg-brand-100',
-    iconColor: 'text-brand-600',
-    buttonClass: 'bg-brand-600 hover:bg-brand-700 text-white',
+    iconBg: "bg-brand-100",
+    iconColor: "text-brand-600",
+    buttonClass: "bg-brand-600 hover:bg-brand-700 text-white",
   },
   success: {
     icon: CheckCircle2,
-    iconBg: 'bg-success-100',
-    iconColor: 'text-success-600',
-    buttonClass: 'bg-success-600 hover:bg-success-700 text-white',
+    iconBg: "bg-success-100",
+    iconColor: "text-success-600",
+    buttonClass: "bg-success-600 hover:bg-success-700 text-white",
   },
 }
 
@@ -56,7 +56,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = "Potvrdi",
   cancelLabel = "Odustani",
-  variant = 'danger',
+  variant = "danger",
   loading = false,
   children,
 }: ConfirmDialogProps) {
@@ -66,14 +66,17 @@ export function ConfirmDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} showClose={false} size="sm">
       <div className="flex gap-4">
-        <div className={cn("flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full", config.iconBg)}>
+        <div
+          className={cn(
+            "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full",
+            config.iconBg
+          )}
+        >
           <Icon className={cn("h-6 w-6", config.iconColor)} />
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-[var(--foreground)]">{title}</h3>
-          {description && (
-            <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>
-          )}
+          {description && <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>}
           {children}
         </div>
       </div>
@@ -82,11 +85,7 @@ export function ConfirmDialog({
         <Button variant="outline" onClick={onClose} disabled={loading}>
           {cancelLabel}
         </Button>
-        <Button
-          onClick={onConfirm}
-          disabled={loading}
-          className={config.buttonClass}
-        >
+        <Button onClick={onConfirm} disabled={loading} className={config.buttonClass}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

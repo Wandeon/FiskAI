@@ -1,10 +1,14 @@
-'use server'
+"use server"
 
-import { db } from '@/lib/db'
-import { requireAuth, requireCompanyWithContext, requireCompanyWithPermission } from '@/lib/auth-utils'
-import { revalidatePath } from 'next/cache'
-import { Prisma, ExpenseStatus, PaymentMethod } from '@prisma/client'
-import { z } from 'zod'
+import { db } from "@/lib/db"
+import {
+  requireAuth,
+  requireCompanyWithContext,
+  requireCompanyWithPermission,
+} from "@/lib/auth-utils"
+import { revalidatePath } from "next/cache"
+import { Prisma, ExpenseStatus, PaymentMethod } from "@prisma/client"
+import { z } from "zod"
 
 const Decimal = Prisma.Decimal
 
@@ -48,7 +52,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
       })
 
       if (!category) {
-        return { success: false, error: 'Kategorija nije pronađena' }
+        return { success: false, error: "Kategorija nije pronađena" }
       }
 
       // Verify vendor if provided (automatically filtered by tenant context)
@@ -57,11 +61,11 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
           where: { id: input.vendorId },
         })
         if (!vendor) {
-          return { success: false, error: 'Dobavljač nije pronađen' }
+          return { success: false, error: "Dobavljač nije pronađen" }
         }
       }
 
-      const status: ExpenseStatus = input.paymentMethod ? 'PAID' : 'DRAFT'
+      const status: ExpenseStatus = input.paymentMethod ? "PAID" : "DRAFT"
 
       const expense = await db.expense.create({
         data: {
@@ -74,7 +78,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
           vatAmount: new Decimal(input.vatAmount),
           totalAmount: new Decimal(input.totalAmount),
           vatDeductible: input.vatDeductible ?? true,
-          currency: input.currency || 'EUR',
+          currency: input.currency || "EUR",
           status,
           paymentMethod: input.paymentMethod as PaymentMethod | null,
           paymentDate: input.paymentMethod ? new Date() : null,
@@ -83,12 +87,12 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
         },
       })
 
-      revalidatePath('/expenses')
+      revalidatePath("/expenses")
       return { success: true, data: expense }
     })
   } catch (error) {
-    console.error('Failed to create expense:', error)
-    return { success: false, error: 'Greška pri kreiranju troška' }
+    console.error("Failed to create expense:", error)
+    return { success: false, error: "Greška pri kreiranju troška" }
   }
 }
 
@@ -105,14 +109,16 @@ export async function updateExpense(
       })
 
       if (!existing) {
-        return { success: false, error: 'Trošak nije pronađen' }
+        return { success: false, error: "Trošak nije pronađen" }
       }
 
       const updateData: Prisma.ExpenseUpdateInput = {}
 
       if (input.categoryId) updateData.category = { connect: { id: input.categoryId } }
       if (input.vendorId !== undefined) {
-        updateData.vendor = input.vendorId ? { connect: { id: input.vendorId } } : { disconnect: true }
+        updateData.vendor = input.vendorId
+          ? { connect: { id: input.vendorId } }
+          : { disconnect: true }
       }
       if (input.description) updateData.description = input.description
       if (input.date) updateData.date = input.date
@@ -125,12 +131,13 @@ export async function updateExpense(
       if (input.paymentMethod !== undefined) {
         updateData.paymentMethod = input.paymentMethod as PaymentMethod | null
         if (input.paymentMethod) {
-          updateData.status = 'PAID'
+          updateData.status = "PAID"
           updateData.paymentDate = new Date()
         }
       }
       if ((input as CreateExpenseInput & { receiptUrl?: string }).receiptUrl !== undefined) {
-        updateData.receiptUrl = (input as CreateExpenseInput & { receiptUrl?: string }).receiptUrl || null
+        updateData.receiptUrl =
+          (input as CreateExpenseInput & { receiptUrl?: string }).receiptUrl || null
       }
 
       const expense = await db.expense.update({
@@ -138,13 +145,13 @@ export async function updateExpense(
         data: updateData,
       })
 
-      revalidatePath('/expenses')
+      revalidatePath("/expenses")
       revalidatePath(`/expenses/${id}`)
       return { success: true, data: expense }
     })
   } catch (error) {
-    console.error('Failed to update expense:', error)
-    return { success: false, error: 'Greška pri ažuriranju troška' }
+    console.error("Failed to update expense:", error)
+    return { success: false, error: "Greška pri ažuriranju troška" }
   }
 }
 
@@ -152,29 +159,29 @@ export async function deleteExpense(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithPermission(user.id!, 'expense:delete', async () => {
+    return requireCompanyWithPermission(user.id!, "expense:delete", async () => {
       const expense = await db.expense.findFirst({
         where: { id },
       })
 
       if (!expense) {
-        return { success: false, error: 'Trošak nije pronađen' }
+        return { success: false, error: "Trošak nije pronađen" }
       }
 
       await db.expense.delete({ where: { id } })
 
-      revalidatePath('/expenses')
+      revalidatePath("/expenses")
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to delete expense:', error)
+    console.error("Failed to delete expense:", error)
 
     // Check if this is a permission error
-    if (error instanceof Error && error.message.includes('Permission denied')) {
-      return { success: false, error: 'Nemate dopuštenje za brisanje troškova' }
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return { success: false, error: "Nemate dopuštenje za brisanje troškova" }
     }
 
-    return { success: false, error: 'Greška pri brisanju troška' }
+    return { success: false, error: "Greška pri brisanju troška" }
   }
 }
 
@@ -191,29 +198,29 @@ export async function markExpenseAsPaid(
       })
 
       if (!expense) {
-        return { success: false, error: 'Trošak nije pronađen' }
+        return { success: false, error: "Trošak nije pronađen" }
       }
 
-      if (expense.status === 'PAID') {
-        return { success: false, error: 'Trošak je već plaćen' }
+      if (expense.status === "PAID") {
+        return { success: false, error: "Trošak je već plaćen" }
       }
 
       await db.expense.update({
         where: { id },
         data: {
-          status: 'PAID',
+          status: "PAID",
           paymentMethod,
           paymentDate: new Date(),
         },
       })
 
-      revalidatePath('/expenses')
+      revalidatePath("/expenses")
       revalidatePath(`/expenses/${id}`)
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to mark expense as paid:', error)
-    return { success: false, error: 'Greška pri označavanju plaćanja' }
+    console.error("Failed to mark expense as paid:", error)
+    return { success: false, error: "Greška pri označavanju plaćanja" }
   }
 }
 
@@ -235,18 +242,18 @@ export async function updateExpenseInline(
       })
 
       if (!existing) {
-        return { success: false, error: 'Trošak nije pronađen' }
+        return { success: false, error: "Trošak nije pronađen" }
       }
 
       const validated = expenseInlineSchema.safeParse(input)
       if (!validated.success) {
-        return { success: false, error: 'Neispravni podaci' }
+        return { success: false, error: "Neispravni podaci" }
       }
 
       const data: Prisma.ExpenseUpdateInput = {}
       if (validated.data.status) {
         data.status = validated.data.status
-        if (validated.data.status === 'PAID') {
+        if (validated.data.status === "PAID") {
           data.paymentDate = new Date()
         }
       }
@@ -259,12 +266,12 @@ export async function updateExpenseInline(
         data,
       })
 
-      revalidatePath('/expenses')
+      revalidatePath("/expenses")
       return { success: true, data: expense }
     })
   } catch (error) {
-    console.error('Failed to update expense inline:', error)
-    return { success: false, error: 'Greška pri ažuriranju' }
+    console.error("Failed to update expense inline:", error)
+    return { success: false, error: "Greška pri ažuriranju" }
   }
 }
 
@@ -295,12 +302,12 @@ export async function createExpenseCategory(input: {
         },
       })
 
-      revalidatePath('/expenses/categories')
+      revalidatePath("/expenses/categories")
       return { success: true, data: category }
     })
   } catch (error) {
-    console.error('Failed to create category:', error)
-    return { success: false, error: 'Greška pri kreiranju kategorije' }
+    console.error("Failed to create category:", error)
+    return { success: false, error: "Greška pri kreiranju kategorije" }
   }
 }
 
@@ -308,35 +315,35 @@ export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithPermission(user.id!, 'expense_category:delete', async () => {
+    return requireCompanyWithPermission(user.id!, "expense_category:delete", async () => {
       const category = await db.expenseCategory.findFirst({
         where: { id },
       })
 
       if (!category) {
-        return { success: false, error: 'Kategorija nije pronađena' }
+        return { success: false, error: "Kategorija nije pronađena" }
       }
 
       // Check if category has expenses
       const expenseCount = await db.expense.count({ where: { categoryId: id } })
       if (expenseCount > 0) {
-        return { success: false, error: 'Nije moguće obrisati kategoriju koja ima troškove' }
+        return { success: false, error: "Nije moguće obrisati kategoriju koja ima troškove" }
       }
 
       await db.expenseCategory.delete({ where: { id } })
 
-      revalidatePath('/expenses/categories')
+      revalidatePath("/expenses/categories")
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to delete category:', error)
+    console.error("Failed to delete category:", error)
 
     // Check if this is a permission error
-    if (error instanceof Error && error.message.includes('Permission denied')) {
-      return { success: false, error: 'Nemate dopuštenje za brisanje kategorija' }
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return { success: false, error: "Nemate dopuštenje za brisanje kategorija" }
     }
 
-    return { success: false, error: 'Greška pri brisanju kategorije' }
+    return { success: false, error: "Greška pri brisanju kategorije" }
   }
 }
 
@@ -347,14 +354,14 @@ export async function seedDefaultCategories(): Promise<ActionResult> {
 
     return requireCompanyWithContext(user.id!, async (company) => {
       const defaults = [
-        { code: 'OFFICE', name: 'Uredski materijal', vatDeductibleDefault: true },
-        { code: 'TRAVEL', name: 'Putni troškovi', vatDeductibleDefault: true },
-        { code: 'FUEL', name: 'Gorivo', vatDeductibleDefault: false }, // 50% deductible
-        { code: 'TELECOM', name: 'Telekomunikacije', vatDeductibleDefault: true },
-        { code: 'RENT', name: 'Najam', vatDeductibleDefault: true },
-        { code: 'UTILITIES', name: 'Režije', vatDeductibleDefault: true },
-        { code: 'SERVICES', name: 'Usluge', vatDeductibleDefault: true },
-        { code: 'OTHER', name: 'Ostalo', vatDeductibleDefault: false },
+        { code: "OFFICE", name: "Uredski materijal", vatDeductibleDefault: true },
+        { code: "TRAVEL", name: "Putni troškovi", vatDeductibleDefault: true },
+        { code: "FUEL", name: "Gorivo", vatDeductibleDefault: false }, // 50% deductible
+        { code: "TELECOM", name: "Telekomunikacije", vatDeductibleDefault: true },
+        { code: "RENT", name: "Najam", vatDeductibleDefault: true },
+        { code: "UTILITIES", name: "Režije", vatDeductibleDefault: true },
+        { code: "SERVICES", name: "Usluge", vatDeductibleDefault: true },
+        { code: "OTHER", name: "Ostalo", vatDeductibleDefault: false },
       ]
 
       for (const cat of defaults) {
@@ -365,11 +372,11 @@ export async function seedDefaultCategories(): Promise<ActionResult> {
         })
       }
 
-      revalidatePath('/expenses/categories')
+      revalidatePath("/expenses/categories")
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to seed categories:', error)
-    return { success: false, error: 'Greška pri kreiranju zadanih kategorija' }
+    console.error("Failed to seed categories:", error)
+    return { success: false, error: "Greška pri kreiranju zadanih kategorija" }
   }
 }

@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useCallback, useState, useRef } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { UploadCloud, Camera } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ACCEPTED_FILE_TYPES } from '@/lib/import/detect-document-type'
-import { DocumentScanner } from '@/components/import/document-scanner'
+import { useCallback, useState, useRef } from "react"
+import { useDropzone } from "react-dropzone"
+import { UploadCloud, Camera } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ACCEPTED_FILE_TYPES } from "@/lib/import/detect-document-type"
+import { DocumentScanner } from "@/components/import/document-scanner"
 
 interface CompactDropzoneProps {
   onFilesDropped: (files: File[]) => void
@@ -26,11 +26,14 @@ export function CompactDropzone({
   const [capturedFile, setCapturedFile] = useState<File | null>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onFilesDropped(acceptedFiles)
-    }
-  }, [onFilesDropped])
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        onFilesDropped(acceptedFiles)
+      }
+    },
+    [onFilesDropped]
+  )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -39,11 +42,14 @@ export function CompactDropzone({
     multiple: true,
   })
 
-  const handleScanCapture = useCallback((file: File) => {
-    setScannerOpen(false)
-    setCapturedFile(null)
-    onFilesDropped([file])
-  }, [onFilesDropped])
+  const handleScanCapture = useCallback(
+    (file: File) => {
+      setScannerOpen(false)
+      setCapturedFile(null)
+      onFilesDropped([file])
+    },
+    [onFilesDropped]
+  )
 
   const handleCameraCapture = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -53,7 +59,7 @@ export function CompactDropzone({
     }
     // Reset input so same file can be selected again
     if (cameraInputRef.current) {
-      cameraInputRef.current.value = ''
+      cameraInputRef.current.value = ""
     }
   }, [])
 
@@ -62,11 +68,12 @@ export function CompactDropzone({
       {...getRootProps()}
       className={`
         flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-dashed transition-all cursor-pointer
-        ${isDragActive
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-300 bg-gradient-to-r from-slate-50 to-white hover:border-gray-400'
+        ${
+          isDragActive
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 bg-gradient-to-r from-slate-50 to-white hover:border-gray-400"
         }
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >
       <input {...getInputProps()} />
@@ -81,20 +88,20 @@ export function CompactDropzone({
         className="hidden"
       />
 
-      <div className={`
+      <div
+        className={`
         flex-shrink-0 p-2 rounded-full transition-colors
-        ${isDragActive ? 'bg-blue-100' : 'bg-gray-100'}
-      `}>
-        <UploadCloud className={`h-5 w-5 ${isDragActive ? 'text-blue-600' : 'text-gray-500'}`} />
+        ${isDragActive ? "bg-blue-100" : "bg-gray-100"}
+      `}
+      >
+        <UploadCloud className={`h-5 w-5 ${isDragActive ? "text-blue-600" : "text-gray-500"}`} />
       </div>
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900">
-          {isDragActive ? 'Ispustite ovdje...' : 'Povucite dokumente ovdje'}
+          {isDragActive ? "Ispustite ovdje..." : "Povucite dokumente ovdje"}
         </p>
-        <p className="text-xs text-gray-500 truncate">
-          PDF, XML, CSV, slike
-        </p>
+        <p className="text-xs text-gray-500 truncate">PDF, XML, CSV, slike</p>
       </div>
 
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -105,7 +112,7 @@ export function CompactDropzone({
             className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hidden sm:block"
             onClick={(e) => e.stopPropagation()}
           >
-            {bankAccounts.map(acc => (
+            {bankAccounts.map((acc) => (
               <option key={acc.id} value={acc.id}>
                 {acc.name}
               </option>

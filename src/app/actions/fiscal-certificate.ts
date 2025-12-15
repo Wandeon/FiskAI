@@ -1,16 +1,16 @@
 // src/app/actions/fiscal-certificate.ts
-'use server'
+"use server"
 
-import { revalidatePath } from 'next/cache'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { encryptWithEnvelope } from '@/lib/fiscal/envelope-encryption'
-import { parseP12Certificate, validateCertificate } from '@/lib/fiscal/certificate-parser'
+import { revalidatePath } from "next/cache"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { encryptWithEnvelope } from "@/lib/fiscal/envelope-encryption"
+import { parseP12Certificate, validateCertificate } from "@/lib/fiscal/certificate-parser"
 
 export interface UploadCertificateInput {
   p12Base64: string
   password: string
-  environment: 'TEST' | 'PROD'
+  environment: "TEST" | "PROD"
 }
 
 export interface CertificateInfo {
@@ -30,10 +30,10 @@ export async function validateCertificateAction(
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
-    const p12Buffer = Buffer.from(input.p12Base64, 'base64')
+    const p12Buffer = Buffer.from(input.p12Base64, "base64")
 
     if (p12Buffer.length > 50 * 1024) {
-      return { success: false, error: 'Certificate file too large (max 50KB)' }
+      return { success: false, error: "Certificate file too large (max 50KB)" }
     }
 
     const certInfo = await parseP12Certificate(p12Buffer, input.password)
@@ -56,15 +56,15 @@ export async function validateCertificateAction(
         notBefore: certInfo.notBefore,
         notAfter: certInfo.notAfter,
         issuer: certInfo.issuer,
-        sha256: certInfo.sha256
-      }
+        sha256: certInfo.sha256,
+      },
     }
   } catch (error) {
-    console.error('[fiscal-cert] validate error:', error)
-    if (error instanceof Error && error.message.includes('password')) {
-      return { success: false, error: 'Invalid certificate password' }
+    console.error("[fiscal-cert] validate error:", error)
+    if (error instanceof Error && error.message.includes("password")) {
+      return { success: false, error: "Invalid certificate password" }
     }
-    return { success: false, error: 'Failed to parse certificate' }
+    return { success: false, error: "Failed to parse certificate" }
   }
 }
 
@@ -75,12 +75,12 @@ export async function saveCertificateAction(
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
-    const p12Buffer = Buffer.from(input.p12Base64, 'base64')
+    const p12Buffer = Buffer.from(input.p12Base64, "base64")
     const certInfo = await parseP12Certificate(p12Buffer, input.password)
 
     const payload = JSON.stringify({
       p12: input.p12Base64,
-      password: input.password
+      password: input.password,
     })
     const { encryptedData, encryptedDataKey } = encryptWithEnvelope(payload)
 
@@ -88,13 +88,13 @@ export async function saveCertificateAction(
       where: {
         companyId_environment: {
           companyId: company.id,
-          environment: input.environment
-        }
+          environment: input.environment,
+        },
       },
       create: {
         companyId: company.id,
         environment: input.environment,
-        provider: 'DIRECT',
+        provider: "DIRECT",
         certSubject: certInfo.subject,
         certSerial: certInfo.serial,
         certNotBefore: certInfo.notBefore,
@@ -103,7 +103,7 @@ export async function saveCertificateAction(
         certSha256: certInfo.sha256,
         encryptedP12: encryptedData,
         encryptedDataKey: encryptedDataKey,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
       update: {
         certSubject: certInfo.subject,
@@ -114,38 +114,38 @@ export async function saveCertificateAction(
         certSha256: certInfo.sha256,
         encryptedP12: encryptedData,
         encryptedDataKey: encryptedDataKey,
-        status: 'ACTIVE',
+        status: "ACTIVE",
         updatedAt: new Date(),
-      }
+      },
     })
 
     await db.auditLog.create({
       data: {
         companyId: company.id,
         userId: user.id!,
-        action: 'CREATE',
-        entity: 'FiscalCertificate',
+        action: "CREATE",
+        entity: "FiscalCertificate",
         entityId: certificate.id,
         changes: {
-          operation: 'CERTIFICATE_UPLOADED',
+          operation: "CERTIFICATE_UPLOADED",
           environment: input.environment,
           certSerial: certInfo.serial,
           oib: certInfo.oib,
-          expiresAt: certInfo.notAfter.toISOString()
-        }
-      }
+          expiresAt: certInfo.notAfter.toISOString(),
+        },
+      },
     })
 
-    revalidatePath('/settings/fiscalisation')
+    revalidatePath("/settings/fiscalisation")
     return { success: true, certificateId: certificate.id }
   } catch (error) {
-    console.error('[fiscal-cert] save error:', error)
-    return { success: false, error: 'Failed to save certificate' }
+    console.error("[fiscal-cert] save error:", error)
+    return { success: false, error: "Failed to save certificate" }
   }
 }
 
 export async function deleteCertificateAction(
-  environment: 'TEST' | 'PROD'
+  environment: "TEST" | "PROD"
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const user = await requireAuth()
@@ -155,14 +155,14 @@ export async function deleteCertificateAction(
       where: {
         companyId: company.id,
         certificate: { environment },
-        status: { in: ['QUEUED', 'PROCESSING'] }
-      }
+        status: { in: ["QUEUED", "PROCESSING"] },
+      },
     })
 
     if (pendingRequests > 0) {
       return {
         success: false,
-        error: `Cannot delete: ${pendingRequests} pending fiscal requests`
+        error: `Cannot delete: ${pendingRequests} pending fiscal requests`,
       }
     }
 
@@ -170,30 +170,30 @@ export async function deleteCertificateAction(
       where: {
         companyId_environment: {
           companyId: company.id,
-          environment
-        }
-      }
+          environment,
+        },
+      },
     })
 
     await db.auditLog.create({
       data: {
         companyId: company.id,
         userId: user.id!,
-        action: 'DELETE',
-        entity: 'FiscalCertificate',
-        entityId: 'deleted',
+        action: "DELETE",
+        entity: "FiscalCertificate",
+        entityId: "deleted",
         changes: {
-          operation: 'CERTIFICATE_DELETED',
-          environment
-        }
-      }
+          operation: "CERTIFICATE_DELETED",
+          environment,
+        },
+      },
     })
 
-    revalidatePath('/settings/fiscalisation')
+    revalidatePath("/settings/fiscalisation")
     return { success: true }
   } catch (error) {
-    console.error('[fiscal-cert] delete error:', error)
-    return { success: false, error: 'Failed to delete certificate' }
+    console.error("[fiscal-cert] delete error:", error)
+    return { success: false, error: "Failed to delete certificate" }
   }
 }
 
@@ -205,48 +205,48 @@ export async function retryFiscalRequestAction(
     const company = await requireCompany(user.id!)
 
     const request = await db.fiscalRequest.findFirst({
-      where: { id: requestId, companyId: company.id }
+      where: { id: requestId, companyId: company.id },
     })
 
     if (!request) {
-      return { success: false, error: 'Request not found' }
+      return { success: false, error: "Request not found" }
     }
 
-    if (!['FAILED', 'DEAD'].includes(request.status)) {
-      return { success: false, error: 'Can only retry failed requests' }
+    if (!["FAILED", "DEAD"].includes(request.status)) {
+      return { success: false, error: "Can only retry failed requests" }
     }
 
     await db.fiscalRequest.update({
       where: { id: requestId },
       data: {
-        status: 'QUEUED',
+        status: "QUEUED",
         attemptCount: 0,
         nextRetryAt: new Date(),
         errorCode: null,
         errorMessage: null,
         lockedAt: null,
-        lockedBy: null
-      }
+        lockedBy: null,
+      },
     })
 
     await db.auditLog.create({
       data: {
         companyId: company.id,
         userId: user.id!,
-        action: 'UPDATE',
-        entity: 'FiscalRequest',
+        action: "UPDATE",
+        entity: "FiscalRequest",
         entityId: requestId,
         changes: {
-          operation: 'REQUEST_RETRY'
-        }
-      }
+          operation: "REQUEST_RETRY",
+        },
+      },
     })
 
-    revalidatePath('/settings/fiscalisation')
+    revalidatePath("/settings/fiscalisation")
     return { success: true }
   } catch (error) {
-    console.error('[fiscal-cert] retry error:', error)
-    return { success: false, error: 'Failed to retry request' }
+    console.error("[fiscal-cert] retry error:", error)
+    return { success: false, error: "Failed to retry request" }
   }
 }
 
@@ -258,34 +258,34 @@ export async function manualFiscalizeAction(
     const company = await requireCompany(user.id!)
 
     const invoice = await db.eInvoice.findFirst({
-      where: { id: invoiceId, companyId: company.id }
+      where: { id: invoiceId, companyId: company.id },
     })
 
     if (!invoice) {
-      return { success: false, error: 'Invoice not found' }
+      return { success: false, error: "Invoice not found" }
     }
 
     if ((invoice as any).jir) {
-      return { success: false, error: 'Invoice already fiscalized' }
+      return { success: false, error: "Invoice already fiscalized" }
     }
 
-    if (invoice.status === 'DRAFT') {
-      return { success: false, error: 'Cannot fiscalize draft invoice' }
+    if (invoice.status === "DRAFT") {
+      return { success: false, error: "Cannot fiscalize draft invoice" }
     }
 
-    const environment = company.fiscalEnvironment || 'PROD'
+    const environment = company.fiscalEnvironment || "PROD"
 
     const certificate = await db.fiscalCertificate.findUnique({
       where: {
         companyId_environment: {
           companyId: company.id,
-          environment
-        }
-      }
+          environment,
+        },
+      },
     })
 
-    if (!certificate || certificate.status !== 'ACTIVE') {
-      return { success: false, error: 'No active certificate configured' }
+    if (!certificate || certificate.status !== "ACTIVE") {
+      return { success: false, error: "No active certificate configured" }
     }
 
     const request = await db.fiscalRequest.upsert({
@@ -293,51 +293,51 @@ export async function manualFiscalizeAction(
         companyId_invoiceId_messageType: {
           companyId: company.id,
           invoiceId,
-          messageType: 'RACUN'
-        }
+          messageType: "RACUN",
+        },
       },
       create: {
         companyId: company.id,
         invoiceId,
         certificateId: certificate.id,
-        messageType: 'RACUN',
-        status: 'QUEUED',
+        messageType: "RACUN",
+        status: "QUEUED",
         attemptCount: 0,
         maxAttempts: 5,
-        nextRetryAt: new Date()
+        nextRetryAt: new Date(),
       },
       update: {
-        status: 'QUEUED',
+        status: "QUEUED",
         attemptCount: 0,
         nextRetryAt: new Date(),
         errorCode: null,
-        errorMessage: null
-      }
+        errorMessage: null,
+      },
     })
 
     await db.eInvoice.update({
       where: { id: invoiceId },
-      data: { fiscalStatus: 'PENDING' }
+      data: { fiscalStatus: "PENDING" },
     })
 
     await db.auditLog.create({
       data: {
         companyId: company.id,
         userId: user.id!,
-        action: 'UPDATE',
-        entity: 'EInvoice',
+        action: "UPDATE",
+        entity: "EInvoice",
         entityId: invoiceId,
         changes: {
-          operation: 'MANUAL_FISCALIZE',
-          requestId: request.id
-        }
-      }
+          operation: "MANUAL_FISCALIZE",
+          requestId: request.id,
+        },
+      },
     })
 
     revalidatePath(`/invoices/${invoiceId}`)
     return { success: true, requestId: request.id }
   } catch (error) {
-    console.error('[fiscal-cert] manual fiscalize error:', error)
-    return { success: false, error: 'Failed to queue fiscalization' }
+    console.error("[fiscal-cert] manual fiscalize error:", error)
+    return { success: false, error: "Failed to queue fiscalization" }
   }
 }

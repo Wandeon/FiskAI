@@ -2,20 +2,18 @@ import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg'
+  size?: "sm" | "md" | "lg"
   className?: string
 }
 
 const sizes = {
-  sm: 'h-4 w-4',
-  md: 'h-6 w-6',
-  lg: 'h-8 w-8',
+  sm: "h-4 w-4",
+  md: "h-6 w-6",
+  lg: "h-8 w-8",
 }
 
-export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
-  return (
-    <Loader2 className={cn("animate-spin text-brand-600", sizes[size], className)} />
-  )
+export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
+  return <Loader2 className={cn("animate-spin text-brand-600", sizes[size], className)} />
 }
 
 interface LoadingOverlayProps {
@@ -25,14 +23,14 @@ interface LoadingOverlayProps {
 
 export function LoadingOverlay({ message, className }: LoadingOverlayProps) {
   return (
-    <div className={cn(
-      "absolute inset-0 flex flex-col items-center justify-center bg-[var(--surface)]/80 backdrop-blur-sm z-10",
-      className
-    )}>
-      <LoadingSpinner size="lg" />
-      {message && (
-        <p className="mt-3 text-sm font-medium text-[var(--muted)]">{message}</p>
+    <div
+      className={cn(
+        "absolute inset-0 flex flex-col items-center justify-center bg-[var(--surface)]/80 backdrop-blur-sm z-10",
+        className
       )}
+    >
+      <LoadingSpinner size="lg" />
+      {message && <p className="mt-3 text-sm font-medium text-[var(--muted)]">{message}</p>}
     </div>
   )
 }

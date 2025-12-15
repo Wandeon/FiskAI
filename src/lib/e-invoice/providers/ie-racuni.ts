@@ -4,8 +4,8 @@ import {
   FiscalResponse,
   StatusResponse,
   CancelResponse,
-  FiscalConfig
-} from '../fiscal-types'
+  FiscalConfig,
+} from "../fiscal-types"
 
 /**
  * IE-Računi Provider for Croatian Fiscalization
@@ -20,18 +20,18 @@ import {
  * 4. Test with sandbox environment first
  */
 export class IeRacuniProvider implements FiscalProvider {
-  name = 'IE-Računi'
+  name = "IE-Računi"
   private apiKey: string
   private apiUrl: string
   private sandbox: boolean
 
   constructor(config?: Partial<FiscalConfig>) {
-    this.apiKey = config?.apiKey || process.env.IE_RACUNI_API_KEY || ''
-    this.apiUrl = config?.apiUrl || process.env.IE_RACUNI_API_URL || 'https://api.ie-racuni.hr/v1'
-    this.sandbox = config?.sandbox ?? (process.env.IE_RACUNI_SANDBOX === 'true')
+    this.apiKey = config?.apiKey || process.env.IE_RACUNI_API_KEY || ""
+    this.apiUrl = config?.apiUrl || process.env.IE_RACUNI_API_URL || "https://api.ie-racuni.hr/v1"
+    this.sandbox = config?.sandbox ?? process.env.IE_RACUNI_SANDBOX === "true"
 
     if (this.sandbox) {
-      this.apiUrl = 'https://sandbox.ie-racuni.hr/v1'
+      this.apiUrl = "https://sandbox.ie-racuni.hr/v1"
     }
   }
 
@@ -39,8 +39,9 @@ export class IeRacuniProvider implements FiscalProvider {
     if (!this.apiKey) {
       return {
         success: false,
-        error: 'IE-Računi API key not configured. Please set IE_RACUNI_API_KEY environment variable.',
-        errorCode: 'CONFIG_ERROR'
+        error:
+          "IE-Računi API key not configured. Please set IE_RACUNI_API_KEY environment variable.",
+        errorCode: "CONFIG_ERROR",
       }
     }
 
@@ -48,13 +49,13 @@ export class IeRacuniProvider implements FiscalProvider {
       const payload = this.transformToApiFormat(invoice)
 
       const response = await fetch(`${this.apiUrl}/fiscalize`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
@@ -63,21 +64,21 @@ export class IeRacuniProvider implements FiscalProvider {
         return {
           success: true,
           jir: data.jir,
-          rawResponse: JSON.stringify(data)
+          rawResponse: JSON.stringify(data),
         }
       }
 
       return {
         success: false,
-        error: data.message || data.error || 'Unknown error from IE-Računi',
-        errorCode: data.code || 'API_ERROR',
-        rawResponse: JSON.stringify(data)
+        error: data.message || data.error || "Unknown error from IE-Računi",
+        errorCode: data.code || "API_ERROR",
+        rawResponse: JSON.stringify(data),
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error',
-        errorCode: 'NETWORK_ERROR'
+        error: error instanceof Error ? error.message : "Network error",
+        errorCode: "NETWORK_ERROR",
       }
     }
   }
@@ -85,18 +86,18 @@ export class IeRacuniProvider implements FiscalProvider {
   async getStatus(jir: string): Promise<StatusResponse> {
     if (!this.apiKey) {
       return {
-        status: 'ERROR',
-        error: 'IE-Računi API key not configured'
+        status: "ERROR",
+        error: "IE-Računi API key not configured",
       }
     }
 
     try {
       const response = await fetch(`${this.apiUrl}/invoice/${encodeURIComponent(jir)}/status`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Accept': 'application/json'
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+          Accept: "application/json",
+        },
       })
 
       const data = await response.json()
@@ -105,18 +106,18 @@ export class IeRacuniProvider implements FiscalProvider {
         return {
           status: this.mapStatus(data.status),
           jir,
-          fiscalizedAt: data.fiscalizedAt ? new Date(data.fiscalizedAt) : undefined
+          fiscalizedAt: data.fiscalizedAt ? new Date(data.fiscalizedAt) : undefined,
         }
       }
 
       return {
-        status: 'ERROR',
-        error: data.message || 'Failed to get status'
+        status: "ERROR",
+        error: data.message || "Failed to get status",
       }
     } catch (error) {
       return {
-        status: 'ERROR',
-        error: error instanceof Error ? error.message : 'Network error'
+        status: "ERROR",
+        error: error instanceof Error ? error.message : "Network error",
       }
     }
   }
@@ -125,18 +126,18 @@ export class IeRacuniProvider implements FiscalProvider {
     if (!this.apiKey) {
       return {
         success: false,
-        error: 'IE-Računi API key not configured'
+        error: "IE-Računi API key not configured",
       }
     }
 
     try {
       const response = await fetch(`${this.apiUrl}/invoice/${encodeURIComponent(jir)}/cancel`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
       })
 
       const data = await response.json()
@@ -144,18 +145,18 @@ export class IeRacuniProvider implements FiscalProvider {
       if (response.ok) {
         return {
           success: true,
-          cancelledAt: data.cancelledAt ? new Date(data.cancelledAt) : new Date()
+          cancelledAt: data.cancelledAt ? new Date(data.cancelledAt) : new Date(),
         }
       }
 
       return {
         success: false,
-        error: data.message || 'Failed to cancel invoice'
+        error: data.message || "Failed to cancel invoice",
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error instanceof Error ? error.message : "Network error",
       }
     }
   }
@@ -167,11 +168,11 @@ export class IeRacuniProvider implements FiscalProvider {
 
     try {
       const response = await fetch(`${this.apiUrl}/health`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Accept': 'application/json'
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+          Accept: "application/json",
+        },
       })
 
       return response.ok
@@ -214,10 +215,10 @@ export class IeRacuniProvider implements FiscalProvider {
         rb: index + 1,
         naziv: item.description,
         kolicina: item.quantity,
-        jedinica_mjere: 'kom', // or from item
+        jedinica_mjere: "kom", // or from item
         cijena: item.unitPrice,
         stopa_pdv: item.vatRate,
-        ukupno: item.total
+        ukupno: item.total,
       })),
 
       // Totals
@@ -226,25 +227,25 @@ export class IeRacuniProvider implements FiscalProvider {
       pdv_13: invoice.totals.vat13,
       pdv_5: invoice.totals.vat5,
       pdv_0: invoice.totals.vat0,
-      ukupno_s_pdv: invoice.totals.total
+      ukupno_s_pdv: invoice.totals.total,
     }
   }
 
   /**
    * Map IE-Računi status to our internal status
    */
-  private mapStatus(apiStatus: string): StatusResponse['status'] {
+  private mapStatus(apiStatus: string): StatusResponse["status"] {
     switch (apiStatus?.toUpperCase()) {
-      case 'FISCALIZED':
-      case 'COMPLETED':
-        return 'FISCALIZED'
-      case 'PENDING':
-      case 'PROCESSING':
-        return 'PENDING'
-      case 'CANCELLED':
-        return 'CANCELLED'
+      case "FISCALIZED":
+      case "COMPLETED":
+        return "FISCALIZED"
+      case "PENDING":
+      case "PROCESSING":
+        return "PENDING"
+      case "CANCELLED":
+        return "CANCELLED"
       default:
-        return 'ERROR'
+        return "ERROR"
     }
   }
 }

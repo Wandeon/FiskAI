@@ -1,17 +1,17 @@
 // src/app/api/cron/bank-sync/route.ts
 
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { getProvider } from '@/lib/bank-sync/providers'
-import { processTransactionsWithDedup } from '@/lib/bank-sync/dedup'
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getProvider } from "@/lib/bank-sync/providers"
+import { processTransactionsWithDedup } from "@/lib/bank-sync/dedup"
 
 export async function POST(request: Request) {
   // Verify cron secret
-  const authHeader = request.headers.get('authorization')
+  const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const results: Array<{
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   try {
     // Find all connected accounts
     const accounts = await db.bankAccount.findMany({
-      where: { connectionStatus: 'CONNECTED' },
+      where: { connectionStatus: "CONNECTED" },
       include: { connection: true },
     })
 
@@ -40,9 +40,9 @@ export async function POST(request: Request) {
             // Expired - mark and skip
             await db.bankAccount.update({
               where: { id: account.id },
-              data: { connectionStatus: 'EXPIRED' },
+              data: { connectionStatus: "EXPIRED" },
             })
-            results.push({ accountId: account.id, status: 'expired' })
+            results.push({ accountId: account.id, status: "expired" })
             continue
           }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         }
 
         if (!account.syncProviderAccountId || !account.connection) {
-          results.push({ accountId: account.id, status: 'skipped', error: 'No provider account' })
+          results.push({ accountId: account.id, status: "skipped", error: "No provider account" })
           continue
         }
 
@@ -61,10 +61,7 @@ export async function POST(request: Request) {
         const provider = getProvider(account.syncProvider)
         const since = account.lastSyncAt || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
 
-        const transactions = await provider.fetchTransactions(
-          account.syncProviderAccountId,
-          since
-        )
+        const transactions = await provider.fetchTransactions(account.syncProviderAccountId, since)
 
         // Process with dedup
         const dedupResult = await processTransactionsWithDedup(
@@ -86,15 +83,15 @@ export async function POST(request: Request) {
 
         results.push({
           accountId: account.id,
-          status: 'synced',
+          status: "synced",
           inserted: dedupResult.inserted,
         })
       } catch (error) {
         console.error(`[bank-sync] Error syncing account ${account.id}:`, error)
         results.push({
           accountId: account.id,
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error',
+          status: "error",
+          error: error instanceof Error ? error.message : "Unknown error",
         })
       }
     }
@@ -104,11 +101,8 @@ export async function POST(request: Request) {
       results,
     })
   } catch (error) {
-    console.error('[bank-sync] Cron error:', error)
-    return NextResponse.json(
-      { error: 'Sync failed' },
-      { status: 500 }
-    )
+    console.error("[bank-sync] Cron error:", error)
+    return NextResponse.json({ error: "Sync failed" }, { status: 500 })
   }
 }
 

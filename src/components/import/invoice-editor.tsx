@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Pencil, Check, X, Plus, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState } from "react"
+import { Pencil, Check, X, Plus, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export interface ExtractedLineItem {
   id: string
@@ -53,7 +53,10 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
 
   // Calculate totals from line items
   const calculatedSubtotal = data.lineItems.reduce((sum, item) => sum + item.amount, 0)
-  const calculatedTax = data.lineItems.reduce((sum, item) => sum + (item.amount * item.taxRate / 100), 0)
+  const calculatedTax = data.lineItems.reduce(
+    (sum, item) => sum + (item.amount * item.taxRate) / 100,
+    0
+  )
   const calculatedTotal = calculatedSubtotal + calculatedTax
 
   // Validate math
@@ -84,9 +87,9 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
     setEditForm((prev) => {
       const updated = { ...prev, [field]: value }
       // Auto-calculate amount when quantity or unit price changes
-      if (field === 'quantity' || field === 'unitPrice') {
-        const qty = field === 'quantity' ? value : (prev.quantity || 0)
-        const price = field === 'unitPrice' ? value : (prev.unitPrice || 0)
+      if (field === "quantity" || field === "unitPrice") {
+        const qty = field === "quantity" ? value : prev.quantity || 0
+        const price = field === "unitPrice" ? value : prev.unitPrice || 0
         updated.amount = qty * price
       }
       return updated
@@ -96,7 +99,7 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
   const addLineItem = () => {
     const newItem: ExtractedLineItem = {
       id: `line-${Date.now()}`,
-      description: 'Nova stavka',
+      description: "Nova stavka",
       quantity: 1,
       unitPrice: 0,
       taxRate: 25,
@@ -131,15 +134,15 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
             <label className="text-xs text-gray-500">Naziv</label>
             <Input
               value={data.vendor.name}
-              onChange={(e) => updateVendor('name', e.target.value)}
+              onChange={(e) => updateVendor("name", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
           <div>
             <label className="text-xs text-gray-500">OIB</label>
             <Input
-              value={data.vendor.oib || ''}
-              onChange={(e) => updateVendor('oib', e.target.value)}
+              value={data.vendor.oib || ""}
+              onChange={(e) => updateVendor("oib", e.target.value)}
               placeholder="11 znamenki"
               className="h-8 text-sm"
             />
@@ -147,8 +150,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
           <div className="col-span-2">
             <label className="text-xs text-gray-500">Adresa</label>
             <Input
-              value={data.vendor.address || ''}
-              onChange={(e) => updateVendor('address', e.target.value)}
+              value={data.vendor.address || ""}
+              onChange={(e) => updateVendor("address", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -163,7 +166,7 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
             <label className="text-xs text-gray-500">Broj računa</label>
             <Input
               value={data.invoice.number}
-              onChange={(e) => updateInvoice('number', e.target.value)}
+              onChange={(e) => updateInvoice("number", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -172,7 +175,7 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
             <Input
               type="date"
               value={data.invoice.issueDate}
-              onChange={(e) => updateInvoice('issueDate', e.target.value)}
+              onChange={(e) => updateInvoice("issueDate", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -180,8 +183,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
             <label className="text-xs text-gray-500">Datum dospijeća</label>
             <Input
               type="date"
-              value={data.invoice.dueDate || ''}
-              onChange={(e) => updateInvoice('dueDate', e.target.value)}
+              value={data.invoice.dueDate || ""}
+              onChange={(e) => updateInvoice("dueDate", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -189,8 +192,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
             <label className="text-xs text-gray-500">Datum isporuke</label>
             <Input
               type="date"
-              value={data.invoice.deliveryDate || ''}
-              onChange={(e) => updateInvoice('deliveryDate', e.target.value)}
+              value={data.invoice.deliveryDate || ""}
+              onChange={(e) => updateInvoice("deliveryDate", e.target.value)}
               className="h-8 text-sm"
             />
           </div>
@@ -226,8 +229,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                   <td className="p-2">
                     {isEditing ? (
                       <Input
-                        value={editForm.description || ''}
-                        onChange={(e) => updateLineForm('description', e.target.value)}
+                        value={editForm.description || ""}
+                        onChange={(e) => updateLineForm("description", e.target.value)}
                         className="h-7 text-sm"
                       />
                     ) : (
@@ -239,8 +242,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={editForm.quantity || ''}
-                        onChange={(e) => updateLineForm('quantity', parseFloat(e.target.value))}
+                        value={editForm.quantity || ""}
+                        onChange={(e) => updateLineForm("quantity", parseFloat(e.target.value))}
                         className="h-7 text-sm w-16"
                       />
                     ) : (
@@ -252,8 +255,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={editForm.unitPrice || ''}
-                        onChange={(e) => updateLineForm('unitPrice', parseFloat(e.target.value))}
+                        value={editForm.unitPrice || ""}
+                        onChange={(e) => updateLineForm("unitPrice", parseFloat(e.target.value))}
                         className="h-7 text-sm w-24"
                       />
                     ) : (
@@ -264,8 +267,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                     {isEditing ? (
                       <Input
                         type="number"
-                        value={editForm.taxRate || ''}
-                        onChange={(e) => updateLineForm('taxRate', parseFloat(e.target.value))}
+                        value={editForm.taxRate || ""}
+                        onChange={(e) => updateLineForm("taxRate", parseFloat(e.target.value))}
                         className="h-7 text-sm w-16"
                       />
                     ) : (
@@ -277,8 +280,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                       <Input
                         type="number"
                         step="0.01"
-                        value={editForm.amount || ''}
-                        onChange={(e) => updateLineForm('amount', parseFloat(e.target.value))}
+                        value={editForm.amount || ""}
+                        onChange={(e) => updateLineForm("amount", parseFloat(e.target.value))}
                         className="h-7 text-sm w-24"
                       />
                     ) : (
@@ -288,19 +291,39 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
                   <td className="p-2 text-center">
                     {isEditing ? (
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={saveEditLine} className="h-7 w-7 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={saveEditLine}
+                          className="h-7 w-7 p-0"
+                        >
                           <Check className="h-4 w-4 text-green-600" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={cancelEditLine} className="h-7 w-7 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={cancelEditLine}
+                          className="h-7 w-7 p-0"
+                        >
                           <X className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => startEditLine(item)} className="h-7 w-7 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEditLine(item)}
+                          className="h-7 w-7 p-0"
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => removeLineItem(item.id)} className="h-7 w-7 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLineItem(item.id)}
+                          className="h-7 w-7 p-0"
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
@@ -325,25 +348,35 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Osnovica:</span>
-              <span className="font-medium">{calculatedSubtotal.toFixed(2)} {data.currency}</span>
+              <span className="font-medium">
+                {calculatedSubtotal.toFixed(2)} {data.currency}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">PDV:</span>
-              <span className="font-medium">{calculatedTax.toFixed(2)} {data.currency}</span>
+              <span className="font-medium">
+                {calculatedTax.toFixed(2)} {data.currency}
+              </span>
             </div>
             <div className="flex justify-between text-base font-semibold border-t pt-2">
               <span>Ukupno:</span>
-              <span>{calculatedTotal.toFixed(2)} {data.currency}</span>
+              <span>
+                {calculatedTotal.toFixed(2)} {data.currency}
+              </span>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Navedeno na računu:</span>
-              <span className="font-medium">{data.totalAmount.toFixed(2)} {data.currency}</span>
+              <span className="font-medium">
+                {data.totalAmount.toFixed(2)} {data.currency}
+              </span>
             </div>
-            <div className={`flex justify-between text-sm font-semibold ${mathValid ? 'text-green-600' : 'text-red-600'}`}>
+            <div
+              className={`flex justify-between text-sm font-semibold ${mathValid ? "text-green-600" : "text-red-600"}`}
+            >
               <span>Status:</span>
-              <span>{mathValid ? 'Ispravan' : 'Neispravan'}</span>
+              <span>{mathValid ? "Ispravan" : "Neispravan"}</span>
             </div>
           </div>
         </div>
@@ -356,8 +389,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
           <div className="col-span-2">
             <label className="text-xs text-gray-500">IBAN primatelja</label>
             <Input
-              value={data.payment.iban || data.vendor.iban || ''}
-              onChange={(e) => updatePayment('iban', e.target.value)}
+              value={data.payment.iban || data.vendor.iban || ""}
+              onChange={(e) => updatePayment("iban", e.target.value)}
               placeholder="HR..."
               className="h-8 text-sm font-mono"
             />
@@ -365,8 +398,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
           <div>
             <label className="text-xs text-gray-500">Model</label>
             <Input
-              value={data.payment.model || ''}
-              onChange={(e) => updatePayment('model', e.target.value)}
+              value={data.payment.model || ""}
+              onChange={(e) => updatePayment("model", e.target.value)}
               placeholder="HR00"
               className="h-8 text-sm"
             />
@@ -374,8 +407,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
           <div className="col-span-3">
             <label className="text-xs text-gray-500">Poziv na broj primatelja</label>
             <Input
-              value={data.payment.reference || ''}
-              onChange={(e) => updatePayment('reference', e.target.value)}
+              value={data.payment.reference || ""}
+              onChange={(e) => updatePayment("reference", e.target.value)}
               className="h-8 text-sm font-mono"
             />
           </div>

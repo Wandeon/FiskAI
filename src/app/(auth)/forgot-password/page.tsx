@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     await requestPasswordReset(data.email)
-    
+
     // Always show success message
     setSuccess(true)
     setLoading(false)
@@ -52,19 +52,14 @@ export default function ForgotPasswordPage() {
             <div className="rounded-md bg-green-50 p-4 text-sm text-green-600">
               <p className="font-medium">Email poslan!</p>
               <p className="mt-1">
-                Ako postoji račun s tom email adresom, poslali smo link za resetiranje
-                lozinke. Provjerite svoju pristiglu poštu.
+                Ako postoji račun s tom email adresom, poslali smo link za resetiranje lozinke.
+                Provjerite svoju pristiglu poštu.
               </p>
-              <p className="mt-2 text-xs">
-                Link vrijedi 1 sat.
-              </p>
+              <p className="mt-2 text-xs">Link vrijedi 1 sat.</p>
             </div>
 
             <div className="text-center">
-              <Link
-                href="/login"
-                className="text-sm text-blue-600 hover:underline"
-              >
+              <Link href="/login" className="text-sm text-blue-600 hover:underline">
                 Povratak na prijavu
               </Link>
             </div>
@@ -89,10 +84,7 @@ export default function ForgotPasswordPage() {
             </Button>
 
             <div className="text-center space-y-2">
-              <Link
-                href="/login"
-                className="block text-sm text-gray-600 hover:text-gray-900"
-              >
+              <Link href="/login" className="block text-sm text-gray-600 hover:text-gray-900">
                 Povratak na prijavu
               </Link>
               <p className="text-sm text-gray-600">

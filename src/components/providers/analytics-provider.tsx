@@ -14,9 +14,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (pathname) {
-      const url = searchParams?.toString()
-        ? `${pathname}?${searchParams.toString()}`
-        : pathname
+      const url = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname
       trackPageView(url)
     }
   }, [pathname, searchParams])

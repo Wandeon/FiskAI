@@ -1,16 +1,16 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Pencil, Check, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState } from "react"
+import { Pencil, Check, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export interface ExtractedTransaction {
   id: string
   date: string
   description: string
   amount: number
-  direction: 'INCOMING' | 'OUTGOING'
+  direction: "INCOMING" | "OUTGOING"
   counterpartyName?: string
   counterpartyIban?: string
   reference?: string
@@ -35,11 +35,11 @@ export function TransactionEditor({
   const [editForm, setEditForm] = useState<Partial<ExtractedTransaction>>({})
 
   const totalIncoming = transactions
-    .filter((t) => t.direction === 'INCOMING')
+    .filter((t) => t.direction === "INCOMING")
     .reduce((sum, t) => sum + t.amount, 0)
 
   const totalOutgoing = transactions
-    .filter((t) => t.direction === 'OUTGOING')
+    .filter((t) => t.direction === "OUTGOING")
     .reduce((sum, t) => sum + t.amount, 0)
 
   const calculatedClosing = (openingBalance || 0) + totalIncoming - totalOutgoing
@@ -82,7 +82,10 @@ export function TransactionEditor({
             <div className="flex justify-between">
               <span className="text-gray-600">Početni saldo:</span>
               <span className="font-medium">
-                {openingBalance !== null && openingBalance !== undefined ? openingBalance.toFixed(2) : 'N/A'} EUR
+                {openingBalance !== null && openingBalance !== undefined
+                  ? openingBalance.toFixed(2)
+                  : "N/A"}{" "}
+                EUR
               </span>
             </div>
             <div className="flex justify-between text-green-600">
@@ -102,16 +105,19 @@ export function TransactionEditor({
             <div className="flex justify-between">
               <span className="text-gray-600">Navedeni saldo:</span>
               <span className="font-medium">
-                {closingBalance !== null && closingBalance !== undefined ? closingBalance.toFixed(2) : 'N/A'} EUR
+                {closingBalance !== null && closingBalance !== undefined
+                  ? closingBalance.toFixed(2)
+                  : "N/A"}{" "}
+                EUR
               </span>
             </div>
             <div
               className={`flex justify-between font-semibold ${
-                mathValid ? 'text-green-600' : 'text-red-600'
+                mathValid ? "text-green-600" : "text-red-600"
               }`}
             >
               <span>Status:</span>
-              <span>{mathValid ? 'Ispravan' : 'Neispravan'}</span>
+              <span>{mathValid ? "Ispravan" : "Neispravan"}</span>
             </div>
           </div>
         </div>
@@ -138,8 +144,8 @@ export function TransactionEditor({
                     {isEditing ? (
                       <Input
                         type="date"
-                        value={editForm.date || ''}
-                        onChange={(e) => updateEditForm('date', e.target.value)}
+                        value={editForm.date || ""}
+                        onChange={(e) => updateEditForm("date", e.target.value)}
                         className="h-8"
                       />
                     ) : (
@@ -149,8 +155,8 @@ export function TransactionEditor({
                   <td className="p-2 text-sm">
                     {isEditing ? (
                       <Input
-                        value={editForm.description || ''}
-                        onChange={(e) => updateEditForm('description', e.target.value)}
+                        value={editForm.description || ""}
+                        onChange={(e) => updateEditForm("description", e.target.value)}
                         className="h-8"
                       />
                     ) : (
@@ -160,20 +166,18 @@ export function TransactionEditor({
                   <td className="p-2 text-sm">
                     {isEditing ? (
                       <Input
-                        value={editForm.counterpartyName || ''}
-                        onChange={(e) => updateEditForm('counterpartyName', e.target.value)}
+                        value={editForm.counterpartyName || ""}
+                        onChange={(e) => updateEditForm("counterpartyName", e.target.value)}
                         placeholder="Naziv druge strane"
                         className="h-8"
                       />
                     ) : (
-                      transaction.counterpartyName || '-'
+                      transaction.counterpartyName || "-"
                     )}
                   </td>
                   <td
                     className={`p-2 text-sm text-right font-medium ${
-                      transaction.direction === 'INCOMING'
-                        ? 'text-green-600'
-                        : 'text-red-600'
+                      transaction.direction === "INCOMING" ? "text-green-600" : "text-red-600"
                     }`}
                   >
                     {isEditing ? (
@@ -181,19 +185,14 @@ export function TransactionEditor({
                         <Input
                           type="number"
                           step="0.01"
-                          value={editForm.amount || ''}
-                          onChange={(e) =>
-                            updateEditForm('amount', parseFloat(e.target.value))
-                          }
+                          value={editForm.amount || ""}
+                          onChange={(e) => updateEditForm("amount", parseFloat(e.target.value))}
                           className="h-8 w-32"
                         />
                         <select
-                          value={editForm.direction || 'INCOMING'}
+                          value={editForm.direction || "INCOMING"}
                           onChange={(e) =>
-                            updateEditForm(
-                              'direction',
-                              e.target.value as 'INCOMING' | 'OUTGOING'
-                            )
+                            updateEditForm("direction", e.target.value as "INCOMING" | "OUTGOING")
                           }
                           className="h-8 border rounded px-2"
                         >
@@ -203,7 +202,7 @@ export function TransactionEditor({
                       </div>
                     ) : (
                       <>
-                        {transaction.direction === 'INCOMING' ? '+' : '-'}
+                        {transaction.direction === "INCOMING" ? "+" : "-"}
                         {transaction.amount.toFixed(2)} EUR
                       </>
                     )}

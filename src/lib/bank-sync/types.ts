@@ -20,7 +20,7 @@ export interface ProviderTransaction {
 export interface ProviderBalance {
   amount: number
   currency: string
-  type: 'available' | 'current'
+  type: "available" | "current"
 }
 
 export interface ConnectionResult {

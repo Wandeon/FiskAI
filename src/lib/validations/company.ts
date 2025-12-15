@@ -25,7 +25,9 @@ export const companySettingsSchema = z.object({
 export const planSettingsSchema = z.object({
   legalForm: z.enum(["OBRT_PAUSAL", "OBRT_REAL", "OBRT_VAT", "JDOO", "DOO"]),
   isVatPayer: z.boolean().default(false),
-  entitlements: z.array(z.enum(["invoicing", "eInvoicing", "expenses", "banking", "reports", "settings"])).min(1),
+  entitlements: z
+    .array(z.enum(["invoicing", "eInvoicing", "expenses", "banking", "reports", "settings"]))
+    .min(1),
 })
 
 export type CompanyInput = z.infer<typeof companySchema>

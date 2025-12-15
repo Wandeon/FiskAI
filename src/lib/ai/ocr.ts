@@ -1,14 +1,14 @@
-import OpenAI from 'openai'
-import { ExtractionResult, ExtractedReceipt } from './types'
-import { trackAIUsage } from './usage-tracking'
+import OpenAI from "openai"
+import { ExtractionResult, ExtractedReceipt } from "./types"
+import { trackAIUsage } from "./usage-tracking"
 
 // Lazy-load OpenAI client to avoid build errors when API key is not set
 function getOpenAI() {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured')
+    throw new Error("OpenAI API key not configured")
   }
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
   })
 }
 
@@ -16,7 +16,7 @@ export async function extractFromImage(
   imageBase64: string,
   companyId?: string
 ): Promise<ExtractionResult<ExtractedReceipt>> {
-  const model = 'gpt-4o'
+  const model = "gpt-4o"
   let success = false
   let inputTokens = 0
   let outputTokens = 0
@@ -27,10 +27,10 @@ export async function extractFromImage(
       model,
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
             {
-              type: 'text',
+              type: "text",
               text: `Extract receipt data from this image. Return JSON:
 {
   "vendor": "business name",
@@ -44,37 +44,37 @@ export async function extractFromImage(
   "currency": "EUR",
   "confidence": 0.0-1.0
 }
-Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
+Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
             },
             {
-              type: 'image_url',
-              image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+            },
+          ],
+        },
       ],
-      max_tokens: 1000
+      max_tokens: 1000,
     })
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
     outputTokens = response.usage?.completion_tokens || 0
 
-    const content = response.choices[0]?.message?.content || ''
+    const content = response.choices[0]?.message?.content || ""
     // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       if (companyId) {
         await trackAIUsage({
           companyId,
-          operation: 'ocr_receipt',
+          operation: "ocr_receipt",
           model,
           inputTokens,
           outputTokens,
           success: false,
         })
       }
-      return { success: false, error: 'No JSON in response', rawText: content }
+      return { success: false, error: "No JSON in response", rawText: content }
     }
 
     const data = JSON.parse(jsonMatch[0]) as ExtractedReceipt
@@ -84,7 +84,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'ocr_receipt',
+        operation: "ocr_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -98,7 +98,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'ocr_receipt',
+        operation: "ocr_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -108,7 +108,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'OCR failed'
+      error: error instanceof Error ? error.message : "OCR failed",
     }
   }
 }
@@ -117,7 +117,7 @@ export async function extractFromImageUrl(
   imageUrl: string,
   companyId?: string
 ): Promise<ExtractionResult<ExtractedReceipt>> {
-  const model = 'gpt-4o'
+  const model = "gpt-4o"
   let inputTokens = 0
   let outputTokens = 0
 
@@ -127,10 +127,10 @@ export async function extractFromImageUrl(
       model,
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: [
             {
-              type: 'text',
+              type: "text",
               text: `Extract receipt data from this image. Return JSON:
 {
   "vendor": "business name",
@@ -144,36 +144,36 @@ export async function extractFromImageUrl(
   "currency": "EUR",
   "confidence": 0.0-1.0
 }
-Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
+Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
             },
             {
-              type: 'image_url',
-              image_url: { url: imageUrl }
-            }
-          ]
-        }
+              type: "image_url",
+              image_url: { url: imageUrl },
+            },
+          ],
+        },
       ],
-      max_tokens: 1000
+      max_tokens: 1000,
     })
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
     outputTokens = response.usage?.completion_tokens || 0
 
-    const content = response.choices[0]?.message?.content || ''
+    const content = response.choices[0]?.message?.content || ""
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       if (companyId) {
         await trackAIUsage({
           companyId,
-          operation: 'ocr_receipt',
+          operation: "ocr_receipt",
           model,
           inputTokens,
           outputTokens,
           success: false,
         })
       }
-      return { success: false, error: 'No JSON in response', rawText: content }
+      return { success: false, error: "No JSON in response", rawText: content }
     }
 
     const data = JSON.parse(jsonMatch[0]) as ExtractedReceipt
@@ -182,7 +182,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'ocr_receipt',
+        operation: "ocr_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -196,7 +196,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
     if (companyId) {
       await trackAIUsage({
         companyId,
-        operation: 'ocr_receipt',
+        operation: "ocr_receipt",
         model,
         inputTokens,
         outputTokens,
@@ -206,7 +206,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'OCR failed'
+      error: error instanceof Error ? error.message : "OCR failed",
     }
   }
 }

@@ -1,11 +1,11 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ImportForm } from './import-form'
-import { StatementDropzone } from './statement-dropzone'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ImportForm } from "./import-form"
+import { StatementDropzone } from "./statement-dropzone"
 
 export default async function ImportPage() {
   const user = await requireAuth()
@@ -19,7 +19,7 @@ export default async function ImportPage() {
   // Get bank accounts
   const accounts = await db.bankAccount.findMany({
     where: { companyId: company.id },
-    orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
     select: {
       id: true,
       name: true,
@@ -36,25 +36,24 @@ export default async function ImportPage() {
         select: { name: true },
       },
     },
-    orderBy: { importedAt: 'desc' },
+    orderBy: { importedAt: "desc" },
     take: 10,
   })
 
   const lastStatements = await db.statement.groupBy({
-    by: ['bankAccountId'],
+    by: ["bankAccountId"],
     where: { companyId: company.id },
     _max: { statementDate: true, sequenceNumber: true },
   })
-  const lastByAccount = lastStatements.reduce<Record<string, { date: string | null; sequenceNumber: number | null }>>(
-    (acc, s) => {
-      acc[s.bankAccountId] = {
-        date: s._max.statementDate ? s._max.statementDate.toISOString() : null,
-        sequenceNumber: s._max.sequenceNumber ?? null,
-      }
-      return acc
-    },
-    {}
-  )
+  const lastByAccount = lastStatements.reduce<
+    Record<string, { date: string | null; sequenceNumber: number | null }>
+  >((acc, s) => {
+    acc[s.bankAccountId] = {
+      date: s._max.statementDate ? s._max.statementDate.toISOString() : null,
+      sequenceNumber: s._max.sequenceNumber ?? null,
+    }
+    return acc
+  }, {})
 
   return (
     <div className="space-y-6">
@@ -92,9 +91,7 @@ export default async function ImportPage() {
           <h2 className="text-lg font-semibold mb-4">Uvezi novi izvod</h2>
           {accounts.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-gray-500 mb-4">
-                Najprije morate dodati bankovni račun
-              </p>
+              <p className="text-gray-500 mb-4">Najprije morate dodati bankovni račun</p>
               <Link href="/banking/accounts">
                 <Button>Dodaj račun</Button>
               </Link>
@@ -122,8 +119,8 @@ export default async function ImportPage() {
                 <code className="bg-gray-100 px-1 py-0.5 rounded">opis</code> - Opis transakcije
               </li>
               <li>
-                <code className="bg-gray-100 px-1 py-0.5 rounded">iznos</code> - Iznos (pozitivan
-                za prihode, negativan za rashode)
+                <code className="bg-gray-100 px-1 py-0.5 rounded">iznos</code> - Iznos (pozitivan za
+                prihode, negativan za rashode)
               </li>
               <li>
                 <code className="bg-gray-100 px-1 py-0.5 rounded">stanje</code> - Stanje računa
@@ -190,7 +187,7 @@ export default async function ImportPage() {
                     {recentImports.map((imp) => (
                       <tr key={imp.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm">
-                          {new Date(imp.importedAt).toLocaleString('hr-HR')}
+                          {new Date(imp.importedAt).toLocaleString("hr-HR")}
                         </td>
                         <td className="px-4 py-3 text-sm">{imp.bankAccount.name}</td>
                         <td className="px-4 py-3 text-sm font-mono text-gray-600">

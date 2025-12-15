@@ -13,10 +13,7 @@ export class MockProvider implements EInvoiceProvider {
 
   constructor(private config: ProviderConfig) {}
 
-  async sendInvoice(
-    invoice: EInvoiceWithRelations,
-    ublXml: string
-  ): Promise<SendInvoiceResult> {
+  async sendInvoice(invoice: EInvoiceWithRelations, ublXml: string): Promise<SendInvoiceResult> {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500))
 
@@ -52,9 +49,7 @@ export class MockProvider implements EInvoiceProvider {
     }
   }
 
-  async archiveInvoice(
-    invoice: EInvoiceWithRelations
-  ): Promise<ArchiveResult> {
+  async archiveInvoice(invoice: EInvoiceWithRelations): Promise<ArchiveResult> {
     await new Promise((resolve) => setTimeout(resolve, 300))
 
     return {

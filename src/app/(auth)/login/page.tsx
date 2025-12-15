@@ -74,9 +74,9 @@ export default function LoginPage() {
       }
 
       const { userId, ...options } = await startResponse.json()
-      const authResponse = await startAuthentication({ optionsJSON:
-        options as PublicKeyCredentialRequestOptionsJSON
-       })
+      const authResponse = await startAuthentication({
+        optionsJSON: options as PublicKeyCredentialRequestOptionsJSON,
+      })
 
       const finishResponse = await fetch("/api/webauthn/login/finish", {
         method: "POST",
@@ -123,9 +123,7 @@ export default function LoginPage() {
           {showPasskeyEmail ? (
             <div className="space-y-4">
               {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                  {error}
-                </div>
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
               )}
               <div className="space-y-2">
                 <label htmlFor="passkey-email" className="text-sm font-medium">
@@ -145,11 +143,7 @@ export default function LoginPage() {
                   }}
                 />
               </div>
-              <Button
-                onClick={handlePasskeyLogin}
-                className="w-full"
-                disabled={passkeyLoading}
-              >
+              <Button onClick={handlePasskeyLogin} className="w-full" disabled={passkeyLoading}>
                 {passkeyLoading ? "Prijava..." : "Nastavi s passkey"}
               </Button>
               <Button
@@ -169,9 +163,7 @@ export default function LoginPage() {
             <>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {error && (
-                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                    {error}
-                  </div>
+                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
                 )}
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium">

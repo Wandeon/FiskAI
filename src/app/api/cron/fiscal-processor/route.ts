@@ -1,17 +1,17 @@
 // src/app/api/cron/fiscal-processor/route.ts
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { FiscalRequest } from '@prisma/client'
-import { executeFiscalRequest } from '@/lib/fiscal/fiscal-pipeline'
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { FiscalRequest } from "@prisma/client"
+import { executeFiscalRequest } from "@/lib/fiscal/fiscal-pipeline"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
 export async function GET(request: Request) {
   // Verify cron secret
-  const authHeader = request.headers.get('authorization')
+  const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', { status: 401 })
+    return new NextResponse("Unauthorized", { status: 401 })
   }
 
   const batchSize = 10
@@ -54,14 +54,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       processed: jobs.length,
-      results
+      results,
     })
   } catch (error) {
-    console.error('[fiscal-processor] error:', error)
-    return NextResponse.json(
-      { error: 'Processing failed' },
-      { status: 500 }
-    )
+    console.error("[fiscal-processor] error:", error)
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 })
   }
 }
 
@@ -76,12 +73,12 @@ async function processJob(
     await db.fiscalRequest.update({
       where: { id: job.id },
       data: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         jir: result.jir,
         responseXml: result.responseXml,
         lockedAt: null,
         lockedBy: null,
-      }
+      },
     })
 
     // Update invoice with JIR
@@ -92,8 +89,8 @@ async function processJob(
           jir: result.jir,
           zki: result.zki,
           fiscalizedAt: new Date(),
-          fiscalStatus: 'COMPLETED'
-        }
+          fiscalStatus: "COMPLETED",
+        },
       })
     }
 
@@ -105,17 +102,15 @@ async function processJob(
     await db.fiscalRequest.update({
       where: { id: job.id },
       data: {
-        status: classification.retriable ? 'FAILED' : 'DEAD',
+        status: classification.retriable ? "FAILED" : "DEAD",
         attemptCount,
         errorCode: classification.code,
         errorMessage: classification.message,
         lastHttpStatus: classification.httpStatus,
-        nextRetryAt: classification.retriable
-          ? calculateNextRetry(attemptCount)
-          : null,
+        nextRetryAt: classification.retriable ? calculateNextRetry(attemptCount) : null,
         lockedAt: null,
         lockedBy: null,
-      }
+      },
     })
 
     // Update invoice fiscal status
@@ -123,8 +118,8 @@ async function processJob(
       await db.eInvoice.update({
         where: { id: job.invoiceId },
         data: {
-          fiscalStatus: classification.retriable ? 'PENDING' : 'FAILED'
-        }
+          fiscalStatus: classification.retriable ? "PENDING" : "FAILED",
+        },
       })
     }
 
@@ -142,59 +137,61 @@ interface ErrorClassification {
 function classifyError(error: unknown): ErrorClassification {
   // Network errors - always retry
   if (error instanceof Error) {
-    if (error.message.includes('ECONNREFUSED') ||
-        error.message.includes('ETIMEDOUT') ||
-        error.message.includes('ENOTFOUND') ||
-        error.message.includes('timeout')) {
-      return { code: 'NETWORK_ERROR', message: error.message, retriable: true }
+    if (
+      error.message.includes("ECONNREFUSED") ||
+      error.message.includes("ETIMEDOUT") ||
+      error.message.includes("ENOTFOUND") ||
+      error.message.includes("timeout")
+    ) {
+      return { code: "NETWORK_ERROR", message: error.message, retriable: true }
     }
   }
 
   // HTTP response errors
-  if (error && typeof error === 'object' && 'httpStatus' in error) {
+  if (error && typeof error === "object" && "httpStatus" in error) {
     const httpError = error as { httpStatus: number; body?: string }
 
     if (httpError.httpStatus >= 500) {
       return {
-        code: 'SERVER_ERROR',
+        code: "SERVER_ERROR",
         message: `HTTP ${httpError.httpStatus}`,
         httpStatus: httpError.httpStatus,
-        retriable: true
+        retriable: true,
       }
     }
 
     if (httpError.httpStatus === 429) {
       return {
-        code: 'RATE_LIMITED',
-        message: 'Too many requests',
+        code: "RATE_LIMITED",
+        message: "Too many requests",
         httpStatus: 429,
-        retriable: true
+        retriable: true,
       }
     }
 
     return {
-      code: 'VALIDATION_ERROR',
+      code: "VALIDATION_ERROR",
       message: httpError.body || `HTTP ${httpError.httpStatus}`,
       httpStatus: httpError.httpStatus,
-      retriable: false
+      retriable: false,
     }
   }
 
   // Porezna-specific error codes
-  if (error && typeof error === 'object' && 'poreznaCode' in error) {
+  if (error && typeof error === "object" && "poreznaCode" in error) {
     const poreznaError = error as { poreznaCode: string; message: string }
 
     // t001-t099: Temporary errors - retry
-    const retriable = poreznaError.poreznaCode.startsWith('t')
+    const retriable = poreznaError.poreznaCode.startsWith("t")
 
     return {
       code: poreznaError.poreznaCode,
       message: poreznaError.message,
-      retriable
+      retriable,
     }
   }
 
-  return { code: 'UNKNOWN', message: String(error), retriable: false }
+  return { code: "UNKNOWN", message: String(error), retriable: false }
 }
 
 function calculateNextRetry(attemptCount: number): Date {
@@ -214,14 +211,14 @@ async function recoverStaleLocks() {
 
   await db.fiscalRequest.updateMany({
     where: {
-      status: 'PROCESSING',
-      lockedAt: { lt: new Date(Date.now() - staleLockThreshold) }
+      status: "PROCESSING",
+      lockedAt: { lt: new Date(Date.now() - staleLockThreshold) },
     },
     data: {
-      status: 'FAILED',
+      status: "FAILED",
       lockedAt: null,
       lockedBy: null,
-      errorMessage: 'Lock expired - worker may have crashed'
-    }
+      errorMessage: "Lock expired - worker may have crashed",
+    },
   })
 }

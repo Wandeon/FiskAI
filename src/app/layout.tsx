@@ -1,24 +1,26 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { Toaster } from "sonner";
-import { AnalyticsProvider } from "@/components/providers/analytics-provider";
-import { OfflineIndicator } from "@/components/layout/offline-indicator";
-import "./globals.css";
+import type { Metadata } from "next"
+import { Suspense } from "react"
+import { Toaster } from "sonner"
+import { AnalyticsProvider } from "@/components/providers/analytics-provider"
+import { OfflineIndicator } from "@/components/layout/offline-indicator"
+import "./globals.css"
 
 export const metadata: Metadata = {
   title: "FiskAI",
   description: "AI-powered e-invoicing platform",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="hr">
       <body>
-        <a href="#glavni-sadrzaj" className="skip-link">Preskoči na sadržaj</a>
+        <a href="#glavni-sadrzaj" className="skip-link">
+          Preskoči na sadržaj
+        </a>
         <OfflineIndicator />
         <Toaster
           position="top-right"
@@ -29,9 +31,9 @@ export default function RootLayout({
             className: "font-sans rounded-card shadow-elevated",
             duration: 4000,
             style: {
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              color: 'var(--foreground)',
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--foreground)",
             },
           }}
         />
@@ -42,5 +44,5 @@ export default function RootLayout({
         </Suspense>
       </body>
     </html>
-  );
+  )
 }

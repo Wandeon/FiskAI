@@ -44,7 +44,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
   function handleVatCategoryChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const category = e.target.value as "S" | "AA" | "E" | "Z" | "O"
-    const vatCat = vatCategories.find(v => v.code === category)
+    const vatCat = vatCategories.find((v) => v.code === category)
     if (vatCat) {
       setValue("vatRate", vatCat.rate)
     }
@@ -74,11 +74,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       <Card>
         <CardHeader>
@@ -106,10 +102,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Šifra (SKU)</label>
-            <Input
-              {...register("sku")}
-              placeholder="ABC-123"
-            />
+            <Input {...register("sku")} placeholder="ABC-123" />
           </div>
 
           <div className="space-y-2">

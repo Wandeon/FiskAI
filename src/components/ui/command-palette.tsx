@@ -29,7 +29,9 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
     const entries: CommandEntry[] = []
     navigation.forEach((section) => {
       section.items.forEach((item) => {
-        const moduleAllowed = item.module ? capabilities.modules[item.module]?.enabled !== false : true
+        const moduleAllowed = item.module
+          ? capabilities.modules[item.module]?.enabled !== false
+          : true
         if (!moduleAllowed) return
         entries.push({
           id: item.href,
@@ -57,8 +59,7 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
     return commands
       .filter(
         (entry) =>
-          entry.label.toLowerCase().includes(q) ||
-          entry.description?.toLowerCase().includes(q)
+          entry.label.toLowerCase().includes(q) || entry.description?.toLowerCase().includes(q)
       )
       .slice(0, 10)
   }, [commands, query])
@@ -120,8 +121,7 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
           <Search className="h-4 w-4" />
           <span className="whitespace-nowrap">Pretraži ili pokreni akciju</span>
           <span className="ml-auto hidden items-center gap-1 text-xs text-[var(--muted)] md:flex">
-            <Command className="h-3.5 w-3.5" />
-            K
+            <Command className="h-3.5 w-3.5" />K
           </span>
         </button>
       ) : (
@@ -176,9 +176,7 @@ export function CommandPalette({ className, triggerType = "button" }: CommandPal
                           <CornerDownLeft className="h-4 w-4 text-[var(--muted)]" />
                         </div>
                         {entry.description && (
-                          <p className="text-xs text-[var(--muted)] mt-1">
-                            {entry.description}
-                          </p>
+                          <p className="text-xs text-[var(--muted)] mt-1">{entry.description}</p>
                         )}
                       </button>
                     </li>

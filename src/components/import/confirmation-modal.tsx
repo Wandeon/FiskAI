@@ -1,21 +1,21 @@
-'use client'
+"use client"
 
-import dynamic from 'next/dynamic'
-import { X, AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { TransactionEditor, ExtractedTransaction } from './transaction-editor'
-import { InvoiceEditor, ExtractedInvoice } from './invoice-editor'
+import dynamic from "next/dynamic"
+import { X, AlertTriangle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { TransactionEditor, ExtractedTransaction } from "./transaction-editor"
+import { InvoiceEditor, ExtractedInvoice } from "./invoice-editor"
 
 // Dynamic import PDF/Image viewers to avoid SSR issues with pdfjs-dist
-const PdfViewer = dynamic(
-  () => import('./pdf-viewer').then((mod) => mod.PdfViewer),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-full">Učitavanje...</div> }
-)
+const PdfViewer = dynamic(() => import("./pdf-viewer").then((mod) => mod.PdfViewer), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full">Učitavanje...</div>,
+})
 
-const ImageViewer = dynamic(
-  () => import('./pdf-viewer').then((mod) => mod.ImageViewer),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-full">Učitavanje...</div> }
-)
+const ImageViewer = dynamic(() => import("./pdf-viewer").then((mod) => mod.ImageViewer), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full">Učitavanje...</div>,
+})
 
 interface ConfirmationModalProps {
   isOpen: boolean
@@ -23,10 +23,10 @@ interface ConfirmationModalProps {
   onConfirm: () => void
   onDiscard: () => void
   filename: string
-  fileType: 'PDF' | 'IMAGE'
+  fileType: "PDF" | "IMAGE"
   fileUrl: string
-  documentType: 'BANK_STATEMENT' | 'INVOICE'
-  onDocumentTypeChange?: (type: 'BANK_STATEMENT' | 'INVOICE') => void
+  documentType: "BANK_STATEMENT" | "INVOICE"
+  onDocumentTypeChange?: (type: "BANK_STATEMENT" | "INVOICE") => void
   // Bank statement props
   transactions?: ExtractedTransaction[]
   openingBalance?: number
@@ -65,7 +65,7 @@ export function ConfirmationModal({
   // Determine if confirm should be disabled
   const isInvoiceValid = invoiceData?.mathValid !== false
   const isBankStatementValid = mathValid
-  const canConfirm = documentType === 'INVOICE' ? isInvoiceValid : isBankStatementValid
+  const canConfirm = documentType === "INVOICE" ? isInvoiceValid : isBankStatementValid
   if (!isOpen) return null
 
   return (
@@ -77,7 +77,9 @@ export function ConfirmationModal({
             <h2 className="text-xl font-semibold">{filename}</h2>
             <select
               value={documentType}
-              onChange={(e) => onDocumentTypeChange?.(e.target.value as 'BANK_STATEMENT' | 'INVOICE')}
+              onChange={(e) =>
+                onDocumentTypeChange?.(e.target.value as "BANK_STATEMENT" | "INVOICE")
+              }
               className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="BANK_STATEMENT">Bankovni izvod</option>
@@ -98,15 +100,15 @@ export function ConfirmationModal({
         </div>
 
         {/* Math Validation Warning - Bank Statement */}
-        {documentType === 'BANK_STATEMENT' && !mathValid && (
+        {documentType === "BANK_STATEMENT" && !mathValid && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 m-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
               <div>
                 <h3 className="font-semibold text-red-800">Provjera salda nije uspjela</h3>
                 <p className="text-sm text-red-700">
-                  Izračunati završni saldo ne odgovara navedenom završnom saldu.
-                  Pregledajte transakcije prije potvrđivanja.
+                  Izračunati završni saldo ne odgovara navedenom završnom saldu. Pregledajte
+                  transakcije prije potvrđivanja.
                 </p>
               </div>
             </div>
@@ -114,15 +116,15 @@ export function ConfirmationModal({
         )}
 
         {/* Math Validation Warning - Invoice */}
-        {documentType === 'INVOICE' && invoiceData && !invoiceData.mathValid && (
+        {documentType === "INVOICE" && invoiceData && !invoiceData.mathValid && (
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 m-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
               <div>
                 <h3 className="font-semibold text-yellow-800">Provjera iznosa</h3>
                 <p className="text-sm text-yellow-700">
-                  Zbroj stavki ne odgovara ukupnom iznosu na računu.
-                  Pregledajte i ispravite stavke prije potvrđivanja.
+                  Zbroj stavki ne odgovara ukupnom iznosu na računu. Pregledajte i ispravite stavke
+                  prije potvrđivanja.
                 </p>
               </div>
             </div>
@@ -130,12 +132,12 @@ export function ConfirmationModal({
         )}
 
         {/* Bank Account Context Bar */}
-        {documentType === 'BANK_STATEMENT' && bankAccounts.length > 0 && (
+        {documentType === "BANK_STATEMENT" && bankAccounts.length > 0 && (
           <div className="px-4 py-2 bg-gray-50 border-b">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Bankovni račun:</label>
               <select
-                value={selectedBankAccount || ''}
+                value={selectedBankAccount || ""}
                 onChange={(e) => onBankAccountChange?.(e.target.value)}
                 className="border rounded px-3 py-1 text-sm"
               >
@@ -154,7 +156,7 @@ export function ConfirmationModal({
         <div className="flex-1 flex overflow-hidden">
           {/* Left Side - Document Viewer */}
           <div className="w-1/2 border-r">
-            {fileType === 'PDF' ? (
+            {fileType === "PDF" ? (
               <PdfViewer url={fileUrl} className="h-full" />
             ) : (
               <ImageViewer url={fileUrl} className="h-full" />
@@ -163,7 +165,7 @@ export function ConfirmationModal({
 
           {/* Right Side - Transaction Editor or Invoice Editor */}
           <div className="w-1/2 overflow-hidden">
-            {documentType === 'BANK_STATEMENT' ? (
+            {documentType === "BANK_STATEMENT" ? (
               <TransactionEditor
                 transactions={transactions}
                 openingBalance={openingBalance}
@@ -172,10 +174,7 @@ export function ConfirmationModal({
                 onChange={onTransactionsChange}
               />
             ) : invoiceData ? (
-              <InvoiceEditor
-                data={invoiceData}
-                onChange={onInvoiceDataChange || (() => {})}
-              />
+              <InvoiceEditor data={invoiceData} onChange={onInvoiceDataChange || (() => {})} />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">

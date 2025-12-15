@@ -8,11 +8,8 @@ const statusSchema = z.object({
   status: z.nativeEnum(SupportTicketStatus),
 })
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const params = await context.params;
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -35,7 +35,7 @@ export function StepBasicInfo() {
     if (lookupData.address) updateData({ address: lookupData.address })
     if (lookupData.city) updateData({ city: lookupData.city })
     if (lookupData.postalCode) updateData({ postalCode: lookupData.postalCode })
-    
+
     toast.success("Pronađeno!", "Podaci o tvrtki su automatski popunjeni")
   }
 
@@ -64,9 +64,7 @@ export function StepBasicInfo() {
             onLookupSuccess={handleOibLookupSuccess}
             onLookupError={handleOibLookupError}
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Osobni identifikacijski broj (11 znamenki)
-          </p>
+          <p className="mt-1 text-xs text-gray-500">Osobni identifikacijski broj (11 znamenki)</p>
         </div>
 
         <div>

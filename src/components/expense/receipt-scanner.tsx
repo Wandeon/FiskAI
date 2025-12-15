@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import Image from 'next/image'
-import { Camera, Upload, X, Check, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { ExtractedReceipt } from '@/lib/ai/types'
+import { useState, useRef } from "react"
+import Image from "next/image"
+import { Camera, Upload, X, Check, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { ExtractedReceipt } from "@/lib/ai/types"
 
 interface ExtractedReceiptWithUrl extends ExtractedReceipt {
   receiptUrl?: string
@@ -41,16 +41,16 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
       const base64 = await fileToBase64(file)
 
       // Call extraction API
-      const response = await fetch('/api/ai/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 })
+      const response = await fetch("/api/ai/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Extraction failed')
+        throw new Error(result.error || "Extraction failed")
       }
 
       if (result.success && result.data) {
@@ -58,10 +58,10 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
         let receiptUrl: string | undefined
         try {
           const formData = new FormData()
-          formData.append('file', file)
+          formData.append("file", file)
 
-          const uploadResponse = await fetch('/api/receipts/upload', {
-            method: 'POST',
+          const uploadResponse = await fetch("/api/receipts/upload", {
+            method: "POST",
             body: formData,
           })
 
@@ -71,15 +71,15 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
           }
         } catch (uploadError) {
           // Log but don't fail - extraction succeeded, storage is optional
-          console.warn('Receipt upload failed:', uploadError)
+          console.warn("Receipt upload failed:", uploadError)
         }
 
         onExtracted({ ...result.data, receiptUrl })
       } else {
-        throw new Error(result.error || 'Failed to extract data')
+        throw new Error(result.error || "Failed to extract data")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Processing failed')
+      setError(err instanceof Error ? err.message : "Processing failed")
     } finally {
       setIsProcessing(false)
     }
@@ -117,8 +117,8 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
     setError(null)
     setIsProcessing(false)
     setCurrentFile(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (cameraInputRef.current) cameraInputRef.current.value = ""
     onCancel?.()
   }
 
@@ -205,12 +205,7 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
 
         {preview && !isProcessing && !error && (
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={handleCancel}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={handleCancel}>
               Poništi
             </Button>
             <Button

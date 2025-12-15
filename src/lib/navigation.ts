@@ -9,7 +9,7 @@ import {
   UserCog,
   LifeBuoy,
   KeyRound,
-  type LucideIcon
+  type LucideIcon,
 } from "lucide-react"
 
 export interface NavItem {
@@ -29,9 +29,7 @@ export interface NavSection {
 export const navigation: NavSection[] = [
   {
     title: "Pregled",
-    items: [
-      { name: "Nadzorna ploča", href: "/dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ name: "Nadzorna ploča", href: "/dashboard", icon: LayoutDashboard }],
   },
   {
     title: "Financije",
@@ -47,7 +45,7 @@ export const navigation: NavSection[] = [
           { name: "E-Računi", href: "/documents?category=e-invoice" },
           { name: "Bankovni izvodi", href: "/documents?category=bank-statement" },
           { name: "Troškovi", href: "/documents?category=expense" },
-        ]
+        ],
       },
       { name: "Banka", href: "/banking", icon: Building2, module: "banking" },
       { name: "Izvještaji", href: "/reports", icon: BarChart3, module: "reports" },
@@ -79,8 +77,8 @@ export const navigation: NavSection[] = [
 // Helper to check if a path matches a nav item (including children)
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
   if (pathname === item.href) return true
-  if (item.children?.some(child => pathname === child.href)) return true
+  if (item.children?.some((child) => pathname === child.href)) return true
   // Check if pathname starts with item.href (for nested routes)
-  if (pathname.startsWith(item.href + '/')) return true
+  if (pathname.startsWith(item.href + "/")) return true
   return false
 }

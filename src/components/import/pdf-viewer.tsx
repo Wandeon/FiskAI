@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Loader2, FileText, ExternalLink, ZoomIn, ZoomOut } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from "react"
+import { Loader2, FileText, ExternalLink, ZoomIn, ZoomOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface PdfViewerProps {
   url: string
   className?: string
 }
 
-export function PdfViewer({ url, className = '' }: PdfViewerProps) {
+export function PdfViewer({ url, className = "" }: PdfViewerProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -59,7 +59,7 @@ interface ImageViewerProps {
   className?: string
 }
 
-export function ImageViewer({ url, className = '' }: ImageViewerProps) {
+export function ImageViewer({ url, className = "" }: ImageViewerProps) {
   const [scale, setScale] = useState<number>(1.0)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<boolean>(false)
@@ -117,8 +117,8 @@ export function ImageViewer({ url, className = '' }: ImageViewerProps) {
         <img
           src={url}
           alt="Document"
-          style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}
-          className={`max-w-full max-h-full object-contain transition-transform ${loading ? 'opacity-0' : 'opacity-100'}`}
+          style={{ transform: `scale(${scale})`, transformOrigin: "center" }}
+          className={`max-w-full max-h-full object-contain transition-transform ${loading ? "opacity-0" : "opacity-100"}`}
           onLoad={() => setLoading(false)}
           onError={() => {
             setLoading(false)

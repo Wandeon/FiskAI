@@ -9,22 +9,17 @@ export const GET = withApiLogging(async () => {
   const startTime = Date.now()
 
   try {
-    const [
-      userCount,
-      companyCount,
-      contactCount,
-      invoiceCount,
-      invoicesByStatus,
-    ] = await Promise.all([
-      db.user.count(),
-      db.company.count(),
-      db.contact.count(),
-      db.eInvoice.count(),
-      db.eInvoice.groupBy({
-        by: ["status"],
-        _count: { id: true },
-      }),
-    ])
+    const [userCount, companyCount, contactCount, invoiceCount, invoicesByStatus] =
+      await Promise.all([
+        db.user.count(),
+        db.company.count(),
+        db.contact.count(),
+        db.eInvoice.count(),
+        db.eInvoice.groupBy({
+          by: ["status"],
+          _count: { id: true },
+        }),
+      ])
 
     const dbQueryTime = Date.now() - startTime
 

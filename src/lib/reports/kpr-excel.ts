@@ -4,7 +4,13 @@ import { KprSummary } from "./kpr"
  * Generates an Excel-compatible CSV with enhanced formatting
  * This creates a CSV that Excel will properly format with Croatian locale settings
  */
-export function kprToExcel(summary: KprSummary, companyName: string, companyOib: string, from?: Date, to?: Date): string {
+export function kprToExcel(
+  summary: KprSummary,
+  companyName: string,
+  companyOib: string,
+  from?: Date,
+  to?: Date
+): string {
   const lines: string[] = []
 
   // Header section
@@ -15,40 +21,48 @@ export function kprToExcel(summary: KprSummary, companyName: string, companyOib:
   lines.push("") // Empty line
 
   // Table header
-  lines.push([
-    "Redni broj",
-    "Datum",
-    "Broj računa/dokumenta",
-    "Opis",
-    "Primitak (Prihod)",
-    "Izdatak (Trošak)",
-    "Saldo",
-  ].map(h => `"${h}"`).join(","))
+  lines.push(
+    [
+      "Redni broj",
+      "Datum",
+      "Broj računa/dokumenta",
+      "Opis",
+      "Primitak (Prihod)",
+      "Izdatak (Trošak)",
+      "Saldo",
+    ]
+      .map((h) => `"${h}"`)
+      .join(",")
+  )
 
   // Data rows
   summary.rows.forEach((row, idx) => {
-    lines.push([
-      idx + 1,
-      formatDate(row.date),
-      escapeCsv(row.documentNumber || ""),
-      escapeCsv(row.description || ""),
-      row.income > 0 ? row.income.toFixed(2) : "",
-      row.expense > 0 ? row.expense.toFixed(2) : "",
-      row.balance.toFixed(2),
-    ].join(","))
+    lines.push(
+      [
+        idx + 1,
+        formatDate(row.date),
+        escapeCsv(row.documentNumber || ""),
+        escapeCsv(row.description || ""),
+        row.income > 0 ? row.income.toFixed(2) : "",
+        row.expense > 0 ? row.expense.toFixed(2) : "",
+        row.balance.toFixed(2),
+      ].join(",")
+    )
   })
 
   // Total row
   lines.push("") // Empty line
-  lines.push([
-    "",
-    "",
-    "",
-    `"UKUPNO"`,
-    summary.totalIncome.toFixed(2),
-    summary.totalExpense.toFixed(2),
-    summary.netIncome.toFixed(2),
-  ].join(","))
+  lines.push(
+    [
+      "",
+      "",
+      "",
+      `"UKUPNO"`,
+      summary.totalIncome.toFixed(2),
+      summary.totalExpense.toFixed(2),
+      summary.netIncome.toFixed(2),
+    ].join(",")
+  )
 
   // Summary section
   lines.push("") // Empty line
@@ -64,22 +78,19 @@ export function kprToExcel(summary: KprSummary, companyName: string, companyOib:
     lines.push("") // Empty line
     lines.push("") // Empty line
     lines.push(`"MJESEČNI PREGLED"`)
-    lines.push([
-      "Mjesec",
-      "Prihod",
-      "Trošak",
-      "Neto",
-    ].map(h => `"${h}"`).join(","))
+    lines.push(["Mjesec", "Prihod", "Trošak", "Neto"].map((h) => `"${h}"`).join(","))
 
     Object.entries(summary.byMonth)
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([monthKey, monthData]) => {
-        lines.push([
-          `"${getMonthName(monthKey)}"`,
-          monthData.totalIncome.toFixed(2),
-          monthData.totalExpense.toFixed(2),
-          monthData.netIncome.toFixed(2),
-        ].join(","))
+        lines.push(
+          [
+            `"${getMonthName(monthKey)}"`,
+            monthData.totalIncome.toFixed(2),
+            monthData.totalExpense.toFixed(2),
+            monthData.netIncome.toFixed(2),
+          ].join(",")
+        )
       })
   }
 
@@ -88,22 +99,19 @@ export function kprToExcel(summary: KprSummary, companyName: string, companyOib:
     lines.push("") // Empty line
     lines.push("") // Empty line
     lines.push(`"KVARTALNI PREGLED"`)
-    lines.push([
-      "Kvartal",
-      "Prihod",
-      "Trošak",
-      "Neto",
-    ].map(h => `"${h}"`).join(","))
+    lines.push(["Kvartal", "Prihod", "Trošak", "Neto"].map((h) => `"${h}"`).join(","))
 
     Object.entries(summary.byQuarter)
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([quarterKey, quarterData]) => {
-        lines.push([
-          `"${quarterKey}"`,
-          quarterData.totalIncome.toFixed(2),
-          quarterData.totalExpense.toFixed(2),
-          quarterData.netIncome.toFixed(2),
-        ].join(","))
+        lines.push(
+          [
+            `"${quarterKey}"`,
+            quarterData.totalIncome.toFixed(2),
+            quarterData.totalExpense.toFixed(2),
+            quarterData.netIncome.toFixed(2),
+          ].join(",")
+        )
       })
   }
 

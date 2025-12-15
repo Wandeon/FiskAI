@@ -1,9 +1,9 @@
-'use server'
+"use server"
 
-import { db, runWithTenant } from '@/lib/db'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { revalidatePath } from 'next/cache'
-import { Prisma, ImportFormat } from '@prisma/client'
+import { db, runWithTenant } from "@/lib/db"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { revalidatePath } from "next/cache"
+import { Prisma, ImportFormat } from "@prisma/client"
 
 const Decimal = Prisma.Decimal
 
@@ -42,7 +42,7 @@ interface ImportTransactionInput {
  * Croatian IBANs start with HR and have 21 characters total
  */
 function validateIBAN(iban: string): boolean {
-  const cleanIban = iban.replace(/\s/g, '').toUpperCase()
+  const cleanIban = iban.replace(/\s/g, "").toUpperCase()
   return /^HR\d{19}$/.test(cleanIban)
 }
 
@@ -58,9 +58,12 @@ export async function createBankAccount(
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Validate IBAN format
-      const cleanIban = data.iban.replace(/\s/g, '').toUpperCase()
+      const cleanIban = data.iban.replace(/\s/g, "").toUpperCase()
       if (!validateIBAN(cleanIban)) {
-        return { success: false, error: 'Neispravan IBAN format. Hrvatski IBAN mora počinjati s HR i imati 21 znak.' }
+        return {
+          success: false,
+          error: "Neispravan IBAN format. Hrvatski IBAN mora počinjati s HR i imati 21 znak.",
+        }
       }
 
       // Check if IBAN already exists for this company
@@ -72,7 +75,7 @@ export async function createBankAccount(
       })
 
       if (existing) {
-        return { success: false, error: 'Račun s ovim IBAN-om već postoji' }
+        return { success: false, error: "Račun s ovim IBAN-om već postoji" }
       }
 
       const bankAccount = await db.bankAccount.create({
@@ -81,18 +84,18 @@ export async function createBankAccount(
           name: data.name,
           iban: cleanIban,
           bankName: data.bankName,
-          currency: data.currency || 'EUR',
+          currency: data.currency || "EUR",
           currentBalance: new Decimal(data.currentBalance || 0),
           isDefault: false,
         },
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       return { success: true, data: { id: bankAccount.id } }
     })
   } catch (error) {
-    console.error('Failed to create bank account:', error)
-    return { success: false, error: 'Greška pri kreiranju bankovnog računa' }
+    console.error("Failed to create bank account:", error)
+    return { success: false, error: "Greška pri kreiranju bankovnog računa" }
   }
 }
 
@@ -114,7 +117,7 @@ export async function updateBankAccount(
       })
 
       if (!existing) {
-        return { success: false, error: 'Bankovni račun nije pronađen' }
+        return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
       // If setting as default, unset other defaults
@@ -138,13 +141,13 @@ export async function updateBankAccount(
         data: updateData,
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/${id}`)
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to update bank account:', error)
-    return { success: false, error: 'Greška pri ažuriranju bankovnog računa' }
+    console.error("Failed to update bank account:", error)
+    return { success: false, error: "Greška pri ažuriranju bankovnog računa" }
   }
 }
 
@@ -163,7 +166,7 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
       })
 
       if (!account) {
-        return { success: false, error: 'Bankovni račun nije pronađen' }
+        return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
       // Check for linked transactions
@@ -180,12 +183,12 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
 
       await db.bankAccount.delete({ where: { id } })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to delete bank account:', error)
-    return { success: false, error: 'Greška pri brisanju bankovnog računa' }
+    console.error("Failed to delete bank account:", error)
+    return { success: false, error: "Greška pri brisanju bankovnog računa" }
   }
 }
 
@@ -208,11 +211,11 @@ export async function importBankStatement(
       })
 
       if (!bankAccount) {
-        return { success: false, error: 'Bankovni račun nije pronađen' }
+        return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
       if (!transactions || transactions.length === 0) {
-        return { success: false, error: 'Nema transakcija za uvoz' }
+        return { success: false, error: "Nema transakcija za uvoz" }
       }
 
       // Create import record and transactions in a transaction
@@ -256,7 +259,7 @@ export async function importBankStatement(
               reference: txn.reference || null,
               counterpartyName: txn.counterpartyName || null,
               counterpartyIban: txn.counterpartyIban || null,
-              matchStatus: 'UNMATCHED',
+              matchStatus: "UNMATCHED",
             },
           })
           importedCount++
@@ -279,13 +282,13 @@ export async function importBankStatement(
         return { importId: bankImport.id, count: importedCount }
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/${bankAccountId}`)
       return { success: true, data: { count: result.count } }
     })
   } catch (error) {
-    console.error('Failed to import bank statement:', error)
-    return { success: false, error: 'Greška pri uvozu bankovnog izvoda' }
+    console.error("Failed to import bank statement:", error)
+    return { success: false, error: "Greška pri uvozu bankovnog izvoda" }
   }
 }
 
@@ -294,7 +297,7 @@ export async function importBankStatement(
  */
 export async function matchTransaction(
   transactionId: string,
-  type: 'invoice' | 'expense',
+  type: "invoice" | "expense",
   matchId: string
 ): Promise<ActionResult> {
   try {
@@ -308,27 +311,30 @@ export async function matchTransaction(
       })
 
       if (!transaction) {
-        return { success: false, error: 'Transakcija nije pronađena' }
+        return { success: false, error: "Transakcija nije pronađena" }
       }
 
-      if (transaction.matchStatus === 'MANUAL_MATCHED' || transaction.matchStatus === 'AUTO_MATCHED') {
-        return { success: false, error: 'Transakcija je već povezana' }
+      if (
+        transaction.matchStatus === "MANUAL_MATCHED" ||
+        transaction.matchStatus === "AUTO_MATCHED"
+      ) {
+        return { success: false, error: "Transakcija je već povezana" }
       }
 
       // Verify the match entity exists
-      if (type === 'invoice') {
+      if (type === "invoice") {
         const invoice = await db.eInvoice.findFirst({
           where: { id: matchId, companyId: company.id },
         })
         if (!invoice) {
-          return { success: false, error: 'Račun nije pronađen' }
+          return { success: false, error: "Račun nije pronađen" }
         }
-      } else if (type === 'expense') {
+      } else if (type === "expense") {
         const expense = await db.expense.findFirst({
           where: { id: matchId, companyId: company.id },
         })
         if (!expense) {
-          return { success: false, error: 'Trošak nije pronađen' }
+          return { success: false, error: "Trošak nije pronađen" }
         }
       }
 
@@ -336,21 +342,21 @@ export async function matchTransaction(
       await db.bankTransaction.update({
         where: { id: transactionId },
         data: {
-          matchedInvoiceId: type === 'invoice' ? matchId : null,
-          matchedExpenseId: type === 'expense' ? matchId : null,
-          matchStatus: 'MANUAL_MATCHED',
+          matchedInvoiceId: type === "invoice" ? matchId : null,
+          matchedExpenseId: type === "expense" ? matchId : null,
+          matchStatus: "MANUAL_MATCHED",
           matchedAt: new Date(),
           matchedBy: user.id!,
         },
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/transactions/${transactionId}`)
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to match transaction:', error)
-    return { success: false, error: 'Greška pri povezivanju transakcije' }
+    console.error("Failed to match transaction:", error)
+    return { success: false, error: "Greška pri povezivanju transakcije" }
   }
 }
 
@@ -369,11 +375,11 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
       })
 
       if (!transaction) {
-        return { success: false, error: 'Transakcija nije pronađena' }
+        return { success: false, error: "Transakcija nije pronađena" }
       }
 
-      if (transaction.matchStatus === 'UNMATCHED' || transaction.matchStatus === 'IGNORED') {
-        return { success: false, error: 'Transakcija nije povezana' }
+      if (transaction.matchStatus === "UNMATCHED" || transaction.matchStatus === "IGNORED") {
+        return { success: false, error: "Transakcija nije povezana" }
       }
 
       // Remove match
@@ -382,19 +388,19 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
         data: {
           matchedInvoiceId: null,
           matchedExpenseId: null,
-          matchStatus: 'UNMATCHED',
+          matchStatus: "UNMATCHED",
           matchedAt: null,
           matchedBy: null,
         },
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/transactions/${transactionId}`)
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to unmatch transaction:', error)
-    return { success: false, error: 'Greška pri uklanjanju poveznice' }
+    console.error("Failed to unmatch transaction:", error)
+    return { success: false, error: "Greška pri uklanjanju poveznice" }
   }
 }
 
@@ -413,13 +419,13 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
       })
 
       if (!transaction) {
-        return { success: false, error: 'Transakcija nije pronađena' }
+        return { success: false, error: "Transakcija nije pronađena" }
       }
 
       await db.bankTransaction.update({
         where: { id: transactionId },
         data: {
-          matchStatus: 'IGNORED',
+          matchStatus: "IGNORED",
           matchedInvoiceId: null,
           matchedExpenseId: null,
           matchedAt: null,
@@ -427,13 +433,13 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
         },
       })
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/transactions/${transactionId}`)
       return { success: true }
     })
   } catch (error) {
-    console.error('Failed to ignore transaction:', error)
-    return { success: false, error: 'Greška pri ignoriranju transakcije' }
+    console.error("Failed to ignore transaction:", error)
+    return { success: false, error: "Greška pri ignoriranju transakcije" }
   }
 }
 
@@ -454,7 +460,7 @@ export async function autoMatchTransactions(
       })
 
       if (!bankAccount) {
-        return { success: false, error: 'Bankovni račun nije pronađen' }
+        return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
       // Get unmatched transactions
@@ -462,9 +468,9 @@ export async function autoMatchTransactions(
         where: {
           bankAccountId,
           companyId: company.id,
-          matchStatus: 'UNMATCHED',
+          matchStatus: "UNMATCHED",
         },
-        orderBy: { date: 'desc' },
+        orderBy: { date: "desc" },
       })
 
       let matchedCount = 0
@@ -484,7 +490,7 @@ export async function autoMatchTransactions(
               companyId: company.id,
               invoiceNumber: { contains: possibleInvoiceNumber },
               totalAmount: txn.amount,
-              direction: 'OUTBOUND',
+              direction: "OUTBOUND",
             },
           })
 
@@ -493,7 +499,7 @@ export async function autoMatchTransactions(
               where: { id: txn.id },
               data: {
                 matchedInvoiceId: invoice.id,
-                matchStatus: 'AUTO_MATCHED',
+                matchStatus: "AUTO_MATCHED",
                 matchedAt: new Date(),
                 matchedBy: user.id!,
               },
@@ -518,7 +524,7 @@ export async function autoMatchTransactions(
                 companyId: company.id,
                 totalAmount: txn.amount.abs(),
                 date: { gte: dateFrom, lte: dateTo },
-                status: 'PENDING',
+                status: "PENDING",
               },
             })
 
@@ -527,7 +533,7 @@ export async function autoMatchTransactions(
                 where: { id: txn.id },
                 data: {
                   matchedExpenseId: expense.id,
-                  matchStatus: 'AUTO_MATCHED',
+                  matchStatus: "AUTO_MATCHED",
                   matchedAt: new Date(),
                   matchedBy: user.id!,
                 },
@@ -537,8 +543,8 @@ export async function autoMatchTransactions(
               await db.expense.update({
                 where: { id: expense.id },
                 data: {
-                  status: 'PAID',
-                  paymentMethod: 'TRANSFER',
+                  status: "PAID",
+                  paymentMethod: "TRANSFER",
                   paymentDate: txn.date,
                 },
               })
@@ -556,7 +562,7 @@ export async function autoMatchTransactions(
                 companyId: company.id,
                 totalAmount: txn.amount,
                 issueDate: { gte: dateFrom, lte: dateTo },
-                direction: 'OUTBOUND',
+                direction: "OUTBOUND",
               },
             })
 
@@ -565,7 +571,7 @@ export async function autoMatchTransactions(
                 where: { id: txn.id },
                 data: {
                   matchedInvoiceId: invoice.id,
-                  matchStatus: 'AUTO_MATCHED',
+                  matchStatus: "AUTO_MATCHED",
                   matchedAt: new Date(),
                   matchedBy: user.id!,
                 },
@@ -577,12 +583,12 @@ export async function autoMatchTransactions(
         }
       }
 
-      revalidatePath('/banking')
+      revalidatePath("/banking")
       revalidatePath(`/banking/${bankAccountId}`)
       return { success: true, data: { count: matchedCount } }
     })
   } catch (error) {
-    console.error('Failed to auto-match transactions:', error)
-    return { success: false, error: 'Greška pri automatskom povezivanju transakcija' }
+    console.error("Failed to auto-match transactions:", error)
+    return { success: false, error: "Greška pri automatskom povezivanju transakcija" }
   }
 }

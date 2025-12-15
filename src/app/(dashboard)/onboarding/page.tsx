@@ -15,9 +15,7 @@ export default function OnboardingPage() {
     <div className="mx-auto max-w-xl py-12">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Dobrodošli u FiskAI</h1>
-        <p className="mt-2 text-gray-600">
-          Postavite svoju tvrtku u 3 jednostavna koraka
-        </p>
+        <p className="mt-2 text-gray-600">Postavite svoju tvrtku u 3 jednostavna koraka</p>
       </div>
 
       <StepIndicator currentStep={currentStep} isStepValid={isStepValid} />

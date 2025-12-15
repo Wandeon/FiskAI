@@ -43,7 +43,7 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
     // Verify buyer belongs to this company (automatically filtered by tenant context)
     const buyerExists = await db.contact.findFirst({
       where: { id: buyerId },
-      select: { id: true }
+      select: { id: true },
     })
 
     if (!buyerExists) {
@@ -84,14 +84,8 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
     })
 
     // Calculate totals using Decimal
-    const netAmount = lineItems.reduce(
-      (sum, line) => sum.add(line.netAmount),
-      new Decimal(0)
-    )
-    const vatAmount = lineItems.reduce(
-      (sum, line) => sum.add(line.vatAmount),
-      new Decimal(0)
-    )
+    const netAmount = lineItems.reduce((sum, line) => sum.add(line.netAmount), new Decimal(0))
+    const vatAmount = lineItems.reduce((sum, line) => sum.add(line.vatAmount), new Decimal(0))
     const totalAmount = netAmount.add(vatAmount)
 
     const eInvoice = await db.eInvoice.create({
@@ -206,12 +200,12 @@ export async function sendEInvoice(eInvoiceId: string) {
         await queueFiscalRequest(updatedInvoice.id, company.id, fiscalDecision)
         await db.eInvoice.update({
           where: { id: updatedInvoice.id },
-          data: { fiscalStatus: 'PENDING' }
+          data: { fiscalStatus: "PENDING" },
         })
       }
     } catch (fiscalError) {
       // Log but don't fail the invoice send if fiscalization queueing fails
-      console.error('[sendEInvoice] Fiscalization queueing error:', fiscalError)
+      console.error("[sendEInvoice] Fiscalization queueing error:", fiscalError)
     }
 
     revalidatePath("/e-invoices")
@@ -233,7 +227,18 @@ export async function getEInvoices(options?: {
     const invoices = await db.eInvoice.findMany({
       where: {
         ...(options?.direction && { direction: options.direction }),
-        ...(options?.status && { status: options.status as "DRAFT" | "PENDING_FISCALIZATION" | "FISCALIZED" | "SENT" | "DELIVERED" | "ACCEPTED" | "REJECTED" | "ARCHIVED" | "ERROR" }),
+        ...(options?.status && {
+          status: options.status as
+            | "DRAFT"
+            | "PENDING_FISCALIZATION"
+            | "FISCALIZED"
+            | "SENT"
+            | "DELIVERED"
+            | "ACCEPTED"
+            | "REJECTED"
+            | "ARCHIVED"
+            | "ERROR",
+        }),
       },
       select: {
         id: true,
@@ -247,8 +252,8 @@ export async function getEInvoices(options?: {
         currency: true,
         createdAt: true,
         buyer: {
-          select: { name: true, oib: true }
-        }
+          select: { name: true, oib: true },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: limit + 1,
@@ -376,7 +381,8 @@ export async function sendInvoiceEmail(invoiceId: string) {
 
     try {
       // Generate PDF using existing API endpoint
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"
+      const baseUrl =
+        process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"
       const pdfUrl = `${baseUrl}/api/invoices/${invoiceId}/pdf`
 
       // For server-side, we need to use absolute URL
@@ -407,7 +413,9 @@ export async function sendInvoiceEmail(invoiceId: string) {
           invoiceNumber: invoice.invoiceNumber,
           buyerName: invoice.buyer.name,
           issueDate: new Date(invoice.issueDate).toLocaleDateString("hr-HR"),
-          dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("hr-HR") : undefined,
+          dueDate: invoice.dueDate
+            ? new Date(invoice.dueDate).toLocaleDateString("hr-HR")
+            : undefined,
           totalAmount: Number(invoice.totalAmount).toFixed(2),
           currency: invoice.currency,
           companyName: invoice.company.name,

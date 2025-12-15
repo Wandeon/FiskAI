@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { generateWebAuthnRegistrationOptions } from '@/lib/webauthn';
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { generateWebAuthnRegistrationOptions } from "@/lib/webauthn"
 
 export async function POST() {
   try {
-    const session = await auth();
+    const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const user = await db.user.findUnique({
@@ -15,10 +15,10 @@ export async function POST() {
       include: {
         webAuthnCredentials: true,
       },
-    });
+    })
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     const options = await generateWebAuthnRegistrationOptions(
@@ -31,14 +31,11 @@ export async function POST() {
         counter: cred.counter,
         transports: cred.transports ?? null,
       }))
-    );
+    )
 
-    return NextResponse.json(options);
+    return NextResponse.json(options)
   } catch (error) {
-    console.error('WebAuthn registration start error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate registration options' },
-      { status: 500 }
-    );
+    console.error("WebAuthn registration start error:", error)
+    return NextResponse.json({ error: "Failed to generate registration options" }, { status: 500 })
   }
 }

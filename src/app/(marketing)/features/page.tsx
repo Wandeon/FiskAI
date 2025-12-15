@@ -5,7 +5,8 @@ import { FileText, ScanText, Sparkles, Shield, Users, Landmark } from "lucide-re
 
 export const metadata: Metadata = {
   title: "FiskAI — Mogućnosti",
-  description: "Pregled mogućnosti FiskAI platforme (beta): računi, troškovi, AI/OCR i priprema za e-račune.",
+  description:
+    "Pregled mogućnosti FiskAI platforme (beta): računi, troškovi, AI/OCR i priprema za e-račune.",
 }
 
 export default function FeaturesPage() {
@@ -14,7 +15,8 @@ export default function FeaturesPage() {
       <div className="space-y-3">
         <h1 className="text-display text-4xl font-semibold">Mogućnosti</h1>
         <p className="max-w-2xl text-sm text-[var(--muted)]">
-          FiskAI je modularan: počnite s osnovama (paušalni obrt), a zatim dodajte e-račune, fiskalizaciju i napredne funkcije kako rastete.
+          FiskAI je modularan: počnite s osnovama (paušalni obrt), a zatim dodajte e-račune,
+          fiskalizaciju i napredne funkcije kako rastete.
         </p>
       </div>
 
@@ -51,7 +53,8 @@ export default function FeaturesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted)]">
-            Priprema za integraciju s informacijskim posrednicima (npr. IE-Računi) i praćenje statusa e-računa.
+            Priprema za integraciju s informacijskim posrednicima (npr. IE-Računi) i praćenje
+            statusa e-računa.
           </CardContent>
         </Card>
 
@@ -75,7 +78,8 @@ export default function FeaturesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted)]">
-            AI nikad ne “mijenja istinu” bez potvrde korisnika: prijedlozi su vidljivi, reverzibilni i (idealno) auditabilni.
+            AI nikad ne “mijenja istinu” bez potvrde korisnika: prijedlozi su vidljivi, reverzibilni
+            i (idealno) auditabilni.
           </CardContent>
         </Card>
 
@@ -87,9 +91,13 @@ export default function FeaturesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-[var(--muted)]">
-            FiskAI treba imati jasan “Trust Center”: gdje su podaci, koliko se čuvaju, kako se izvoze i brišu te kako radi AI obrada.
+            FiskAI treba imati jasan “Trust Center”: gdje su podaci, koliko se čuvaju, kako se
+            izvoze i brišu te kako radi AI obrada.
             <div className="mt-3">
-              <Link href="/security" className="text-sm font-semibold text-blue-700 hover:underline">
+              <Link
+                href="/security"
+                className="text-sm font-semibold text-blue-700 hover:underline"
+              >
                 Pročitaj više
               </Link>
             </div>
@@ -99,4 +107,3 @@ export default function FeaturesPage() {
     </div>
   )
 }
-

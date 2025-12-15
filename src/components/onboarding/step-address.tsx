@@ -18,9 +18,7 @@ export function StepAddress() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold">Adresa tvrtke</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Unesite poslovnu adresu
-        </p>
+        <p className="mt-1 text-sm text-gray-600">Unesite poslovnu adresu</p>
       </div>
 
       <div className="space-y-4">

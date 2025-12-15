@@ -31,6 +31,8 @@ export function isOk<T>(result: ActionResult<T>): result is { success: true; dat
 }
 
 // Type guard to check if result is error
-export function isErr<T>(result: ActionResult<T>): result is { success: false; error: string; code?: string; field?: string } {
+export function isErr<T>(
+  result: ActionResult<T>
+): result is { success: false; error: string; code?: string; field?: string } {
   return result.success === false
 }

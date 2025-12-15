@@ -31,21 +31,11 @@ export function AccountingExportForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="from">Od datuma</Label>
-          <Input
-            id="from"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="to">Do datuma</Label>
-          <Input
-            id="to"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
       </div>
 
@@ -99,8 +89,9 @@ export function AccountingExportForm() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        CSV datoteke uključuju osnovne podatke, PDV, status plaćanja i (za troškove) link na skenirani račun.
-        Tax Season paket sadrži sve datoteke (računi, troškovi, KPR, sažetak) u jednom ZIP-u.
+        CSV datoteke uključuju osnovne podatke, PDV, status plaćanja i (za troškove) link na
+        skenirani račun. Tax Season paket sadrži sve datoteke (računi, troškovi, KPR, sažetak) u
+        jednom ZIP-u.
       </p>
     </div>
   )

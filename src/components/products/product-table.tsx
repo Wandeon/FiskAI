@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
@@ -116,8 +116,10 @@ export function ProductTable({ products, vatOptions }: ProductTableProps) {
 
       <div className="flex items-center justify-between text-sm text-[var(--muted)]">
         <p>
-          Prikazano <span className="font-semibold text-[var(--foreground)]">{filteredProducts.length}</span> od{" "}
-          <span className="font-semibold text-[var(--foreground)]">{products.length}</span> proizvoda
+          Prikazano{" "}
+          <span className="font-semibold text-[var(--foreground)]">{filteredProducts.length}</span>{" "}
+          od <span className="font-semibold text-[var(--foreground)]">{products.length}</span>{" "}
+          proizvoda
           {" · "}
           Aktivni: <span className="font-semibold text-[var(--foreground)]">{totalActive}</span>
         </p>
@@ -148,11 +150,16 @@ export function ProductTable({ products, vatOptions }: ProductTableProps) {
             </thead>
             <tbody>
               {filteredProducts.map((product) => (
-                <tr key={product.id} className="border-b border-[var(--border)] last:border-0 even:bg-[var(--surface-secondary)]/30">
+                <tr
+                  key={product.id}
+                  className="border-b border-[var(--border)] last:border-0 even:bg-[var(--surface-secondary)]/30"
+                >
                   <td className="px-4 py-4 align-top">
                     <p className="font-medium text-[var(--foreground)]">{product.name}</p>
                     {product.description && (
-                      <p className="text-sm text-[var(--muted)] truncate max-w-xs">{product.description}</p>
+                      <p className="text-sm text-[var(--muted)] truncate max-w-xs">
+                        {product.description}
+                      </p>
                     )}
                   </td>
                   <td className="px-4 py-4 align-top text-sm text-[var(--muted)]">
@@ -199,12 +206,12 @@ export function ProductTable({ products, vatOptions }: ProductTableProps) {
                       }
                       className={cn(
                         "inline-flex items-center gap-2 rounded-full px-3 py-0.5 text-xs font-semibold transition",
-                        drafts[product.id]?.isActive ?? product.isActive
+                        (drafts[product.id]?.isActive ?? product.isActive)
                           ? "bg-success-100 text-success-700"
                           : "bg-[var(--surface-secondary)] text-[var(--muted)] hover:text-[var(--foreground)]"
                       )}
                     >
-                      {drafts[product.id]?.isActive ?? product.isActive ? "Aktivan" : "Neaktivan"}
+                      {(drafts[product.id]?.isActive ?? product.isActive) ? "Aktivan" : "Neaktivan"}
                     </button>
                   </td>
                   <td className="px-4 py-4 align-top">
@@ -217,7 +224,10 @@ export function ProductTable({ products, vatOptions }: ProductTableProps) {
                           setErrorId(null)
                           const priceValue = Number(drafts[product.id]?.price ?? product.price)
                           const isActive = drafts[product.id]?.isActive ?? product.isActive
-                          const result = await updateProductInline(product.id, { price: priceValue, isActive })
+                          const result = await updateProductInline(product.id, {
+                            price: priceValue,
+                            isActive,
+                          })
                           if (result?.error) {
                             setErrorId(product.id)
                             toast.error("Greška", result.error)

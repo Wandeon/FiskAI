@@ -38,7 +38,7 @@ export function useMarketingAnalytics() {
     properties?: Record<string, unknown>
   ) => {
     const segment = pathname?.startsWith("/for/") ? pathname.split("/")[2] : undefined
-    
+
     switch (event) {
       case "free_trial":
         import("@/lib/marketing-analytics").then(({ trackFreeTrialConversion }) => {

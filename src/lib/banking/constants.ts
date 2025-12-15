@@ -1,8 +1,8 @@
 /**
  * Croatian Banks VBDI (Vodeća Banka za Devizno Inozemstvo) mapping
- * 
+ *
  * VBDI is the 7-digit bank code embedded in Croatian IBANs at positions 5-11.
- * 
+ *
  * Format: HRKK BBBB B00C CCCC CCCC C
  * - HR: Country code
  * - KK: Checksum (2 digits)
@@ -31,8 +31,8 @@ export const CROATIAN_BANKS: Record<string, string> = {
   "2492008": "Imex banka d.d.",
   "2393000": "Slavonska banka d.d.",
   "2423001": "Partner banka d.d.",
-  "3206300": "Revolut Bank UAB"
-};
+  "3206300": "Revolut Bank UAB",
+}
 
 /**
  * Extract bank code (VBDI) from Croatian IBAN
@@ -40,20 +40,20 @@ export const CROATIAN_BANKS: Record<string, string> = {
  * @returns 7-digit bank code or null if invalid format
  */
 export function extractBankCodeFromIban(iban: string): string | null {
-  if (!iban) return null;
+  if (!iban) return null
 
   // Clean and uppercase
-  const cleaned = iban.toUpperCase().replace(/\s/g, '');
+  const cleaned = iban.toUpperCase().replace(/\s/g, "")
 
   // Must be Croatian IBAN format: HR + 19 digits
   if (!/^HR\d{19}$/.test(cleaned)) {
-    return null;
+    return null
   }
 
   // Extract positions 5-11 (7-digit bank code)
   // Format: HR KK BBBB B00 CCCC CCCC C
   // Where: HR = country, KK = checksum (2 digits), BBBB B00 = bank code (7 digits)
-  return cleaned.substring(4, 11);
+  return cleaned.substring(4, 11)
 }
 
 /**
@@ -62,10 +62,10 @@ export function extractBankCodeFromIban(iban: string): string | null {
  * @returns Bank name or null if not found
  */
 export function getBankNameFromIban(iban: string): string | null {
-  const bankCode = extractBankCodeFromIban(iban);
-  if (!bankCode) return null;
-  
-  return CROATIAN_BANKS[bankCode] || null;
+  const bankCode = extractBankCodeFromIban(iban)
+  if (!bankCode) return null
+
+  return CROATIAN_BANKS[bankCode] || null
 }
 
 /**
@@ -74,37 +74,39 @@ export function getBankNameFromIban(iban: string): string | null {
  * @returns true if valid Croatian IBAN
  */
 export function isValidCroatianIban(iban: string): boolean {
-  if (!iban) return false;
-  
-  const cleaned = iban.toUpperCase().replace(/\s/g, '');
-  
+  if (!iban) return false
+
+  const cleaned = iban.toUpperCase().replace(/\s/g, "")
+
   // Basic format check
   if (!/^HR\d{19}$/.test(cleaned)) {
-    return false;
+    return false
   }
-  
+
   // Basic IBAN validation (simplified)
   // Note: Full IBAN validation is more complex, this covers most cases
-  const countryCode = 'HR';
-  const checkDigits = cleaned.substring(2, 4);
-  const basicAccountNumber = cleaned.substring(4);
-  
+  const countryCode = "HR"
+  const checkDigits = cleaned.substring(2, 4)
+  const basicAccountNumber = cleaned.substring(4)
+
   // Convert to numeric check (simplified)
-  const rearranged = basicAccountNumber + countryCode + checkDigits;
-  const numeric = Array.from(rearranged).map(char => {
-    const code = char.charCodeAt(0);
-    return (code >= 65 && code <= 90) ? (code - 55).toString() : char;
-  }).join('');
-  
+  const rearranged = basicAccountNumber + countryCode + checkDigits
+  const numeric = Array.from(rearranged)
+    .map((char) => {
+      const code = char.charCodeAt(0)
+      return code >= 65 && code <= 90 ? (code - 55).toString() : char
+    })
+    .join("")
+
   // Check if numeric representation mod 97 === 1 (simplified)
   // Note: In production, use a proper IBAN validation library
   try {
     const remainder = Array.from(numeric).reduce((acc, digit) => {
-      return (acc * 10 + parseInt(digit, 10)) % 97;
-    }, 0);
-    return remainder === 1;
+      return (acc * 10 + parseInt(digit, 10)) % 97
+    }, 0)
+    return remainder === 1
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -114,16 +116,16 @@ export function isValidCroatianIban(iban: string): boolean {
  * @returns Formatted IBAN (HR12 1234 5678 9012 3456 789)
  */
 export function formatIban(iban: string): string {
-  if (!iban) return '';
-  
-  const cleaned = iban.toUpperCase().replace(/\s/g, '');
-  
+  if (!iban) return ""
+
+  const cleaned = iban.toUpperCase().replace(/\s/g, "")
+
   // Format as HR12 1234 5678 9012 3456 789
   if (cleaned.length === 21) {
-    return cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
+    return cleaned.match(/.{1,4}/g)?.join(" ") || cleaned
   }
-  
-  return cleaned;
+
+  return cleaned
 }
 
 /**
@@ -132,8 +134,8 @@ export function formatIban(iban: string): string {
  * @returns 'EUR' for Croatian IBANs
  */
 export function getCurrencyFromIban(iban: string): string {
-  if (iban.toUpperCase().startsWith('HR')) {
-    return 'EUR';
+  if (iban.toUpperCase().startsWith("HR")) {
+    return "EUR"
   }
-  return 'EUR'; // Default to EUR for non-Croatian
+  return "EUR" // Default to EUR for non-Croatian
 }

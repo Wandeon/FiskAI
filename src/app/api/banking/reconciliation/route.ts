@@ -7,7 +7,13 @@ import { ParsedTransaction } from "@/lib/banking/csv-parser"
 import { AUTO_MATCH_THRESHOLD } from "@/lib/banking/reconciliation-config"
 import { MatchStatus, Prisma } from "@prisma/client"
 
-const matchStatusOptions = ["UNMATCHED", "AUTO_MATCHED", "MANUAL_MATCHED", "IGNORED", "ALL"] as const
+const matchStatusOptions = [
+  "UNMATCHED",
+  "AUTO_MATCHED",
+  "MANUAL_MATCHED",
+  "IGNORED",
+  "ALL",
+] as const
 
 const querySchema = z.object({
   bankAccountId: z.string().optional(),

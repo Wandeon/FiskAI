@@ -1,39 +1,35 @@
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { InvoiceActions } from './invoice-actions'
-import { FiscalStatusBadge } from './fiscal-status-badge'
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { notFound } from "next/navigation"
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { InvoiceActions } from "./invoice-actions"
+import { FiscalStatusBadge } from "./fiscal-status-badge"
 
 const TYPE_LABELS: Record<string, string> = {
-  INVOICE: 'Račun',
-  E_INVOICE: 'E-Račun',
-  QUOTE: 'Ponuda',
-  PROFORMA: 'Predračun',
-  CREDIT_NOTE: 'Odobrenje',
-  DEBIT_NOTE: 'Terećenje',
+  INVOICE: "Račun",
+  E_INVOICE: "E-Račun",
+  QUOTE: "Ponuda",
+  PROFORMA: "Predračun",
+  CREDIT_NOTE: "Odobrenje",
+  DEBIT_NOTE: "Terećenje",
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Nacrt',
-  SENT: 'Poslano',
-  PENDING_FISCALIZATION: 'Čeka fiskalizaciju',
-  FISCALIZED: 'Fiskalizirano',
-  DELIVERED: 'Dostavljeno',
-  ACCEPTED: 'Prihvaćeno',
-  REJECTED: 'Odbijeno',
-  ARCHIVED: 'Arhivirano',
-  ERROR: 'Greška',
+  DRAFT: "Nacrt",
+  SENT: "Poslano",
+  PENDING_FISCALIZATION: "Čeka fiskalizaciju",
+  FISCALIZED: "Fiskalizirano",
+  DELIVERED: "Dostavljeno",
+  ACCEPTED: "Prihvaćeno",
+  REJECTED: "Odbijeno",
+  ARCHIVED: "Arhivirano",
+  ERROR: "Greška",
 }
 
-export default async function InvoiceDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
   const { id } = await params
@@ -48,12 +44,12 @@ export default async function InvoiceDetailPage({
     include: {
       buyer: true,
       seller: true,
-      lines: { orderBy: { lineNumber: 'asc' } },
+      lines: { orderBy: { lineNumber: "asc" } },
       convertedFrom: { select: { id: true, invoiceNumber: true, type: true } },
       convertedTo: { select: { id: true, invoiceNumber: true, type: true } },
       fiscalRequests: {
-        orderBy: { createdAt: 'desc' },
-        take: 1
+        orderBy: { createdAt: "desc" },
+        take: 1,
       },
     },
   })
@@ -66,14 +62,14 @@ export default async function InvoiceDetailPage({
   const activeCertificate = await db.fiscalCertificate.findFirst({
     where: {
       companyId: company.id,
-      environment: company.fiscalEnvironment || 'PROD',
-      status: 'ACTIVE',
-    }
+      environment: company.fiscalEnvironment || "PROD",
+      status: "ACTIVE",
+    },
   })
 
   const formatCurrency = (amount: number | string) =>
-    new Intl.NumberFormat('hr-HR', {
-      style: 'currency',
+    new Intl.NumberFormat("hr-HR", {
+      style: "currency",
       currency: invoice.currency,
     }).format(Number(amount))
 
@@ -107,7 +103,11 @@ export default async function InvoiceDetailPage({
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="py-3">
             <p className="text-sm text-blue-800">
-              Konvertirano iz: <Link href={`/invoices/${invoice.convertedFrom.id}`} className="font-medium hover:underline">
+              Konvertirano iz:{" "}
+              <Link
+                href={`/invoices/${invoice.convertedFrom.id}`}
+                className="font-medium hover:underline"
+              >
                 {invoice.convertedFrom.invoiceNumber} ({TYPE_LABELS[invoice.convertedFrom.type]})
               </Link>
             </p>
@@ -119,10 +119,10 @@ export default async function InvoiceDetailPage({
         <Card className="bg-green-50 border-green-200">
           <CardContent className="py-3">
             <p className="text-sm text-green-800">
-              Konvertirano u:{' '}
+              Konvertirano u:{" "}
               {invoice.convertedTo.map((c, i) => (
                 <span key={c.id}>
-                  {i > 0 && ', '}
+                  {i > 0 && ", "}
                   <Link href={`/invoices/${c.id}`} className="font-medium hover:underline">
                     {c.invoiceNumber} ({TYPE_LABELS[c.type]})
                   </Link>
@@ -143,8 +143,12 @@ export default async function InvoiceDetailPage({
             {invoice.buyer ? (
               <div className="space-y-1">
                 <p className="font-medium">{invoice.buyer.name}</p>
-                {invoice.buyer.oib && <p className="text-sm text-gray-500">OIB: {invoice.buyer.oib}</p>}
-                {invoice.buyer.address && <p className="text-sm text-gray-500">{invoice.buyer.address}</p>}
+                {invoice.buyer.oib && (
+                  <p className="text-sm text-gray-500">OIB: {invoice.buyer.oib}</p>
+                )}
+                {invoice.buyer.address && (
+                  <p className="text-sm text-gray-500">{invoice.buyer.address}</p>
+                )}
                 {(invoice.buyer.postalCode || invoice.buyer.city) && (
                   <p className="text-sm text-gray-500">
                     {invoice.buyer.postalCode} {invoice.buyer.city}
@@ -165,11 +169,11 @@ export default async function InvoiceDetailPage({
           <CardContent className="space-y-4">
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <dt className="text-gray-500">Datum izdavanja:</dt>
-              <dd>{new Date(invoice.issueDate).toLocaleDateString('hr-HR')}</dd>
+              <dd>{new Date(invoice.issueDate).toLocaleDateString("hr-HR")}</dd>
               {invoice.dueDate && (
                 <>
                   <dt className="text-gray-500">Rok plaćanja:</dt>
-                  <dd>{new Date(invoice.dueDate).toLocaleDateString('hr-HR')}</dd>
+                  <dd>{new Date(invoice.dueDate).toLocaleDateString("hr-HR")}</dd>
                 </>
               )}
             </dl>
@@ -177,10 +181,7 @@ export default async function InvoiceDetailPage({
             {/* Fiscal Status */}
             <div className="pt-2 border-t">
               <div className="text-sm font-medium text-gray-700 mb-2">Status fiskalizacije</div>
-              <FiscalStatusBadge
-                invoice={invoice}
-                hasCertificate={!!activeCertificate}
-              />
+              <FiscalStatusBadge invoice={invoice} hasCertificate={!!activeCertificate} />
             </div>
           </CardContent>
         </Card>
@@ -208,7 +209,9 @@ export default async function InvoiceDetailPage({
                 <tr key={line.id} className="border-b">
                   <td className="py-2">{line.lineNumber}</td>
                   <td className="py-2">{line.description}</td>
-                  <td className="text-right py-2">{Number(line.quantity)} {line.unit}</td>
+                  <td className="text-right py-2">
+                    {Number(line.quantity)} {line.unit}
+                  </td>
                   <td className="text-right py-2">{formatCurrency(Number(line.unitPrice))}</td>
                   <td className="text-right py-2">{Number(line.vatRate)}%</td>
                   <td className="text-right py-2">{formatCurrency(Number(line.netAmount))}</td>

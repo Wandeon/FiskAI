@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(8, "Lozinka mora imati najmanje 8 znakova"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Lozinke se ne podudaraju",
-  path: ["confirmPassword"],
-})
+const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Lozinka mora imati najmanje 8 znakova"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Lozinke se ne podudaraju",
+    path: ["confirmPassword"],
+  })
 
 type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 
@@ -25,7 +27,7 @@ export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
-  
+
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -72,16 +74,11 @@ export default function ResetPasswordPage() {
         <CardContent>
           <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
             <p className="font-medium">Token nedostaje ili je nevažeći</p>
-            <p className="mt-1">
-              Molimo zatražite novo resetiranje lozinke.
-            </p>
+            <p className="mt-1">Molimo zatražite novo resetiranje lozinke.</p>
           </div>
 
           <div className="mt-4 text-center">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-blue-600 hover:underline"
-            >
+            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
               Zatraži novo resetiranje
             </Link>
           </div>
@@ -94,17 +91,11 @@ export default function ResetPasswordPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Nova lozinka</CardTitle>
-        <CardDescription>
-          Unesite svoju novu lozinku
-        </CardDescription>
+        <CardDescription>Unesite svoju novu lozinku</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
+          {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">
@@ -137,10 +128,7 @@ export default function ResetPasswordPage() {
           </Button>
 
           <div className="text-center">
-            <Link
-              href="/login"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
+            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
               Povratak na prijavu
             </Link>
           </div>

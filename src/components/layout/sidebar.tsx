@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from "next/link"
 import Image from "next/image"
@@ -41,18 +41,20 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
                 {user.image ? (
                   <Image
                     src={user.image}
-                    alt={user.name || 'Profile'}
+                    alt={user.name || "Profile"}
                     width={40}
                     height={40}
                     className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold">
-                    {(user.name || user.email || 'U').slice(0, 2).toUpperCase()}
+                    {(user.name || user.email || "U").slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="font-semibold text-[var(--foreground)] truncate">{user.name || user.email}</p>
+                  <p className="font-semibold text-[var(--foreground)] truncate">
+                    {user.name || user.email}
+                  </p>
                   {company && (
                     <p className="text-xs text-[var(--muted)] truncate">{company.name}</p>
                   )}
@@ -60,16 +62,22 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
               </div>
               {company && (
                 <div className="mt-3 flex gap-2 text-xs text-[var(--muted)]">
-                  <span className={cn(
-                    "rounded-full px-2 py-0.5 font-medium",
-                    company.eInvoiceProvider ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                  )}>
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 font-medium",
+                      company.eInvoiceProvider
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                    )}
+                  >
                     {company.eInvoiceProvider ? "Posrednik spojen" : "Posrednik nije konfiguriran"}
                   </span>
-                  <span className={cn(
-                    "rounded-full px-2 py-0.5 font-medium",
-                    company.isVatPayer ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
-                  )}>
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 font-medium",
+                      company.isVatPayer ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
+                    )}
+                  >
                     {company.isVatPayer ? "PDV obveznik" : "Nije PDV obveznik"}
                   </span>
                 </div>
@@ -108,10 +116,12 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
                         isCollapsed && "justify-center px-2"
                       )}
                     >
-                      <Icon className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        isActive ? "text-brand-600" : "text-[var(--muted)]"
-                      )} />
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0",
+                          isActive ? "text-brand-600" : "text-[var(--muted)]"
+                        )}
+                      />
 
                       {!isCollapsed && (
                         <>

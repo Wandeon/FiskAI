@@ -58,12 +58,7 @@ export function StepIndicator({ currentStep, isStepValid }: StepIndicatorProps) 
                 </span>
               </div>
               {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    "mx-4 h-0.5 w-12",
-                    isPast ? "bg-green-600" : "bg-gray-200"
-                  )}
-                />
+                <div className={cn("mx-4 h-0.5 w-12", isPast ? "bg-green-600" : "bg-gray-200")} />
               )}
             </li>
           )

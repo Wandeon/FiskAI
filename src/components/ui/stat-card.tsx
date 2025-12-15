@@ -13,14 +13,7 @@ interface StatCardProps {
   className?: string
 }
 
-export function StatCard({
-  title,
-  value,
-  description,
-  icon,
-  trend,
-  className,
-}: StatCardProps) {
+export function StatCard({ title, value, description, icon, trend, className }: StatCardProps) {
   const isPositiveTrend = trend && trend.value >= 0
 
   return (
@@ -29,11 +22,9 @@ export function StatCard({
         <div>
           <p className="text-sm font-medium text-[var(--muted)]">{title}</p>
           <p className="mt-2 text-3xl font-bold text-[var(--foreground)]">
-            {typeof value === 'number' ? value.toLocaleString('hr-HR') : value}
+            {typeof value === "number" ? value.toLocaleString("hr-HR") : value}
           </p>
-          {description && (
-            <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>
-          )}
+          {description && <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>}
           {trend && (
             <div className="mt-2 flex items-center gap-1">
               <span
@@ -42,17 +33,14 @@ export function StatCard({
                   isPositiveTrend ? "text-success-600" : "text-danger-600"
                 )}
               >
-                {isPositiveTrend ? "+" : ""}{trend.value}%
+                {isPositiveTrend ? "+" : ""}
+                {trend.value}%
               </span>
               <span className="text-sm text-[var(--muted)]">{trend.label}</span>
             </div>
           )}
         </div>
-        {icon && (
-          <div className="rounded-lg bg-brand-50 p-3 text-brand-600">
-            {icon}
-          </div>
-        )}
+        {icon && <div className="rounded-lg bg-brand-50 p-3 text-brand-600">{icon}</div>}
       </div>
     </div>
   )

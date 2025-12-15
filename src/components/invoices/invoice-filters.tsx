@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
@@ -52,8 +52,7 @@ export function InvoiceFilters({
     })
   }
 
-  const hasFilters =
-    Boolean(search.trim()) || types.length > 0 || statuses.length > 0
+  const hasFilters = Boolean(search.trim()) || types.length > 0 || statuses.length > 0
 
   return (
     <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">

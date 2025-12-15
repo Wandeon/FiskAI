@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react"
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false)
@@ -11,13 +11,13 @@ export function useMediaQuery(query: string): boolean {
       setMatches(media.matches)
     }
     const listener = () => setMatches(media.matches)
-    media.addEventListener('change', listener)
-    return () => media.removeEventListener('change', listener)
+    media.addEventListener("change", listener)
+    return () => media.removeEventListener("change", listener)
   }, [matches, query])
 
   return matches
 }
 
 export function useIsMobile() {
-  return useMediaQuery('(max-width: 768px)')
+  return useMediaQuery("(max-width: 768px)")
 }

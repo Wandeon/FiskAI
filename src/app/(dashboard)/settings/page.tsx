@@ -4,7 +4,16 @@ import { CompanySettingsForm } from "./company-settings-form"
 import { EInvoiceSettingsForm } from "./einvoice-settings-form"
 import Link from "next/link"
 import { PasskeyManager } from "@/components/settings/passkey-manager"
-import { Building2, ReceiptText, ShieldCheck, KeyRound, ChevronRight, ArrowUpRight, ListChecks, Shield } from "lucide-react"
+import {
+  Building2,
+  ReceiptText,
+  ShieldCheck,
+  KeyRound,
+  ChevronRight,
+  ArrowUpRight,
+  ListChecks,
+  Shield,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PlanSettingsForm } from "./plan-settings-form"
 
@@ -79,17 +88,24 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                       : "hover:bg-[var(--surface-secondary)]/60"
                   )}
                 >
-                  <div className={cn(
-                    "rounded-xl bg-[var(--surface-secondary)] p-2 text-[var(--muted)]",
-                    isActive && "bg-brand-50 text-brand-600"
-                  )}>
+                  <div
+                    className={cn(
+                      "rounded-xl bg-[var(--surface-secondary)] p-2 text-[var(--muted)]",
+                      isActive && "bg-brand-50 text-brand-600"
+                    )}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[var(--foreground)]">{tab.label}</p>
                     <p className="text-xs text-[var(--muted)] mt-0.5">{tab.description}</p>
                   </div>
-                  <ChevronRight className={cn("ml-auto h-4 w-4 text-[var(--muted)]", isActive && "text-brand-600")} />
+                  <ChevronRight
+                    className={cn(
+                      "ml-auto h-4 w-4 text-[var(--muted)]",
+                      isActive && "text-brand-600"
+                    )}
+                  />
                 </Link>
               )
             })}
@@ -219,9 +235,15 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                       <p className="font-semibold">Rokovi za usklađenost</p>
                     </div>
                     <ul className="mt-3 space-y-1 text-sm text-blue-800">
-                      <li>• <strong>1. siječnja 2026.</strong> – Obveza primanja e-računa (B2B)</li>
-                      <li>• <strong>1. siječnja 2026.</strong> – Obveza slanja e-računa (B2B)</li>
-                      <li>• <strong>1. srpnja 2026.</strong> – Obveza slanja e-računa (B2G)</li>
+                      <li>
+                        • <strong>1. siječnja 2026.</strong> – Obveza primanja e-računa (B2B)
+                      </li>
+                      <li>
+                        • <strong>1. siječnja 2026.</strong> – Obveza slanja e-računa (B2B)
+                      </li>
+                      <li>
+                        • <strong>1. srpnja 2026.</strong> – Obveza slanja e-računa (B2G)
+                      </li>
                     </ul>
                   </div>
                 </CardContent>
@@ -240,7 +262,9 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                   <Card className="cursor-pointer transition-all hover:border-brand-200 hover:shadow-card">
                     <CardHeader>
                       <CardTitle>Revizijski dnevnik</CardTitle>
-                      <CardDescription>Pregledajte aktivnosti korisnika i AI asistenta</CardDescription>
+                      <CardDescription>
+                        Pregledajte aktivnosti korisnika i AI asistenta
+                      </CardDescription>
                     </CardHeader>
                   </Card>
                 </Link>
@@ -274,7 +298,12 @@ function StatusCard({
     <div className="rounded-xl border border-[var(--border)] p-4">
       <p className="text-sm font-medium text-[var(--foreground)]">{label}</p>
       <p className="text-xs text-[var(--muted)]">{description}</p>
-      <span className={cn("mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold", colors[variant])}>
+      <span
+        className={cn(
+          "mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+          colors[variant]
+        )}
+      >
         {status}
       </span>
     </div>

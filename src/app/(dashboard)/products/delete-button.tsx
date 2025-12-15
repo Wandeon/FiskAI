@@ -34,12 +34,7 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
 
   return (
     <>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => setIsOpen(true)}
-        disabled={loading}
-      >
+      <Button variant="destructive" size="sm" onClick={() => setIsOpen(true)} disabled={loading}>
         Obriši
       </Button>
 

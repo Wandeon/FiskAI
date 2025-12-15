@@ -1,13 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
-function NavLink({
-  href,
-  children,
-}: {
-  href: string
-  children: React.ReactNode
-}) {
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
@@ -91,8 +85,18 @@ export default function MarketingLayout({
                 <p>Radnička cesta 80, 10000 Zagreb</p>
                 <p>OIB: 12345678901</p>
                 <p>IBAN: HR1234567890123456789 (ZABA)</p>
-                <p>Email: <a href="mailto:kontakt@fiskai.hr" className="text-blue-700 hover:underline">kontakt@fiskai.hr</a></p>
-                <p>Tel: <a href="tel:+38512345678" className="text-blue-700 hover:underline">+385 1 234 5678</a></p>
+                <p>
+                  Email:{" "}
+                  <a href="mailto:kontakt@fiskai.hr" className="text-blue-700 hover:underline">
+                    kontakt@fiskai.hr
+                  </a>
+                </p>
+                <p>
+                  Tel:{" "}
+                  <a href="tel:+38512345678" className="text-blue-700 hover:underline">
+                    +385 1 234 5678
+                  </a>
+                </p>
               </div>
             </div>
           </div>
@@ -130,13 +134,22 @@ export default function MarketingLayout({
               © {new Date().getFullYear()} Metrica d.o.o. (FiskAI). Sva prava pridržana.
             </p>
             <div className="flex items-center gap-6">
-              <a href="/status" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
+              <a
+                href="/status"
+                className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
                 Status sustava
               </a>
-              <a href="/sitemap.xml" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
+              <a
+                href="/sitemap.xml"
+                className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
                 Sitemap
               </a>
-              <a href="/robots.txt" className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]">
+              <a
+                href="/robots.txt"
+                className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
                 Robots.txt
               </a>
             </div>
@@ -146,4 +159,3 @@ export default function MarketingLayout({
     </div>
   )
 }
-

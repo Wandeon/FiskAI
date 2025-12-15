@@ -1,11 +1,11 @@
 // src/lib/fiscal/fiscal-pipeline.ts
-import { db } from '@/lib/db'
-import { FiscalRequest } from '@prisma/client'
-import { decryptWithEnvelope } from './envelope-encryption'
-import { parseP12Certificate, forgeToPem } from './certificate-parser'
-import { buildRacunRequest, buildStornoRequest, FiscalInvoiceData } from './xml-builder'
-import { signXML } from './xml-signer'
-import { submitToPorezna } from './porezna-client'
+import { db } from "@/lib/db"
+import { FiscalRequest } from "@prisma/client"
+import { decryptWithEnvelope } from "./envelope-encryption"
+import { parseP12Certificate, forgeToPem } from "./certificate-parser"
+import { buildRacunRequest, buildStornoRequest, FiscalInvoiceData } from "./xml-builder"
+import { signXML } from "./xml-signer"
+import { submitToPorezna } from "./porezna-client"
 
 export interface PipelineResult {
   success: boolean
@@ -16,24 +16,22 @@ export interface PipelineResult {
   errorMessage?: string
 }
 
-export async function executeFiscalRequest(
-  request: FiscalRequest
-): Promise<PipelineResult> {
+export async function executeFiscalRequest(request: FiscalRequest): Promise<PipelineResult> {
   // 1. Load certificate
   const certificate = await db.fiscalCertificate.findUnique({
-    where: { id: request.certificateId }
+    where: { id: request.certificateId },
   })
 
   if (!certificate) {
-    throw { poreznaCode: 'p001', message: 'Certificate not found' }
+    throw { poreznaCode: "p001", message: "Certificate not found" }
   }
 
-  if (certificate.status !== 'ACTIVE') {
-    throw { poreznaCode: 'p002', message: `Certificate status: ${certificate.status}` }
+  if (certificate.status !== "ACTIVE") {
+    throw { poreznaCode: "p002", message: `Certificate status: ${certificate.status}` }
   }
 
   if (certificate.certNotAfter < new Date()) {
-    throw { poreznaCode: 'p003', message: 'Certificate has expired' }
+    throw { poreznaCode: "p003", message: "Certificate has expired" }
   }
 
   // 2. Decrypt certificate
@@ -42,7 +40,7 @@ export async function executeFiscalRequest(
     certificate.encryptedDataKey
   )
   const { p12, password } = JSON.parse(decryptedPayload)
-  const p12Buffer = Buffer.from(p12, 'base64')
+  const p12Buffer = Buffer.from(p12, "base64")
 
   const parsedCert = await parseP12Certificate(p12Buffer, password)
   const credentials = forgeToPem(parsedCert.privateKey, parsedCert.certificate)
@@ -52,12 +50,12 @@ export async function executeFiscalRequest(
     where: { id: request.invoiceId! },
     include: {
       lines: true,
-      company: true
-    }
+      company: true,
+    },
   })
 
   if (!invoice) {
-    throw { poreznaCode: 'p004', message: 'Invoice not found' }
+    throw { poreznaCode: "p004", message: "Invoice not found" }
   }
 
   // 4. Build fiscal invoice structure
@@ -65,7 +63,7 @@ export async function executeFiscalRequest(
 
   // 5. Build XML
   let buildResult
-  if (request.messageType === 'STORNO' && invoice.jir) {
+  if (request.messageType === "STORNO" && invoice.jir) {
     buildResult = buildStornoRequest(
       fiscalInvoice,
       invoice.jir,
@@ -85,7 +83,7 @@ export async function executeFiscalRequest(
   // Store request XML
   await db.fiscalRequest.update({
     where: { id: request.id },
-    data: { requestXml: xml, zki }
+    data: { requestXml: xml, zki },
   })
 
   // 6. Sign XML
@@ -94,7 +92,7 @@ export async function executeFiscalRequest(
   // Store signed XML
   await db.fiscalRequest.update({
     where: { id: request.id },
-    data: { signedXml }
+    data: { signedXml },
   })
 
   // 7. Submit to Porezna
@@ -103,13 +101,13 @@ export async function executeFiscalRequest(
   // Store response
   await db.fiscalRequest.update({
     where: { id: request.id },
-    data: { responseXml: response.rawResponse }
+    data: { responseXml: response.rawResponse },
   })
 
   // Update certificate last used
   await db.fiscalCertificate.update({
     where: { id: certificate.id },
-    data: { lastUsedAt: new Date() }
+    data: { lastUsedAt: new Date() },
   })
 
   if (response.success) {
@@ -117,12 +115,12 @@ export async function executeFiscalRequest(
       success: true,
       jir: response.jir,
       zki: response.zki || zki,
-      responseXml: response.rawResponse
+      responseXml: response.rawResponse,
     }
   } else {
     throw {
       poreznaCode: response.errorCode,
-      message: response.errorMessage || 'Unknown error'
+      message: response.errorMessage || "Unknown error",
     }
   }
 }
@@ -142,20 +140,20 @@ function mapToFiscalInvoice(invoice: any): FiscalInvoiceData {
   const vatBreakdown = Array.from(vatMap.entries()).map(([rate, amounts]) => ({
     rate,
     baseAmount: amounts.base,
-    vatAmount: amounts.vat
+    vatAmount: amounts.vat,
   }))
 
   return {
     invoiceNumber: extractInvoiceNumber(invoice.invoiceNumber),
-    premisesCode: invoice.company.premisesCode || '1',
-    deviceCode: invoice.company.deviceCode || '1',
+    premisesCode: invoice.company.premisesCode || "1",
+    deviceCode: invoice.company.deviceCode || "1",
     issueDate: invoice.issueDate,
     totalAmount: Number(invoice.totalAmount),
     vatRegistered: invoice.company.vatRegistered ?? true,
     vatBreakdown,
-    paymentMethod: invoice.paymentMethod || 'G',
+    paymentMethod: invoice.paymentMethod || "G",
     operatorOib: invoice.operatorOib || invoice.company.oib,
-    subsequentDelivery: false
+    subsequentDelivery: false,
   }
 }
 

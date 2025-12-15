@@ -1,12 +1,12 @@
 // src/lib/email-sync/sync-service.ts
 
-import crypto from 'crypto'
-import { db } from '@/lib/db'
-import { getEmailProvider } from './providers'
-import { decryptSecret, encryptSecret } from '@/lib/secrets'
-import { uploadToR2, generateR2Key } from '@/lib/r2-client'
-import type { EmailConnection, EmailImportRule } from '@prisma/client'
-import type { EmailMessage, EmailAttachmentInfo } from './types'
+import crypto from "crypto"
+import { db } from "@/lib/db"
+import { getEmailProvider } from "./providers"
+import { decryptSecret, encryptSecret } from "@/lib/secrets"
+import { uploadToR2, generateR2Key } from "@/lib/r2-client"
+import type { EmailConnection, EmailImportRule } from "@prisma/client"
+import type { EmailMessage, EmailAttachmentInfo } from "./types"
 
 interface SyncResult {
   connectionId: string
@@ -66,17 +66,10 @@ export async function syncEmailConnection(
 
         for (const attachment of message.attachments) {
           try {
-            await processAttachment(
-              connection,
-              message,
-              attachment,
-              accessToken,
-              provider,
-              result
-            )
+            await processAttachment(connection, message, attachment, accessToken, provider, result)
           } catch (attError) {
             result.errors.push(
-              `Failed to process ${attachment.filename}: ${attError instanceof Error ? attError.message : 'Unknown error'}`
+              `Failed to process ${attachment.filename}: ${attError instanceof Error ? attError.message : "Unknown error"}`
             )
           }
         }
@@ -101,14 +94,14 @@ export async function syncEmailConnection(
       },
     })
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Sync failed'
+    const errorMessage = error instanceof Error ? error.message : "Sync failed"
     result.errors.push(errorMessage)
 
     await db.emailConnection.update({
       where: { id: connection.id },
       data: {
         lastError: errorMessage,
-        status: errorMessage.includes('token') ? 'EXPIRED' : 'ERROR',
+        status: errorMessage.includes("token") ? "EXPIRED" : "ERROR",
       },
     })
   }
@@ -126,9 +119,9 @@ async function processAttachment(
 ): Promise<void> {
   // Generate content hash for deduplication
   const contentHash = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(`${message.id}:${attachment.id}:${attachment.filename}:${attachment.sizeBytes}`)
-    .digest('hex')
+    .digest("hex")
     .slice(0, 32)
 
   // Check if already processed
@@ -154,15 +147,21 @@ async function processAttachment(
     }
 
     if (rule.senderDomain) {
-      const domain = message.senderEmail.split('@')[1]?.toLowerCase()
+      const domain = message.senderEmail.split("@")[1]?.toLowerCase()
       if (domain !== rule.senderDomain.toLowerCase()) return false
     }
 
-    if (rule.subjectContains && !message.subject.toLowerCase().includes(rule.subjectContains.toLowerCase())) {
+    if (
+      rule.subjectContains &&
+      !message.subject.toLowerCase().includes(rule.subjectContains.toLowerCase())
+    ) {
       return false
     }
 
-    if (rule.filenameContains && !attachment.filename.toLowerCase().includes(rule.filenameContains.toLowerCase())) {
+    if (
+      rule.filenameContains &&
+      !attachment.filename.toLowerCase().includes(rule.filenameContains.toLowerCase())
+    ) {
       return false
     }
 
@@ -193,26 +192,26 @@ async function processAttachment(
       mimeType: attachment.mimeType,
       sizeBytes: attachment.sizeBytes,
       r2Key,
-      status: matchesRule ? 'PENDING' : 'SKIPPED',
+      status: matchesRule ? "PENDING" : "SKIPPED",
     },
   })
 
   // If matches rule, create ImportJob
   if (matchesRule) {
     // Determine document type from filename/mime
-    const isPdf = attachment.mimeType === 'application/pdf' || attachment.filename.endsWith('.pdf')
-    const isImage = attachment.mimeType.startsWith('image/')
+    const isPdf = attachment.mimeType === "application/pdf" || attachment.filename.endsWith(".pdf")
+    const isImage = attachment.mimeType.startsWith("image/")
 
     if (isPdf || isImage) {
       const importJob = await db.importJob.create({
         data: {
           companyId: connection.companyId,
-          userId: 'system', // System-initiated
+          userId: "system", // System-initiated
           fileChecksum: contentHash,
           originalName: attachment.filename,
           storagePath: r2Key,
-          status: 'PENDING',
-          documentType: 'BANK_STATEMENT', // Default, AI will refine
+          status: "PENDING",
+          documentType: "BANK_STATEMENT", // Default, AI will refine
         },
       })
 
@@ -220,7 +219,7 @@ async function processAttachment(
         where: { id: emailAttachment.id },
         data: {
           importJobId: importJob.id,
-          status: 'IMPORTED',
+          status: "IMPORTED",
         },
       })
 
@@ -232,7 +231,7 @@ async function processAttachment(
 export async function syncAllConnections(): Promise<SyncResult[]> {
   const connections = await db.emailConnection.findMany({
     where: {
-      status: 'CONNECTED',
+      status: "CONNECTED",
     },
     include: {
       importRules: true,

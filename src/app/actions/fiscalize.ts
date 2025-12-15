@@ -1,10 +1,10 @@
-'use server'
+"use server"
 
-import { db } from '@/lib/db'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { getFiscalProvider, calculateZKI, validateZKIInput } from '@/lib/e-invoice'
-import type { FiscalInvoice, PaymentMethodCode } from '@/lib/e-invoice'
-import { revalidatePath } from 'next/cache'
+import { db } from "@/lib/db"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { getFiscalProvider, calculateZKI, validateZKIInput } from "@/lib/e-invoice"
+import type { FiscalInvoice, PaymentMethodCode } from "@/lib/e-invoice"
+import { revalidatePath } from "next/cache"
 
 /**
  * Fiscalize an invoice with Croatian Tax Authority (CIS)
@@ -24,31 +24,31 @@ export async function fiscalizeInvoice(invoiceId: string) {
     const invoice = await db.eInvoice.findFirst({
       where: {
         id: invoiceId,
-        companyId: company.id
+        companyId: company.id,
       },
       include: {
         company: true,
         lines: true,
-        buyer: true
-      }
+        buyer: true,
+      },
     })
 
     if (!invoice) {
-      return { success: false, error: 'Račun nije pronađen' }
+      return { success: false, error: "Račun nije pronađen" }
     }
 
     // Check if already fiscalized
-    if (invoice.status === 'FISCALIZED' || invoice.jir) {
-      return { success: false, error: 'Račun je već fiskaliziran' }
+    if (invoice.status === "FISCALIZED" || invoice.jir) {
+      return { success: false, error: "Račun je već fiskaliziran" }
     }
 
     // Check if invoice has required data
     if (!invoice.invoiceNumber) {
-      return { success: false, error: 'Račun nema broj računa' }
+      return { success: false, error: "Račun nema broj računa" }
     }
 
     if (!invoice.lines || invoice.lines.length === 0) {
-      return { success: false, error: 'Račun mora imati barem jednu stavku' }
+      return { success: false, error: "Račun mora imati barem jednu stavku" }
     }
 
     // Get default business premises and device
@@ -57,14 +57,14 @@ export async function fiscalizeInvoice(invoiceId: string) {
       where: {
         companyId: company.id,
         isDefault: true,
-        isActive: true
-      }
+        isActive: true,
+      },
     })
 
     if (!premises) {
       return {
         success: false,
-        error: 'Nije konfiguriran poslovni prostor. Molimo konfigurirajte u postavkama.'
+        error: "Nije konfiguriran poslovni prostor. Molimo konfigurirajte u postavkama.",
       }
     }
 
@@ -72,14 +72,14 @@ export async function fiscalizeInvoice(invoiceId: string) {
       where: {
         businessPremisesId: premises.id,
         isDefault: true,
-        isActive: true
-      }
+        isActive: true,
+      },
     })
 
     if (!device) {
       return {
         success: false,
-        error: 'Nije konfiguriran naplatni uređaj. Molimo konfigurirajte u postavkama.'
+        error: "Nije konfiguriran naplatni uređaj. Molimo konfigurirajte u postavkama.",
       }
     }
 
@@ -93,7 +93,7 @@ export async function fiscalizeInvoice(invoiceId: string) {
       invoiceNumber: invoice.invoiceNumber,
       premisesCode: premises.code.toString(),
       deviceCode: device.code.toString(),
-      totalAmount: Math.round(totalInCents)
+      totalAmount: Math.round(totalInCents),
     }
 
     // Validate ZKI input
@@ -101,7 +101,7 @@ export async function fiscalizeInvoice(invoiceId: string) {
     if (!validation.valid) {
       return {
         success: false,
-        error: `Nevažeći podaci za fiskalizaciju: ${validation.errors.join(', ')}`
+        error: `Nevažeći podaci za fiskalizaciju: ${validation.errors.join(", ")}`,
       }
     }
 
@@ -110,17 +110,20 @@ export async function fiscalizeInvoice(invoiceId: string) {
     const zki = calculateZKI(zkiInput)
 
     // Group VAT amounts by rate
-    const vatByRate = invoice.lines.reduce((acc, line) => {
-      const rate = Number(line.vatRate)
-      const amount = Number(line.vatAmount)
+    const vatByRate = invoice.lines.reduce(
+      (acc, line) => {
+        const rate = Number(line.vatRate)
+        const amount = Number(line.vatAmount)
 
-      if (rate === 25) acc.vat25 += amount
-      else if (rate === 13) acc.vat13 += amount
-      else if (rate === 5) acc.vat5 += amount
-      else if (rate === 0) acc.vat0 += amount
+        if (rate === 25) acc.vat25 += amount
+        else if (rate === 13) acc.vat13 += amount
+        else if (rate === 5) acc.vat5 += amount
+        else if (rate === 0) acc.vat0 += amount
 
-      return acc
-    }, { vat25: 0, vat13: 0, vat5: 0, vat0: 0 })
+        return acc
+      },
+      { vat25: 0, vat13: 0, vat5: 0, vat0: 0 }
+    )
 
     // Prepare fiscal invoice
     const fiscalInvoice: FiscalInvoice = {
@@ -130,16 +133,16 @@ export async function fiscalizeInvoice(invoiceId: string) {
       company: {
         oib: company.oib,
         name: company.name,
-        address: company.address || ''
+        address: company.address || "",
       },
       premisesCode: premises.code.toString(),
       deviceCode: device.code.toString(),
-      items: invoice.lines.map(line => ({
+      items: invoice.lines.map((line) => ({
         description: line.description,
         quantity: Number(line.quantity),
         unitPrice: Number(line.unitPrice),
         vatRate: Number(line.vatRate),
-        total: Number(line.netAmount) + Number(line.vatAmount)
+        total: Number(line.netAmount) + Number(line.vatAmount),
       })),
       totals: {
         net: Number(invoice.netAmount),
@@ -147,9 +150,9 @@ export async function fiscalizeInvoice(invoiceId: string) {
         vat13: vatByRate.vat13,
         vat5: vatByRate.vat5,
         vat0: vatByRate.vat0,
-        total: Number(invoice.totalAmount)
+        total: Number(invoice.totalAmount),
       },
-      paymentMethod: determinePaymentMethod(invoice)
+      paymentMethod: determinePaymentMethod(invoice),
     }
 
     // Get fiscal provider
@@ -163,14 +166,14 @@ export async function fiscalizeInvoice(invoiceId: string) {
       await db.eInvoice.update({
         where: { id: invoiceId },
         data: {
-          status: 'ERROR',
-          providerError: result.error
-        }
+          status: "ERROR",
+          providerError: result.error,
+        },
       })
 
       return {
         success: false,
-        error: result.error || 'Greška pri fiskalizaciji'
+        error: result.error || "Greška pri fiskalizaciji",
       }
     }
 
@@ -178,28 +181,27 @@ export async function fiscalizeInvoice(invoiceId: string) {
     await db.eInvoice.update({
       where: { id: invoiceId },
       data: {
-        status: 'FISCALIZED',
+        status: "FISCALIZED",
         jir: result.jir,
         zki,
         fiscalizedAt: new Date(),
-        providerError: null // Clear any previous errors
-      }
+        providerError: null, // Clear any previous errors
+      },
     })
 
-    revalidatePath('/e-invoices')
+    revalidatePath("/e-invoices")
     revalidatePath(`/e-invoices/${invoiceId}`)
 
     return {
       success: true,
       jir: result.jir,
-      zki
+      zki,
     }
-
   } catch (error) {
-    console.error('Fiscalization error:', error)
+    console.error("Fiscalization error:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Nepoznata greška pri fiskalizaciji'
+      error: error instanceof Error ? error.message : "Nepoznata greška pri fiskalizaciji",
     }
   }
 }
@@ -215,23 +217,23 @@ export async function checkFiscalStatus(invoiceId: string) {
     const invoice = await db.eInvoice.findFirst({
       where: {
         id: invoiceId,
-        companyId: company.id
+        companyId: company.id,
       },
       select: {
         id: true,
         jir: true,
         zki: true,
         status: true,
-        fiscalizedAt: true
-      }
+        fiscalizedAt: true,
+      },
     })
 
     if (!invoice) {
-      return { success: false, error: 'Račun nije pronađen' }
+      return { success: false, error: "Račun nije pronađen" }
     }
 
     if (!invoice.jir) {
-      return { success: false, error: 'Račun nije fiskaliziran' }
+      return { success: false, error: "Račun nije fiskaliziran" }
     }
 
     const provider = getFiscalProvider()
@@ -242,13 +244,12 @@ export async function checkFiscalStatus(invoiceId: string) {
       status: status.status,
       jir: invoice.jir,
       zki: invoice.zki,
-      fiscalizedAt: invoice.fiscalizedAt
+      fiscalizedAt: invoice.fiscalizedAt,
     }
-
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Greška pri provjeri statusa'
+      error: error instanceof Error ? error.message : "Greška pri provjeri statusa",
     }
   }
 }
@@ -266,21 +267,21 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
     const invoice = await db.eInvoice.findFirst({
       where: {
         id: invoiceId,
-        companyId: company.id
+        companyId: company.id,
       },
       select: {
         id: true,
         jir: true,
-        status: true
-      }
+        status: true,
+      },
     })
 
     if (!invoice) {
-      return { success: false, error: 'Račun nije pronađen' }
+      return { success: false, error: "Račun nije pronađen" }
     }
 
     if (!invoice.jir) {
-      return { success: false, error: 'Račun nije fiskaliziran' }
+      return { success: false, error: "Račun nije fiskaliziran" }
     }
 
     const provider = getFiscalProvider()
@@ -289,7 +290,7 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
     if (!result.success) {
       return {
         success: false,
-        error: result.error || 'Greška pri storniranju'
+        error: result.error || "Greška pri storniranju",
       }
     }
 
@@ -297,19 +298,18 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
     await db.eInvoice.update({
       where: { id: invoiceId },
       data: {
-        status: 'REJECTED' // or create a CANCELLED status
-      }
+        status: "REJECTED", // or create a CANCELLED status
+      },
     })
 
-    revalidatePath('/e-invoices')
+    revalidatePath("/e-invoices")
     revalidatePath(`/e-invoices/${invoiceId}`)
 
     return { success: true }
-
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Greška pri storniranju'
+      error: error instanceof Error ? error.message : "Greška pri storniranju",
     }
   }
 }
@@ -321,9 +321,9 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
 function determinePaymentMethod(invoice: { dueDate?: Date | null }): PaymentMethodCode {
   // If due date is in future, assume bank transfer
   if (invoice.dueDate && invoice.dueDate > new Date()) {
-    return 'T' // Transakcija (Bank Transfer)
+    return "T" // Transakcija (Bank Transfer)
   }
 
   // Default to bank transfer for B2B
-  return 'T'
+  return "T"
 }

@@ -7,11 +7,8 @@ const messageSchema = z.object({
   body: z.string().min(1, "Poruka je obavezna"),
 })
 
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
-  const params = await context.params;
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

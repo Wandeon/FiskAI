@@ -1,20 +1,20 @@
-import { db } from '@/lib/db'
-import { CategorySuggestion } from './types'
+import { db } from "@/lib/db"
+import { CategorySuggestion } from "./types"
 
 // Simple keyword-based categorization (no AI needed)
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  'OFFICE': ['papir', 'toner', 'uredski', 'office', 'printer', 'pisač', 'olovka', 'bilježnica'],
-  'TRAVEL': ['gorivo', 'benzin', 'diesel', 'cestarina', 'parking', 'put', 'autoprevoz'],
-  'TELECOM': ['mobitel', 'internet', 'telefon', 'a1', 'tele2', 'telemach', 'telekom'],
-  'RENT': ['najam', 'zakup', 'rent', 'naknada', 'prostor'],
-  'UTILITIES': ['struja', 'voda', 'plin', 'hep', 'komunalije', 'grijanje', 'hlađenje'],
-  'SERVICES': ['usluga', 'servis', 'održavanje', 'consulting', 'savjetovanje', 'podrška'],
-  'MARKETING': ['marketing', 'reklama', 'promocija', 'oglas', 'advertising'],
-  'FOOD': ['restoran', 'hrana', 'piće', 'kava', 'obrok', 'restaurant', 'catering'],
-  'TRANSPORT': ['prijevoz', 'transport', 'dostava', 'kurir', 'shipping'],
-  'EQUIPMENT': ['oprema', 'alat', 'uređaj', 'equipment', 'tool', 'stroj'],
-  'SOFTWARE': ['software', 'licenca', 'pretplata', 'subscription', 'aplikacija', 'program'],
-  'INSURANCE': ['osiguranje', 'polica', 'insurance', 'premija'],
+  OFFICE: ["papir", "toner", "uredski", "office", "printer", "pisač", "olovka", "bilježnica"],
+  TRAVEL: ["gorivo", "benzin", "diesel", "cestarina", "parking", "put", "autoprevoz"],
+  TELECOM: ["mobitel", "internet", "telefon", "a1", "tele2", "telemach", "telekom"],
+  RENT: ["najam", "zakup", "rent", "naknada", "prostor"],
+  UTILITIES: ["struja", "voda", "plin", "hep", "komunalije", "grijanje", "hlađenje"],
+  SERVICES: ["usluga", "servis", "održavanje", "consulting", "savjetovanje", "podrška"],
+  MARKETING: ["marketing", "reklama", "promocija", "oglas", "advertising"],
+  FOOD: ["restoran", "hrana", "piće", "kava", "obrok", "restaurant", "catering"],
+  TRANSPORT: ["prijevoz", "transport", "dostava", "kurir", "shipping"],
+  EQUIPMENT: ["oprema", "alat", "uređaj", "equipment", "tool", "stroj"],
+  SOFTWARE: ["software", "licenca", "pretplata", "subscription", "aplikacija", "program"],
+  INSURANCE: ["osiguranje", "polica", "insurance", "premija"],
 }
 
 export async function suggestCategory(
@@ -22,7 +22,7 @@ export async function suggestCategory(
   companyId: string
 ): Promise<CategorySuggestion[]> {
   const categories = await db.expenseCategory.findMany({
-    where: { OR: [{ companyId }, { companyId: null }] }
+    where: { OR: [{ companyId }, { companyId: null }] },
   })
 
   const descLower = description.toLowerCase()
@@ -30,10 +30,10 @@ export async function suggestCategory(
 
   for (const cat of categories) {
     const keywords = CATEGORY_KEYWORDS[cat.code] || []
-    const matches = keywords.filter(kw => descLower.includes(kw))
+    const matches = keywords.filter((kw) => descLower.includes(kw))
 
     if (matches.length > 0) {
-      const matchedWords = matches.slice(0, 3).join(', ')
+      const matchedWords = matches.slice(0, 3).join(", ")
       suggestions.push({
         categoryId: cat.id,
         categoryName: cat.name,
@@ -56,9 +56,9 @@ export async function suggestCategoryByVendor(
       companyId,
       name: {
         contains: vendorName,
-        mode: 'insensitive'
-      }
-    }
+        mode: "insensitive",
+      },
+    },
   })
 
   if (!contact) return null
@@ -67,14 +67,14 @@ export async function suggestCategoryByVendor(
   const previousExpense = await db.expense.findFirst({
     where: {
       companyId,
-      vendorId: contact.id
+      vendorId: contact.id,
     },
     include: {
-      category: true
+      category: true,
     },
     orderBy: {
-      date: 'desc'
-    }
+      date: "desc",
+    },
   })
 
   if (previousExpense?.category) {

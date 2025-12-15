@@ -3,7 +3,7 @@ import { AlertTriangle, AlertCircle, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AlertBannerProps {
-  type: 'error' | 'warning' | 'info'
+  type: "error" | "warning" | "info"
   title: string
   description?: string
   action?: {
@@ -54,7 +54,10 @@ export function AlertBanner({ type, title, description, action, className }: Ale
       {action && (
         <Link
           href={action.href}
-          className={cn("rounded-button px-4 py-2 text-sm font-medium text-white transition-colors flex-shrink-0", s.button)}
+          className={cn(
+            "rounded-button px-4 py-2 text-sm font-medium text-white transition-colors flex-shrink-0",
+            s.button
+          )}
         >
           {action.label}
         </Link>

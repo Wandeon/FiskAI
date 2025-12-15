@@ -30,28 +30,30 @@ function checkRateLimit(identifier: string): boolean {
 }
 
 // Clean up old entries periodically (every 5 minutes)
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, record] of rateLimitMap.entries()) {
-    if (now > record.resetAt) {
-      rateLimitMap.delete(key)
+setInterval(
+  () => {
+    const now = Date.now()
+    for (const [key, record] of rateLimitMap.entries()) {
+      if (now > record.resetAt) {
+        rateLimitMap.delete(key)
+      }
     }
-  }
-}, 5 * 60 * 1000)
+  },
+  5 * 60 * 1000
+)
 
 export async function POST(request: NextRequest) {
   try {
     // Get IP for rate limiting
-    const ip = request.headers.get("x-forwarded-for") || 
-               request.headers.get("x-real-ip") || 
-               "unknown"
+    const ip =
+      request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
 
     // Check rate limit
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Previše zahtjeva. Pokušajte ponovno za nekoliko trenutaka." 
+        {
+          success: false,
+          error: "Previše zahtjeva. Pokušajte ponovno za nekoliko trenutaka.",
         },
         { status: 429 }
       )
@@ -64,9 +66,9 @@ export async function POST(request: NextRequest) {
     // Validate input
     if (!oib || typeof oib !== "string") {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "OIB je obavezan" 
+        {
+          success: false,
+          error: "OIB je obavezan",
         },
         { status: 400 }
       )
@@ -75,9 +77,9 @@ export async function POST(request: NextRequest) {
     // Quick format validation
     if (!validateOib(oib)) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Neispravan format OIB-a ili kontrolna znamenka" 
+        {
+          success: false,
+          error: "Neispravan format OIB-a ili kontrolna znamenka",
         },
         { status: 400 }
       )
@@ -90,9 +92,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("OIB lookup error:", error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Dogodila se greška prilikom pretrage OIB-a" 
+      {
+        success: false,
+        error: "Dogodila se greška prilikom pretrage OIB-a",
       },
       { status: 500 }
     )

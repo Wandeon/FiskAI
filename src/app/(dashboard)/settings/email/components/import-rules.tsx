@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
 // src/app/(dashboard)/settings/email/components/import-rules.tsx
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Plus, Trash2, X } from 'lucide-react'
-import type { EmailImportRule } from '@prisma/client'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Plus, Trash2, X } from "lucide-react"
+import type { EmailImportRule } from "@prisma/client"
 
 interface ImportRulesSectionProps {
   connectionId: string
@@ -23,10 +23,10 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
-    senderEmail: '',
-    senderDomain: '',
-    subjectContains: '',
-    filenameContains: '',
+    senderEmail: "",
+    senderDomain: "",
+    subjectContains: "",
+    filenameContains: "",
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,22 +34,22 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
     setSaving(true)
 
     try {
-      const response = await fetch('/api/email/rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/email/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ connectionId, ...formData }),
       })
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to create rule')
+        throw new Error(data.error || "Failed to create rule")
       }
 
-      setFormData({ senderEmail: '', senderDomain: '', subjectContains: '', filenameContains: '' })
+      setFormData({ senderEmail: "", senderDomain: "", subjectContains: "", filenameContains: "" })
       setShowForm(false)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to create rule')
+      alert(error instanceof Error ? error.message : "Failed to create rule")
     } finally {
       setSaving(false)
     }
@@ -59,16 +59,16 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
     setDeleting(ruleId)
     try {
       const response = await fetch(`/api/email/rules/${ruleId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete rule')
+        throw new Error("Failed to delete rule")
       }
 
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to delete rule')
+      alert(error instanceof Error ? error.message : "Failed to delete rule")
     } finally {
       setDeleting(null)
     }
@@ -77,18 +77,18 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
   async function handleToggle(rule: EmailImportRule) {
     try {
       const response = await fetch(`/api/email/rules/${rule.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !rule.isActive }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update rule')
+        throw new Error("Failed to update rule")
       }
 
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to update rule')
+      alert(error instanceof Error ? error.message : "Failed to update rule")
     }
   }
 
@@ -142,7 +142,7 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
             </div>
           </div>
           <Button type="submit" size="sm" disabled={saving}>
-            {saving ? 'Saving...' : 'Add Rule'}
+            {saving ? "Saving..." : "Add Rule"}
           </Button>
         </form>
       )}
@@ -161,14 +161,13 @@ export function ImportRulesSection({ connectionId, rules }: ImportRulesSectionPr
               <div className="flex-1">
                 {rule.senderEmail && <span className="mr-2">From: {rule.senderEmail}</span>}
                 {rule.senderDomain && <span className="mr-2">Domain: @{rule.senderDomain}</span>}
-                {rule.subjectContains && <span className="mr-2">Subject: *{rule.subjectContains}*</span>}
+                {rule.subjectContains && (
+                  <span className="mr-2">Subject: *{rule.subjectContains}*</span>
+                )}
                 {rule.filenameContains && <span>File: *{rule.filenameContains}*</span>}
               </div>
               <div className="flex items-center gap-2">
-                <Switch
-                  checked={rule.isActive}
-                  onCheckedChange={() => handleToggle(rule)}
-                />
+                <Switch checked={rule.isActive} onCheckedChange={() => handleToggle(rule)} />
                 <Button
                   variant="ghost"
                   size="sm"

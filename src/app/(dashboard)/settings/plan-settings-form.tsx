@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
@@ -28,14 +28,14 @@ export function PlanSettingsForm({ company }: { company: Company }) {
   const [legalForm, setLegalForm] = useState<LegalForm>((company.legalForm as LegalForm) || "DOO")
   const [isVatPayer, setIsVatPayer] = useState<boolean>(company.isVatPayer)
   const [entitlements, setEntitlements] = useState<ModuleKey[]>(
-    Array.isArray(company.entitlements) ? (company.entitlements as ModuleKey[]) : ["invoicing", "eInvoicing", "expenses", "reports", "settings"]
+    Array.isArray(company.entitlements)
+      ? (company.entitlements as ModuleKey[])
+      : ["invoicing", "eInvoicing", "expenses", "reports", "settings"]
   )
   const [isPending, startTransition] = useTransition()
 
   const toggleEntitlement = (key: ModuleKey) => {
-    setEntitlements((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
+    setEntitlements((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
   }
 
   const onSubmit = () => {
@@ -71,7 +71,9 @@ export function PlanSettingsForm({ company }: { company: Company }) {
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-[var(--muted)]">Određuje koja polja/obveze se prikazuju.</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Određuje koja polja/obveze se prikazuju.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -90,7 +92,9 @@ export function PlanSettingsForm({ company }: { company: Company }) {
 
       <div>
         <p className="text-sm font-semibold text-[var(--foreground)]">Moduli</p>
-        <p className="text-xs text-[var(--muted)] mb-2">Aktivirajte module dostupne ovom klijentu.</p>
+        <p className="text-xs text-[var(--muted)] mb-2">
+          Aktivirajte module dostupne ovom klijentu.
+        </p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {modules.map((mod) => {
             const checked = entitlements.includes(mod.key)

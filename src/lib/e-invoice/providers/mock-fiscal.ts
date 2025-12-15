@@ -3,8 +3,8 @@ import {
   FiscalInvoice,
   FiscalResponse,
   StatusResponse,
-  CancelResponse
-} from '../fiscal-types'
+  CancelResponse,
+} from "../fiscal-types"
 
 /**
  * Mock Fiscal Provider for Development and Testing
@@ -18,14 +18,17 @@ import {
  * - Demo environments
  */
 export class MockFiscalProvider implements FiscalProvider {
-  name = 'Mock Fiscal Provider (Development)'
+  name = "Mock Fiscal Provider (Development)"
 
-  private fiscalizedInvoices = new Map<string, {
-    jir: string
-    zki: string
-    fiscalizedAt: Date
-    invoice: FiscalInvoice
-  }>()
+  private fiscalizedInvoices = new Map<
+    string,
+    {
+      jir: string
+      zki: string
+      fiscalizedAt: Date
+      invoice: FiscalInvoice
+    }
+  >()
 
   async send(invoice: FiscalInvoice): Promise<FiscalResponse> {
     // Simulate API delay (500-800ms)
@@ -36,8 +39,8 @@ export class MockFiscalProvider implements FiscalProvider {
     if (!validation.valid) {
       return {
         success: false,
-        error: validation.errors.join(', '),
-        errorCode: 'VALIDATION_ERROR'
+        error: validation.errors.join(", "),
+        errorCode: "VALIDATION_ERROR",
       }
     }
 
@@ -50,7 +53,7 @@ export class MockFiscalProvider implements FiscalProvider {
       jir,
       zki: invoice.zki,
       fiscalizedAt: new Date(),
-      invoice
+      invoice,
     })
 
     console.log(`[MockFiscalProvider] Invoice ${invoice.invoiceNumber} fiscalized`)
@@ -61,10 +64,10 @@ export class MockFiscalProvider implements FiscalProvider {
       success: true,
       jir,
       rawResponse: JSON.stringify({
-        status: 'OK',
+        status: "OK",
         jir,
-        timestamp: new Date().toISOString()
-      })
+        timestamp: new Date().toISOString(),
+      }),
     }
   }
 
@@ -75,15 +78,15 @@ export class MockFiscalProvider implements FiscalProvider {
 
     if (!record) {
       return {
-        status: 'ERROR',
-        error: 'JIR not found'
+        status: "ERROR",
+        error: "JIR not found",
       }
     }
 
     return {
-      status: 'FISCALIZED',
+      status: "FISCALIZED",
       jir,
-      fiscalizedAt: record.fiscalizedAt
+      fiscalizedAt: record.fiscalizedAt,
     }
   }
 
@@ -95,7 +98,7 @@ export class MockFiscalProvider implements FiscalProvider {
     if (!record) {
       return {
         success: false,
-        error: 'JIR not found'
+        error: "JIR not found",
       }
     }
 
@@ -104,7 +107,7 @@ export class MockFiscalProvider implements FiscalProvider {
 
     return {
       success: true,
-      cancelledAt: new Date()
+      cancelledAt: new Date(),
     }
   }
 
@@ -127,10 +130,10 @@ export class MockFiscalProvider implements FiscalProvider {
       random.substring(0, 4),
       random.substring(4, 8),
       random.substring(8, 12),
-      (timestamp + random).substring(0, 12)
+      (timestamp + random).substring(0, 12),
     ]
 
-    return parts.join('-')
+    return parts.join("-")
   }
 
   /**
@@ -141,41 +144,41 @@ export class MockFiscalProvider implements FiscalProvider {
 
     // Validate OIB
     if (!/^\d{11}$/.test(invoice.company.oib)) {
-      errors.push('Invalid OIB format (must be 11 digits)')
+      errors.push("Invalid OIB format (must be 11 digits)")
     }
 
     // Validate invoice number
     if (!invoice.invoiceNumber || invoice.invoiceNumber.trim().length === 0) {
-      errors.push('Invoice number is required')
+      errors.push("Invoice number is required")
     }
 
     // Validate ZKI
     if (!invoice.zki || invoice.zki.length !== 32) {
-      errors.push('Invalid ZKI format (must be 32 characters)')
+      errors.push("Invalid ZKI format (must be 32 characters)")
     }
 
     // Validate premises and device codes
     if (!invoice.premisesCode || invoice.premisesCode.trim().length === 0) {
-      errors.push('Premises code is required')
+      errors.push("Premises code is required")
     }
 
     if (!invoice.deviceCode || invoice.deviceCode.trim().length === 0) {
-      errors.push('Device code is required')
+      errors.push("Device code is required")
     }
 
     // Validate totals
     if (invoice.totals.total <= 0) {
-      errors.push('Total amount must be positive')
+      errors.push("Total amount must be positive")
     }
 
     // Validate items
     if (!invoice.items || invoice.items.length === 0) {
-      errors.push('At least one item is required')
+      errors.push("At least one item is required")
     }
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     }
   }
 
@@ -183,6 +186,6 @@ export class MockFiscalProvider implements FiscalProvider {
    * Simulate network delay
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

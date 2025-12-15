@@ -18,9 +18,33 @@ type ContactFormInput = z.input<typeof contactSchema>
 
 // EU country codes for VAT lookup
 const EU_COUNTRIES = [
-  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR",
-  "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
-  "SE", "SI", "SK"
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "EL",
+  "ES",
+  "FI",
+  "FR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
 ]
 
 export default function NewContactPage() {
@@ -101,7 +125,7 @@ export default function NewContactPage() {
     if (data.city) setValue("city", data.city)
     if (data.postalCode) setValue("postalCode", data.postalCode)
     if (data.vatNumber) setValue("vatNumber", data.vatNumber)
-    
+
     toast.success("Pronađeno!", "Podaci o tvrtki su automatski popunjeni")
   }
 
@@ -114,11 +138,7 @@ export default function NewContactPage() {
       <h1 className="text-2xl font-bold">Novi kontakt</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
         <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white shadow-sm">
           <section className="grid gap-4 p-6 md:grid-cols-2">
@@ -139,9 +159,7 @@ export default function NewContactPage() {
                 <option value="SUPPLIER">Dobavljač</option>
                 <option value="BOTH">Kupac i dobavljač</option>
               </select>
-              {errors.type && (
-                <p className="text-sm text-red-500">{errors.type.message}</p>
-              )}
+              {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -196,7 +214,8 @@ export default function NewContactPage() {
                   error={errors.oib?.message}
                 />
                 <p className="text-xs text-gray-500">
-                  11 znamenaka — kliknite “Dohvati podatke” za automatsko popunjavanje naziva/adrese.
+                  11 znamenaka — kliknite “Dohvati podatke” za automatsko popunjavanje
+                  naziva/adrese.
                 </p>
               </div>
             ) : (
@@ -206,7 +225,9 @@ export default function NewContactPage() {
                 </label>
                 <Input
                   {...register("vatNumber")}
-                  placeholder={isEuCustomer ? `${countryValue}123456789` : "Porezni identifikacijski broj"}
+                  placeholder={
+                    isEuCustomer ? `${countryValue}123456789` : "Porezni identifikacijski broj"
+                  }
                 />
                 {isEuCustomer && (
                   <p className="text-xs text-gray-500">
@@ -252,7 +273,8 @@ export default function NewContactPage() {
                 placeholder="npr. 15"
               />
               <p className="text-xs text-gray-500">
-                Koliko dana nakon izdavanja računa ovaj kupac u pravilu plaća. Koristi se za automatski izračun dospijeća.
+                Koliko dana nakon izdavanja računa ovaj kupac u pravilu plaća. Koristi se za
+                automatski izračun dospijeća.
               </p>
               {errors.paymentTermsDays && (
                 <p className="text-sm text-red-500">{errors.paymentTermsDays.message}</p>
@@ -262,14 +284,8 @@ export default function NewContactPage() {
             {isLocalCustomer && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">PDV ID</label>
-                <Input
-                  {...register("vatNumber")}
-                  placeholder="HR12345678901"
-                  disabled
-                />
-                <p className="text-xs text-gray-500">
-                  Automatski popunjeno iz OIB-a (HR + OIB)
-                </p>
+                <Input {...register("vatNumber")} placeholder="HR12345678901" disabled />
+                <p className="text-xs text-gray-500">Automatski popunjeno iz OIB-a (HR + OIB)</p>
               </div>
             )}
           </section>
@@ -277,15 +293,14 @@ export default function NewContactPage() {
           <section className="grid gap-4 p-6 md:grid-cols-2">
             <div className="md:col-span-2">
               <h2 className="text-lg font-semibold text-[var(--foreground)]">Adresa</h2>
-              <p className="text-sm text-[var(--muted)]">Poštanski broj i grad se povezuju automatski kad je moguće</p>
+              <p className="text-sm text-[var(--muted)]">
+                Poštanski broj i grad se povezuju automatski kad je moguće
+              </p>
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium">Ulica i broj</label>
-              <Input
-                {...register("address")}
-                placeholder="Ulica i kućni broj"
-              />
+              <Input {...register("address")} placeholder="Ulica i kućni broj" />
             </div>
 
             <div className="space-y-2">
@@ -332,17 +347,21 @@ export default function NewContactPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Telefon</label>
-              <Input
-                {...register("phone")}
-                placeholder="+385 1 234 5678"
-              />
+              <Input {...register("phone")} placeholder="+385 1 234 5678" />
             </div>
           </section>
         </div>
 
         <div className="flex gap-4">
           <Button type="submit" disabled={loading} className="min-w-[140px]">
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Spremanje...</> : "Spremi kontakt"}
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Spremanje...
+              </>
+            ) : (
+              "Spremi kontakt"
+            )}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Odustani

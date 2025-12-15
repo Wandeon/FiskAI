@@ -23,7 +23,7 @@ export async function POST() {
       if (!company) {
         return NextResponse.json({ error: "No company found" }, { status: 404 })
       }
-      userId = 'test-user-' + Date.now()
+      userId = "test-user-" + Date.now()
     }
   } catch (authError) {
     // If auth fails, try first company for testing
@@ -32,7 +32,7 @@ export async function POST() {
     if (!company) {
       return NextResponse.json({ error: "No company found" }, { status: 404 })
     }
-    userId = 'test-user-' + Date.now()
+    userId = "test-user-" + Date.now()
   }
 
   setTenantContext({

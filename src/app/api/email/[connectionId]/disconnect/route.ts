@@ -1,11 +1,11 @@
 // src/app/api/email/[connectionId]/disconnect/route.ts
 
-import { NextResponse } from 'next/server'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
-import { getEmailProvider } from '@/lib/email-sync/providers'
-import { decryptSecret } from '@/lib/secrets'
+import { NextResponse } from "next/server"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { getEmailProvider } from "@/lib/email-sync/providers"
+import { decryptSecret } from "@/lib/secrets"
 
 export async function DELETE(
   request: Request,
@@ -23,10 +23,7 @@ export async function DELETE(
     })
 
     if (!connection) {
-      return NextResponse.json(
-        { error: 'Connection not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Connection not found" }, { status: 404 })
     }
 
     // Try to revoke access token
@@ -37,7 +34,7 @@ export async function DELETE(
         await provider.revokeAccess(accessToken)
       }
     } catch (revokeError) {
-      console.error('[email/disconnect] revoke error:', revokeError)
+      console.error("[email/disconnect] revoke error:", revokeError)
       // Continue with deletion even if revoke fails
     }
 
@@ -45,17 +42,17 @@ export async function DELETE(
     await db.emailConnection.update({
       where: { id: connectionId },
       data: {
-        status: 'REVOKED',
+        status: "REVOKED",
         accessTokenEnc: null,
-        refreshTokenEnc: '',
+        refreshTokenEnc: "",
       },
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[email/disconnect] error:', error)
+    console.error("[email/disconnect] error:", error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Disconnect failed' },
+      { error: error instanceof Error ? error.message : "Disconnect failed" },
       { status: 500 }
     )
   }

@@ -46,13 +46,21 @@ export function VatOverviewCard({ paidVat, pendingVat, isVatPayer }: VatOverview
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
           <p className="text-xs uppercase tracking-wide text-[var(--muted)]">PDV plaćen</p>
-          <p className="text-2xl font-semibold text-[var(--foreground)]">{formatCurrency(paidVat)}</p>
-          <p className="text-xs font-medium text-emerald-600">{paidPercent.toFixed(0)}% od ukupnog</p>
+          <p className="text-2xl font-semibold text-[var(--foreground)]">
+            {formatCurrency(paidVat)}
+          </p>
+          <p className="text-xs font-medium text-emerald-600">
+            {paidPercent.toFixed(0)}% od ukupnog
+          </p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
           <p className="text-xs uppercase tracking-wide text-[var(--muted)]">PDV u tijeku</p>
-          <p className="text-2xl font-semibold text-[var(--foreground)]">{formatCurrency(pendingVat)}</p>
-          <p className="text-xs font-medium text-amber-600">{pendingPercent.toFixed(0)}% od ukupnog</p>
+          <p className="text-2xl font-semibold text-[var(--foreground)]">
+            {formatCurrency(pendingVat)}
+          </p>
+          <p className="text-xs font-medium text-amber-600">
+            {pendingPercent.toFixed(0)}% od ukupnog
+          </p>
         </div>
       </div>
 

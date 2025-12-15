@@ -61,10 +61,14 @@ export function RecentActivity({ invoices, className }: RecentActivityProps) {
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {invoices.map((invoice) => {
-              const status = statusConfig[invoice.status] || { label: invoice.status, className: "bg-gray-100" }
-              const amount = typeof invoice.totalAmount === 'number'
-                ? invoice.totalAmount
-                : Number(invoice.totalAmount.toString())
+              const status = statusConfig[invoice.status] || {
+                label: invoice.status,
+                className: "bg-gray-100",
+              }
+              const amount =
+                typeof invoice.totalAmount === "number"
+                  ? invoice.totalAmount
+                  : Number(invoice.totalAmount.toString())
 
               return (
                 <Link
@@ -82,9 +86,14 @@ export function RecentActivity({ invoices, className }: RecentActivityProps) {
                   </div>
                   <div className="text-right flex-shrink-0 ml-4">
                     <p className="font-semibold text-[var(--foreground)]">
-                      {amount.toLocaleString('hr-HR', { minimumFractionDigits: 2 })} €
+                      {amount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} €
                     </p>
-                    <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-medium", status.className)}>
+                    <span
+                      className={cn(
+                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                        status.className
+                      )}
+                    >
                       {status.label}
                     </span>
                   </div>

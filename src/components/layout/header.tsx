@@ -32,13 +32,7 @@ export async function Header() {
   let capabilities = deriveCapabilities(null)
 
   if (session?.user?.id && currentCompany) {
-    const [
-      feed,
-      companyUser,
-      contactCount,
-      productCount,
-      eInvoiceCount,
-    ] = await Promise.all([
+    const [feed, companyUser, contactCount, productCount, eInvoiceCount] = await Promise.all([
       getNotificationCenterFeed({
         userId: session.user.id,
         company: {
@@ -56,7 +50,10 @@ export async function Header() {
       db.eInvoice.count({ where: { companyId: currentCompany.id } }),
     ])
     notificationItems = feed.items
-    notificationUnreadCount = countUnreadNotifications(feed.items, companyUser?.notificationSeenAt ?? null)
+    notificationUnreadCount = countUnreadNotifications(
+      feed.items,
+      companyUser?.notificationSeenAt ?? null
+    )
 
     const steps = [
       Boolean(currentCompany.oib && currentCompany.address),
@@ -91,10 +88,7 @@ export async function Header() {
           {/* Company Switcher (Desktop) */}
           {currentCompany && companies.length > 0 && (
             <div className="hidden lg:block">
-              <CompanySwitcher
-                companies={companies}
-                currentCompanyId={currentCompany.id}
-              />
+              <CompanySwitcher companies={companies} currentCompanyId={currentCompany.id} />
             </div>
           )}
 

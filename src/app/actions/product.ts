@@ -36,10 +36,7 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
   })
 }
 
-export async function updateProduct(
-  productId: string,
-  formData: z.infer<typeof productSchema>
-) {
+export async function updateProduct(productId: string, formData: z.infer<typeof productSchema>) {
   const user = await requireAuth()
 
   return requireCompanyWithContext(user.id!, async () => {

@@ -1,9 +1,9 @@
 // src/app/api/email/rules/route.ts
 
-import { NextResponse } from 'next/server'
-import { requireAuth, requireCompany } from '@/lib/auth-utils'
-import { db } from '@/lib/db'
-import { setTenantContext } from '@/lib/prisma-extensions'
+import { NextResponse } from "next/server"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { db } from "@/lib/db"
+import { setTenantContext } from "@/lib/prisma-extensions"
 
 export async function GET() {
   try {
@@ -18,16 +18,13 @@ export async function GET() {
           select: { emailAddress: true, provider: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     })
 
     return NextResponse.json({ rules })
   } catch (error) {
-    console.error('[email/rules] GET error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch rules' },
-      { status: 500 }
-    )
+    console.error("[email/rules] GET error:", error)
+    return NextResponse.json({ error: "Failed to fetch rules" }, { status: 500 })
   }
 }
 
@@ -41,10 +38,7 @@ export async function POST(request: Request) {
       await request.json()
 
     if (!connectionId) {
-      return NextResponse.json(
-        { error: 'connectionId is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "connectionId is required" }, { status: 400 })
     }
 
     // Verify connection belongs to company
@@ -53,16 +47,13 @@ export async function POST(request: Request) {
     })
 
     if (!connection) {
-      return NextResponse.json(
-        { error: 'Connection not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Connection not found" }, { status: 404 })
     }
 
     // Require at least one filter
     if (!senderEmail && !senderDomain && !subjectContains && !filenameContains) {
       return NextResponse.json(
-        { error: 'At least one filter criterion is required' },
+        { error: "At least one filter criterion is required" },
         { status: 400 }
       )
     }
@@ -80,10 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ rule })
   } catch (error) {
-    console.error('[email/rules] POST error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create rule' },
-      { status: 500 }
-    )
+    console.error("[email/rules] POST error:", error)
+    return NextResponse.json({ error: "Failed to create rule" }, { status: 500 })
   }
 }

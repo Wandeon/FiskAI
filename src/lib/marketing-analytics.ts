@@ -20,33 +20,33 @@ export const MarketingEvents = {
   PRICING_PLAN_CLICKED: "pricing_plan_clicked",
   SIGNUP_BUTTON_CLICKED: "signup_button_clicked",
   LOGIN_BUTTON_CLICKED: "login_button_clicked",
-  
+
   // Demo request form events
   DEMO_FORM_STARTED: "demo_form_started",
   DEMO_FORM_COMPLETED: "demo_form_completed",
   DEMO_FORM_ABANDONED: "demo_form_abandoned",
-  
+
   // Registration funnel events
   REGISTRATION_STARTED: "registration_started",
   REGISTRATION_COMPLETED: "registration_completed",
   REGISTRATION_ABANDONED: "registration_abandoned",
-  
+
   // Email capture events
   NEWSLETTER_SIGNUP: "newsletter_signup",
-  
+
   // Support interactions
   CONTACT_FORM_SUBMITTED: "contact_form_submitted",
   SUPPORT_CALL_CLICKED: "support_call_clicked",
   SUPPORT_EMAIL_CLICKED: "support_email_clicked",
-  
+
   // Trust signals
   TRUST_PAGE_VIEWED: "trust_page_viewed", // /security, /privacy, etc.
   LEGAL_PAGE_VIEWED: "legal_page_viewed",
-  
+
   // Social proof interactions
   TESTIMONIAL_VIEWED: "testimonial_viewed",
   CASE_STUDY_VIEWED: "case_study_viewed",
-  
+
   // Segment-specific conversions
   PAUSALNI_OBRT_CONVERSION: "pausalni_obrt_conversion",
   DOO_CONVERSION: "doo_conversion",
@@ -72,7 +72,7 @@ export function trackMarketingEvent(
  */
 export function trackFreeTrialConversion(segment?: string, plan?: string) {
   trackMarketingEvent("FREE_TRIAL_CLICKED", { segment, plan })
-  
+
   // Also track segment-specific conversion if applicable
   if (segment === "pausalni-obrt") {
     trackMarketingEvent("PAUSALNI_OBRT_CONVERSION")
@@ -96,7 +96,7 @@ export function trackDemoRequest(
     invoice_count: invoiceCount,
     source_page: sourcePage,
   })
-  
+
   // Track segment-specific demo if applicable
   if (businessType === "pausalni-obrt") {
     trackMarketingEvent("PAUSALNI_OBRT_CONVERSION")
@@ -120,7 +120,7 @@ export function trackRegistrationComplete(
     business_type: businessType,
     company_size: companySize,
   })
-  
+
   // For analytics, also track the standard user identification
   // (Note: user-specific identification happens in auth flow)
 }
@@ -130,7 +130,7 @@ export function trackRegistrationComplete(
  */
 export function trackMarketingPageView(page: string, segment?: string) {
   let event: keyof typeof MarketingEvents
-  
+
   switch (page) {
     case "/":
       event = "LANDING_PAGE_VIEWED"
@@ -156,7 +156,7 @@ export function trackMarketingPageView(page: string, segment?: string) {
         return // Don't track non-marketing pages
       }
   }
-  
+
   trackMarketingEvent(event, { page, segment })
 }
 
@@ -209,43 +209,47 @@ export function trackSupportInteraction(
  */
 export function initMarketingAnalytics() {
   if (typeof window === "undefined") return
-  
+
   // Track the initial page view
   const pathname = window.location.pathname
   const segment = pathname.startsWith("/for/") ? pathname.split("/")[2] : undefined
-  
+
   trackMarketingPageView(pathname, segment)
-  
+
   // Set up click tracking for conversion buttons
-  document.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement
-    const button = target.closest("button, a")
-    
-    if (!button) return
-    
-    const text = button.textContent?.toLowerCase() || ""
-    const href = button.getAttribute("href")
-    
-    // Track free trial clicks
-    if (text.includes("započni") || text.includes("besplatno") || text.includes("trial")) {
-      const segmentMatch = window.location.pathname.match(/\/for\/([^/]+)/)
-      const segment = segmentMatch ? segmentMatch[1] : undefined
-      trackFreeTrialConversion(segment)
-    }
-    
-    // Track demo request clicks
-    if (text.includes("demo") || text.includes("zahtjev") || (href && href.includes("contact"))) {
-      trackMarketingEvent("DEMO_REQUEST_CLICKED")
-    }
-    
-    // Track signup clicks
-    if (text.includes("prijava") || text.includes("signup") || text.includes("register")) {
-      trackMarketingEvent("SIGNUP_BUTTON_CLICKED")
-    }
-    
-    // Track login clicks
-    if (text.includes("login") || text.includes("prijava")) {
-      trackMarketingEvent("LOGIN_BUTTON_CLICKED")
-    }
-  }, { capture: true })
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target as HTMLElement
+      const button = target.closest("button, a")
+
+      if (!button) return
+
+      const text = button.textContent?.toLowerCase() || ""
+      const href = button.getAttribute("href")
+
+      // Track free trial clicks
+      if (text.includes("započni") || text.includes("besplatno") || text.includes("trial")) {
+        const segmentMatch = window.location.pathname.match(/\/for\/([^/]+)/)
+        const segment = segmentMatch ? segmentMatch[1] : undefined
+        trackFreeTrialConversion(segment)
+      }
+
+      // Track demo request clicks
+      if (text.includes("demo") || text.includes("zahtjev") || (href && href.includes("contact"))) {
+        trackMarketingEvent("DEMO_REQUEST_CLICKED")
+      }
+
+      // Track signup clicks
+      if (text.includes("prijava") || text.includes("signup") || text.includes("register")) {
+        trackMarketingEvent("SIGNUP_BUTTON_CLICKED")
+      }
+
+      // Track login clicks
+      if (text.includes("login") || text.includes("prijava")) {
+        trackMarketingEvent("LOGIN_BUTTON_CLICKED")
+      }
+    },
+    { capture: true }
+  )
 }

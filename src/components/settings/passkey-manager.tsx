@@ -1,71 +1,69 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { startRegistration } from "@simplewebauthn/browser";
-import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/server";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/lib/toast";
-import { Trash2, KeyRound, Plus } from "lucide-react";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { startRegistration } from "@simplewebauthn/browser"
+import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/server"
+import { Button } from "@/components/ui/button"
+import { toast } from "@/lib/toast"
+import { Trash2, KeyRound, Plus } from "lucide-react"
 
 interface Passkey {
-  id: string;
-  name: string | null;
-  createdAt: string;
-  lastUsedAt: string | null;
+  id: string
+  name: string | null
+  createdAt: string
+  lastUsedAt: string | null
 }
 
 export function PasskeyManager() {
-  const router = useRouter();
-  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const router = useRouter()
+  const [passkeys, setPasskeys] = useState<Passkey[]>([])
+  const [loading, setLoading] = useState(false)
+  const [isSupported, setIsSupported] = useState(false)
 
   useEffect(() => {
     // Check if WebAuthn is supported
     setIsSupported(
-      window?.PublicKeyCredential !== undefined &&
-        navigator?.credentials !== undefined
-    );
+      window?.PublicKeyCredential !== undefined && navigator?.credentials !== undefined
+    )
 
     // Load passkeys
-    loadPasskeys();
-  }, []);
+    loadPasskeys()
+  }, [])
 
   async function loadPasskeys() {
     try {
-      const response = await fetch("/api/webauthn/passkeys");
+      const response = await fetch("/api/webauthn/passkeys")
       if (response.ok) {
-        const data = await response.json();
-        setPasskeys(data.passkeys || []);
+        const data = await response.json()
+        setPasskeys(data.passkeys || [])
       }
     } catch (error) {
-      console.error("Failed to load passkeys:", error);
+      console.error("Failed to load passkeys:", error)
     }
   }
 
   async function handleAddPasskey() {
     if (!isSupported) {
-      toast.error("Passkeys nisu podržani u ovom pregledniku");
-      return;
+      toast.error("Passkeys nisu podržani u ovom pregledniku")
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
       // Start registration
       const startResponse = await fetch("/api/webauthn/register/start", {
         method: "POST",
-      });
+      })
 
       if (!startResponse.ok) {
-        throw new Error("Failed to start registration");
+        throw new Error("Failed to start registration")
       }
 
-      const options: PublicKeyCredentialCreationOptionsJSON =
-        await startResponse.json();
+      const options: PublicKeyCredentialCreationOptionsJSON = await startResponse.json()
 
       // Prompt user for passkey
-      const registrationResponse = await startRegistration({ optionsJSON: options });
+      const registrationResponse = await startRegistration({ optionsJSON: options })
 
       // Finish registration
       const finishResponse = await fetch("/api/webauthn/register/finish", {
@@ -77,70 +75,70 @@ export function PasskeyManager() {
           response: registrationResponse,
           name: `Passkey ${new Date().toLocaleDateString("hr-HR")}`,
         }),
-      });
+      })
 
       if (!finishResponse.ok) {
-        throw new Error("Failed to finish registration");
+        throw new Error("Failed to finish registration")
       }
 
-      toast.success("Passkey uspješno dodan");
-      await loadPasskeys();
-      router.refresh();
+      toast.success("Passkey uspješno dodan")
+      await loadPasskeys()
+      router.refresh()
     } catch (error) {
-      console.error("Passkey registration error:", error);
+      console.error("Passkey registration error:", error)
       if (error instanceof Error && error.name === "NotAllowedError") {
-        toast.error("Registracija otkazana");
+        toast.error("Registracija otkazana")
       } else {
-        toast.error("Greška prilikom dodavanja passkeya");
+        toast.error("Greška prilikom dodavanja passkeya")
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function handleDeletePasskey(id: string) {
     if (!confirm("Jeste li sigurni da želite obrisati ovaj passkey?")) {
-      return;
+      return
     }
 
     try {
       const response = await fetch(`/api/webauthn/passkeys/${id}`, {
         method: "DELETE",
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to delete passkey");
+        throw new Error("Failed to delete passkey")
       }
 
-      toast.success("Passkey obrisan");
-      await loadPasskeys();
-      router.refresh();
+      toast.success("Passkey obrisan")
+      await loadPasskeys()
+      router.refresh()
     } catch (error) {
-      console.error("Delete passkey error:", error);
-      toast.error("Greška prilikom brisanja passkeya");
+      console.error("Delete passkey error:", error)
+      toast.error("Greška prilikom brisanja passkeya")
     }
   }
 
   function formatDate(dateString: string | null) {
-    if (!dateString) return "Nikad";
+    if (!dateString) return "Nikad"
     return new Date(dateString).toLocaleDateString("hr-HR", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    });
+    })
   }
 
   if (!isSupported) {
     return (
       <div className="rounded-md bg-yellow-50 p-4">
         <p className="text-sm text-yellow-800">
-          Passkeys nisu podržani u ovom pregledniku. Molimo koristite noviju
-          verziju Chrome, Safari, ili Edge preglednika.
+          Passkeys nisu podržani u ovom pregledniku. Molimo koristite noviju verziju Chrome, Safari,
+          ili Edge preglednika.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -152,11 +150,7 @@ export function PasskeyManager() {
             Passkeys omogućuju brzu i sigurnu prijavu bez lozinke
           </p>
         </div>
-        <Button
-          onClick={handleAddPasskey}
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
+        <Button onClick={handleAddPasskey} disabled={loading} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Dodaj passkey
         </Button>
@@ -165,20 +159,13 @@ export function PasskeyManager() {
       {passkeys.length === 0 ? (
         <div className="rounded-md border border-dashed border-gray-300 p-8 text-center">
           <KeyRound className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
-            Nema registriranih passkeya
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Dodajte passkey za brzu i sigurnu prijavu
-          </p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Nema registriranih passkeya</h3>
+          <p className="mt-1 text-sm text-gray-500">Dodajte passkey za brzu i sigurnu prijavu</p>
         </div>
       ) : (
         <div className="divide-y divide-gray-200 rounded-md border">
           {passkeys.map((passkey) => (
-            <div
-              key={passkey.id}
-              className="flex items-center justify-between p-4"
-            >
+            <div key={passkey.id} className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <KeyRound className="h-5 w-5 text-gray-400" />
                 <div>
@@ -207,5 +194,5 @@ export function PasskeyManager() {
         </div>
       )}
     </div>
-  );
+  )
 }

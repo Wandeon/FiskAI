@@ -20,7 +20,8 @@ export default async function MarketingHomePage() {
                 AI-first računovodstvo koje ostaje u vašim rukama.
               </h1>
               <p className="max-w-xl text-base/7 text-white/85">
-                FiskAI pomaže izdavati račune, skupljati troškove i pripremati podatke za knjigovođu — bez slanja mailova i bez &quot;donosim fascikl&quot;.
+                FiskAI pomaže izdavati račune, skupljati troškove i pripremati podatke za knjigovođu
+                — bez slanja mailova i bez &quot;donosim fascikl&quot;.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -75,9 +76,13 @@ export default async function MarketingHomePage() {
                   <CardTitle className="text-lg">Transparentno: FiskAI je u beta fazi</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-white/85">
-                  Fokus je na brzom “time-to-value” za male tvrtke, uz postepeno proširenje na punu ERP funkcionalnost.
+                  Fokus je na brzom “time-to-value” za male tvrtke, uz postepeno proširenje na punu
+                  ERP funkcionalnost.
                   <div className="mt-3">
-                    <Link href="/features" className="text-sm font-semibold text-white underline underline-offset-4">
+                    <Link
+                      href="/features"
+                      className="text-sm font-semibold text-white underline underline-offset-4"
+                    >
                       Pogledaj mogućnosti
                     </Link>
                   </div>
@@ -132,7 +137,9 @@ export default async function MarketingHomePage() {
       <section className="bg-gradient-to-b from-white to-blue-50">
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <div className="mb-10 text-center">
-            <h2 className="text-display text-3xl font-semibold">Pouzdano od strane obrtnika i knjigovođa</h2>
+            <h2 className="text-display text-3xl font-semibold">
+              Pouzdano od strane obrtnika i knjigovođa
+            </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm text-[var(--muted)]">
               FiskAI pomaže paušalnim obrtnicima, VAT obrtima i knjigovođama u cijeloj Hrvatskoj.
             </p>
@@ -151,11 +158,17 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                &quot;Prije sam trošio 5-6 sati mjesečno na administraciju. Sada mi treba sat vremena za sve. Izvoz za knjigovođu je game-changer.&quot;
+                &quot;Prije sam trošio 5-6 sati mjesečno na administraciju. Sada mi treba sat
+                vremena za sve. Izvoz za knjigovođu je game-changer.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <svg key={i} className="h-4 w-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    key={i}
+                    className="h-4 w-4 text-yellow-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 ))}
@@ -174,11 +187,17 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                &quot;Klijenti mi šalju uredne izvozne pakete umjesto fotografija računa. Smanjuje vrijeme obrade za 70% i eliminira greške pri prepisivanju.&quot;
+                &quot;Klijenti mi šalju uredne izvozne pakete umjesto fotografija računa. Smanjuje
+                vrijeme obrade za 70% i eliminira greške pri prepisivanju.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <svg key={i} className="h-4 w-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    key={i}
+                    className="h-4 w-4 text-yellow-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 ))}
@@ -197,11 +216,17 @@ export default async function MarketingHomePage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--muted)] italic mb-4">
-                &quot;AI OCR za skeniranje računa je nevjerojatan. Uštedio mi je 10-15 sati mjesečno na unosu troškova. Priprema za e-račune je plus za budućnost.&quot;
+                &quot;AI OCR za skeniranje računa je nevjerojatan. Uštedio mi je 10-15 sati mjesečno
+                na unosu troškova. Priprema za e-račune je plus za budućnost.&quot;
               </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <svg key={i} className="h-4 w-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    key={i}
+                    className="h-4 w-4 text-yellow-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 ))}
@@ -235,9 +260,12 @@ export default async function MarketingHomePage() {
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <div className="grid gap-10 md:grid-cols-2 md:items-center">
             <div className="space-y-4">
-              <h2 className="text-display text-3xl font-semibold">Za paušalni obrt: jednostavno i kompletno</h2>
+              <h2 className="text-display text-3xl font-semibold">
+                Za paušalni obrt: jednostavno i kompletno
+              </h2>
               <p className="text-sm text-[var(--muted)]">
-                Cilj je da najjednostavniji korisnici dobiju sve što im treba: izdavanje računa, evidenciju troškova i “paket za knjigovođu” bez ručnog rada.
+                Cilj je da najjednostavniji korisnici dobiju sve što im treba: izdavanje računa,
+                evidenciju troškova i “paket za knjigovođu” bez ručnog rada.
               </p>
               <div className="pt-2">
                 <Link
@@ -254,16 +282,20 @@ export default async function MarketingHomePage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-[var(--muted)]">
                 <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Brzi onboarding s checklistom
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Brzi onboarding s
+                  checklistom
                 </p>
                 <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> OCR + AI prijedlozi kategorija za troškove
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> OCR + AI prijedlozi
+                  kategorija za troškove
                 </p>
                 <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Izvoz podataka (računi, troškovi, kontakti)
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Izvoz podataka (računi,
+                  troškovi, kontakti)
                 </p>
                 <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Priprema za e-račune / fiskalizaciju 2.0
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" /> Priprema za e-račune /
+                  fiskalizaciju 2.0
                 </p>
               </CardContent>
             </Card>
@@ -273,4 +305,3 @@ export default async function MarketingHomePage() {
     </div>
   )
 }
-

@@ -52,20 +52,21 @@ export function EInvoiceSettingsForm({ company }: EInvoiceSettingsFormProps) {
   const [loading, setLoading] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-  } = useForm<SettingsFormInput>({
+  const { register, handleSubmit, watch } = useForm<SettingsFormInput>({
     resolver: zodResolver(companySettingsSchema),
     defaultValues: {
-      eInvoiceProvider: company.eInvoiceProvider as "ie-racuni" | "fina" | "ddd-invoices" | "mock" | undefined,
-      eInvoiceApiKey: "",  // Always empty - encrypted keys cannot be shown
+      eInvoiceProvider: company.eInvoiceProvider as
+        | "ie-racuni"
+        | "fina"
+        | "ddd-invoices"
+        | "mock"
+        | undefined,
+      eInvoiceApiKey: "", // Always empty - encrypted keys cannot be shown
     },
   })
 
   const selectedProvider = watch("eInvoiceProvider")
-  const selectedProviderInfo = providers.find(p => p.id === selectedProvider)
+  const selectedProviderInfo = providers.find((p) => p.id === selectedProvider)
 
   async function onSubmit(data: SettingsFormInput) {
     setLoading(true)
@@ -93,7 +94,7 @@ export function EInvoiceSettingsForm({ company }: EInvoiceSettingsFormProps) {
     setSuccess(null)
 
     // Simulate API test
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
     if (selectedProvider === "mock") {
       setSuccess("Test uspješan! Mock provider je spreman za testiranje.")
@@ -108,15 +109,9 @@ export function EInvoiceSettingsForm({ company }: EInvoiceSettingsFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       {success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
-          {success}
-        </div>
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">{success}</div>
       )}
 
       <div className="space-y-4">

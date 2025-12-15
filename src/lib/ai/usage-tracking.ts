@@ -1,25 +1,25 @@
-import { db } from '@/lib/db'
-import { logger } from '@/lib/logger'
+import { db } from "@/lib/db"
+import { logger } from "@/lib/logger"
 
 /**
  * AI operations that can be tracked
  */
 export type AIOperation =
-  | 'ocr_receipt'
-  | 'extract_receipt'
-  | 'extract_invoice'
-  | 'categorize_expense'
+  | "ocr_receipt"
+  | "extract_receipt"
+  | "extract_invoice"
+  | "categorize_expense"
 
 /**
  * Model pricing in cents (EUR) per 1M tokens
  * Based on OpenAI pricing as of 2024
  */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o': {
+  "gpt-4o": {
     input: 250, // $2.50 per 1M input tokens
     output: 1000, // $10.00 per 1M output tokens
   },
-  'gpt-4o-mini': {
+  "gpt-4o-mini": {
     input: 15, // $0.15 per 1M input tokens
     output: 60, // $0.60 per 1M output tokens
   },
@@ -28,14 +28,10 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
 /**
  * Calculate cost in cents based on tokens used
  */
-function calculateCost(
-  model: string,
-  inputTokens: number,
-  outputTokens: number
-): number {
+function calculateCost(model: string, inputTokens: number, outputTokens: number): number {
   const pricing = MODEL_PRICING[model]
   if (!pricing) {
-    logger.warn({ model }, 'Unknown AI model, cannot calculate cost')
+    logger.warn({ model }, "Unknown AI model, cannot calculate cost")
     return 0
   }
 
@@ -66,9 +62,7 @@ export async function trackAIUsage(params: {
     } = params
 
     const tokensUsed = inputTokens + outputTokens
-    const costCents = model
-      ? calculateCost(model, inputTokens, outputTokens)
-      : null
+    const costCents = model ? calculateCost(model, inputTokens, outputTokens) : null
 
     await db.aIUsage.create({
       data: {
@@ -90,11 +84,11 @@ export async function trackAIUsage(params: {
         costCents,
         success,
       },
-      'AI usage tracked'
+      "AI usage tracked"
     )
   } catch (error) {
     // Don't fail the operation if tracking fails
-    logger.error({ error, params }, 'Failed to track AI usage')
+    logger.error({ error, params }, "Failed to track AI usage")
   }
 }
 
@@ -105,10 +99,7 @@ export async function getUsageThisMonth(companyId: string): Promise<{
   totalCalls: number
   totalTokens: number
   totalCostCents: number
-  byOperation: Record<
-    string,
-    { calls: number; tokens: number; costCents: number }
-  >
+  byOperation: Record<string, { calls: number; tokens: number; costCents: number }>
 }> {
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
@@ -128,10 +119,7 @@ export async function getUsageThisMonth(companyId: string): Promise<{
     },
   })
 
-  const byOperation: Record<
-    string,
-    { calls: number; tokens: number; costCents: number }
-  > = {}
+  const byOperation: Record<string, { calls: number; tokens: number; costCents: number }> = {}
 
   let totalCalls = 0
   let totalTokens = 0
@@ -253,10 +241,7 @@ export async function getUsageStats(
 /**
  * Check if company has exceeded their AI budget for the month
  */
-export async function hasExceededBudget(
-  companyId: string,
-  budgetCents?: number
-): Promise<boolean> {
+export async function hasExceededBudget(companyId: string, budgetCents?: number): Promise<boolean> {
   if (!budgetCents) return false
 
   const usage = await getUsageThisMonth(companyId)

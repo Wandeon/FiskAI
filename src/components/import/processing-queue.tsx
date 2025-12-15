@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { ProcessingCard, ImportJobState } from './processing-card'
+import { ProcessingCard, ImportJobState } from "./processing-card"
 
 interface ProcessingQueueProps {
   jobs: ImportJobState[]
@@ -13,23 +13,19 @@ export function ProcessingQueue({ jobs, onView, onRetry, onRemove }: ProcessingQ
   if (jobs.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center">
-        <p className="text-sm text-gray-500">
-          Nema dokumenata u redu čekanja
-        </p>
-        <p className="text-xs text-gray-400 mt-1">
-          Povucite datoteke u dropzonu za početak
-        </p>
+        <p className="text-sm text-gray-500">Nema dokumenata u redu čekanja</p>
+        <p className="text-xs text-gray-400 mt-1">Povucite datoteke u dropzonu za početak</p>
       </div>
     )
   }
 
   // Calculate queue positions for ready-for-review items
-  const readyJobs = jobs.filter(j => j.status === 'READY_FOR_REVIEW')
+  const readyJobs = jobs.filter((j) => j.status === "READY_FOR_REVIEW")
   const firstReadyId = readyJobs[0]?.id
 
-  const jobsWithPosition = jobs.map(job => {
-    if (job.status === 'READY_FOR_REVIEW') {
-      const position = readyJobs.findIndex(j => j.id === job.id) + 1
+  const jobsWithPosition = jobs.map((job) => {
+    if (job.status === "READY_FOR_REVIEW") {
+      const position = readyJobs.findIndex((j) => j.id === job.id) + 1
       return {
         ...job,
         queuePosition: position,
@@ -42,16 +38,14 @@ export function ProcessingQueue({ jobs, onView, onRetry, onRemove }: ProcessingQ
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">
-          Red čekanja
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-700">Red čekanja</h3>
         <span className="text-xs text-gray-500">
-          {jobs.length} {jobs.length === 1 ? 'datoteka' : 'datoteka'}
+          {jobs.length} {jobs.length === 1 ? "datoteka" : "datoteka"}
         </span>
       </div>
 
       <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-        {jobsWithPosition.map(job => (
+        {jobsWithPosition.map((job) => (
           <ProcessingCard
             key={job.id}
             job={job}

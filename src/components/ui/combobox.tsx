@@ -56,9 +56,7 @@ export function Combobox({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault()
-        setHighlightedIndex((prev) =>
-          Math.min(prev + 1, filteredOptions.length - 1)
-        )
+        setHighlightedIndex((prev) => Math.min(prev + 1, filteredOptions.length - 1))
         break
       case "ArrowUp":
         e.preventDefault()

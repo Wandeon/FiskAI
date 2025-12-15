@@ -1,20 +1,26 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from '@/lib/toast'
-import { createInvoice } from '@/app/actions/invoice'
-import { InvoiceType } from '@prisma/client'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "@/lib/toast"
+import { createInvoice } from "@/app/actions/invoice"
+import { InvoiceType } from "@prisma/client"
 
 interface InvoiceFormProps {
   type: string
   contacts: Array<{ id: string; name: string; oib: string | null }>
-  products: Array<{ id: string; name: string; price: number | { toNumber(): number }; vatRate: number | { toNumber(): number }; unit: string }>
+  products: Array<{
+    id: string
+    name: string
+    price: number | { toNumber(): number }
+    vatRate: number | { toNumber(): number }
+    unit: string
+  }>
 }
 
 interface LineItem {
@@ -28,16 +34,16 @@ interface LineItem {
 export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [buyerId, setBuyerId] = useState('')
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0])
-  const [dueDate, setDueDate] = useState('')
-  const [notes, setNotes] = useState('')
+  const [buyerId, setBuyerId] = useState("")
+  const [issueDate, setIssueDate] = useState(new Date().toISOString().split("T")[0])
+  const [dueDate, setDueDate] = useState("")
+  const [notes, setNotes] = useState("")
   const [lines, setLines] = useState<LineItem[]>([
-    { description: '', quantity: 1, unit: 'C62', unitPrice: 0, vatRate: 25 },
+    { description: "", quantity: 1, unit: "C62", unitPrice: 0, vatRate: 25 },
   ])
 
   function addLine() {
-    setLines([...lines, { description: '', quantity: 1, unit: 'C62', unitPrice: 0, vatRate: 25 }])
+    setLines([...lines, { description: "", quantity: 1, unit: "C62", unitPrice: 0, vatRate: 25 }])
   }
 
   function removeLine(index: number) {
@@ -55,8 +61,8 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
     const product = products.find((p) => p.id === productId)
     if (!product) return
 
-    const price = typeof product.price === 'number' ? product.price : Number(product.price)
-    const vatRate = typeof product.vatRate === 'number' ? product.vatRate : Number(product.vatRate)
+    const price = typeof product.price === "number" ? product.price : Number(product.price)
+    const vatRate = typeof product.vatRate === "number" ? product.vatRate : Number(product.vatRate)
 
     setLines([
       ...lines,
@@ -88,12 +94,12 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
     e.preventDefault()
 
     if (!buyerId) {
-      toast.error('Odaberite kupca')
+      toast.error("Odaberite kupca")
       return
     }
 
     if (lines.some((l) => !l.description || l.unitPrice <= 0)) {
-      toast.error('Ispunite sve stavke')
+      toast.error("Ispunite sve stavke")
       return
     }
 
@@ -111,15 +117,15 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
     setIsLoading(false)
 
     if (result.success) {
-      toast.success('Dokument je kreiran')
-      router.push('/invoices')
+      toast.success("Dokument je kreiran")
+      router.push("/invoices")
     } else {
-      toast.error(result.error || 'Greška pri kreiranju')
+      toast.error(result.error || "Greška pri kreiranju")
     }
   }
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' }).format(amount)
+    new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR" }).format(amount)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -140,7 +146,7 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
               <option value="">Odaberite kupca...</option>
               {contacts.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.oib ? `(${c.oib})` : ''}
+                  {c.name} {c.oib ? `(${c.oib})` : ""}
                 </option>
               ))}
             </select>
@@ -176,13 +182,13 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
             <select
               onChange={(e) => {
                 if (e.target.value) addProduct(e.target.value)
-                e.target.value = ''
+                e.target.value = ""
               }}
               className="text-sm rounded-md border-gray-300"
             >
               <option value="">+ Dodaj proizvod...</option>
               {products.map((p) => {
-                const price = typeof p.price === 'number' ? p.price : Number(p.price)
+                const price = typeof p.price === "number" ? p.price : Number(p.price)
                 return (
                   <option key={p.id} value={p.id}>
                     {p.name} - {formatCurrency(price)}
@@ -211,7 +217,7 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
                   <td className="py-2 pr-2">
                     <Input
                       value={line.description}
-                      onChange={(e) => updateLine(index, 'description', e.target.value)}
+                      onChange={(e) => updateLine(index, "description", e.target.value)}
                       placeholder="Opis stavke"
                       required
                     />
@@ -222,14 +228,16 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
                       min="0.001"
                       step="0.001"
                       value={line.quantity}
-                      onChange={(e) => updateLine(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateLine(index, "quantity", parseFloat(e.target.value) || 0)
+                      }
                       required
                     />
                   </td>
                   <td className="py-2 pr-2">
                     <select
                       value={line.unit}
-                      onChange={(e) => updateLine(index, 'unit', e.target.value)}
+                      onChange={(e) => updateLine(index, "unit", e.target.value)}
                       className="w-full rounded-md border-gray-300 text-sm"
                     >
                       <option value="C62">kom</option>
@@ -247,14 +255,16 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
                       min="0"
                       step="0.01"
                       value={line.unitPrice}
-                      onChange={(e) => updateLine(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateLine(index, "unitPrice", parseFloat(e.target.value) || 0)
+                      }
                       required
                     />
                   </td>
                   <td className="py-2 pr-2">
                     <select
                       value={line.vatRate}
-                      onChange={(e) => updateLine(index, 'vatRate', parseFloat(e.target.value))}
+                      onChange={(e) => updateLine(index, "vatRate", parseFloat(e.target.value))}
                       className="w-full rounded-md border-gray-300 text-sm"
                     >
                       <option value="25">25%</option>
@@ -326,10 +336,12 @@ export function InvoiceForm({ type, contacts, products }: InvoiceFormProps) {
 
       <div className="flex justify-end gap-2">
         <Link href="/invoices">
-          <Button type="button" variant="outline">Odustani</Button>
+          <Button type="button" variant="outline">
+            Odustani
+          </Button>
         </Link>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Spremanje...' : 'Spremi dokument'}
+          {isLoading ? "Spremanje..." : "Spremi dokument"}
         </Button>
       </div>
     </form>

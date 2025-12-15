@@ -12,7 +12,8 @@ export default function AssistantPage() {
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">FiskAI asistent</h1>
             <p className="text-gray-600">
-              Asistent je u izradi. U međuvremenu koristite postojeće brze akcije i pretragu kako biste došli do računa i kontakata bez klikanja kroz izbornik.
+              Asistent je u izradi. U međuvremenu koristite postojeće brze akcije i pretragu kako
+              biste došli do računa i kontakata bez klikanja kroz izbornik.
             </p>
             <div className="flex flex-wrap gap-2">
               <Link
@@ -39,7 +40,8 @@ export default function AssistantPage() {
             Command palette (⌘K / Ctrl+K)
           </div>
           <p className="text-sm text-gray-600">
-            Otvorite paletu naredbi za brzu navigaciju, pretragu kontakata i skok na obrasce bez miša.
+            Otvorite paletu naredbi za brzu navigaciju, pretragu kontakata i skok na obrasce bez
+            miša.
           </p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-2">
@@ -48,7 +50,8 @@ export default function AssistantPage() {
             Vodiči i podrška
           </div>
           <p className="text-sm text-gray-600">
-            Trebate pomoć oko fiskalizacije ili e-računa? Javi se timu ili pogledaj dokumentaciju iz dashboarda.
+            Trebate pomoć oko fiskalizacije ili e-računa? Javi se timu ili pogledaj dokumentaciju iz
+            dashboarda.
           </p>
         </div>
       </div>

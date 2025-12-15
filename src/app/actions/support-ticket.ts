@@ -7,13 +7,13 @@ import {
   requireAuth,
   requireCompanyWithContext,
   getCurrentUser,
-  getCurrentCompany
+  getCurrentCompany,
 } from "@/lib/auth-utils"
 import {
   SupportTicketPriority,
   SupportTicketStatus,
   SupportTicket,
-  SupportTicketMessage
+  SupportTicketMessage,
 } from "@prisma/client"
 import { logger } from "@/lib/logger"
 
@@ -99,18 +99,21 @@ export async function createSupportTicket(input: CreateSupportTicketInput) {
         },
         include: {
           messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1
-          }
-        }
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId: ticket.id,
-        operation: "support_ticket_created"
-      }, "Support ticket created")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId: ticket.id,
+          operation: "support_ticket_created",
+        },
+        "Support ticket created"
+      )
 
       return { success: true, data: ticket }
     })
@@ -137,21 +140,24 @@ export async function getSupportTicket(ticketId: string) {
         where: { id: ticketId },
         include: {
           messages: {
-            orderBy: { createdAt: "asc" }
-          }
-        }
+            orderBy: { createdAt: "asc" },
+          },
+        },
       })
 
       if (!ticket) {
         return { success: false, error: "Ticket not found" }
       }
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId,
-        operation: "support_ticket_fetched"
-      }, "Support ticket fetched")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId,
+          operation: "support_ticket_fetched",
+        },
+        "Support ticket fetched"
+      )
 
       return { success: true, data: ticket }
     })
@@ -195,23 +201,26 @@ export async function getSupportTickets(
           include: {
             messages: {
               select: {
-                createdAt: true
+                createdAt: true,
               },
               orderBy: { createdAt: "desc" },
               take: 1,
-            }
-          }
+            },
+          },
         }),
-        db.supportTicket.count({ where: whereClause })
+        db.supportTicket.count({ where: whereClause }),
       ])
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        operation: "support_tickets_fetched",
-        count: tickets.length,
-        total: totalCount
-      }, "Support tickets fetched")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          operation: "support_tickets_fetched",
+          count: tickets.length,
+          total: totalCount,
+        },
+        "Support tickets fetched"
+      )
 
       return {
         success: true,
@@ -222,7 +231,7 @@ export async function getSupportTickets(
           totalPages: Math.ceil(totalCount / limit),
           hasNextPage: skip + tickets.length < totalCount,
           hasPrevPage: page > 1,
-        }
+        },
       }
     })
   } catch (error) {
@@ -242,7 +251,7 @@ export async function updateSupportTicket(ticketId: string, input: UpdateSupport
       // Verify ticket belongs to company (automatically filtered by tenant context)
       const existingTicket = await db.supportTicket.findFirst({
         where: { id: ticketId },
-        select: { id: true }
+        select: { id: true },
       })
 
       if (!existingTicket) {
@@ -260,7 +269,10 @@ export async function updateSupportTicket(ticketId: string, input: UpdateSupport
       if (validated.status !== undefined) {
         updateData.status = validated.status
         // If status is being changed to RESOLVED/CLOSED, update resolvedAt
-        if (validated.status === SupportTicketStatus.RESOLVED || validated.status === SupportTicketStatus.CLOSED) {
+        if (
+          validated.status === SupportTicketStatus.RESOLVED ||
+          validated.status === SupportTicketStatus.CLOSED
+        ) {
           updateData.resolvedAt = new Date()
         }
       }
@@ -270,19 +282,22 @@ export async function updateSupportTicket(ticketId: string, input: UpdateSupport
         data: updateData,
         include: {
           messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1
-          }
-        }
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId,
-        operation: "support_ticket_updated",
-        changes: Object.keys(updateData)
-      }, "Support ticket updated")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId,
+          operation: "support_ticket_updated",
+          changes: Object.keys(updateData),
+        },
+        "Support ticket updated"
+      )
 
       return { success: true, data: ticket }
     })
@@ -308,7 +323,7 @@ export async function addSupportTicketMessage(ticketId: string, input: AddSuppor
       // Verify ticket belongs to company (automatically filtered by tenant context)
       const ticket = await db.supportTicket.findFirst({
         where: { id: ticketId },
-        select: { id: true }
+        select: { id: true },
       })
 
       if (!ticket) {
@@ -322,22 +337,25 @@ export async function addSupportTicketMessage(ticketId: string, input: AddSuppor
           ticketId: ticket.id,
           authorId: user.id!,
           body: validated.body.trim(),
-        }
+        },
       })
 
       // Update ticket's updatedAt
       await db.supportTicket.update({
         where: { id: ticket.id },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       })
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId,
-        messageId: message.id,
-        operation: "support_ticket_message_added"
-      }, "Support ticket message added")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId,
+          messageId: message.id,
+          operation: "support_ticket_message_added",
+        },
+        "Support ticket message added"
+      )
 
       return { success: true, data: message }
     })
@@ -363,7 +381,7 @@ export async function closeSupportTicket(ticketId: string, resolutionNote?: stri
       // Verify ticket belongs to company (automatically filtered by tenant context)
       const ticket = await db.supportTicket.findFirst({
         where: { id: ticketId },
-        select: { id: true, status: true, body: true }
+        select: { id: true, status: true, body: true },
       })
 
       if (!ticket) {
@@ -379,22 +397,27 @@ export async function closeSupportTicket(ticketId: string, resolutionNote?: stri
         where: { id: ticketId },
         data: {
           status: SupportTicketStatus.CLOSED,
-          ...(resolutionNote && { body: `${ticket.body || ''}\n\n---\nRješenje: ${resolutionNote}`.trim() })
+          ...(resolutionNote && {
+            body: `${ticket.body || ""}\n\n---\nRješenje: ${resolutionNote}`.trim(),
+          }),
         },
         include: {
           messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1
-          }
-        }
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId,
-        operation: "support_ticket_closed"
-      }, "Support ticket closed")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId,
+          operation: "support_ticket_closed",
+        },
+        "Support ticket closed"
+      )
 
       return { success: true, data: updatedTicket }
     })
@@ -416,9 +439,9 @@ export async function reopenSupportTicket(ticketId: string) {
       const ticket = await db.supportTicket.findFirst({
         where: {
           id: ticketId,
-          status: { in: [SupportTicketStatus.CLOSED, SupportTicketStatus.RESOLVED] }
+          status: { in: [SupportTicketStatus.CLOSED, SupportTicketStatus.RESOLVED] },
         },
-        select: { id: true }
+        select: { id: true },
       })
 
       if (!ticket) {
@@ -432,18 +455,21 @@ export async function reopenSupportTicket(ticketId: string) {
         },
         include: {
           messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1
-          }
-        }
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
-      logger.info({
-        userId: user.id,
-        companyId: company.id,
-        ticketId,
-        operation: "support_ticket_reopened"
-      }, "Support ticket reopened")
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          ticketId,
+          operation: "support_ticket_reopened",
+        },
+        "Support ticket reopened"
+      )
 
       return { success: true, data: updatedTicket }
     })

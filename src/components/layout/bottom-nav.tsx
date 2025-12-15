@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -14,7 +14,7 @@ import {
   Plus,
   Receipt,
   Package,
-  LifeBuoy
+  LifeBuoy,
 } from "lucide-react"
 
 const navItems = [
@@ -58,23 +58,26 @@ export function BottomNav() {
         )}
       >
         <div className="rounded-3xl surface-glass border border-white/20 shadow-glow p-4 space-y-3 safe-bottom animate-slide-up">
-          <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
-            Brze akcije
-          </p>
+          <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Brze akcije</p>
           <div className="grid grid-cols-2 gap-3">
             {quickActions
-              .filter((action) => (action.module ? capabilities.modules[action.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+              .filter((action) =>
+                action.module
+                  ? capabilities.modules[action.module as keyof typeof capabilities.modules]
+                      ?.enabled !== false
+                  : true
+              )
               .map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                onClick={() => setIsQuickOpen(false)}
-                className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-white/10"
-              >
-                <action.icon className="icon-md text-[var(--muted)]" />
-                {action.label}
-              </Link>
-            ))}
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  onClick={() => setIsQuickOpen(false)}
+                  className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-white/10"
+                >
+                  <action.icon className="icon-md text-[var(--muted)]" />
+                  {action.label}
+                </Link>
+              ))}
           </div>
         </div>
       </div>
@@ -82,16 +85,25 @@ export function BottomNav() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur safe-bottom md:hidden">
         <div className="flex items-center justify-around px-2 py-1">
           {navItems
-            .filter((item) => (item.module ? capabilities.modules[item.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+            .filter((item) =>
+              item.module
+                ? capabilities.modules[item.module as keyof typeof capabilities.modules]
+                    ?.enabled !== false
+                : true
+            )
             .slice(0, 2)
             .map((item) => (
-            <NavLink
-              key={item.href}
-              item={item}
-              activePath={pathname}
-              badge={item.href === "/support" ? summary?.unread || summary?.openCount || undefined : undefined}
-            />
-          ))}
+              <NavLink
+                key={item.href}
+                item={item}
+                activePath={pathname}
+                badge={
+                  item.href === "/support"
+                    ? summary?.unread || summary?.openCount || undefined
+                    : undefined
+                }
+              />
+            ))}
 
           <button
             onClick={() => setIsQuickOpen((prev) => !prev)}
@@ -105,25 +117,41 @@ export function BottomNav() {
           </button>
 
           {navItems
-            .filter((item) => (item.module ? capabilities.modules[item.module as keyof typeof capabilities.modules]?.enabled !== false : true))
+            .filter((item) =>
+              item.module
+                ? capabilities.modules[item.module as keyof typeof capabilities.modules]
+                    ?.enabled !== false
+                : true
+            )
             .slice(2)
             .map((item) => (
-            <NavLink
-              key={item.href}
-              item={item}
-              activePath={pathname}
-              badge={item.href === "/support" ? summary?.unread || summary?.openCount || undefined : undefined}
-            />
-          ))}
+              <NavLink
+                key={item.href}
+                item={item}
+                activePath={pathname}
+                badge={
+                  item.href === "/support"
+                    ? summary?.unread || summary?.openCount || undefined
+                    : undefined
+                }
+              />
+            ))}
         </div>
       </nav>
     </>
   )
 }
 
-function NavLink({ item, activePath, badge }: { item: typeof navItems[number]; activePath: string; badge?: number }) {
-  const isActive =
-    activePath === item.href || activePath.startsWith(item.href + "/")
+function NavLink({
+  item,
+  activePath,
+  badge,
+}: {
+  item: (typeof navItems)[number]
+  activePath: string
+  badge?: number
+}) {
+  const isActive = activePath === item.href || activePath.startsWith(item.href + "/")
   const Icon = item.icon
   return (
     <Link

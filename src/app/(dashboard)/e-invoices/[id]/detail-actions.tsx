@@ -15,14 +15,22 @@ interface InvoiceDetailActionsProps {
   paidAt?: Date | null
 }
 
-export function InvoiceDetailActions({ invoiceId, status, hasProvider, paidAt }: InvoiceDetailActionsProps) {
+export function InvoiceDetailActions({
+  invoiceId,
+  status,
+  hasProvider,
+  paidAt,
+}: InvoiceDetailActionsProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [action, setAction] = useState<string | null>(null)
 
   async function handleSend() {
     if (!hasProvider) {
-      toast.error("Greška", "Molimo konfigurirajte informacijskog posrednika u postavkama prije slanja računa.")
+      toast.error(
+        "Greška",
+        "Molimo konfigurirajte informacijskog posrednika u postavkama prije slanja računa."
+      )
       return
     }
 
@@ -72,7 +80,9 @@ export function InvoiceDetailActions({ invoiceId, status, hasProvider, paidAt }:
   }
 
   async function handleDelete() {
-    if (!confirm("Jeste li sigurni da želite obrisati ovaj račun? Ova akcija se ne može poništiti.")) {
+    if (
+      !confirm("Jeste li sigurni da želite obrisati ovaj račun? Ova akcija se ne može poništiti.")
+    ) {
       return
     }
 
@@ -95,7 +105,8 @@ export function InvoiceDetailActions({ invoiceId, status, hasProvider, paidAt }:
   const canSend = status === "DRAFT" || status === "ERROR"
   const canEdit = status === "DRAFT"
   const canDelete = status === "DRAFT"
-  const canMarkAsPaid = (status === "FISCALIZED" || status === "SENT" || status === "DELIVERED") && !paidAt
+  const canMarkAsPaid =
+    (status === "FISCALIZED" || status === "SENT" || status === "DELIVERED") && !paidAt
 
   return (
     <div className="flex gap-2">
@@ -112,8 +123,8 @@ export function InvoiceDetailActions({ invoiceId, status, hasProvider, paidAt }:
       )}
 
       {canMarkAsPaid && (
-        <Button 
-          onClick={handleMarkAsPaid} 
+        <Button
+          onClick={handleMarkAsPaid}
           disabled={loading}
           className="bg-green-600 hover:bg-green-700"
         >
@@ -123,11 +134,7 @@ export function InvoiceDetailActions({ invoiceId, status, hasProvider, paidAt }:
       )}
 
       {canDelete && (
-        <Button
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={loading}
-        >
+        <Button variant="destructive" onClick={handleDelete} disabled={loading}>
           {loading && action === "delete" ? "Brisanje..." : "Obriši"}
         </Button>
       )}

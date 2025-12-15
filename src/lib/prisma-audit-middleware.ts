@@ -1,32 +1,32 @@
-import { getContext } from './context'
-import { logger } from './logger'
+import { getContext } from "./context"
+import { logger } from "./logger"
 
 // Entities to audit - add more as needed
 const AUDITED_MODELS = [
-  'EInvoice',
-  'Contact',
-  'Product',
-  'Company',
-  'EInvoiceLine',
-  'Expense',
-  'BankTransaction',
+  "EInvoice",
+  "Contact",
+  "Product",
+  "Company",
+  "EInvoiceLine",
+  "Expense",
+  "BankTransaction",
 ]
 
 // Map Prisma actions to our AuditAction enum
-const ACTION_MAP: Record<string, 'CREATE' | 'UPDATE' | 'DELETE'> = {
-  create: 'CREATE',
-  update: 'UPDATE',
-  delete: 'DELETE',
-  createMany: 'CREATE',
-  updateMany: 'UPDATE',
-  deleteMany: 'DELETE',
-  upsert: 'UPDATE',
+const ACTION_MAP: Record<string, "CREATE" | "UPDATE" | "DELETE"> = {
+  create: "CREATE",
+  update: "UPDATE",
+  delete: "DELETE",
+  createMany: "CREATE",
+  updateMany: "UPDATE",
+  deleteMany: "DELETE",
+  upsert: "UPDATE",
 }
 
 interface AuditQueueItem {
   companyId: string
   userId: string | null
-  action: 'CREATE' | 'UPDATE' | 'DELETE'
+  action: "CREATE" | "UPDATE" | "DELETE"
   entity: string
   entityId: string
   changes: { before?: Record<string, unknown>; after?: Record<string, unknown> } | null
@@ -53,7 +53,7 @@ async function processAuditQueue() {
 
   try {
     // Dynamic import to avoid circular dependency
-    const { db } = await import('./db')
+    const { db } = await import("./db")
 
     while (auditQueue.length > 0) {
       const item = auditQueue.shift()
@@ -71,7 +71,10 @@ async function processAuditQueue() {
           },
         })
       } catch (error) {
-        logger.error({ error, entity: item.entity, entityId: item.entityId }, 'Failed to create audit log')
+        logger.error(
+          { error, entity: item.entity, entityId: item.entityId },
+          "Failed to create audit log"
+        )
       }
     }
   } finally {
@@ -126,25 +129,25 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
   if (Array.isArray(result)) {
     // Batch operations - log each item
     for (const item of result) {
-      if (typeof item === 'object' && item !== null) {
+      if (typeof item === "object" && item !== null) {
         const companyId = (item as Record<string, unknown>).companyId as string
         const entityId = (item as Record<string, unknown>).id as string
         if (companyId && entityId) {
           queueAuditItem(
             companyId,
             entityId,
-            action === 'CREATE' ? { after: item as Record<string, unknown> } : null
+            action === "CREATE" ? { after: item as Record<string, unknown> } : null
           )
         }
       }
     }
-  } else if (typeof result === 'object' && result !== null) {
+  } else if (typeof result === "object" && result !== null) {
     const companyId = (result as Record<string, unknown>).companyId as string
     const entityId = (result as Record<string, unknown>).id as string
 
     if (companyId && entityId) {
       const changes =
-        action === 'DELETE'
+        action === "DELETE"
           ? { before: result as Record<string, unknown> }
           : { after: result as Record<string, unknown> }
       queueAuditItem(companyId, entityId, changes)
@@ -152,7 +155,7 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
   }
 
   // Process queue asynchronously (fire and forget)
-  processAuditQueue().catch((err) => logger.error({ err }, 'Audit queue processing failed'))
+  processAuditQueue().catch((err) => logger.error({ err }, "Audit queue processing failed"))
 
   return result
 }

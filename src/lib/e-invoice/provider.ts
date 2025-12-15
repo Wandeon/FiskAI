@@ -10,18 +10,13 @@ import {
 export interface EInvoiceProvider {
   readonly name: string
 
-  sendInvoice(
-    invoice: EInvoiceWithRelations,
-    ublXml: string
-  ): Promise<SendInvoiceResult>
+  sendInvoice(invoice: EInvoiceWithRelations, ublXml: string): Promise<SendInvoiceResult>
 
   fetchIncomingInvoices(): Promise<IncomingInvoice[]>
 
   getInvoiceStatus(providerRef: string): Promise<InvoiceStatusResult>
 
-  archiveInvoice(
-    invoice: EInvoiceWithRelations
-  ): Promise<ArchiveResult>
+  archiveInvoice(invoice: EInvoiceWithRelations): Promise<ArchiveResult>
 
   testConnection(): Promise<boolean>
 }

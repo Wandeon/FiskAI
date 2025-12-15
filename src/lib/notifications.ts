@@ -90,14 +90,7 @@ export async function getNotificationCenterFeed({
         where: {
           companyId: company.id,
           status: {
-            in: [
-              "FISCALIZED",
-              "DELIVERED",
-              "ACCEPTED",
-              "SENT",
-              "REJECTED",
-              "ERROR",
-            ],
+            in: ["FISCALIZED", "DELIVERED", "ACCEPTED", "SENT", "REJECTED", "ERROR"],
           },
         },
         orderBy: { updatedAt: "desc" },
@@ -270,46 +263,43 @@ export async function getNotificationCenterFeed({
       })
     }
 
-    const invoiceNotifications: NotificationItem[] = recentInvoices.map(
-      (invoice) => {
-        const amount = Number(invoice.totalAmount || 0)
-        return {
-          id: `invoice-${invoice.id}`,
-          type: statusToNotificationType(invoice.status),
-          title: STATUS_LABELS[invoice.status] || invoice.status,
-          description: [
-            invoice.invoiceNumber || "Bez broja",
-            invoice.buyer?.name,
-            `${amount.toLocaleString("hr-HR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })} €`,
-          ]
-            .filter(Boolean)
-            .join(" · "),
-          timestamp: formatRelativeTime(invoice.updatedAt),
-          rawTimestamp: invoice.updatedAt.toISOString(),
-          action: { label: "Otvori račun", href: `/e-invoices/${invoice.id}` },
-        }
+    const invoiceNotifications: NotificationItem[] = recentInvoices.map((invoice) => {
+      const amount = Number(invoice.totalAmount || 0)
+      return {
+        id: `invoice-${invoice.id}`,
+        type: statusToNotificationType(invoice.status),
+        title: STATUS_LABELS[invoice.status] || invoice.status,
+        description: [
+          invoice.invoiceNumber || "Bez broja",
+          invoice.buyer?.name,
+          `${amount.toLocaleString("hr-HR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} €`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        timestamp: formatRelativeTime(invoice.updatedAt),
+        rawTimestamp: invoice.updatedAt.toISOString(),
+        action: { label: "Otvori račun", href: `/e-invoices/${invoice.id}` },
       }
-    )
+    })
 
-    const activityNotifications = recentActivity
-      .map((entry) => {
-        const entityLabel = ENTITY_LABELS[entry.entity] || entry.entity
-        const targetName = extractEntityName(entry.changes) || entry.entityId
-        const actionLabel = AUDIT_ACTION_LABELS[entry.action] || entry.action
+    const activityNotifications = recentActivity.map((entry) => {
+      const entityLabel = ENTITY_LABELS[entry.entity] || entry.entity
+      const targetName = extractEntityName(entry.changes) || entry.entityId
+      const actionLabel = AUDIT_ACTION_LABELS[entry.action] || entry.action
 
-        return {
-          id: `activity-${entry.id}`,
-          type: (entry.action === "DELETE" ? "warning" : "info") as NotificationType,
-          title: `${actionLabel} – ${entityLabel}`,
-          description: targetName,
-          timestamp: formatRelativeTime(entry.timestamp),
-          rawTimestamp: entry.timestamp.toISOString(),
-          action: { label: "Audit log", href: "/settings/audit-log" },
-        }
-      })
+      return {
+        id: `activity-${entry.id}`,
+        type: (entry.action === "DELETE" ? "warning" : "info") as NotificationType,
+        title: `${actionLabel} – ${entityLabel}`,
+        description: targetName,
+        timestamp: formatRelativeTime(entry.timestamp),
+        rawTimestamp: entry.timestamp.toISOString(),
+        action: { label: "Audit log", href: "/settings/audit-log" },
+      }
+    })
 
     const ticketNotifications: NotificationItem[] = recentTickets.map((ticket) => ({
       id: `ticket-${ticket.id}`,
@@ -321,7 +311,12 @@ export async function getNotificationCenterFeed({
       action: { label: "Otvori ticket", href: `/support/${ticket.id}` },
     }))
 
-    const items = [...alerts, ...ticketNotifications, ...invoiceNotifications, ...activityNotifications].slice(0, 12)
+    const items = [
+      ...alerts,
+      ...ticketNotifications,
+      ...invoiceNotifications,
+      ...activityNotifications,
+    ].slice(0, 12)
     const latestEventAt = items.reduce<Date | null>((latest, item) => {
       if (!item.rawTimestamp) return latest
       const ts = new Date(item.rawTimestamp)
@@ -340,7 +335,10 @@ export async function getNotificationCenterItems(context: NotificationCenterCont
   return feed.items
 }
 
-export function countUnreadNotifications(items: NotificationItem[], lastSeen: Date | null | undefined) {
+export function countUnreadNotifications(
+  items: NotificationItem[],
+  lastSeen: Date | null | undefined
+) {
   if (!lastSeen) {
     return items.filter((item) => Boolean(item.rawTimestamp)).length
   }

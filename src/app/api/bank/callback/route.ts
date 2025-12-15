@@ -1,16 +1,16 @@
 // src/app/api/bank/callback/route.ts
 
-import { redirect } from 'next/navigation'
-import { db } from '@/lib/db'
-import { getProvider } from '@/lib/bank-sync/providers'
-import { processTransactionsWithDedup } from '@/lib/bank-sync/dedup'
+import { redirect } from "next/navigation"
+import { db } from "@/lib/db"
+import { getProvider } from "@/lib/bank-sync/providers"
+import { processTransactionsWithDedup } from "@/lib/bank-sync/dedup"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const ref = searchParams.get('ref')
+  const ref = searchParams.get("ref")
 
   if (!ref) {
-    redirect('/banking?error=missing_ref')
+    redirect("/banking?error=missing_ref")
   }
 
   try {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     })
 
     if (!connection) {
-      redirect('/banking?error=unknown_connection')
+      redirect("/banking?error=unknown_connection")
     }
 
     const provider = getProvider(connection.provider)
@@ -30,9 +30,7 @@ export async function GET(request: Request) {
     const result = await provider.handleCallback(connection.providerConnectionId)
 
     // Find matching account by IBAN
-    const matchedAccount = result.accounts.find(
-      (acc) => acc.iban === connection.bankAccount.iban
-    )
+    const matchedAccount = result.accounts.find((acc) => acc.iban === connection.bankAccount.iban)
 
     if (!matchedAccount) {
       await db.bankConnection.update({
@@ -41,7 +39,7 @@ export async function GET(request: Request) {
           lastError: `No account found with IBAN ${connection.bankAccount.iban}`,
         },
       })
-      redirect('/banking?error=iban_not_found')
+      redirect("/banking?error=iban_not_found")
     }
 
     // Derive provider enum from connection
@@ -52,7 +50,7 @@ export async function GET(request: Request) {
       db.bankConnection.update({
         where: { id: connection.id },
         data: {
-          status: 'CONNECTED',
+          status: "CONNECTED",
           authorizedAt: new Date(),
           expiresAt: result.expiresAt,
           lastError: null,
@@ -63,7 +61,7 @@ export async function GET(request: Request) {
         data: {
           syncProvider: providerEnum,
           syncProviderAccountId: matchedAccount.id,
-          connectionStatus: 'CONNECTED',
+          connectionStatus: "CONNECTED",
           connectionExpiresAt: result.expiresAt,
         },
       }),
@@ -94,13 +92,13 @@ export async function GET(request: Request) {
         })
       }
     } catch (syncError) {
-      console.error('[bank/callback] initial sync error:', syncError)
+      console.error("[bank/callback] initial sync error:", syncError)
       // Don't fail the connection, just log
     }
 
-    redirect('/banking?success=connected')
+    redirect("/banking?success=connected")
   } catch (error) {
-    console.error('[bank/callback] error:', error)
-    redirect('/banking?error=callback_failed')
+    console.error("[bank/callback] error:", error)
+    redirect("/banking?error=callback_failed")
   }
 }

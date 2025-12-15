@@ -29,10 +29,7 @@ export function decryptSecret(value: string): string {
   const tag = Buffer.from(tagHex, "hex")
   const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
   decipher.setAuthTag(tag)
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(dataHex, "hex")),
-    decipher.final(),
-  ])
+  const decrypted = Buffer.concat([decipher.update(Buffer.from(dataHex, "hex")), decipher.final()])
   return decrypted.toString("utf8")
 }
 

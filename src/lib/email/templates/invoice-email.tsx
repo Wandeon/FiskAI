@@ -8,7 +8,7 @@ import {
   Section,
   Text,
   Hr,
-} from '@react-email/components'
+} from "@react-email/components"
 
 interface InvoiceEmailProps {
   invoiceNumber: string
@@ -36,13 +36,15 @@ export function InvoiceEmail({
   return (
     <Html>
       <Head />
-      <Preview>Račun {invoiceNumber} - {companyName}</Preview>
+      <Preview>
+        Račun {invoiceNumber} - {companyName}
+      </Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>Račun {invoiceNumber}</Heading>
-          
+
           <Text style={text}>Poštovani {buyerName},</Text>
-          
+
           <Text style={text}>
             U prilogu vam šaljemo račun broj <strong>{invoiceNumber}</strong>.
           </Text>
@@ -68,7 +70,9 @@ export function InvoiceEmail({
                 <tr>
                   <td style={infoLabel}>Ukupan iznos:</td>
                   <td style={infoValue}>
-                    <strong>{totalAmount} {currency}</strong>
+                    <strong>
+                      {totalAmount} {currency}
+                    </strong>
                   </td>
                 </tr>
                 {jir && (
@@ -93,13 +97,9 @@ export function InvoiceEmail({
 
           <Hr style={hr} />
 
-          <Text style={text}>
-            Račun u PDF formatu nalazi se u prilogu ovog e-maila.
-          </Text>
+          <Text style={text}>Račun u PDF formatu nalazi se u prilogu ovog e-maila.</Text>
 
-          <Text style={text}>
-            Molimo izvršite plaćanje prema uputama navedenim na računu.
-          </Text>
+          <Text style={text}>Molimo izvršite plaćanje prema uputama navedenim na računu.</Text>
 
           <Hr style={hr} />
 
@@ -120,107 +120,106 @@ export function InvoiceEmail({
 
 // Styles
 const main = {
-  backgroundColor: '#f6f9fc',
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif',
+  backgroundColor: "#f6f9fc",
+  fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif",
 }
 
 const container = {
-  backgroundColor: '#ffffff',
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  marginBottom: '64px',
-  maxWidth: '600px',
+  backgroundColor: "#ffffff",
+  margin: "0 auto",
+  padding: "20px 0 48px",
+  marginBottom: "64px",
+  maxWidth: "600px",
 }
 
 const h1 = {
-  color: '#1f2937',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: '40px 0',
-  padding: '0 40px',
+  color: "#1f2937",
+  fontSize: "24px",
+  fontWeight: "bold",
+  margin: "40px 0",
+  padding: "0 40px",
 }
 
 const text = {
-  color: '#374151',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '16px 40px',
+  color: "#374151",
+  fontSize: "16px",
+  lineHeight: "26px",
+  margin: "16px 40px",
 }
 
 const infoBox = {
-  backgroundColor: '#f9fafb',
-  borderRadius: '8px',
-  margin: '24px 40px',
-  padding: '20px',
+  backgroundColor: "#f9fafb",
+  borderRadius: "8px",
+  margin: "24px 40px",
+  padding: "20px",
 }
 
 const infoTitle = {
-  color: '#1f2937',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 16px 0',
+  color: "#1f2937",
+  fontSize: "18px",
+  fontWeight: "bold",
+  margin: "0 0 16px 0",
 }
 
 const infoTable = {
-  width: '100%',
+  width: "100%",
 }
 
 const infoLabel = {
-  color: '#6b7280',
-  fontSize: '14px',
-  paddingBottom: '8px',
-  paddingRight: '16px',
-  verticalAlign: 'top',
+  color: "#6b7280",
+  fontSize: "14px",
+  paddingBottom: "8px",
+  paddingRight: "16px",
+  verticalAlign: "top",
 }
 
 const infoValue = {
-  color: '#1f2937',
-  fontSize: '14px',
-  paddingBottom: '8px',
-  verticalAlign: 'top',
+  color: "#1f2937",
+  fontSize: "14px",
+  paddingBottom: "8px",
+  verticalAlign: "top",
 }
 
 const infoValueMono = {
-  color: '#1f2937',
-  fontSize: '12px',
-  paddingBottom: '8px',
-  verticalAlign: 'top',
-  fontFamily: 'monospace',
+  color: "#1f2937",
+  fontSize: "12px",
+  paddingBottom: "8px",
+  verticalAlign: "top",
+  fontFamily: "monospace",
 }
 
 const warningBox = {
-  backgroundColor: '#fef3c7',
-  border: '1px solid #fbbf24',
-  borderRadius: '8px',
-  margin: '24px 40px',
-  padding: '16px',
+  backgroundColor: "#fef3c7",
+  border: "1px solid #fbbf24",
+  borderRadius: "8px",
+  margin: "24px 40px",
+  padding: "16px",
 }
 
 const warningText = {
-  color: '#92400e',
-  fontSize: '14px',
-  lineHeight: '20px',
-  margin: '0',
+  color: "#92400e",
+  fontSize: "14px",
+  lineHeight: "20px",
+  margin: "0",
 }
 
 const hr = {
-  borderColor: '#e5e7eb',
-  margin: '24px 40px',
+  borderColor: "#e5e7eb",
+  margin: "24px 40px",
 }
 
 const footer = {
-  color: '#374151',
-  fontSize: '16px',
-  lineHeight: '24px',
-  margin: '24px 40px 16px',
+  color: "#374151",
+  fontSize: "16px",
+  lineHeight: "24px",
+  margin: "24px 40px 16px",
 }
 
 const footerSmall = {
-  color: '#6b7280',
-  fontSize: '12px',
-  lineHeight: '18px',
-  margin: '8px 40px',
+  color: "#6b7280",
+  fontSize: "12px",
+  lineHeight: "18px",
+  margin: "8px 40px",
 }
 
 export default InvoiceEmail

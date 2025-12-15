@@ -61,7 +61,13 @@ const addDays = (date: Date, days: number) => {
   return next
 }
 
-export function InvoiceForm({ contacts, products, company, capabilities, nextInvoiceNumber }: InvoiceFormProps) {
+export function InvoiceForm({
+  contacts,
+  products,
+  company,
+  capabilities,
+  nextInvoiceNumber,
+}: InvoiceFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -107,7 +113,7 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
   })
 
   const watchedValues = watch()
-  const selectedBuyer = contacts.find(c => c.id === watchedValues.buyerId)
+  const selectedBuyer = contacts.find((c) => c.id === watchedValues.buyerId)
   const buyerPaymentTerms = selectedBuyer?.paymentTermsDays ?? DEFAULT_PAYMENT_TERMS_DAYS
   const issueDate = useMemo(() => {
     const issueDateValue = watchedValues.issueDate as string | Date | undefined
@@ -120,11 +126,11 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
 
   // Autosave to localStorage
   useEffect(() => {
-    const savedDraft = localStorage.getItem('einvoice-draft')
+    const savedDraft = localStorage.getItem("einvoice-draft")
     if (savedDraft) {
       try {
         const draft = JSON.parse(savedDraft)
-        Object.keys(draft).forEach(key => {
+        Object.keys(draft).forEach((key) => {
           if (key === "issueDate" && draft[key]) {
             setValue("issueDate", formatDateInput(new Date(draft[key])), { shouldValidate: true })
           } else if (key === "dueDate" && draft[key]) {
@@ -163,7 +169,7 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem('einvoice-draft', JSON.stringify(watchedValues))
+      localStorage.setItem("einvoice-draft", JSON.stringify(watchedValues))
       setLastSavedAt(new Date())
     }, 1000)
     return () => clearTimeout(timer)
@@ -173,9 +179,9 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
     let isValid = true
 
     if (currentStep === 0) {
-      isValid = await trigger(['buyerId', 'issueDate'])
+      isValid = await trigger(["buyerId", "issueDate"])
     } else if (currentStep === 1) {
-      isValid = await trigger('lines')
+      isValid = await trigger("lines")
     }
 
     if (isValid && currentStep < STEPS.length - 1) {
@@ -202,7 +208,7 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
       return
     }
 
-    localStorage.removeItem('einvoice-draft')
+    localStorage.removeItem("einvoice-draft")
     trackEvent(AnalyticsEvents.INVOICE_CREATED, {
       lineCount: data.lines.length,
       hasProduct: data.lines.some((l) => l.description),
@@ -222,7 +228,10 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
       return
     }
     // Update a single field to avoid replacing the whole array and losing focus
-    setValue(`lines.${index}.${field}` as Path<EInvoiceFormInput>, value, { shouldDirty: true, shouldValidate: false })
+    setValue(`lines.${index}.${field}` as Path<EInvoiceFormInput>, value, {
+      shouldDirty: true,
+      shouldValidate: false,
+    })
   }
 
   const handleDownloadPdf = () => {
@@ -264,11 +273,7 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
 
       {/* Step Indicator */}
       <div className="pt-4 pb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <StepIndicator
-          steps={STEPS}
-          currentStep={currentStep}
-          onStepClick={setCurrentStep}
-        />
+        <StepIndicator steps={STEPS} currentStep={currentStep} onStepClick={setCurrentStep} />
         <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
           <span>
             {currentStep === 0
@@ -279,16 +284,14 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
           </span>
           {lastSavedAt && (
             <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-secondary)] px-2 py-1">
-              <Loader2 className="h-3 w-3" />
-              U zadnje vrijeme spremljeno {lastSavedAt.toLocaleTimeString("hr-HR")}
+              <Loader2 className="h-3 w-3" />U zadnje vrijeme spremljeno{" "}
+              {lastSavedAt.toLocaleTimeString("hr-HR")}
             </span>
           )}
         </div>
       </div>
 
-      {error && (
-        <AlertBanner type="error" title="Greška pri spremanju" description={error} />
-      )}
+      {error && <AlertBanner type="error" title="Greška pri spremanju" description={error} />}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-6 lg:grid-cols-12 items-start">
@@ -466,7 +469,8 @@ export function InvoiceForm({ contacts, products, company, capabilities, nextInv
                     />
 
                     <p className="text-sm text-[var(--muted)]">
-                      Klikom na &quot;Spremi&quot; račun će biti spremljen kao nacrt. Možete ga kasnije pregledati i poslati kupcu ili preuzeti PDF verziju.
+                      Klikom na &quot;Spremi&quot; račun će biti spremljen kao nacrt. Možete ga
+                      kasnije pregledati i poslati kupcu ili preuzeti PDF verziju.
                     </p>
                   </div>
                 </PageCardContent>

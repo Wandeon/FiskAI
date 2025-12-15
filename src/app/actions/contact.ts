@@ -25,10 +25,7 @@ export async function createContact(formData: z.infer<typeof contactSchema>) {
   })
 }
 
-export async function updateContact(
-  contactId: string,
-  formData: z.infer<typeof contactSchema>
-) {
+export async function updateContact(contactId: string, formData: z.infer<typeof contactSchema>) {
   const user = await requireAuth()
 
   return requireCompanyWithContext(user.id!, async () => {

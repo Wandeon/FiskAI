@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from "next/link"
 import { CheckCircle2, Circle, ArrowRight } from "lucide-react"
@@ -19,7 +19,7 @@ interface OnboardingChecklistProps {
 }
 
 export function OnboardingChecklist({ items, className }: OnboardingChecklistProps) {
-  const completedCount = items.filter(i => i.completed).length
+  const completedCount = items.filter((i) => i.completed).length
   const progress = (completedCount / items.length) * 100
 
   if (completedCount === items.length) {
@@ -50,9 +50,7 @@ export function OnboardingChecklist({ items, className }: OnboardingChecklistPro
               href={item.href}
               className={cn(
                 "flex items-center gap-4 px-6 py-4 transition-colors",
-                item.completed
-                  ? "bg-success-50/50"
-                  : "hover:bg-[var(--surface-secondary)]"
+                item.completed ? "bg-success-50/50" : "hover:bg-[var(--surface-secondary)]"
               )}
             >
               {item.completed ? (
@@ -61,10 +59,12 @@ export function OnboardingChecklist({ items, className }: OnboardingChecklistPro
                 <Circle className="h-6 w-6 text-[var(--muted)] flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "font-medium",
-                  item.completed ? "text-success-700" : "text-[var(--foreground)]"
-                )}>
+                <p
+                  className={cn(
+                    "font-medium",
+                    item.completed ? "text-success-700" : "text-[var(--foreground)]"
+                  )}
+                >
                   {item.label}
                 </p>
                 <p className="text-sm text-[var(--muted)] truncate">{item.description}</p>

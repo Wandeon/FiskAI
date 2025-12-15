@@ -48,9 +48,7 @@ export default function AdminLoginPage() {
             <Shield className="h-6 w-6 text-blue-600" />
           </div>
           <CardTitle className="text-2xl">Admin pristup</CardTitle>
-          <p className="text-sm text-[var(--muted)]">
-            Unesite administratorsku lozinku za pristup
-          </p>
+          <p className="text-sm text-[var(--muted)]">Unesite administratorsku lozinku za pristup</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

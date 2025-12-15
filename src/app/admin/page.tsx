@@ -49,7 +49,9 @@ export default async function AdminPage() {
               const entitlements = getEntitlementsList(company.entitlements)
               return (
                 <tr key={company.id} className="hover:bg-[var(--surface-secondary)]/50">
-                  <td className="px-4 py-3 font-semibold text-[var(--foreground)]">{company.name}</td>
+                  <td className="px-4 py-3 font-semibold text-[var(--foreground)]">
+                    {company.name}
+                  </td>
                   <td className="px-4 py-3 text-[var(--muted)] font-mono text-xs">{company.oib}</td>
                   <td className="px-4 py-3 text-[var(--foreground)]">{company.legalForm || "—"}</td>
                   <td className="px-4 py-3">

@@ -27,18 +27,12 @@ export async function getContactList(params: ContactListParams = {}) {
   }
   if (segments.includes("MISSING_EMAIL")) {
     segmentConditions.push({
-      OR: [
-        { email: null },
-        { email: "" },
-      ],
+      OR: [{ email: null }, { email: "" }],
     })
   }
   if (segments.includes("NO_DOCUMENTS")) {
     segmentConditions.push({
-      AND: [
-        { eInvoicesAsBuyer: { none: {} } },
-        { eInvoicesAsSeller: { none: {} } },
-      ],
+      AND: [{ eInvoicesAsBuyer: { none: {} } }, { eInvoicesAsSeller: { none: {} } }],
     })
   }
 

@@ -37,10 +37,7 @@ export async function POST(request: Request) {
   }
 
   if (transaction.matchStatus !== "UNMATCHED" && transaction.matchStatus !== "IGNORED") {
-    return NextResponse.json(
-      { error: "Transakcija je već povezana" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Transakcija je već povezana" }, { status: 400 })
   }
 
   const invoice = await db.eInvoice.findFirst({
@@ -52,10 +49,7 @@ export async function POST(request: Request) {
   }
 
   if (invoice.paidAt) {
-    return NextResponse.json(
-      { error: "Račun je već evidentiran kao plaćen" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Račun je već evidentiran kao plaćen" }, { status: 400 })
   }
 
   await db.bankTransaction.update({
