@@ -61,7 +61,7 @@ export default async function VatThresholdReportPage() {
     where: {
       companyId: company.id,
       direction: "OUTBOUND",
-      status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] },
+      status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] },
       issueDate: {
         gte: new Date(currentYear, 0, 1),
         lte: new Date(currentYear, 11, 31),

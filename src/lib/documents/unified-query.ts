@@ -210,12 +210,7 @@ export async function queryUnifiedDocuments(
     amount: Number(exp.amount),
     currency: exp.currency,
     status: EXPENSE_STATUS_LABELS[exp.status] || exp.status,
-    statusColor:
-      exp.status === "APPROVED" || exp.status === "PAID"
-        ? "green"
-        : exp.status === "REJECTED"
-          ? "red"
-          : "gray",
+    statusColor: exp.status === "PAID" ? "green" : exp.status === "CANCELLED" ? "red" : "gray",
     detailUrl: `/expenses/${exp.id}`,
   }))
 

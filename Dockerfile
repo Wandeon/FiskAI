@@ -1,5 +1,7 @@
 # Dockerfile
-FROM --platform=linux/arm64 node:20-alpine AS base
+# Use TARGETPLATFORM for multi-arch builds (defaults to host platform in CI)
+# For production ARM64 builds: docker buildx build --platform linux/arm64
+FROM node:20-alpine AS base
 
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl

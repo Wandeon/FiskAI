@@ -112,7 +112,7 @@ export async function generatePOSD(companyId: string, year: number): Promise<POS
           gte: startDate,
           lte: endDate,
         },
-        status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] },
+        status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] },
         direction: "OUTBOUND", // Only issued invoices count toward income
       },
       include: {
@@ -132,7 +132,7 @@ export async function generatePOSD(companyId: string, year: number): Promise<POS
           gte: startDate,
           lte: endDate,
         },
-        status: "APPROVED", // Only approved expenses are deductible
+        status: "PAID", // Only paid expenses are deductible
       },
       include: {
         category: true,
@@ -466,7 +466,7 @@ export async function generateQuarterlyPOSDSummary(
             gte: startDate,
             lte: endDate,
           },
-          status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] },
+          status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] },
           direction: "OUTBOUND",
         },
         select: {
@@ -483,7 +483,7 @@ export async function generateQuarterlyPOSDSummary(
             gte: startDate,
             lte: endDate,
           },
-          status: "APPROVED",
+          status: "PAID",
         },
         select: {
           totalAmount: true,

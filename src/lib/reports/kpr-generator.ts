@@ -76,7 +76,7 @@ export async function generateKPRReport(
           gte: fromDate,
           lte: toDate,
         },
-        status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] }, // Only fiscalized invoices
+        status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] }, // Only fiscalized invoices
         direction: "OUTBOUND", // Only issued invoices count toward KPR
       },
       include: {
@@ -301,7 +301,7 @@ export async function calculateVatThresholdProgress(
           gte: startDate,
           lte: endDate,
         },
-        status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] }, // Only fiscalized invoices
+        status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] }, // Only fiscalized invoices
         direction: "OUTBOUND", // Only issued invoices count toward threshold
       },
       select: {

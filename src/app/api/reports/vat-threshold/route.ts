@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         where: {
           companyId: company.id,
           direction: "OUTBOUND",
-          status: { in: ["SENT", "DELIVERED", "PAID", "FISCALIZED"] },
+          status: { in: ["FISCALIZED", "SENT", "DELIVERED", "ACCEPTED"] },
           issueDate: {
             gte: monthStart,
             lte: monthEnd,
