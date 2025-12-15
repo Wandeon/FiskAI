@@ -11,7 +11,8 @@ import {
   Package,
   ChevronDown,
   Settings,
-  User
+  User,
+  HelpCircle
 } from "lucide-react"
 import { LogoutButton } from "./logout-button"
 import { NotificationCenter } from "@/components/ui/notification-center"
@@ -224,6 +225,14 @@ export function UserMenu({ user, className }: UserMenuProps) {
             >
               <Settings className="icon-md text-[var(--muted)]" />
               Postavke
+            </Link>
+            <Link
+              href="/support"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
+            >
+              <HelpCircle className="icon-md text-[var(--muted)]" />
+              Pomoć i podrška
             </Link>
           </div>
           <div className="border-t border-white/10 p-1">
