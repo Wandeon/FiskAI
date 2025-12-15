@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { requireAuth, requireCompanyWithContext } from '@/lib/auth-utils'
+import { requireAuth, requireCompanyWithContext, requireCompanyWithPermission } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { Prisma, ExpenseStatus, PaymentMethod } from '@prisma/client'
 import { z } from 'zod'
@@ -152,7 +152,7 @@ export async function deleteExpense(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithContext(user.id!, async () => {
+    return requireCompanyWithPermission(user.id!, 'expense:delete', async () => {
       const expense = await db.expense.findFirst({
         where: { id },
       })
@@ -168,6 +168,12 @@ export async function deleteExpense(id: string): Promise<ActionResult> {
     })
   } catch (error) {
     console.error('Failed to delete expense:', error)
+
+    // Check if this is a permission error
+    if (error instanceof Error && error.message.includes('Permission denied')) {
+      return { success: false, error: 'Nemate dopuštenje za brisanje troškova' }
+    }
+
     return { success: false, error: 'Greška pri brisanju troška' }
   }
 }
@@ -302,7 +308,7 @@ export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithContext(user.id!, async () => {
+    return requireCompanyWithPermission(user.id!, 'expense_category:delete', async () => {
       const category = await db.expenseCategory.findFirst({
         where: { id },
       })
@@ -324,6 +330,12 @@ export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
     })
   } catch (error) {
     console.error('Failed to delete category:', error)
+
+    // Check if this is a permission error
+    if (error instanceof Error && error.message.includes('Permission denied')) {
+      return { success: false, error: 'Nemate dopuštenje za brisanje kategorija' }
+    }
+
     return { success: false, error: 'Greška pri brisanju kategorije' }
   }
 }

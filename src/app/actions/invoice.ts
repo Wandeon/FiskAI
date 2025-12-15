@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { requireAuth, requireCompanyWithContext } from '@/lib/auth-utils'
+import { requireAuth, requireCompanyWithContext, requireCompanyWithPermission } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { Prisma, InvoiceType } from '@prisma/client'
 import { getNextInvoiceNumber } from '@/lib/invoice-numbering'
@@ -270,7 +270,7 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
 
-    return requireCompanyWithContext(user.id!, async () => {
+    return requireCompanyWithPermission(user.id!, 'invoice:delete', async () => {
       const invoice = await db.eInvoice.findFirst({
         where: { id, status: 'DRAFT' },
       })
@@ -295,6 +295,12 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
     })
   } catch (error) {
     console.error('Failed to delete invoice:', error)
+
+    // Check if this is a permission error
+    if (error instanceof Error && error.message.includes('Permission denied')) {
+      return { success: false, error: 'Nemate dopuštenje za brisanje dokumenata' }
+    }
+
     return { success: false, error: 'Greška pri brisanju dokumenta' }
   }
 }
