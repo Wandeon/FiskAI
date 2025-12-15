@@ -85,6 +85,10 @@ model Company {
   legalForm               String?
   entitlements            Json?
   featureFlags            Json?
+  fiscalEnabled           Boolean             @default(false)
+  fiscalEnvironment       FiscalEnv           @default(PROD)
+  premisesCode            String              @default("1")
+  deviceCode              String              @default("1")
   auditLogs               AuditLog[]
   bankAccounts            BankAccount[]
   businessPremises        BusinessPremises[]
@@ -108,6 +112,8 @@ model Company {
   emailConnections        EmailConnection[]
   emailImportRules        EmailImportRule[]
   emailAttachments        EmailAttachment[]
+  fiscalCertificates      FiscalCertificate[]
+  fiscalRequests          FiscalRequest[]
 }
 
 model CompanyUser {
@@ -187,6 +193,8 @@ model EInvoice {
   jir               String?
   zki               String?
   fiscalizedAt      DateTime?
+  fiscalStatus      String?
+  operatorOib       String?
   ublXml            String?
   providerRef       String?
   providerStatus    String?
@@ -219,6 +227,7 @@ model EInvoice {
   seller            Contact?          @relation("EInvoiceSeller", fields: [sellerId], references: [id])
   importJob         ImportJob?        @relation(fields: [importJobId], references: [id])
   lines             EInvoiceLine[]
+  fiscalRequests    FiscalRequest[]
 
   @@index([companyId])
   @@index([status])
@@ -945,4 +954,89 @@ enum AttachmentStatus {
   IMPORTED
   SKIPPED
   FAILED
+}
+
+enum FiscalEnv {
+  TEST
+  PROD
+}
+
+enum CertStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum FiscalStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  DEAD
+}
+
+enum FiscalMessageType {
+  RACUN
+  STORNO
+  PROVJERA
+}
+
+model FiscalCertificate {
+  id               String      @id @default(cuid())
+  companyId        String
+  environment      FiscalEnv
+  provider         String      @default("DIRECT")
+  certSubject      String
+  certSerial       String
+  certNotBefore    DateTime
+  certNotAfter     DateTime
+  oibExtracted     String
+  certSha256       String
+  encryptedP12     String      @db.Text
+  encryptedDataKey String
+  status           CertStatus  @default(PENDING)
+  lastUsedAt       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fiscalRequests   FiscalRequest[]
+
+  @@unique([companyId, environment])
+  @@index([companyId])
+  @@index([status])
+}
+
+model FiscalRequest {
+  id              String            @id @default(cuid())
+  companyId       String
+  certificateId   String
+  invoiceId       String?
+  messageType     FiscalMessageType
+  status          FiscalStatus      @default(QUEUED)
+  attemptCount    Int               @default(0)
+  maxAttempts     Int               @default(5)
+  nextRetryAt     DateTime          @default(now())
+  lockedAt        DateTime?
+  lockedBy        String?
+  jir             String?
+  zki             String?
+  errorCode       String?
+  errorMessage    String?
+  lastHttpStatus  Int?
+  requestXml      String?           @db.Text
+  signedXml       String?           @db.Text
+  responseXml     String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  certificate     FiscalCertificate @relation(fields: [certificateId], references: [id])
+  invoice         EInvoice?         @relation(fields: [invoiceId], references: [id])
+
+  @@unique([companyId, invoiceId, messageType])
+  @@index([status, nextRetryAt])
+  @@index([companyId])
+  @@index([invoiceId])
 }
