@@ -1,6 +1,6 @@
 // src/lib/fiscal/should-fiscalize.ts
 import { db } from '@/lib/db'
-import { EInvoice, Company } from '@prisma/client'
+import { EInvoice, Company, PaymentMethod } from '@prisma/client'
 
 export interface FiscalDecision {
   shouldFiscalize: boolean
@@ -8,6 +8,9 @@ export interface FiscalDecision {
   certificateId?: string
   environment?: 'TEST' | 'PROD'
 }
+
+// Payment methods that require fiscalization per Croatian law
+const FISCALIZABLE_PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'CARD']
 
 export async function shouldFiscalizeInvoice(
   invoice: EInvoice & { company: Company }
@@ -20,14 +23,17 @@ export async function shouldFiscalizeInvoice(
   }
 
   // 2. Check payment method - only cash-equivalent needs fiscalisation
-  const cashMethods = ['CASH', 'CARD', 'G', 'K']
-  const paymentMethod = (invoice as any).paymentMethod
-  if (!cashMethods.includes(paymentMethod)) {
+  // If paymentMethod is not set, skip fiscalization (cannot fiscalize without knowing payment method)
+  if (!invoice.paymentMethod) {
+    return { shouldFiscalize: false, reason: 'Payment method not specified' }
+  }
+
+  if (!FISCALIZABLE_PAYMENT_METHODS.includes(invoice.paymentMethod)) {
     return { shouldFiscalize: false, reason: 'Non-cash payment method' }
   }
 
   // 3. Check if already fiscalized
-  if ((invoice as any).jir) {
+  if (invoice.jir) {
     return { shouldFiscalize: false, reason: 'Already fiscalized' }
   }
 

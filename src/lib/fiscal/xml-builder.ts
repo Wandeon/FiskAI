@@ -48,7 +48,9 @@ export function buildRacunRequest(
   const timestamp = new Date()
 
   // Calculate ZKI (Zaštitni Kod Izdavatelja)
-  // Note: ZKI expects amount in cents, so convert totalAmount to cents
+  // IMPORTANT: invoice.totalAmount is in decimal form (e.g., 100.00 for 100 EUR)
+  // ZKI calculation expects cents (smallest currency unit), so we multiply by 100
+  // Example: 100.00 EUR -> 10000 cents -> formatted as "100,00" in ZKI string
   const zki = calculateZKI({
     oib,
     dateTime: invoice.issueDate,

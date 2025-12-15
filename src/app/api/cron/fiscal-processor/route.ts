@@ -17,6 +17,8 @@ export async function GET(request: Request) {
   const batchSize = 10
   const lockDurationMs = 60000
   const workerId = `worker-${crypto.randomUUID().slice(0, 8)}`
+  // Calculate stale lock cutoff in TypeScript to avoid SQL injection
+  const staleLockCutoff = new Date(Date.now() - lockDurationMs)
 
   try {
     // Recover stale locks first
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
         WHERE "status" IN ('QUEUED', 'FAILED')
           AND "nextRetryAt" <= NOW()
           AND "attemptCount" < "maxAttempts"
-          AND ("lockedAt" IS NULL OR "lockedAt" < NOW() - INTERVAL '${lockDurationMs} milliseconds')
+          AND ("lockedAt" IS NULL OR "lockedAt" < ${staleLockCutoff})
         ORDER BY "nextRetryAt" ASC
         FOR UPDATE SKIP LOCKED
         LIMIT ${batchSize}

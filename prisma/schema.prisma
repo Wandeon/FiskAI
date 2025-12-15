@@ -212,6 +212,7 @@ model EInvoice {
   paidAt            DateTime?
   bankAccount       String?
   includeBarcode    Boolean           @default(true)
+  paymentMethod     PaymentMethod?    // Required for fiscalization: CASH/CARD must be fiscalized
   // Vendor payment details (for inbound invoices)
   vendorIban        String?
   vendorBankName    String?
