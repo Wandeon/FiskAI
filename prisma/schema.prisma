@@ -841,3 +841,22 @@ enum DuplicateResolution {
   MERGE
   DELETE_NEW
 }
+
+enum EmailProvider {
+  GMAIL
+  MICROSOFT
+}
+
+enum EmailConnectionStatus {
+  CONNECTED
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+enum AttachmentStatus {
+  PENDING
+  IMPORTED
+  SKIPPED
+  FAILED
+}
