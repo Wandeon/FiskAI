@@ -4,638 +4,372 @@
 
 - Documentation: ✅ Complete
 - Last verified: 2025-12-15
-- Evidence count: 15
-- Complexity: High
+- Evidence count: 28
 
 ## Purpose
 
-The AI Receipt Extraction feature provides a robust API endpoint (/api/ai/extract) that leverages OpenAI's GPT-4o Vision model to perform intelligent OCR (Optical Character Recognition) and structured data extraction from receipt images. The feature accepts image uploads (via base64 encoding or file upload), processes them through a multimodal vision model to extract key business information (merchant details, line items, amounts, dates, payment methods), validates and structures the data according to predefined JSON schemas, and returns it with confidence scores for downstream processing. This feature is designed for expense management systems, accounting software, and financial applications that need to automate receipt digitization with high accuracy across multiple languages and receipt formats.
+Enables automatic extraction of structured data from receipt images using OpenAI's GPT-4o Vision model. Users can photograph or upload receipt images, and the system extracts vendor details, line items, amounts, dates, and payment methods into structured JSON for expense creation. The feature supports both image-based OCR extraction and text-based extraction, with comprehensive usage tracking and rate limiting per subscription plan.
 
-## API Overview
+## User Entry Points
 
-| Attribute    | Details                                  |
-| ------------ | ---------------------------------------- |
-| Endpoint     | POST /api/ai/extract                     |
-| Method       | POST                                     |
-| Model        | OpenAI GPT-4o Vision                     |
-| Input Format | Base64-encoded image or multipart upload |
-| Output       | Structured JSON with confidence scoring  |
-| Rate Limits  | Subscription-based (20-unlimited/month)  |
-| Use Cases    | Expense tracking, receipt digitization   |
+| Type      | Path            | Evidence                                                      |
+| --------- | --------------- | ------------------------------------------------------------- |
+| API       | /api/ai/extract | `src/app/api/ai/extract/route.ts:11`                          |
+| Component | ReceiptScanner  | `src/components/expense/receipt-scanner.tsx:19`               |
+| Component | WithFeedback    | `src/components/expense/receipt-scanner-with-feedback.tsx:21` |
 
-## Core Technology Stack
+## Core Flow
 
-### GPT-4o Vision Model
+1. User opens receipt scanner component in expense form → `src/components/expense/receipt-scanner.tsx:19`
+2. User clicks "Fotografiraj" (camera) or "Učitaj sliku" (upload) → `src/components/expense/receipt-scanner.tsx:167-202`
+3. Component converts image to base64 format → `src/components/expense/receipt-scanner.tsx:88-99`
+4. Component sends POST request to /api/ai/extract → `src/components/expense/receipt-scanner.tsx:44-48`
+5. API validates user session and retrieves company context → `src/app/api/ai/extract/route.ts:12-34`
+6. API checks rate limits (per-minute and monthly quotas) → `src/app/api/ai/extract/route.ts:39-56`
+7. If rate limit exceeded, returns 429 with retry info → `src/app/api/ai/extract/route.ts:43-56`
+8. System strips base64 prefix and calls extractFromImage → `src/app/api/ai/extract/route.ts:59-66`
+9. OCR module sends image to GPT-4o with extraction prompt → `src/lib/ai/ocr.ts:26-57`
+10. GPT-4o returns structured JSON with receipt data → `src/lib/ai/ocr.ts:63-65`
+11. System parses JSON and validates structure → `src/lib/ai/ocr.ts:80`
+12. System tracks token usage and calculates cost → `src/lib/ai/ocr.ts:84-93`
+13. API returns extracted data with usage stats → `src/app/api/ai/extract/route.ts:62-65`
+14. Component optionally uploads receipt image to R2 storage → `src/components/expense/receipt-scanner.tsx:57-75`
+15. Component calls onExtracted callback with data → `src/components/expense/receipt-scanner.tsx:77`
 
-**What is GPT-4o?**
-GPT-4o ("o" for "omni") is OpenAI's flagship multimodal model that accepts any combination of text, audio, image, and video inputs and generates text, audio, and image outputs. It represents a significant advancement where a single neural network processes all input modalities end-to-end, enabling more natural human-computer interaction.
+## Key Modules
 
-**Vision Capabilities**
+| Module                     | Purpose                                | Location                                                          |
+| -------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| POST /api/ai/extract       | API endpoint for extraction requests   | `src/app/api/ai/extract/route.ts:11-84`                           |
+| extractFromImage           | GPT-4o Vision OCR for base64 images    | `src/lib/ai/ocr.ts:15-114`                                        |
+| extractFromImageUrl        | GPT-4o Vision OCR for URL images       | `src/lib/ai/ocr.ts:116-212`                                       |
+| extractReceipt             | Text-based extraction with gpt-4o-mini | `src/lib/ai/extract.ts:54-126`                                    |
+| extractInvoice             | Invoice extraction with gpt-4o-mini    | `src/lib/ai/extract.ts:128-200`                                   |
+| trackAIUsage               | Logs usage to database                 | `src/lib/ai/usage-tracking.ts:50-99`                              |
+| checkRateLimit             | Validates against plan limits          | `src/lib/ai/rate-limiter.ts:120`                                  |
+| ReceiptScanner             | UI component for image capture/upload  | `src/components/expense/receipt-scanner.tsx:19-231`               |
+| ReceiptScannerWithFeedback | Scanner with AI feedback integration   | `src/components/expense/receipt-scanner-with-feedback.tsx:21-258` |
 
-- **OCR Performance**: GPT-4o can extract text from images with high accuracy, though specialized OCR engines may still outperform for pure text extraction tasks
-- **Contextual Understanding**: Unlike traditional OCR, GPT-4o understands contextual information in images like humans, enabling it to fix OCR errors based on context
-- **Structured Output**: With structured outputs feature, GPT-4o-2024-08-06 achieves 100% reliability in matching JSON schemas when `strict: true` is set
-- **Multilingual Support**: Handles diverse languages and mixed-language content, particularly effective for international receipts
-- **Layout Understanding**: Processes complex receipt layouts, including tables, line items, and hierarchical data structures
+## Data Types
 
-**Performance Metrics**
-
-- Speed: 2x faster than GPT-4 Turbo
-- Cost: 50% lower pricing than GPT-4 Turbo
-- Rate Limits: 5x higher than GPT-4 Turbo
-- Real-World Accuracy: ~90% accuracy for receipt parsing out-of-the-box, with ~97% achievable with hybrid OCR+LLM approaches
-
-## Extraction Workflow
-
-### 1. Image Input Processing
-
-**Supported Input Methods**
-
-- Base64-encoded data URLs with MIME type prefix
-- File uploads via multipart/form-data
-- Public HTTPS URLs to image files
-- Maximum file size: 20MB recommended
-- Supported formats: PNG, JPEG, WebP, HEIC, non-animated GIF
-
-**Base64 Encoding Pattern**
+### ExtractedReceipt Interface
 
 ```typescript
-// Correct format for base64 images
-{
-  "type": "image_url",
-  "image_url": {
-    "url": "data:image/jpeg;base64,{base64_string}"
-  }
+interface ExtractedReceipt {
+  vendor: string
+  vendorOib?: string // Croatian tax ID (11 digits)
+  date: string // YYYY-MM-DD format
+  items: ExtractedItem[]
+  subtotal: number
+  vatAmount: number
+  total: number
+  paymentMethod?: "cash" | "card" | "transfer"
+  currency: string // Default: EUR
+  confidence: number // 0-1 scale
 }
 ```
 
-**Image Preprocessing Considerations**
+Evidence: `src/lib/ai/types.ts:1-12`
 
-- Higher resolution images provide better OCR accuracy
-- Poor quality images (blurred, rotated, damaged) benefit from hybrid OCR+GPT-4o approach
-- Images are automatically deleted after processing for privacy
-- Multiple images can be processed in a single request (count as separate tokens)
+### ExtractedItem Interface
 
-### 2. Vision API Integration
+```typescript
+interface ExtractedItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  total: number
+  vatRate?: number // Default: 25 (Croatian standard VAT)
+}
+```
 
-**API Configuration**
+Evidence: `src/lib/ai/types.ts:14-20`
 
-- Model: `gpt-4o` or `gpt-4o-2024-08-06` for structured outputs
-- Max tokens: 1000-2000 recommended for receipt extraction
-- Temperature: 0-0.3 for deterministic extraction
-- Response format: JSON schema with `strict: true` for guaranteed structure
+### ExtractionResult Interface
 
-**Prompt Engineering for Receipts**
-The system prompt should include:
+```typescript
+interface ExtractionResult<T> {
+  success: boolean
+  data?: T
+  error?: string
+  rawText?: string
+}
+```
 
-- Request for structured JSON output with specific field names
-- Instructions to handle Croatian/local language terms (e.g., "PDV" for VAT, "Ukupno" for Total)
-- Guidance to extract line items with quantity, description, and unit prices
-- Instructions to return confidence scores (0-1 scale)
-- Error handling instructions for missing or unclear information
+Evidence: `src/lib/ai/types.ts:30-35`
 
-**Example Prompt Structure**
+## AI Model Configuration
+
+### Image OCR (GPT-4o Vision)
+
+- **Model**: `gpt-4o` → `src/lib/ai/ocr.ts:19`
+- **Max tokens**: 1000 → `src/lib/ai/ocr.ts:56`
+- **Input format**: Base64 JPEG with data URL → `src/lib/ai/ocr.ts:50-52`
+- **Use case**: Receipt images requiring visual processing
+
+### Text Extraction (GPT-4o-mini)
+
+- **Model**: `gpt-4o-mini` → `src/lib/ai/extract.ts:58`
+- **Response format**: JSON object mode → `src/lib/ai/extract.ts:70`
+- **Use case**: Pre-extracted text or OCR output refinement
+
+## Prompt Engineering
+
+### OCR Prompt Structure
+
+The system prompt instructs GPT-4o to extract receipt data with Croatian context:
 
 ```text
-Extract all information from this receipt image and return as JSON.
-Extract: vendor name, tax ID (OIB), date (YYYY-MM-DD format),
-line items (with qty/description/price), subtotal, VAT amount,
-total, payment method, and currency. Croatian receipts use
-"PDV" for VAT and "Ukupno" for total. Return confidence score
-(0-1). If information is unclear, set field to null.
-```
-
-### 3. Structured Data Extraction
-
-**Core Data Fields**
-
-| Field         | Type   | Description                           | Example       |
-| ------------- | ------ | ------------------------------------- | ------------- |
-| vendor        | string | Merchant/business name                | "Konzum d.d." |
-| vendorOib     | string | 11-digit tax identification number    | "12345678901" |
-| date          | string | Transaction date (YYYY-MM-DD)         | "2025-12-15"  |
-| items         | array  | Line items with qty/description/price | See below     |
-| subtotal      | number | Amount before VAT                     | 100.00        |
-| vatAmount     | number | VAT/tax amount                        | 25.00         |
-| total         | number | Final total amount                    | 125.00        |
-| paymentMethod | enum   | cash/card/transfer                    | "card"        |
-| currency      | string | ISO currency code                     | "EUR"         |
-| confidence    | number | Extraction confidence (0-1)           | 0.92          |
-
-**Line Item Structure**
-
-```typescript
+Extract receipt data from this image. Return JSON:
 {
-  quantity: number // Item quantity
-  description: string // Item name/description
-  unitPrice: number // Price per unit
-  totalPrice: number // Line total (qty × unitPrice)
+  "vendor": "business name",
+  "vendorOib": "OIB if visible",
+  "date": "YYYY-MM-DD",
+  "items": [{"description": "", "quantity": 1, "unitPrice": 0, "total": 0, "vatRate": 25}],
+  "subtotal": 0,
+  "vatAmount": 0,
+  "total": 0,
+  "paymentMethod": "cash|card|transfer",
+  "currency": "EUR",
+  "confidence": 0.0-1.0
+}
+Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card
+```
+
+Evidence: `src/lib/ai/ocr.ts:34-47`
+
+### Text Extraction Prompt
+
+Similar structure with system/user message separation:
+
+Evidence: `src/lib/ai/extract.ts:15-30`
+
+## Rate Limiting
+
+### Per-Minute Limits
+
+- **Window**: 60 seconds → `src/lib/ai/rate-limiter.ts:72`
+- **Max requests**: 10 per company → `src/lib/ai/rate-limiter.ts:73`
+- **Implementation**: In-memory Map with cleanup → `src/lib/ai/rate-limiter.ts:70-113`
+
+### Monthly Subscription Limits
+
+| Plan         | Total Calls | Cost Limit | OCR Limit |
+| ------------ | ----------- | ---------- | --------- |
+| Trial        | 20          | €0.50      | -         |
+| Pausalni     | 100         | €2.00      | 50        |
+| Obrtnicki    | 500         | €10.00     | 250       |
+| Obrt VAT     | 1,000       | €20.00     | -         |
+| DOO Small    | 2,000       | €50.00     | -         |
+| DOO Standard | 5,000       | €100.00    | -         |
+| Enterprise   | Unlimited   | Unlimited  | -         |
+
+Evidence: `src/lib/ai/rate-limiter.ts:17-64`
+
+### Rate Limit Response
+
+When limits exceeded, returns 429 with:
+
+- Error message explaining the limit
+- Current usage stats
+- Retry-after seconds (for per-minute limits)
+
+Evidence: `src/app/api/ai/extract/route.ts:43-56`
+
+## Usage Tracking
+
+### AIUsage Database Model
+
+```prisma
+model AIUsage {
+  id         String   @id @default(cuid())
+  companyId  String
+  operation  String   // ocr_receipt, extract_receipt, extract_invoice
+  tokensUsed Int?
+  costCents  Int?     // Cost in EUR cents
+  model      String?  // gpt-4o, gpt-4o-mini
+  success    Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }
 ```
 
-### 4. Response Parsing and Validation
+Evidence: `prisma/schema.prisma:1086-1100`
 
-**JSON Extraction**
+### Cost Calculation
 
-- Parse response text to extract JSON content
-- Handle cases where model adds explanatory text around JSON
-- Validate against expected schema using Zod or similar
-- Implement fallback parsing for non-JSON responses
+Pricing per 1M tokens (EUR cents):
 
-**Confidence Score Interpretation**
+| Model       | Input | Output |
+| ----------- | ----- | ------ |
+| gpt-4o      | 250   | 1000   |
+| gpt-4o-mini | 15    | 60     |
 
-| Range     | Level  | Meaning                                    | Action                  |
-| --------- | ------ | ------------------------------------------ | ----------------------- |
-| 0.80-1.00 | High   | High reliability, minimal review needed    | Auto-process            |
-| 0.60-0.79 | Medium | Moderate confidence, review recommended    | Flag for review         |
-| 0.00-0.59 | Low    | Low confidence, manual verification needed | Require manual approval |
+Formula: `cost = (inputTokens/1M × inputPrice) + (outputTokens/1M × outputPrice)`
 
-**Validation Rules**
+Evidence: `src/lib/ai/usage-tracking.ts:17-45`
 
-- Verify mathematical consistency (subtotal + VAT = total)
-- Check date format and reasonable date range
-- Validate tax ID format (country-specific)
-- Ensure line items sum matches subtotal
-- Flag anomalies for review
-
-### 5. Error Handling and Fallbacks
-
-**Common Error Scenarios**
-
-- Low quality/damaged images → Return low confidence score, suggest re-scan
-- Ambiguous text → Set unclear fields to null, lower confidence
-- Non-receipt images → Detect and reject with appropriate error
-- Rate limit exceeded → Return 429 with retry-after information
-- Model refusal (unsafe content) → New refusal string in API response
-
-**Hybrid OCR Approach for Better Accuracy**
-For improved results, especially with low-quality images:
-
-1. Run specialized OCR first (Google Vision, Azure OCR, Tesseract)
-2. Pass OCR text + original image to GPT-4o
-3. Instruct GPT-4o to fix OCR errors using contextual understanding
-4. This hybrid approach can improve accuracy from 80% to 97%+
-
-## Rate Limiting and Usage Tracking
-
-### Subscription-Based Limits
-
-**Rate Limit Tiers**
-
-- **Trial/Default**: 20 extraction calls/month
-- **Pausalni**: 100 calls/month, 50 OCR receipts
-- **Obrtnicki**: 500 calls/month, 250 OCR receipts
-- **Obrt VAT**: 1000 calls/month
-- **DOO Small**: 2000 calls/month
-- **DOO Standard**: 5000 calls/month
-- **Enterprise**: Unlimited
-
-**Multi-Tier Enforcement**
-
-1. Per-minute limit: 10 requests (prevents abuse)
-2. Monthly total calls limit (per subscription plan)
-3. Monthly cost budget limit (based on token usage)
-4. Per-operation specific limits (e.g., OCR receipts vs. text extraction)
-
-### Usage Tracking
-
-**Tracked Metrics**
+### Tracking Call Sites
 
-- **Token Usage**: prompt_tokens + completion_tokens per request
-- **Cost Calculation**: Stored in cents (EUR) for billing
-- **Success Rate**: Track successful vs. failed extractions
-- **Model Used**: Record which model version processed request
-- **Operation Type**: Distinguish between OCR, text extraction, categorization
+- Successful OCR: `src/lib/ai/ocr.ts:84-93`
+- Failed OCR: `src/lib/ai/ocr.ts:98-107`
+- Parse error: `src/lib/ai/ocr.ts:67-77`
+- Text extraction success: `src/lib/ai/extract.ts:94-104`
+- Text extraction failure: `src/lib/ai/extract.ts:109-118`
 
-**Usage Data Storage**
+## UI Components
 
-```typescript
-AIUsage {
-  companyId: string;      // Tenant isolation
-  operation: string;      // Operation type
-  tokensUsed: number;     // Total tokens consumed
-  costCents: number;      // Cost in EUR cents
-  model: string;          // AI model identifier
-  success: boolean;       // Operation result
-  createdAt: DateTime;    // Timestamp
-}
-```
-
-## Best Practices for Implementation
-
-### Image Input Optimization
-
-1. **Resolution**: Use high-resolution images (300 DPI or higher) for best OCR results
-2. **Orientation**: Auto-rotate images to correct orientation before sending
-3. **Compression**: Balance file size vs. quality (JPEG quality 85-95)
-4. **Format Selection**: Use JPEG for photos, PNG for screenshots/digital receipts
-
-### Prompt Engineering Tips
-
-1. **Be Specific**: Clearly define expected output structure and field names
-2. **Provide Examples**: Include sample JSON in prompt for complex schemas
-3. **Handle Ambiguity**: Instruct model how to handle unclear/missing data
-4. **Local Context**: Include language-specific terms and formats
-5. **Confidence Scoring**: Always request confidence scores for quality assessment
-
-### Structured Output Configuration
-
-**Using JSON Schema (Recommended)**
-
-```typescript
-{
-  "model": "gpt-4o-2024-08-06",
-  "messages": [...],
-  "response_format": {
-    "type": "json_schema",
-    "json_schema": {
-      "name": "receipt_extraction",
-      "strict": true,
-      "schema": {
-        "type": "object",
-        "properties": {
-          "vendor": {"type": "string"},
-          "total": {"type": "number"},
-          "confidence": {"type": "number"}
-        },
-        "required": ["vendor", "total", "confidence"],
-        "additionalProperties": false
-      }
-    }
-  }
-}
-```
-
-**Benefits of Structured Outputs**
-
-- 100% schema compliance (no validation failures)
-- Eliminates need for retry logic due to format errors
-- Faster parsing and integration with downstream systems
-- Predictable output structure for type safety
-
-### Error Recovery Strategies
-
-1. **Retry Logic**: Implement exponential backoff for transient failures
-2. **Fallback Models**: Use GPT-4o-mini for text-only extraction as cheaper fallback
-3. **User Feedback Loop**: Collect corrections to improve future extractions
-4. **Confidence Thresholds**: Route low-confidence extractions to manual review queue
-
-## Security and Privacy Considerations
-
-### Data Protection
-
-- **Automatic Deletion**: OpenAI automatically deletes images after processing
-- **No Training**: Images not used to train OpenAI models (per API terms)
-- **Tenant Isolation**: Implement proper company/user data segregation
-- **Sensitive Data**: Be cautious with receipts containing personal information (medical, financial services)
-
-### Compliance
-
-- **GDPR**: Ensure lawful basis for processing receipt data (legitimate interest, contract)
-- **Data Retention**: Define retention policies for extracted data
-- **Right to Erasure**: Implement deletion workflows for user data
-- **Audit Logging**: Track all AI operations for compliance and troubleshooting
-
-## Integration Patterns
-
-### RESTful API Integration
-
-**Request Example**
-
-```typescript
-POST /api/ai/extract
-Content-Type: application/json
-
-{
-  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
-  "options": {
-    "language": "hr",
-    "includeItems": true
-  }
-}
-```
-
-**Response Example**
-
-```typescript
-{
-  "success": true,
-  "data": {
-    "vendor": "Konzum d.d.",
-    "vendorOib": "12345678901",
-    "date": "2025-12-15",
-    "items": [
-      {
-        "quantity": 2,
-        "description": "Mlijeko 1L",
-        "unitPrice": 5.99,
-        "totalPrice": 11.98
-      }
-    ],
-    "subtotal": 100.00,
-    "vatAmount": 25.00,
-    "total": 125.00,
-    "paymentMethod": "card",
-    "currency": "EUR",
-    "confidence": 0.92
-  },
-  "usage": {
-    "tokensUsed": 1250,
-    "costCents": 15,
-    "remaining": 985
-  }
-}
-```
-
-### SDK Integration (Node.js Example)
-
-```typescript
-import { OpenAI } from "openai"
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
-async function extractReceipt(imageBase64: string) {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-2024-08-06",
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Extract receipt data as JSON with fields: vendor, date, total, items, confidence",
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${imageBase64}`,
-            },
-          },
-        ],
-      },
-    ],
-    max_tokens: 1000,
-    response_format: { type: "json_object" },
-  })
-
-  return JSON.parse(response.choices[0].message.content)
-}
-```
-
-### Webhook Pattern for Async Processing
-
-For high-volume scenarios:
-
-1. Accept image upload, return job ID immediately
-2. Process extraction asynchronously in background queue
-3. Send webhook notification when complete
-4. Store results in database for retrieval
-
-## Advanced Features
-
-### Confidence Scoring and Validation
-
-**Generating Confidence Scores**
-
-- Prompt model to self-report confidence per field
-- Use logit probabilities for calibrated scores (requires API access)
-- Implement cross-field validation (e.g., total = subtotal + VAT)
-- Compare against historical patterns for anomaly detection
-
-**Confidence Signals**
-Instead of single confidence number, track specific uncertainty signals:
-
-- Unclear text/blurred areas
-- Ambiguous date formats
-- Missing required fields
-- Mathematical inconsistencies
-
-### Multilingual Receipt Processing
-
-**Language Support**
-
-- GPT-4o handles 38+ languages natively
-- Mixed-language receipts (e.g., Arabic-English) supported
-- Automatic language detection from image content
-- Cultural context awareness (date formats, currency symbols)
-
-**Internationalization Considerations**
-
-- VAT vs. GST vs. Sales Tax terminology
-- Date format variations (DD/MM/YYYY vs. MM/DD/YYYY)
-- Currency symbol placement
-- Decimal separator differences (. vs. ,)
-
-### Fraud Detection Integration
-
-**Automated Checks**
-
-- Duplicate receipt detection (hash comparison)
-- Altered amount detection (visual vs. extracted mismatches)
-- Suspicious patterns (round numbers, missing tax IDs)
-- Policy violation flags (expense category limits)
-
-**Implementation Pattern**
-
-1. Extract receipt data via GPT-4o
-2. Run validation rules on extracted data
-3. Compare against company policy database
-4. Flag anomalies for manual review
-5. Log all checks for audit trail
-
-## Monitoring and Observability
-
-### Key Metrics to Track
-
-1. **Accuracy Metrics**
-   - Field-level extraction accuracy per receipt type
-   - Confidence score distribution
-   - False positive/negative rates for validation
-
-2. **Performance Metrics**
-   - API response time (p50, p95, p99)
-   - Token usage per request
-   - Cost per extraction
-   - Success rate by subscription tier
-
-3. **Business Metrics**
-   - User adoption rate (% using AI extraction)
-   - Manual correction frequency
-   - Time saved vs. manual entry
-   - ROI on AI feature costs
-
-### Logging Best Practices
-
-```typescript
-// Structured logging for AI operations
-logger.info("Receipt extraction started", {
-  companyId: company.id,
-  userId: user.id,
-  imageSize: imageBuffer.length,
-  operation: "ocr_receipt",
-})
-
-logger.info("Receipt extraction completed", {
-  companyId: company.id,
-  success: true,
-  confidence: result.confidence,
-  tokensUsed: usage.total_tokens,
-  costCents: calculatedCost,
-  processingTimeMs: endTime - startTime,
-})
-```
-
-## Testing Strategies
-
-### Unit Testing
-
-- Mock OpenAI API responses with sample JSON
-- Test schema validation with valid/invalid data
-- Verify confidence score calculations
-- Test error handling for API failures
-
-### Integration Testing
-
-- Test with real receipt images across various formats
-- Verify end-to-end flow from upload to storage
-- Test rate limiting enforcement
-- Validate webhook delivery
-
-### Quality Assurance
-
-- Maintain test receipt dataset (diverse vendors, languages, qualities)
-- Automated accuracy testing against ground truth
-- A/B testing different prompt formulations
-- User acceptance testing with real users
-
-## Cost Optimization
-
-### Token Usage Strategies
-
-1. **Image Compression**: Reduce image size while maintaining OCR quality
-2. **Prompt Optimization**: Use concise, efficient prompts
-3. **Response Limits**: Set appropriate max_tokens to avoid waste
-4. **Model Selection**: Use GPT-4o-mini for simpler receipts (lower cost)
-
-### Cost Calculation Example
-
-**GPT-4o Pricing** (as of 2024):
-
-- Input: $2.50 per 1M tokens
-- Output: $10.00 per 1M tokens
-
-**Typical Receipt Extraction**:
-
-- Input tokens: ~1000 (image encoding + prompt)
-- Output tokens: ~200 (JSON response)
-- Cost per extraction: ~$0.0045 USD
-
-**Monthly Cost Projections**:
-
-- 100 receipts: ~$0.45
-- 500 receipts: ~$2.25
-- 1000 receipts: ~$4.50
-
-## Troubleshooting Guide
-
-### Common Issues
-
-**Issue**: Low extraction accuracy
-
-- **Solution**: Implement hybrid OCR+GPT-4o approach
-- **Solution**: Improve image quality (higher resolution, better lighting)
-- **Solution**: Fine-tune prompt with specific receipt format examples
-
-**Issue**: Inconsistent JSON structure
-
-- **Solution**: Use structured outputs with `strict: true`
-- **Solution**: Implement robust JSON parsing with fallbacks
-- **Solution**: Add schema validation layer (Zod, JSON Schema)
-
-**Issue**: Rate limit exceeded
-
-- **Solution**: Implement request queuing with backoff
-- **Solution**: Upgrade subscription plan
-- **Solution**: Optimize by reducing unnecessary extraction calls
-
-**Issue**: High costs
-
-- **Solution**: Switch to GPT-4o-mini for standard receipts
-- **Solution**: Implement caching for duplicate receipts
-- **Solution**: Use confidence thresholds to reduce unnecessary reprocessing
-
-## Future Enhancements
-
-### Potential Improvements
-
-1. **Local Model Fallback**: Use open-source models (LLaMA, Mistral) for offline/privacy-sensitive scenarios
-2. **Active Learning**: Train custom fine-tuned model on collected feedback data
-3. **Real-time Processing**: Implement streaming responses for faster UX
-4. **Mobile SDK**: Native mobile libraries for on-device preprocessing
-5. **Batch Processing**: Optimize API for bulk receipt processing
-
-### Research Directions
-
-- **ReceiptSense Dataset**: Leverage academic datasets for model benchmarking
-- **Post-OCR Parsing**: Explore specialized post-processing models
-- **Table Extraction**: Improve line item extraction accuracy with table-specific models
-- **Few-Shot Learning**: Use example receipts in prompt for better adaptation
-
-## Evidence Links
-
-1. [GPT-4o Vision OCR Receipt Parsing - Medium](https://medium.com/data-science/how-to-effortlessly-extract-receipt-information-with-ocr-and-gpt-4o-mini-0825b4ac1fea) - Guide on using GPT-4o mini for receipt extraction with clean JSON output
-2. [Traditional OCR Is Dead - GPT-4o's Vision Model](https://medium.com/@mohammedadil77/traditional-ocr-is-dead-gpt-4os-vision-model-does-magic-ed7c8d9340e3) - Comparison showing GPT-4o's advantages over traditional OCR for receipt parsing
-3. [OpenAI Cookbook: Data Extraction with GPT-4o](https://cookbook.openai.com/examples/data_extraction_transformation) - Official guide on using GPT-4o as OCR alternative for ELT workflows
-4. [OpenAI Vision API Documentation](https://platform.openai.com/docs/guides/vision) - Official documentation for vision-enabled chat models
-5. [Hello GPT-4o - OpenAI](https://openai.com/index/hello-gpt-4o/) - Official announcement of GPT-4o multimodal capabilities
-6. [Receipt Data Extraction - Microsoft Azure](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0) - Azure's prebuilt receipt model with JSON output specification
-7. [How AI Converts Scanned Receipts to Structured Data](https://airparser.com/blog/how-ai-helps-convert-scanned-receipts-to-structured-data/) - Overview of AI technologies (OCR, ML, NLP) for receipt parsing
-8. [Structured Outputs in OpenAI API](https://platform.openai.com/docs/guides/structured-outputs) - Documentation on 100% reliable JSON schema adherence
-9. [Introducing Structured Outputs - OpenAI](https://openai.com/index/introducing-structured-outputs-in-the-api/) - Announcement of guaranteed schema compliance feature
-10. [Confidence Scores in LLMs - Infrrd](https://www.infrrd.ai/blog/confidence-scores-in-llms) - Guide on implementing confidence scoring for LLM extractions
-11. [Receipt OCR Benchmark with LLMs](https://research.aimultiple.com/receipt-ocr/) - Benchmarks showing 97% accuracy with LLM-based receipt OCR
-12. [Complete Guide to GPT-4o Image API](https://www.cursor-ide.com/blog/gpt4o-image-api-guide-2025-english) - Comprehensive guide on base64 encoding and image processing
-13. [Receipt OCR API Integration - Veryfi](https://www.veryfi.com/receipt-ocr-api/) - Commercial API example with SDKs and integration patterns
-14. [ReceiptSense Dataset - arXiv](https://arxiv.org/abs/2406.04493) - Academic research on multilingual receipt understanding with 20,000+ annotated receipts
-15. [GPT-4o Vision Best Practices - tsmatz](https://tsmatz.wordpress.com/2024/02/07/gpt-4-vision-with-ocr/) - Best practices for improving accuracy with OCR-assisted multimodal models
+### ReceiptScanner Component
+
+**Features:**
+
+- Camera capture button with device camera access → `src/components/expense/receipt-scanner.tsx:167-184`
+- File upload button for gallery images → `src/components/expense/receipt-scanner.tsx:186-202`
+- Image preview with processing overlay → `src/components/expense/receipt-scanner.tsx:137-156`
+- Error display with red background → `src/components/expense/receipt-scanner.tsx:158-163`
+- Cancel/Confirm action buttons → `src/components/expense/receipt-scanner.tsx:206-227`
+
+**Croatian Labels:**
+
+- "Skeniraj račun" (Scan receipt) → `src/components/expense/receipt-scanner.tsx:129`
+- "Fotografiraj" (Photograph) → `src/components/expense/receipt-scanner.tsx:175`
+- "Učitaj sliku" (Upload image) → `src/components/expense/receipt-scanner.tsx:194`
+- "Obrađujem..." (Processing...) → `src/components/expense/receipt-scanner.tsx:151`
+- "Greška" (Error) → `src/components/expense/receipt-scanner.tsx:160`
+
+### ReceiptScannerWithFeedback Component
+
+Extends base scanner with AI feedback integration:
+
+- Shows AIFeedback component after extraction → `src/components/expense/receipt-scanner-with-feedback.tsx:182-192`
+- Displays confidence score from extraction → `src/components/expense/receipt-scanner-with-feedback.tsx:187`
+- Tracks feedback for ocr_receipt operation → `src/components/expense/receipt-scanner-with-feedback.tsx:186`
+
+## Receipt Storage
+
+After successful extraction, images can be uploaded to R2:
+
+1. Create FormData with file → `src/components/expense/receipt-scanner.tsx:60-61`
+2. POST to /api/receipts/upload → `src/components/expense/receipt-scanner.tsx:63-66`
+3. Receive receiptUrl on success → `src/components/expense/receipt-scanner.tsx:69-70`
+4. Attach URL to extracted data → `src/components/expense/receipt-scanner.tsx:77`
+
+Evidence: `src/components/expense/receipt-scanner.tsx:57-75`
+
+## Error Handling
+
+### API Error Cases
+
+| Scenario          | Status | Response                               | Evidence                                |
+| ----------------- | ------ | -------------------------------------- | --------------------------------------- |
+| No session        | 401    | `{ error: 'Unauthorized' }`            | `src/app/api/ai/extract/route.ts:13-15` |
+| No company        | 404    | `{ error: 'Company not found' }`       | `src/app/api/ai/extract/route.ts:26-30` |
+| Rate limited      | 429    | `{ error: reason, usage, retryAfter }` | `src/app/api/ai/extract/route.ts:48-55` |
+| No input          | 400    | `{ error: 'No input provided' }`       | `src/app/api/ai/extract/route.ts:76`    |
+| Extraction failed | 500    | `{ error: message }`                   | `src/app/api/ai/extract/route.ts:77-82` |
+
+### OCR Error Cases
+
+| Scenario        | Result                                    | Evidence                    |
+| --------------- | ----------------------------------------- | --------------------------- |
+| No API key      | Throws 'OpenAI API key not configured'    | `src/lib/ai/ocr.ts:7-9`     |
+| No JSON in resp | `{ success: false, error: 'No JSON...' }` | `src/lib/ai/ocr.ts:66-78`   |
+| Parse error     | `{ success: false, error: message }`      | `src/lib/ai/ocr.ts:109-112` |
+
+## Security
+
+### Authentication
+
+- Session required via `auth()` → `src/app/api/ai/extract/route.ts:12-15`
+- Company context from CompanyUser → `src/app/api/ai/extract/route.ts:21-31`
+
+### Tenant Isolation
+
+- All usage tracked per companyId → `src/lib/ai/usage-tracking.ts:51`
+- Rate limits enforced per company → `src/lib/ai/rate-limiter.ts:75-77`
+- AIUsage indexed by companyId → `prisma/schema.prisma:1098-1099`
+
+### API Key Security
+
+- OpenAI key from environment variable → `src/lib/ai/ocr.ts:7-12`
+- Lazy-loaded to avoid build errors → `src/lib/ai/ocr.ts:6`
 
 ## Dependencies
 
 - **Depends on**:
-  - OpenAI API - GPT-4o Vision model for image understanding
-  - Rate limiting system - Subscription-based usage enforcement
-  - Authentication - User/company context for tenant isolation
-  - Image storage - R2/S3 for receipt image persistence
-  - Database - AIUsage and AIFeedback tables for tracking
+  - [[auth-session]] - Session validation for API access
+  - [[settings-company]] - Company context for tenant isolation
+  - OpenAI API - GPT-4o Vision model
+  - Cloudflare R2 - Receipt image storage (optional)
 
 - **Depended by**:
-  - Expense creation workflows - Auto-populate expense forms
-  - Receipt scanner UI components - Frontend integration
-  - Reporting and analytics - Extracted data for business insights
-  - Accounting integrations - Structured data export
+  - [[expenses-create]] - Uses extracted data to populate expense form
+  - [[ai-feedback]] - Collects user feedback on extraction quality
+  - [[ai-usage]] - Displays usage statistics from tracking data
+
+## Integrations
+
+### OpenAI API
+
+- Client initialization: `src/lib/ai/ocr.ts:6-13`
+- Chat completions with vision: `src/lib/ai/ocr.ts:26-57`
+- JSON response format: `src/lib/ai/extract.ts:70`
+
+### Logging
+
+- Pino logger for structured logs → `src/app/api/ai/extract/route.ts:6`
+- Rate limit warnings → `src/app/api/ai/extract/route.ts:44-47`
+- Extraction errors → `src/app/api/ai/extract/route.ts:78`
+- Usage tracking logs → `src/lib/ai/usage-tracking.ts:84-94`
 
 ## Verification Checklist
 
-- [ ] API endpoint accepts base64-encoded images
-- [ ] API endpoint accepts multipart file uploads
-- [ ] GPT-4o Vision model processes receipt images
-- [ ] Structured JSON output matches defined schema
-- [ ] Confidence scores generated for extractions
-- [ ] Rate limiting enforces subscription-based limits
-- [ ] Per-minute rate limits prevent abuse
-- [ ] Token usage tracked in AIUsage table
-- [ ] Cost calculation accurate in EUR cents
-- [ ] Mathematical validation (subtotal + VAT = total)
-- [ ] Date format validation (YYYY-MM-DD)
-- [ ] Line items extracted with all fields
-- [ ] Payment method correctly categorized
-- [ ] Multilingual receipts supported
-- [ ] Error handling for low-quality images
-- [ ] 429 responses include retry-after information
-- [ ] Usage stats returned in API response
-- [ ] Tenant isolation prevents cross-company access
-- [ ] Images processed securely and deleted after use
-- [ ] Webhook support for async processing
-- [ ] Monitoring logs capture all relevant metrics
+- [x] API endpoint accepts base64-encoded images
+- [x] API endpoint accepts text input for extraction
+- [x] GPT-4o Vision processes receipt images
+- [x] GPT-4o-mini processes text-based extraction
+- [x] Structured JSON output matches ExtractedReceipt interface
+- [x] Confidence scores included in extraction results
+- [x] Per-minute rate limiting (10 req/min) enforced
+- [x] Monthly subscription limits enforced
+- [x] 429 response includes retry-after for per-minute limits
+- [x] Token usage tracked in AIUsage table
+- [x] Cost calculation uses correct model pricing
+- [x] Croatian terms recognized (PDV, Ukupno, etc.)
+- [x] Line items extracted with quantity, price, VAT rate
+- [x] Payment method detected (cash/card/transfer)
+- [x] Receipt images can be uploaded to R2 storage
+- [x] UI shows camera and upload options
+- [x] Processing overlay during extraction
+- [x] Error messages displayed in Croatian
+- [x] Feedback component integration available
+
+## Evidence Links
+
+1. `src/app/api/ai/extract/route.ts:1-84` - Complete API endpoint implementation
+2. `src/lib/ai/ocr.ts:1-212` - OCR extraction with GPT-4o Vision
+3. `src/lib/ai/extract.ts:1-200` - Text-based extraction with GPT-4o-mini
+4. `src/lib/ai/types.ts:1-43` - TypeScript interfaces for extraction
+5. `src/lib/ai/usage-tracking.ts:1-99` - Usage tracking and cost calculation
+6. `src/lib/ai/rate-limiter.ts:1-100` - Rate limiting configuration and logic
+7. `src/components/expense/receipt-scanner.tsx:1-231` - Receipt scanner UI component
+8. `src/components/expense/receipt-scanner-with-feedback.tsx:1-258` - Scanner with feedback
+9. `prisma/schema.prisma:1086-1100` - AIUsage database model
+10. `src/app/api/ai/extract/route.ts:11` - POST handler with logging wrapper
+11. `src/app/api/ai/extract/route.ts:21-34` - Company context retrieval
+12. `src/app/api/ai/extract/route.ts:39-56` - Rate limit check and 429 response
+13. `src/lib/ai/ocr.ts:15-114` - extractFromImage function
+14. `src/lib/ai/ocr.ts:26-57` - OpenAI API call with vision
+15. `src/lib/ai/ocr.ts:34-47` - Croatian-aware extraction prompt
+16. `src/lib/ai/ocr.ts:84-93` - Successful extraction usage tracking
+17. `src/lib/ai/extract.ts:54-126` - extractReceipt for text input
+18. `src/lib/ai/extract.ts:15-30` - Receipt extraction prompt
+19. `src/lib/ai/rate-limiter.ts:17-64` - PLAN_LIMITS configuration
+20. `src/lib/ai/rate-limiter.ts:70-113` - InMemoryRateLimiter class
+21. `src/lib/ai/usage-tracking.ts:17-26` - MODEL_PRICING configuration
+22. `src/lib/ai/usage-tracking.ts:31-45` - Cost calculation function
+23. `src/lib/ai/usage-tracking.ts:50-82` - trackAIUsage function
+24. `src/components/expense/receipt-scanner.tsx:27-86` - Image processing flow
+25. `src/components/expense/receipt-scanner.tsx:44-48` - API fetch call
+26. `src/components/expense/receipt-scanner.tsx:57-75` - R2 upload flow
+27. `src/components/expense/receipt-scanner-with-feedback.tsx:182-192` - Feedback integration
+28. `prisma/schema.prisma:129` - Company.aiUsage relation
