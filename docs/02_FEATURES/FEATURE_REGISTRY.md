@@ -4,7 +4,7 @@
 
 **Last Updated:** 2025-12-15
 **Total Features:** 108
-**Coverage:** 58% (63/108 documented)
+**Coverage:** 67% (72/108 documented)
 
 ## Registry
 
@@ -83,16 +83,16 @@
 | F062              | Data Export                   | Reports       | ✅     | /reports/export                    | High       | [→](features/reports-export.md)            |
 | F063              | Accountant Export             | Reports       | ✅     | /api/reports/accountant-export     | Medium     | [→](features/reports-accountant-export.md) |
 | **FISCALIZATION** |
-| F064              | Fiscalize Invoice             | Fiscalization | ❌     | Actions + CRS                      | High       | -                                          |
-| F065              | Fiscal Certificate Management | Fiscalization | ❌     | /settings/fiscalisation            | High       | -                                          |
-| F066              | Business Premises Setup       | Fiscalization | ❌     | /settings/premises                 | Medium     | -                                          |
-| F067              | Fiscal Status Check           | Fiscalization | ❌     | Actions                            | Medium     | -                                          |
+| F064              | Fiscalize Invoice             | Fiscalization | ✅     | Actions + CRS                      | High       | [→](features/fiscal-fiscalize.md)          |
+| F065              | Fiscal Certificate Management | Fiscalization | ✅     | /settings/fiscalisation            | High       | [→](features/fiscal-certificates.md)       |
+| F066              | Business Premises Setup       | Fiscalization | ✅     | /settings/premises                 | Medium     | [→](features/fiscal-premises.md)           |
+| F067              | Fiscal Status Check           | Fiscalization | ✅     | Actions                            | Medium     | [→](features/fiscal-status.md)             |
 | **SETTINGS**      |
-| F068              | Company Settings              | Settings      | ❌     | /settings                          | High       | -                                          |
-| F069              | Billing Settings              | Settings      | ❌     | /settings/billing                  | Medium     | -                                          |
-| F070              | Email Settings                | Settings      | ❌     | /settings/email                    | Medium     | -                                          |
-| F071              | Audit Log                     | Settings      | ❌     | /settings/audit-log                | Medium     | -                                          |
-| F072              | Company Switcher              | Settings      | ❌     | Layout Component                   | Low        | -                                          |
+| F068              | Company Settings              | Settings      | ✅     | /settings                          | High       | [→](features/settings-company.md)          |
+| F069              | Billing Settings              | Settings      | ✅     | /settings/billing                  | Medium     | [→](features/settings-billing.md)          |
+| F070              | Email Settings                | Settings      | ✅     | /settings/email                    | Medium     | [→](features/settings-email.md)            |
+| F071              | Audit Log                     | Settings      | ✅     | /settings/audit-log                | Medium     | [→](features/settings-audit-log.md)        |
+| F072              | Company Switcher              | Settings      | ✅     | Layout Component                   | Low        | [→](features/settings-company-switcher.md) |
 | **DOCUMENTS**     |
 | F073              | Document Management           | Documents     | ❌     | /documents                         | High       | -                                          |
 | F074              | Document Upload               | Documents     | ❌     | /documents                         | Medium     | -                                          |
