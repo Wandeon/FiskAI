@@ -7,6 +7,8 @@ interface ComparisonCellProps {
   type?: "pausalni" | "obrt-dohodak" | "jdoo" | "doo" | "freelancer" | "generic"
   isPositive?: boolean
   isNegative?: boolean
+  as?: "td" | "span"
+  className?: string
   children: ReactNode
 }
 
@@ -23,20 +25,32 @@ export function ComparisonCell({
   type = "generic",
   isPositive,
   isNegative,
+  as = "td",
+  className,
   children,
 }: ComparisonCellProps) {
-  return (
+  const pill = (
     <span
       className={cn(
-        "inline-block px-2 py-1 rounded text-sm",
+        "inline-flex max-w-full items-start gap-1 rounded px-2 py-1 text-sm",
         typeColors[type] || typeColors.generic,
         isPositive && "text-green-700 font-medium",
         isNegative && "text-red-700 font-medium"
       )}
     >
-      {isPositive && "✓ "}
-      {isNegative && "✗ "}
-      {children}
+      {isPositive && <span aria-hidden>✓</span>}
+      {isNegative && <span aria-hidden>✗</span>}
+      <span className="min-w-0 break-words">{children}</span>
     </span>
+  )
+
+  if (as === "span") {
+    return <span className={cn(className)}>{pill}</span>
+  }
+
+  return (
+    <td className={cn("p-3 text-center align-top", className)}>
+      <div className="flex justify-center">{pill}</div>
+    </td>
   )
 }

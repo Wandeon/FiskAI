@@ -1,4 +1,6 @@
 // src/components/knowledge-hub/mdx-components.tsx
+import { isValidElement, type ReactNode } from "react"
+import { slugifyHeading } from "@/lib/knowledge-hub/slugify"
 import { PersonalizedSection } from "./guide/PersonalizedSection"
 import { FAQ } from "./guide/FAQ"
 import { ContributionCalculator } from "./calculators/ContributionCalculator"
@@ -23,12 +25,32 @@ function H1(props: any) {
   return <h1 className="text-3xl font-bold mb-6" {...props} />
 }
 
+function nodeToText(node: ReactNode): string {
+  if (node == null) return ""
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(nodeToText).join("")
+  if (isValidElement(node)) return nodeToText(node.props?.children)
+  return ""
+}
+
 function H2(props: any) {
-  return <h2 className="text-2xl font-semibold mt-8 mb-4" {...props} />
+  const { children, id, ...rest } = props
+  const resolvedId = id ?? slugifyHeading(nodeToText(children))
+  return (
+    <h2 id={resolvedId} className="scroll-mt-28 text-2xl font-semibold mt-8 mb-4" {...rest}>
+      {children}
+    </h2>
+  )
 }
 
 function H3(props: any) {
-  return <h3 className="text-xl font-medium mt-6 mb-3" {...props} />
+  const { children, id, ...rest } = props
+  const resolvedId = id ?? slugifyHeading(nodeToText(children))
+  return (
+    <h3 id={resolvedId} className="scroll-mt-28 text-xl font-medium mt-6 mb-3" {...rest}>
+      {children}
+    </h3>
+  )
 }
 
 function Table(props: any) {

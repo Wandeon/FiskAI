@@ -7,6 +7,7 @@ import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
 import { ComparisonTable } from "./ComparisonTable"
 import { ComparisonCalculator } from "./ComparisonCalculator"
 import { RecommendationCard } from "./RecommendationCard"
+import type { ComponentProps } from "react"
 
 interface ComparisonPageContentProps {
   comparison: ComparisonContent
@@ -30,6 +31,15 @@ export function ComparisonPageContent({ comparison }: ComparisonPageContentProps
   const missingDeepDiveCount = frontmatter.compares.filter(
     (id) => !mapCompareToGuideSlug(id)
   ).length
+
+  const highlightedColumn: string | undefined = undefined
+  const ComparisonTableWithColumns = (props: ComponentProps<typeof ComparisonTable>) => (
+    <ComparisonTable
+      {...props}
+      compareIds={frontmatter.compares}
+      highlightedColumn={highlightedColumn}
+    />
+  )
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
@@ -58,7 +68,7 @@ export function ComparisonPageContent({ comparison }: ComparisonPageContentProps
           source={content}
           components={{
             ...mdxComponents,
-            ComparisonTable,
+            ComparisonTable: ComparisonTableWithColumns,
             ComparisonCalculator,
             RecommendationCard,
           }}

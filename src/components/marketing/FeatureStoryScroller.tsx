@@ -1,0 +1,261 @@
+"use client"
+
+import { useEffect, useMemo, useRef, useState } from "react"
+import { CheckCircle2, FileText, ScanText, Landmark, Users, Sparkles } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { motion, useReducedMotion } from "framer-motion"
+
+type FeatureStoryStep = {
+  title: string
+  subtitle: string
+  bullets: string[]
+}
+
+const DEFAULT_STEPS: FeatureStoryStep[] = [
+  {
+    title: "Računi u 30 sekundi",
+    subtitle: "Predlošci, numeracija i slanje — bez ručnog gubljenja vremena.",
+    bullets: [
+      "Hrvatski predlošci + obavezni elementi",
+      "Statusi i podsjetnici za naplatu",
+      "Exporti za knjigovođu (CSV/Excel/PDF)",
+    ],
+  },
+  {
+    title: "Troškovi + AI OCR (vi potvrđujete)",
+    subtitle: "Skenirajte račun — FiskAI predloži polja i kategoriju, vi imate kontrolu.",
+    bullets: ["Unos kamerom ili uploadom", "Istaknuta polja za provjeru", "Auditabilni prijedlozi"],
+  },
+  {
+    title: "E-računi i fiskalizacija 2.0 (u razvoju)",
+    subtitle: "Priprema za IE-Račune/posrednike i praćenje statusa e-računa end-to-end.",
+    bullets: [
+      "Jedinstveni tok: izrada → slanje → status",
+      "Povijest promjena i dokazivost",
+      "Manje ručnog rada",
+    ],
+  },
+  {
+    title: "Suradnja s knjigovođom bez kaosa",
+    subtitle: "Sve uredno, spremno i dijeljivo — bez fascikla i prepisivanja.",
+    bullets: ["Izvoz po razdoblju", "ZIP paketi s prilozima", "Jasan audit trag promjena"],
+  },
+]
+
+function FeaturePreview({ activeIndex }: { activeIndex: number }) {
+  const reduce = useReducedMotion()
+  const previews = useMemo(
+    () => [
+      {
+        icon: FileText,
+        kicker: "Računi",
+        title: "Novi račun",
+        lines: ["Kupac: ACME d.o.o.", "Iznos: 1.250,00 €", "Rok: 15 dana", "Status: Poslano"],
+        cta: "Pošalji PDF",
+      },
+      {
+        icon: ScanText,
+        kicker: "Troškovi",
+        title: "OCR rezultat",
+        lines: [
+          "Dobavljač: Konzum",
+          "Iznos: 23,49 €",
+          "Kategorija: Ured",
+          "PDV: 25% (detektirano)",
+        ],
+        cta: "Potvrdi unos",
+      },
+      {
+        icon: Landmark,
+        kicker: "E-računi",
+        title: "Statusni tok",
+        lines: ["Kreirano →", "Poslano →", "Dostavljeno →", "Prihvaćeno"],
+        cta: "Prati status",
+      },
+      {
+        icon: Users,
+        kicker: "Knjigovođa",
+        title: "Paket za izvoz",
+        lines: ["CSV (računi + troškovi)", "PDF prilozi", "Pregled po mjesecima", "Audit log"],
+        cta: "Preuzmi ZIP",
+      },
+    ],
+    []
+  )
+
+  const preview = previews[Math.min(previews.length - 1, Math.max(0, activeIndex))]
+  const Icon = preview.icon
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-card">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_circle_at_0%_0%,rgba(59,130,246,0.18),transparent_60%),radial-gradient(500px_circle_at_100%_10%,rgba(99,102,241,0.16),transparent_55%)]" />
+      <div className="relative p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-blue-600/10 text-blue-700 flex items-center justify-center">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-semibold text-[var(--muted)]">FiskAI • Feature demo</p>
+          </div>
+          <div className="flex gap-1">
+            <span className="h-2 w-2 rounded-full bg-red-400/80" />
+            <span className="h-2 w-2 rounded-full bg-yellow-400/80" />
+            <span className="h-2 w-2 rounded-full bg-green-400/80" />
+          </div>
+        </div>
+
+        <div className="relative mt-5 h-[280px]">
+          <motion.div
+            key={preview.kicker}
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={reduce ? undefined : { opacity: 1, y: 0 }}
+            exit={reduce ? undefined : { opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 h-10 w-10 rounded-xl bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-blue-700">{preview.kicker}</p>
+                  <p className="text-sm font-semibold">{preview.title}</p>
+                </div>
+              </div>
+              <span className="rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] px-2 py-1 text-[10px] font-semibold text-[var(--muted)]">
+                animirano
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {preview.lines.map((line) => (
+                <div
+                  key={line}
+                  className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2"
+                >
+                  <p className="text-xs text-[var(--muted)]">{line}</p>
+                  <span className="h-2 w-2 rounded-full bg-blue-600/70" />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <div className="h-2 w-28 overflow-hidden rounded-full bg-[var(--border-light)]">
+                <div className="h-full w-2/3 rounded-full bg-blue-600 transition-all duration-300" />
+              </div>
+              <div className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white">
+                {preview.cta}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function FeatureStoryScroller({
+  steps = DEFAULT_STEPS,
+  className,
+}: {
+  steps?: FeatureStoryStep[]
+  className?: string
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const stepRefs = useRef<Array<HTMLDivElement | null>>([])
+
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
+
+        if (!visible) return
+        const index = Number(visible.target.getAttribute("data-step-index"))
+        if (Number.isFinite(index)) setActiveIndex(index)
+      },
+      {
+        root: null,
+        threshold: prefersReduced ? 0.6 : [0.2, 0.35, 0.5, 0.65, 0.8],
+        rootMargin: "-20% 0px -55% 0px",
+      }
+    )
+
+    stepRefs.current.forEach((el) => {
+      if (el) observer.observe(el)
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div className={cn("grid gap-8 md:grid-cols-[minmax(0,1fr)_420px] md:items-start", className)}>
+      <div className="space-y-4">
+        {steps.map((step, index) => {
+          const isActive = index === activeIndex
+          return (
+            <div
+              key={step.title}
+              ref={(el) => {
+                stepRefs.current[index] = el
+              }}
+              data-step-index={index}
+              className={cn(
+                "rounded-2xl border p-6 transition-colors",
+                isActive
+                  ? "border-blue-200 bg-blue-50"
+                  : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]"
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-blue-700">Feature {index + 1}</p>
+                  <h3 className="mt-1 text-lg font-semibold">{step.title}</h3>
+                  <p className="mt-1 text-sm text-[var(--muted)]">{step.subtitle}</p>
+                </div>
+                <div
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-bold",
+                    isActive
+                      ? "border-blue-200 bg-white text-blue-700"
+                      : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
+                  )}
+                >
+                  {index + 1}
+                </div>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-[var(--muted)]">
+                {step.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-600" />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 md:hidden">
+                <FeaturePreview activeIndex={index} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden md:block md:sticky md:top-24">
+        <FeaturePreview activeIndex={activeIndex} />
+        <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+          <p className="text-sm font-semibold">Zašto ovo izgleda “premium”?</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Kombiniramo animacije, jasne informacije i “show, don’t tell” mikro-demo elemente tako
+            da posjetitelj odmah razumije vrijednost — bez čitanja zidova teksta.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

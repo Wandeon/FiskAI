@@ -1,7 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useState, useEffect, ReactNode } from "react"
+import { Children, isValidElement, useEffect, useMemo, useState, type ReactNode } from "react"
+import { ComparisonCell } from "./ComparisonCell"
 
 interface ComparisonColumn {
   id: string
@@ -18,17 +19,47 @@ interface ComparisonRow {
 interface ComparisonTableProps {
   columns?: ComparisonColumn[]
   rows?: ComparisonRow[]
+  compareIds?: string[]
   highlightedColumn?: string // from URL params
   children?: ReactNode
+}
+
+type ParsedCell = {
+  type?: any
+  isPositive?: boolean
+  isNegative?: boolean
+  content: ReactNode
+}
+
+type ParsedRow = {
+  label: string
+  tooltip?: string
+  cells: ParsedCell[]
+}
+
+function labelForCompareId(id: string) {
+  const normalized = id.toLowerCase()
+  if (normalized === "pausalni-uz-posao") return "Paušalni uz posao"
+  if (normalized === "pausalni") return "Paušalni obrt"
+  if (normalized.startsWith("pausalni-")) return "Paušalni obrt"
+  if (normalized === "obrt-dohodak") return "Obrt na dohodak"
+  if (normalized === "jdoo") return "J.D.O.O."
+  if (normalized === "doo") return "D.O.O."
+  if (normalized === "freelancer") return "Freelancer"
+  if (normalized === "ugovor-djelo") return "Ugovor o djelu"
+  if (normalized === "autorski") return "Autorski honorar"
+  return id.replace(/-/g, " ")
 }
 
 export function ComparisonTable({
   columns,
   rows,
+  compareIds,
   highlightedColumn,
   children,
 }: ComparisonTableProps) {
   const [showScrollHint, setShowScrollHint] = useState(true)
+  const compareKey = (compareIds ?? []).join("|")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +73,61 @@ export function ComparisonTable({
     }
   }, [])
 
+  const derivedColumns = useMemo(
+    () => (compareIds ?? []).map((id) => ({ id, name: labelForCompareId(id) })),
+    [compareKey]
+  )
+
+  const parsedRows: ParsedRow[] = useMemo(() => {
+    if (!children) return []
+
+    return Children.toArray(children)
+      .filter(isValidElement)
+      .map((rowEl: any) => {
+        const label = String(rowEl.props?.label ?? "")
+        const tooltip = rowEl.props?.tooltip ? String(rowEl.props.tooltip) : undefined
+        const cells: ParsedCell[] = Children.toArray(rowEl.props?.children).map((cellNode) => {
+          if (isValidElement(cellNode)) {
+            const props: any = cellNode.props ?? {}
+            return {
+              type: props.type,
+              isPositive: !!props.isPositive,
+              isNegative: !!props.isNegative,
+              content: props.children,
+            }
+          }
+          return { content: cellNode }
+        })
+        return { label, tooltip, cells }
+      })
+      .filter((row) => row.label.length > 0)
+  }, [children])
+
+  const inferredColumnCount = derivedColumns.length || parsedRows[0]?.cells.length || 0
+  const columnsToUse = useMemo(() => {
+    if (derivedColumns.length > 0) return derivedColumns
+    if (!inferredColumnCount) return []
+    return Array.from({ length: inferredColumnCount }).map((_, index) => ({
+      id: `col-${index + 1}`,
+      name: `Opcija ${index + 1}`,
+    }))
+  }, [derivedColumns, inferredColumnCount])
+
+  const [activeId, setActiveId] = useState(() => columnsToUse[0]?.id ?? "")
+  const columnsKey = columnsToUse.map((c) => c.id).join("|")
+
+  useEffect(() => {
+    const firstId = columnsToUse[0]?.id
+    if (!firstId) return
+    setActiveId((current) => (columnsToUse.some((c) => c.id === current) ? current : firstId))
+  }, [columnsKey, columnsToUse])
+
+  const activeIndex = Math.max(
+    0,
+    columnsToUse.findIndex((c) => c.id === activeId)
+  )
+  const activeColumn = columnsToUse[activeIndex]
+
   // If children are provided, render them directly in a table structure
   if (children) {
     return (
@@ -49,18 +135,104 @@ export function ComparisonTable({
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
+            {columnsToUse.length > 0 && (
+              <thead>
+                <tr>
+                  <th className="sticky top-0 left-0 z-30 min-w-[180px] bg-gray-50 border-b p-3 text-left font-medium">
+                    Usporedba
+                  </th>
+                  {columnsToUse.map((col) => (
+                    <th
+                      key={col.id}
+                      className={cn(
+                        "sticky top-0 z-20 min-w-[180px] border-b p-3 text-center font-medium bg-gray-50",
+                        col.id === highlightedColumn && "bg-blue-50 text-blue-900"
+                      )}
+                    >
+                      {col.name}
+                      {col.id === highlightedColumn && (
+                        <span className="block text-xs text-blue-600 font-normal">Preporučeno</span>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
             <tbody>{children}</tbody>
           </table>
         </div>
 
-        {/* Mobile Table */}
-        <div
-          className="md:hidden overflow-x-auto -mx-4 px-4"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          <table className="w-full border-collapse min-w-max">
-            <tbody>{children}</tbody>
-          </table>
+        {/* Mobile Comparison Cards */}
+        <div className="md:hidden">
+          <div
+            className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-2"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {columnsToUse.map((col) => {
+              const selected = col.id === activeId
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => setActiveId(col.id)}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
+                    selected
+                      ? "border-blue-200 bg-blue-50 text-blue-700"
+                      : "border-[var(--border)] bg-white text-[var(--muted)]"
+                  )}
+                >
+                  {col.name}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-[var(--border)] bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-[var(--muted)]">Odabrana opcija</p>
+                <p className="text-base font-semibold">{activeColumn?.name ?? "Usporedba"}</p>
+              </div>
+              {activeColumn?.id === highlightedColumn && (
+                <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                  Preporučeno
+                </span>
+              )}
+            </div>
+
+            <dl className="mt-4 space-y-3">
+              {parsedRows.map((row) => {
+                const cell = row.cells[activeIndex]
+                const content = cell?.content ?? "—"
+                return (
+                  <div
+                    key={row.label}
+                    className="flex items-start justify-between gap-3 border-b border-[var(--border-light)] pb-3 last:border-b-0 last:pb-0"
+                  >
+                    <dt className="max-w-[52%] text-xs font-medium text-gray-600">
+                      <span>{row.label}</span>
+                      {row.tooltip && (
+                        <span className="ml-1 text-gray-400 cursor-help" title={row.tooltip}>
+                          ⓘ
+                        </span>
+                      )}
+                    </dt>
+                    <dd className="text-right">
+                      <ComparisonCell
+                        as="span"
+                        type={cell?.type ?? "generic"}
+                        isPositive={cell?.isPositive}
+                        isNegative={cell?.isNegative}
+                      >
+                        {content}
+                      </ComparisonCell>
+                    </dd>
+                  </div>
+                )
+              })}
+            </dl>
+          </div>
         </div>
       </div>
     )
