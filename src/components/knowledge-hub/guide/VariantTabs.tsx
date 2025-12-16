@@ -29,16 +29,19 @@ export function VariantTabs({ tabs, defaultTab, children }: VariantTabsProps) {
   return (
     <div>
       {/* Tab buttons */}
-      <div className="flex border-b mb-6 overflow-x-auto">
+      <div
+        className="flex border-b mb-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
             className={cn(
-              "px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors",
+              "px-4 sm:px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] flex items-center",
               activeTab === tab.id
                 ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-gray-500 hover:text-gray-700 active:bg-gray-50"
             )}
           >
             {tab.label}
@@ -54,6 +57,16 @@ export function VariantTabs({ tabs, defaultTab, children }: VariantTabsProps) {
           return <div className={cn(activeTab === tabId ? "block" : "hidden")}>{child}</div>
         })}
       </div>
+
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   )
 }

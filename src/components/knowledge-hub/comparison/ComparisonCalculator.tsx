@@ -112,13 +112,13 @@ export function ComparisonCalculator({ businessTypes, defaultRevenue = 35000 }: 
     }).format(amount)
 
   return (
-    <div className="bg-white border rounded-lg p-6">
+    <div className="bg-white border rounded-lg p-4 sm:p-6">
       {/* Revenue Input */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Očekivani godišnji prihod
         </label>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <input
             type="range"
             min={10000}
@@ -126,14 +126,17 @@ export function ComparisonCalculator({ businessTypes, defaultRevenue = 35000 }: 
             step={5000}
             value={revenue}
             onChange={(e) => setRevenue(Number(e.target.value))}
-            className="flex-1"
+            className="flex-1 h-11 sm:h-auto"
+            style={{ minHeight: "44px" }}
           />
-          <div className="w-32 text-right font-mono text-lg">{formatCurrency(revenue)}</div>
+          <div className="w-full sm:w-32 text-center sm:text-right font-mono text-lg bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded">
+            {formatCurrency(revenue)}
+          </div>
         </div>
       </div>
 
-      {/* Results Table */}
-      <div className="overflow-x-auto">
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b">
@@ -220,6 +223,55 @@ export function ComparisonCalculator({ businessTypes, defaultRevenue = 35000 }: 
             </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Stacked Cards */}
+      <div className="md:hidden space-y-4">
+        {results.map((r) => (
+          <div
+            key={r.type}
+            className={cn(
+              "border rounded-lg p-4",
+              r.isRecommended ? "border-green-500 bg-green-50" : "border-gray-200"
+            )}
+          >
+            <div className="flex items-center justify-between mb-3 pb-3 border-b">
+              <h3 className="font-semibold text-base">{r.label}</h3>
+              {r.isRecommended && (
+                <span className="text-xs px-2 py-1 bg-green-600 text-white rounded">
+                  ✓ Preporučeno
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center min-h-[44px] py-1">
+                <span className="text-gray-600">Doprinosi</span>
+                <span className="font-medium">{formatCurrency(r.contributions)}</span>
+              </div>
+              <div className="flex justify-between items-center min-h-[44px] py-1">
+                <span className="text-gray-600">Porez</span>
+                <span className="font-medium">{formatCurrency(r.tax)}</span>
+              </div>
+              <div className="flex justify-between items-center min-h-[44px] py-1">
+                <span className="text-gray-600">Knjigovodstvo</span>
+                <span className="font-medium">{formatCurrency(r.bookkeeping)}</span>
+              </div>
+              <div className="flex justify-between items-center min-h-[44px] py-1">
+                <span className="text-gray-600">Ostalo</span>
+                <span className="font-medium">{formatCurrency(r.other)}</span>
+              </div>
+              <div className="flex justify-between items-center min-h-[44px] py-2 border-t-2 border-gray-300 font-semibold mt-2">
+                <span>UKUPNO GODIŠNJE</span>
+                <span>{formatCurrency(r.total)}</span>
+              </div>
+              <div className="flex justify-between items-center min-h-[44px] py-2 bg-green-100 -mx-4 px-4 -mb-4 rounded-b font-semibold text-green-700">
+                <span>NETO OSTATAK</span>
+                <span>{formatCurrency(r.netIncome)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Disclaimer */}
