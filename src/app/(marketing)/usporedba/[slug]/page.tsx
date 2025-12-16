@@ -16,6 +16,12 @@ export async function generateStaticParams() {
 export const dynamicParams = true
 export const dynamic = "force-dynamic"
 
+function getBaseUrl() {
+  const env = process.env.NEXT_PUBLIC_APP_URL
+  if (env) return env.replace(/\/+$/, "")
+  return "http://localhost:3000"
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const comparison = await getComparisonBySlug(slug)
@@ -24,9 +30,39 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Usporedba nije pronađena" }
   }
 
+  const baseUrl = getBaseUrl()
+  const pageUrl = `${baseUrl}/usporedba/${slug}`
+  const ogImage = `${baseUrl}/og-knowledge-hub.png`
+
   return {
     title: `${comparison.frontmatter.title} | FiskAI`,
     description: comparison.frontmatter.description,
+    authors: [{ name: "FiskAI" }],
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: comparison.frontmatter.title,
+      description: comparison.frontmatter.description,
+      type: "article",
+      url: pageUrl,
+      siteName: "FiskAI",
+      locale: "hr_HR",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: comparison.frontmatter.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: comparison.frontmatter.title,
+      description: comparison.frontmatter.description,
+      images: [ogImage],
+    },
   }
 }
 
@@ -39,5 +75,48 @@ export default async function ComparisonPage({ params, searchParams }: PageProps
     notFound()
   }
 
-  return <ComparisonPageContent comparison={comparison} searchParams={resolvedSearchParams} />
+  const baseUrl = getBaseUrl()
+  const pageUrl = `${baseUrl}/usporedba/${slug}`
+
+  // Structured data for SEO - optimized for comparison/decision pages
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: comparison.frontmatter.title,
+    description: comparison.frontmatter.description,
+    url: pageUrl,
+    author: {
+      "@type": "Organization",
+      name: "FiskAI",
+      url: baseUrl,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "FiskAI",
+      url: baseUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${baseUrl}/logo.png`,
+      },
+    },
+    datePublished: new Date().toISOString(),
+    dateModified: new Date().toISOString(),
+    articleSection: "Comparison",
+    ...(comparison.frontmatter.compares && {
+      about: comparison.frontmatter.compares.map((item: string) => ({
+        "@type": "Thing",
+        name: item,
+      })),
+    }),
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ComparisonPageContent comparison={comparison} searchParams={resolvedSearchParams} />
+    </>
+  )
 }
