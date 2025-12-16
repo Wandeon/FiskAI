@@ -28,8 +28,8 @@ export default function MarketingLayout({
       <ComplianceProgressBar />
 
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4 md:px-6">
-          <div className="space-y-3 md:col-span-2">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-2 lg:grid-cols-5 md:px-6">
+          <div className="space-y-3 lg:col-span-2">
             <div>
               <p className="text-sm font-semibold">FiskAI</p>
               <p className="text-sm text-[var(--muted)] mt-1">
@@ -70,13 +70,21 @@ export default function MarketingLayout({
             </div>
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Legal & Podrška</p>
+            <p className="text-sm font-semibold">Legal</p>
             <div className="flex flex-col gap-2">
               <NavLink href="/privacy">Privatnost</NavLink>
               <NavLink href="/terms">Uvjeti korištenja</NavLink>
               <NavLink href="/dpa">DPA (Obrada podataka)</NavLink>
               <NavLink href="/cookies">Kolačići</NavLink>
               <NavLink href="/ai-data-policy">AI politika</NavLink>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Transparentnost</p>
+            <div className="flex flex-col gap-2">
+              <NavLink href="/metodologija">Metodologija</NavLink>
+              <NavLink href="/urednicka-politika">Urednička politika</NavLink>
+              <NavLink href="/izvori">Službeni izvori</NavLink>
             </div>
             <div className="pt-4">
               <p className="text-xs font-medium text-[var(--muted)]">PODRŠKA</p>
