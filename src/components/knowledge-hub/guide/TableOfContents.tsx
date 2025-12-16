@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface TOCItem {
@@ -15,6 +17,9 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ items }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -38,9 +43,36 @@ export function TableOfContents({ items }: TableOfContentsProps) {
 
   const handleClick = (id: string) => {
     const element = document.getElementById(id)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (!element) return
+
+    const panel = element.closest<HTMLElement>("[data-variant-tab-panel]")
+    const desiredVariant = panel?.getAttribute("data-variant-tab-panel") ?? null
+    const panelHidden = panel?.getAttribute("aria-hidden") === "true"
+
+    if (desiredVariant && panelHidden && searchParams.get("varijanta") !== desiredVariant) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("varijanta", desiredVariant)
+      router.replace(`?${params.toString()}`, { scroll: false })
+
+      const startedAt = performance.now()
+      const maxWaitMs = 900
+      const tryScroll = () => {
+        const target = document.getElementById(id)
+        const targetPanel = target?.closest<HTMLElement>("[data-variant-tab-panel]")
+        const isHidden = targetPanel?.getAttribute("aria-hidden") === "true"
+
+        if (target && !isHidden) {
+          target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })
+          return
+        }
+        if (performance.now() - startedAt > maxWaitMs) return
+        requestAnimationFrame(tryScroll)
+      }
+      requestAnimationFrame(tryScroll)
+      return
     }
+
+    element.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })
   }
 
   return (

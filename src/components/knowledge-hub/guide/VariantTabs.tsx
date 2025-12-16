@@ -2,6 +2,7 @@
 
 import React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface Tab {
@@ -18,43 +19,114 @@ interface VariantTabsProps {
 export function VariantTabs({ tabs, defaultTab, children }: VariantTabsProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const reduce = useReducedMotion()
+  const tabsId = React.useId()
   const activeTab = searchParams.get("varijanta") || defaultTab || tabs[0]?.id
+  const tabRefs = React.useRef<Array<HTMLButtonElement | null>>([])
+  const panels = React.Children.toArray(children).filter((child): child is React.ReactElement =>
+    React.isValidElement(child)
+  )
 
   const handleTabChange = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set("varijanta", tabId)
-    router.push(`?${params.toString()}`, { scroll: false })
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    const key = event.key
+    if (key !== "ArrowLeft" && key !== "ArrowRight" && key !== "Home" && key !== "End") return
+    if (!tabs.length) return
+
+    event.preventDefault()
+    const activeIndex = Math.max(
+      0,
+      tabs.findIndex((t) => t.id === activeTab)
+    )
+
+    const nextIndex =
+      key === "Home"
+        ? 0
+        : key === "End"
+          ? tabs.length - 1
+          : key === "ArrowRight"
+            ? (activeIndex + 1) % tabs.length
+            : (activeIndex - 1 + tabs.length) % tabs.length
+
+    const next = tabs[nextIndex]
+    if (!next) return
+    handleTabChange(next.id)
+    tabRefs.current[nextIndex]?.focus()
   }
 
   return (
-    <div>
+    <div className="not-prose">
       {/* Tab buttons */}
       <div
+        role="tablist"
+        aria-label="Varijante"
+        onKeyDown={handleKeyDown}
         className="flex border-b mb-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {tabs.map((tab) => (
+        {tabs.map((tab, index) => (
           <button
             key={tab.id}
+            ref={(node) => {
+              tabRefs.current[index] = node
+            }}
+            id={`${tabsId}-tab-${tab.id}`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`${tabsId}-panel-${tab.id}`}
             onClick={() => handleTabChange(tab.id)}
             className={cn(
-              "px-4 sm:px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] flex items-center",
+              "relative px-4 sm:px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/30",
               activeTab === tab.id
-                ? "border-b-2 border-blue-500 text-blue-600"
+                ? "text-blue-700"
                 : "text-gray-500 hover:text-gray-700 active:bg-gray-50"
             )}
           >
-            {tab.label}
+            {activeTab === tab.id && (
+              <motion.span
+                layoutId={`${tabsId}-indicator`}
+                aria-hidden="true"
+                className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-blue-600 to-cyan-400"
+                transition={reduce ? { duration: 0 } : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              />
+            )}
+            <span className="relative">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Tab content - render all, show active */}
-      <div>
-        {React.Children.map(children, (child, index) => {
-          if (!React.isValidElement(child)) return null
+      {/* Tab content */}
+      <div className="space-y-0">
+        {panels.map((child, index) => {
           const tabId = tabs[index]?.id
-          return <div className={cn(activeTab === tabId ? "block" : "hidden")}>{child}</div>
+          if (!tabId) return null
+          const isActive = activeTab === tabId
+          return (
+            <motion.section
+              key={tabId}
+              role="tabpanel"
+              id={`${tabsId}-panel-${tabId}`}
+              aria-labelledby={`${tabsId}-tab-${tabId}`}
+              aria-hidden={!isActive}
+              data-variant-tab-panel={tabId}
+              initial={false}
+              animate={
+                isActive
+                  ? { opacity: 1, y: 0, height: "auto", pointerEvents: "auto" }
+                  : { opacity: 0, y: 8, height: 0, pointerEvents: "none" }
+              }
+              transition={reduce ? { duration: 0 } : { duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
+            >
+              <div className={cn(isActive ? "py-1" : "py-0")}>{child}</div>
+            </motion.section>
+          )
         })}
       </div>
 

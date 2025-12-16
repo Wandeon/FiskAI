@@ -2,6 +2,7 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
+import { Lightbulb, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { calculatePausalMonthlyCosts, formatEUR } from "@/lib/knowledge-hub/calculations"
 import { getPausalTaxBracket } from "@/lib/knowledge-hub/constants"
@@ -23,7 +24,9 @@ export function PersonalizedSection() {
     <Card className="mb-8 border-blue-200 bg-blue-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-2xl">🎯</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/70 text-blue-700">
+            <Target className="h-5 w-5" />
+          </span>
           Vaš personalizirani pregled
         </CardTitle>
       </CardHeader>
@@ -48,10 +51,15 @@ export function PersonalizedSection() {
           </div>
         </div>
         {zaposlenje === "da" && (
-          <p className="mt-4 text-sm bg-yellow-50 p-3 rounded border border-yellow-200">
-            💡 <strong>Napomena:</strong> Uz zaposlenje kod drugog poslodavca, i dalje plaćate pune
-            doprinose za obrt.
-          </p>
+          <div className="mt-4 flex gap-3 rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-gray-700">
+            <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/70 text-yellow-700">
+              <Lightbulb className="h-4 w-4" />
+            </span>
+            <p className="m-0">
+              <strong>Napomena:</strong> Uz zaposlenje kod drugog poslodavca, i dalje plaćate pune
+              doprinose za obrt.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

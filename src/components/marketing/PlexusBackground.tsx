@@ -43,14 +43,38 @@ export function PlexusBackground({
     let width = 0
     let height = 0
     let dpr = 1
+    let isInView = true
+    let isPageVisible =
+      typeof document !== "undefined" ? document.visibilityState === "visible" : true
+    let isRunning = false
+    let cachedRect: DOMRect | null = null
 
     const mouse = { x: -9999, y: -9999 }
+
+    const stop = () => {
+      isRunning = false
+      if (animationFrame) cancelAnimationFrame(animationFrame)
+      animationFrame = null
+    }
+
+    const start = () => {
+      if (isRunning) return
+      isRunning = true
+      animationFrame = requestAnimationFrame(tick)
+    }
+
+    const syncRunningState = () => {
+      const shouldRun = isInView && isPageVisible
+      if (shouldRun) start()
+      else stop()
+    }
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
       width = Math.max(1, Math.floor(rect.width))
       height = Math.max(1, Math.floor(rect.height))
       dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+      cachedRect = rect
 
       canvas.width = Math.floor(width * dpr)
       canvas.height = Math.floor(height * dpr)
@@ -75,7 +99,8 @@ export function PlexusBackground({
     }
 
     const handlePointerMove = (event: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect()
+      const rect = cachedRect ?? canvas.getBoundingClientRect()
+      cachedRect = rect
       mouse.x = event.clientX - rect.left
       mouse.y = event.clientY - rect.top
     }
@@ -86,6 +111,7 @@ export function PlexusBackground({
     }
 
     const tick = () => {
+      if (!isRunning) return
       context.clearRect(0, 0, width, height)
 
       const linkDistance = Math.min(170, Math.max(110, width * 0.18))
@@ -144,21 +170,49 @@ export function PlexusBackground({
         context.fill()
       }
 
-      animationFrame = requestAnimationFrame(tick)
+      if (isRunning) animationFrame = requestAnimationFrame(tick)
     }
 
     resize()
-    tick()
+    syncRunningState()
+
+    const handleScroll = () => {
+      cachedRect = canvas.getBoundingClientRect()
+    }
+
+    const handleVisibilityChange = () => {
+      isPageVisible = document.visibilityState === "visible"
+      syncRunningState()
+    }
 
     window.addEventListener("resize", resize)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     window.addEventListener("pointermove", handlePointerMove, { passive: true })
     window.addEventListener("pointerleave", handlePointerLeave, { passive: true })
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    const observer =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              const entry = entries[0]
+              isInView = Boolean(entry?.isIntersecting)
+              syncRunningState()
+            },
+            { threshold: 0.05 }
+          )
+        : null
+
+    observer?.observe(canvas)
 
     return () => {
       window.removeEventListener("resize", resize)
+      window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("pointerleave", handlePointerLeave)
-      if (animationFrame) cancelAnimationFrame(animationFrame)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      observer?.disconnect()
+      stop()
     }
   }, [density, maxPoints, reduceMotion])
 

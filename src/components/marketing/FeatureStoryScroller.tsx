@@ -5,11 +5,17 @@ import { CheckCircle2, FileText, ScanText, Landmark, Users, Sparkles } from "luc
 import { cn } from "@/lib/utils"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { DemoExport, DemoInvoice, DemoScan, DemoStatusFlow } from "@/components/marketing/MiniDemos"
+import { MarketingVideo } from "@/components/marketing/MarketingMedia"
 
 type FeatureStoryStep = {
   title: string
   subtitle: string
   bullets: string[]
+}
+
+type FeatureStoryMedia = {
+  videoSrc: string
+  posterSrc?: string
 }
 
 const DEFAULT_STEPS: FeatureStoryStep[] = [
@@ -43,7 +49,13 @@ const DEFAULT_STEPS: FeatureStoryStep[] = [
   },
 ]
 
-function FeaturePreview({ activeIndex }: { activeIndex: number }) {
+function FeaturePreview({
+  activeIndex,
+  media,
+}: {
+  activeIndex: number
+  media?: Array<FeatureStoryMedia | null | undefined>
+}) {
   const reduce = useReducedMotion()
   const previews = useMemo(
     () => [
@@ -75,7 +87,9 @@ function FeaturePreview({ activeIndex }: { activeIndex: number }) {
     []
   )
 
-  const preview = previews[Math.min(previews.length - 1, Math.max(0, activeIndex))]
+  const index = Math.min(previews.length - 1, Math.max(0, activeIndex))
+  const preview = previews[index]
+  const activeMedia = media?.[index] ?? null
   const Icon = preview.icon
   const shellTransition = reduce ? { duration: 0 } : { duration: 0.35, ease: [0.16, 1, 0.3, 1] }
 
@@ -123,10 +137,23 @@ function FeaturePreview({ activeIndex }: { activeIndex: number }) {
               </div>
 
               <div className="mt-4">
-                {preview.kind === "invoice" && <DemoInvoice reduce={!!reduce} />}
-                {preview.kind === "scan" && <DemoScan reduce={!!reduce} />}
-                {preview.kind === "status" && <DemoStatusFlow reduce={!!reduce} />}
-                {preview.kind === "export" && <DemoExport reduce={!!reduce} />}
+                {activeMedia?.videoSrc ? (
+                  <div className="relative h-[200px] overflow-hidden rounded-lg border border-[var(--border)] bg-black/5">
+                    <MarketingVideo
+                      src={activeMedia.videoSrc}
+                      poster={activeMedia.posterSrc}
+                      label={`FiskAI demo: ${preview.title}`}
+                      className="rounded-none"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    {preview.kind === "invoice" && <DemoInvoice reduce={!!reduce} />}
+                    {preview.kind === "scan" && <DemoScan reduce={!!reduce} />}
+                    {preview.kind === "status" && <DemoStatusFlow reduce={!!reduce} />}
+                    {preview.kind === "export" && <DemoExport reduce={!!reduce} />}
+                  </>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
@@ -138,9 +165,11 @@ function FeaturePreview({ activeIndex }: { activeIndex: number }) {
 
 export function FeatureStoryScroller({
   steps = DEFAULT_STEPS,
+  media,
   className,
 }: {
   steps?: FeatureStoryStep[]
+  media?: Array<FeatureStoryMedia | null | undefined>
   className?: string
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -220,7 +249,7 @@ export function FeatureStoryScroller({
                 ))}
               </ul>
               <div className="mt-5 md:hidden">
-                <FeaturePreview activeIndex={index} />
+                <FeaturePreview activeIndex={index} media={media} />
               </div>
             </div>
           )
@@ -228,7 +257,7 @@ export function FeatureStoryScroller({
       </div>
 
       <div className="hidden md:block md:sticky md:top-24">
-        <FeaturePreview activeIndex={activeIndex} />
+        <FeaturePreview activeIndex={activeIndex} media={media} />
         <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
           <p className="text-sm font-semibold">Zašto ovo izgleda “premium”?</p>
           <p className="mt-1 text-sm text-[var(--muted)]">
