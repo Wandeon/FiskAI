@@ -1,7 +1,7 @@
 // src/lib/news/fetcher.ts
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsSources, newsItems } from "@/lib/db/schema"
-import { eq, and, lt, sql } from "drizzle-orm"
+import { eq, and, sql } from "drizzle-orm"
 import Parser from "rss-parser"
 import { summarizeNews } from "./ai-processor"
 import type { NewsSource, NewNewsItem } from "@/lib/db/schema"
@@ -138,24 +138,14 @@ export async function saveNewsItems(
 /**
  * Update the lastFetchedAt timestamp for a source
  */
-export async function updateSourceLastFetched(
-  sourceId: string,
-  success: boolean = true,
-  error?: string
-): Promise<void> {
-  const updateData: any = {
-    lastFetchedAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  if (success) {
-    updateData.lastSuccessAt = new Date()
-    updateData.lastError = null
-  } else if (error) {
-    updateData.lastError = error
-  }
-
-  await drizzleDb.update(newsSources).set(updateData).where(eq(newsSources.id, sourceId))
+export async function updateSourceLastFetched(sourceId: string): Promise<void> {
+  await drizzleDb
+    .update(newsSources)
+    .set({
+      lastFetchedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(newsSources.id, sourceId))
 }
 
 /**
@@ -228,7 +218,7 @@ export async function fetchAllNews(): Promise<{
       totalInserted += inserted
       totalSkipped += skipped
 
-      await updateSourceLastFetched(source.id, true)
+      await updateSourceLastFetched(source.id)
 
       console.log(
         `✓ ${source.name}: Fetched ${items.length}, Inserted ${inserted}, Skipped ${skipped}`
@@ -237,12 +227,6 @@ export async function fetchAllNews(): Promise<{
       const errorMsg = `Failed to fetch from ${source.name}: ${error instanceof Error ? error.message : String(error)}`
       errors.push(errorMsg)
       console.error(errorMsg)
-
-      await updateSourceLastFetched(
-        source.id,
-        false,
-        error instanceof Error ? error.message : String(error)
-      )
     }
   }
 
