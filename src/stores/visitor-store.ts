@@ -27,7 +27,7 @@ export interface WizardAnswers {
   needsVat?: boolean
   isHighRisk?: boolean
   needsPartners?: boolean
-  [key: string]: any
+  [key: string]: boolean | string | number | undefined
 }
 
 interface VisitorState {

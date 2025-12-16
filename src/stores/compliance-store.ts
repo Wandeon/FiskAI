@@ -53,7 +53,7 @@ const initialState = {
 
 export const useComplianceStore = create<ComplianceState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       ...initialState,
 
       markStepComplete: (step) =>
