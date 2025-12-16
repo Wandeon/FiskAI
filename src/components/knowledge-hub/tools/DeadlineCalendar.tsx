@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
 
 interface Deadline {
   date: string // YYYY-MM-DD
@@ -67,11 +68,11 @@ const DEADLINES_2025: Deadline[] = [
 ]
 
 const typeColors = {
-  doprinosi: "bg-blue-500",
-  pdv: "bg-purple-500",
-  dohodak: "bg-green-500",
+  doprinosi: "bg-blue-600",
+  pdv: "bg-purple-600",
+  dohodak: "bg-green-600",
   porez: "bg-amber-500",
-  joppd: "bg-red-500",
+  joppd: "bg-red-600",
 }
 
 interface DeadlineCalendarProps {
@@ -125,28 +126,37 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
       {/* Filter */}
       <div className="flex flex-wrap gap-2">
         <button
+          type="button"
           onClick={() => setFilter("all")}
           className={cn(
-            "px-3 py-1 rounded text-sm",
-            filter === "all" ? "bg-gray-900 text-white" : "bg-gray-100"
+            "btn-press rounded-full border px-3 py-1.5 text-sm font-medium",
+            filter === "all"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]"
           )}
         >
           Svi rokovi
         </button>
         <button
+          type="button"
           onClick={() => setFilter("pausalni")}
           className={cn(
-            "px-3 py-1 rounded text-sm",
-            filter === "pausalni" ? "bg-gray-900 text-white" : "bg-gray-100"
+            "btn-press rounded-full border px-3 py-1.5 text-sm font-medium",
+            filter === "pausalni"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]"
           )}
         >
           Paušalni obrt
         </button>
         <button
+          type="button"
           onClick={() => setFilter("doo")}
           className={cn(
-            "px-3 py-1 rounded text-sm",
-            filter === "doo" ? "bg-gray-900 text-white" : "bg-gray-100"
+            "btn-press rounded-full border px-3 py-1.5 text-sm font-medium",
+            filter === "doo"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]"
           )}
         >
           D.O.O.
@@ -156,28 +166,30 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <button
+          type="button"
           onClick={() => setSelectedMonth((m) => Math.max(0, m - 1))}
-          className="p-2 hover:bg-gray-100 rounded"
+          className="btn-press inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] p-2 hover:bg-[var(--surface-secondary)]"
         >
-          ←
+          <ChevronLeft className="h-4 w-4" />
         </button>
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-display text-2xl font-semibold">
           {monthNames[selectedMonth]} {year}
         </h2>
         <button
+          type="button"
           onClick={() => setSelectedMonth((m) => Math.min(11, m + 1))}
-          className="p-2 hover:bg-gray-100 rounded"
+          className="btn-press inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] p-2 hover:bg-[var(--surface-secondary)]"
         >
-          →
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
       {/* Calendar grid */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-gray-50">
+        <div className="grid grid-cols-7 bg-[var(--surface-secondary)]">
           {["Pon", "Uto", "Sri", "Čet", "Pet", "Sub", "Ned"].map((day) => (
-            <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+            <div key={day} className="p-2 text-center text-sm font-semibold text-[var(--muted)]">
               {day}
             </div>
           ))}
@@ -187,7 +199,10 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
         <div className="grid grid-cols-7">
           {/* Empty cells for days before month starts */}
           {Array.from({ length: firstDay }, (_, i) => (
-            <div key={`empty-${i}`} className="p-2 border-t bg-gray-50" />
+            <div
+              key={`empty-${i}`}
+              className="p-2 border-t border-[var(--border)] bg-[var(--surface-secondary)]"
+            />
           ))}
 
           {/* Month days */}
@@ -198,15 +213,22 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
             const isToday = new Date().toISOString().split("T")[0] === dateStr
 
             return (
-              <div key={day} className={cn("p-2 border-t min-h-[80px]", isToday && "bg-blue-50")}>
-                <span className={cn("text-sm", isToday && "font-bold text-blue-600")}>{day}</span>
+              <div
+                key={day}
+                className={cn(
+                  "p-2 border-t border-[var(--border)] min-h-[84px]",
+                  isToday && "bg-blue-600/10"
+                )}
+              >
+                <span className={cn("text-sm", isToday && "font-bold text-blue-700")}>{day}</span>
                 <div className="mt-1 space-y-1">
                   {dayDeadlines.map((deadline, idx) => (
                     <button
+                      type="button"
                       key={idx}
                       onClick={() => setSelectedDeadline(deadline)}
                       className={cn(
-                        "w-full text-left text-xs p-1 rounded text-white truncate",
+                        "btn-press w-full text-left text-xs p-1 rounded-md text-white truncate hover:opacity-95",
                         typeColors[deadline.type]
                       )}
                     >
@@ -222,23 +244,25 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
 
       {/* Selected deadline details */}
       {selectedDeadline && (
-        <div className="bg-white border rounded-lg p-4">
+        <div className="card p-4">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold">{selectedDeadline.title}</h3>
-              <p className="text-sm text-gray-500">{selectedDeadline.date}</p>
+              <p className="text-sm text-[var(--muted)]">{selectedDeadline.date}</p>
             </div>
             <button
+              type="button"
               onClick={() => setSelectedDeadline(null)}
-              className="text-gray-400 hover:text-gray-600"
+              className="btn-press inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] p-2 hover:bg-[var(--surface-secondary)]"
+              aria-label="Zatvori detalje"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
           <p className="mt-2 text-sm">{selectedDeadline.description}</p>
           <div className="mt-2">
-            <span className="text-xs text-gray-500">Primjenjuje se na: </span>
-            {selectedDeadline.applies.join(", ")}
+            <span className="text-xs text-[var(--muted)]">Primjenjuje se na: </span>
+            <span className="text-xs">{selectedDeadline.applies.join(", ")}</span>
           </div>
         </div>
       )}
@@ -248,7 +272,7 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
         {Object.entries(typeColors).map(([type, color]) => (
           <div key={type} className="flex items-center gap-2">
             <span className={cn("w-3 h-3 rounded", color)} />
-            <span className="capitalize">{type}</span>
+            <span className="capitalize text-[var(--muted)]">{type}</span>
           </div>
         ))}
       </div>

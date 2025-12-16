@@ -200,7 +200,10 @@ export default function ContactPage() {
       </div>
 
       <div className="mt-12 rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <h3 className="text-lg font-semibold mb-2">📞 Hitna podrška</h3>
+        <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <Phone className="h-5 w-5 text-red-700" />
+          Hitna podrška
+        </h3>
         <p className="text-sm text-[var(--muted)] mb-3">
           Ako imate kritičan problem koji sprečava korištenje aplikacije (npr. ne možete izdati
           račun):

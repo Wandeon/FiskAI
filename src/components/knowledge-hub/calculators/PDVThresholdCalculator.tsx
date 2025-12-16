@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
+import { useAnimatedNumber } from "@/hooks/use-animated-number"
+import { formatEUR } from "@/lib/knowledge-hub/calculations"
 
 const PDV_THRESHOLD = 60000
 
@@ -33,6 +35,10 @@ export function PDVThresholdCalculator() {
     }
   }, [currentRevenue, monthlyAverage, currentMonth])
 
+  const animatedPercentage = useAnimatedNumber(analysis.percentageOfThreshold, { durationMs: 600 })
+  const animatedProjected = useAnimatedNumber(analysis.projectedYearEnd, { durationMs: 750 })
+  const animatedSafeMonthly = useAnimatedNumber(analysis.safeMonthlyRevenue, { durationMs: 750 })
+
   const monthNames = [
     "Siječanj",
     "Veljača",
@@ -49,44 +55,67 @@ export function PDVThresholdCalculator() {
   ]
 
   return (
-    <div className="bg-white border rounded-lg p-6 space-y-6">
+    <div className="card p-6 space-y-6">
       {/* Inputs */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Trenutni prihod (YTD)
-          </label>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Trenutni prihod (YTD)</label>
           <input
-            type="number"
+            type="range"
+            min={0}
+            max={80000}
+            step={100}
             value={currentRevenue}
             onChange={(e) => setCurrentRevenue(Number(e.target.value))}
-            className="w-full border rounded px-3 py-2"
+            className="w-full accent-blue-600"
           />
+          <div className="flex items-center justify-between gap-3">
+            <input
+              type="number"
+              value={currentRevenue}
+              onChange={(e) => setCurrentRevenue(Number(e.target.value))}
+              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm min-h-[44px] md:min-h-0"
+            />
+            <span className="text-xs text-[var(--muted)] whitespace-nowrap">max 80k</span>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Prosječni mjesečni prihod
-          </label>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Prosječni mjesečni prihod</label>
           <input
-            type="number"
+            type="range"
+            min={0}
+            max={20000}
+            step={100}
             value={monthlyAverage}
             onChange={(e) => setMonthlyAverage(Number(e.target.value))}
-            className="w-full border rounded px-3 py-2"
+            className="w-full accent-blue-600"
           />
+          <div className="flex items-center justify-between gap-3">
+            <input
+              type="number"
+              value={monthlyAverage}
+              onChange={(e) => setMonthlyAverage(Number(e.target.value))}
+              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm min-h-[44px] md:min-h-0"
+            />
+            <span className="text-xs text-[var(--muted)] whitespace-nowrap">max 20k</span>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Trenutni mjesec</label>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Trenutni mjesec</label>
           <select
             value={currentMonth}
             onChange={(e) => setCurrentMonth(Number(e.target.value))}
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm min-h-[44px] md:min-h-0"
           >
             {monthNames.map((name, idx) => (
-              <option key={idx} value={idx + 1}>
+              <option key={name} value={idx + 1}>
                 {name}
               </option>
             ))}
           </select>
+          <p className="text-xs text-[var(--muted)]">Preostali mjeseci se računaju do prosinca.</p>
         </div>
       </div>
 
@@ -94,42 +123,42 @@ export function PDVThresholdCalculator() {
       <div>
         <div className="flex justify-between text-sm mb-1">
           <span>Napredak prema pragu</span>
-          <span>{analysis.percentageOfThreshold.toFixed(1)}%</span>
+          <span>{animatedPercentage.toFixed(1)}%</span>
         </div>
-        <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-4 bg-[var(--border-light)] rounded-full overflow-hidden">
           <div
             className={cn(
               "h-full transition-all duration-500",
               analysis.percentageOfThreshold > 90
-                ? "bg-red-500"
+                ? "bg-danger-500"
                 : analysis.percentageOfThreshold > 70
-                  ? "bg-amber-500"
-                  : "bg-green-500"
+                  ? "bg-warning-500"
+                  : "bg-success-500"
             )}
-            style={{ width: `${analysis.percentageOfThreshold}%` }}
+            style={{ width: `${Math.min(animatedPercentage, 100)}%` }}
           />
         </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>0 EUR</span>
-          <span>60.000 EUR</span>
+        <div className="flex justify-between text-xs text-[var(--muted)] mt-1">
+          <span>{formatEUR(0)}</span>
+          <span>{formatEUR(PDV_THRESHOLD)}</span>
         </div>
       </div>
 
       {/* Results */}
       <div
+        key={analysis.willCrossThreshold ? "cross" : "safe"}
         className={cn(
-          "p-4 rounded-lg",
+          "p-4 rounded-xl transition-colors animate-fade-in",
           analysis.willCrossThreshold
-            ? "bg-amber-50 border border-amber-200"
-            : "bg-green-50 border border-green-200"
+            ? "bg-warning-50 border border-warning-100"
+            : "bg-success-50 border border-success-50"
         )}
       >
         {analysis.willCrossThreshold ? (
           <>
-            <h3 className="font-semibold text-amber-800 mb-2">Prelazite prag!</h3>
-            <p className="text-sm text-amber-700">
-              Projekcija do kraja godine:{" "}
-              <strong>{analysis.projectedYearEnd.toLocaleString("hr-HR")} EUR</strong>
+            <h3 className="font-semibold text-warning-700 mb-2">Prelazite prag!</h3>
+            <p className="text-sm text-warning-700">
+              Projekcija do kraja godine: <strong>{formatEUR(animatedProjected)}</strong>
               {analysis.monthToCross && (
                 <span className="block mt-1">
                   Očekivani prelazak praga: <strong>{monthNames[analysis.monthToCross - 1]}</strong>
@@ -139,16 +168,13 @@ export function PDVThresholdCalculator() {
           </>
         ) : (
           <>
-            <h3 className="font-semibold text-green-800 mb-2">Ispod praga</h3>
-            <p className="text-sm text-green-700">
-              Projekcija do kraja godine:{" "}
-              <strong>{analysis.projectedYearEnd.toLocaleString("hr-HR")} EUR</strong>
+            <h3 className="font-semibold text-success-600 mb-2">Ispod praga</h3>
+            <p className="text-sm text-success-600">
+              Projekcija do kraja godine: <strong>{formatEUR(animatedProjected)}</strong>
               {analysis.safeMonthlyRevenue > 0 && (
                 <span className="block mt-1">
                   Sigurni ste ako održite prosječni prihod ispod{" "}
-                  <strong>
-                    {Math.floor(analysis.safeMonthlyRevenue).toLocaleString("hr-HR")} EUR/mj
-                  </strong>
+                  <strong>{formatEUR(Math.floor(animatedSafeMonthly))}/mj</strong>
                 </span>
               )}
             </p>

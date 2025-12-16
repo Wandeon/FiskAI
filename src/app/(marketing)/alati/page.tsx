@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calculator, FileText, Scale, Calendar, CreditCard, BarChart3 } from "lucide-react"
+import { Calculator, Scale, Calendar, CreditCard, BarChart3, ArrowRight } from "lucide-react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -23,57 +23,79 @@ const tools = [
     icon: BarChart3,
   },
   {
-    slug: "pdv-prag-kalkulator",
-    title: "PDV prag kalkulator",
-    description: "Pratite koliko ste blizu PDV praga od 60.000 EUR",
+    slug: "pdv-kalkulator",
+    title: "PDV prag (60.000€)",
+    description: "Provjerite koliko ste blizu praga i kada postajete PDV obveznik",
     icon: Scale,
   },
   {
-    slug: "generator-uplatnica",
+    slug: "uplatnice",
     title: "Generator uplatnica",
-    description: "Generirajte Hub3 barkod za uplate doprinosa",
+    description: "Generirajte HUB3 barkod za uplate doprinosa i poreza",
     icon: CreditCard,
   },
   {
-    slug: "usporedba-oblika",
-    title: "Usporedba oblika",
-    description: "Usporedite paušalni obrt, obrt na dohodak i d.o.o.",
-    icon: FileText,
-  },
-  {
-    slug: "kalendar-rokova",
+    slug: "kalendar",
     title: "Kalendar rokova",
-    description: "Sve važne datume za plaćanje na jednom mjestu",
+    description: "Podsjetnik za važne rokove prijava i uplata",
     icon: Calendar,
   },
 ]
 
 export default function ToolsIndexPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Besplatni alati</h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+    <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+      <nav className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+          Baza znanja
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <span className="text-[var(--foreground)]">Alati</span>
+      </nav>
+
+      <header className="text-center">
+        <h1 className="text-display text-4xl font-semibold md:text-5xl">Besplatni alati</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--muted)]">
           Kalkulatori i pomoćni alati za hrvatske poduzetnike. Potpuno besplatno, bez registracije.
         </p>
-      </div>
+      </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tools.map((tool) => (
-          <Link key={tool.slug} href={`/alati/${tool.slug}`}>
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+          <Link key={tool.slug} href={`/alati/${tool.slug}`} className="group">
+            <Card className="card card-hover h-full cursor-pointer">
               <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <tool.icon className="w-6 h-6 text-blue-600" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/10">
+                  <tool.icon className="h-6 w-6 text-blue-600" />
                 </div>
-                <CardTitle>{tool.title}</CardTitle>
+                <CardTitle className="flex items-center justify-between gap-3">
+                  <span>{tool.title}</span>
+                  <ArrowRight className="h-4 w-4 text-[var(--muted)] transition-transform group-hover:translate-x-0.5" />
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">{tool.description}</p>
+                <p className="text-sm text-[var(--muted)]">{tool.description}</p>
               </CardContent>
             </Card>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+        <p className="text-sm">
+          Trebate širu sliku (paušal vs obrt vs d.o.o.)?{" "}
+          <Link href="/wizard" className="font-semibold text-blue-700 hover:underline">
+            Pokrenite čarobnjak
+          </Link>{" "}
+          ili otvorite{" "}
+          <Link
+            href="/usporedba/pocinjem-solo"
+            className="font-semibold text-blue-700 hover:underline"
+          >
+            usporedbe
+          </Link>
+          .
+        </p>
       </div>
     </div>
   )

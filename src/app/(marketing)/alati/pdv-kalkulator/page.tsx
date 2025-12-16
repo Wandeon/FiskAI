@@ -10,17 +10,32 @@ export const metadata: Metadata = {
 
 export default function PDVCalculatorPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">PDV Kalkulator</h1>
-        <p className="text-lg text-gray-600">
-          Provjerite koliko ste blizu PDV praga i što to znači za vaše poslovanje.
+    <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+      <nav className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+          Baza znanja
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <Link href="/alati" className="hover:text-[var(--foreground)]">
+          Alati
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <span className="text-[var(--foreground)]">PDV prag</span>
+      </nav>
+
+      <header>
+        <h1 className="text-display text-4xl font-semibold">PDV kalkulator (60.000€)</h1>
+        <p className="mt-4 text-[var(--muted)]">
+          Provjerite koliko ste blizu praga i kad postajete PDV obveznik. Kalkulator koristi
+          trenutni prihod (YTD), mjesečni prosjek i preostale mjesece do kraja godine.
         </p>
       </header>
 
-      <PDVThresholdCalculator />
+      <div className="mt-8">
+        <PDVThresholdCalculator />
+      </div>
 
-      <section className="mt-12 prose prose-gray max-w-none">
+      <section className="mt-12 prose prose-slate max-w-none">
         <h2>Što je PDV prag?</h2>
         <p>
           Od 2025. godine, PDV prag u Hrvatskoj iznosi <strong>60.000 EUR</strong> godišnje. Kada

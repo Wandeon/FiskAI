@@ -2,11 +2,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { getPausalTaxBracket, PAUSAL_TAX_BRACKETS } from "@/lib/knowledge-hub/constants"
+import { getPausalTaxBracket } from "@/lib/knowledge-hub/constants"
 import { calculatePausalAnnualCosts, formatEUR } from "@/lib/knowledge-hub/calculations"
+import { useAnimatedNumber } from "@/hooks/use-animated-number"
 
 interface Props {
   embedded?: boolean
@@ -14,69 +15,84 @@ interface Props {
 
 export function TaxCalculator({ embedded = true }: Props) {
   const [revenue, setRevenue] = useState<number>(25000)
-  const [showResults, setShowResults] = useState(false)
 
   const bracket = getPausalTaxBracket(revenue)
   const costs = calculatePausalAnnualCosts(revenue)
 
-  const handleCalculate = () => {
-    setShowResults(true)
-  }
+  const animatedTax = useAnimatedNumber(costs.tax, { durationMs: 650 })
+  const animatedContributions = useAnimatedNumber(costs.contributions, { durationMs: 650 })
+  const animatedHok = useAnimatedNumber(costs.hok, { durationMs: 650 })
+  const animatedTotal = useAnimatedNumber(costs.total, { durationMs: 650 })
 
   const content = (
     <div className="space-y-4">
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <label className="text-sm font-medium mb-1 block">Očekivani godišnji prihod (EUR)</label>
+      <div className="grid gap-3">
+        <label className="text-sm font-medium">Očekivani godišnji prihod</label>
+        <input
+          type="range"
+          min={0}
+          max={60000}
+          step={100}
+          value={revenue}
+          onChange={(e) => setRevenue(Number(e.target.value))}
+          className="w-full accent-blue-600"
+        />
+        <div className="flex items-center gap-3">
           <Input
             type="number"
             value={revenue}
             onChange={(e) => {
-              setRevenue(Number(e.target.value))
-              setShowResults(false)
+              const next = Number(e.target.value)
+              if (!Number.isFinite(next)) return
+              setRevenue(Math.min(Math.max(next, 0), 60000))
             }}
             min={0}
             max={60000}
             className="font-mono"
           />
+          <span className="text-xs text-[var(--muted)] whitespace-nowrap">max 60.000€</span>
         </div>
-        <div className="flex items-end">
-          <Button onClick={handleCalculate}>Izračunaj</Button>
-        </div>
+        <p className="text-xs text-[var(--muted)]">
+          Paušalni obrt ima limit od 60.000€ godišnjeg prihoda.
+        </p>
       </div>
 
-      {showResults && (
-        <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-          <h4 className="font-semibold">Godišnji troškovi</h4>
-          <div className="grid gap-2 text-sm">
-            <div className="flex justify-between">
-              <span>Kvartalni porez (x4)</span>
-              <span className="font-mono">{formatEUR(costs.tax)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Doprinosi (262,51 x 12)</span>
-              <span className="font-mono">{formatEUR(costs.contributions)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>HOK članarina (34,20 x 4)</span>
-              <span className="font-mono">{formatEUR(costs.hok)}</span>
-            </div>
-            <div className="flex justify-between font-bold pt-2 border-t">
-              <span>Ukupno godišnje</span>
-              <span className="font-mono text-lg">{formatEUR(costs.total)}</span>
-            </div>
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
+        <h4 className="font-semibold">Godišnji troškovi (procjena)</h4>
+        <div className="grid gap-2 text-sm">
+          <div className="flex justify-between gap-3">
+            <span className="text-[var(--muted)]">Kvartalni porez (×4)</span>
+            <span className="font-mono">{formatEUR(animatedTax)}</span>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Porezni razred: {formatEUR(bracket.min)} - {formatEUR(bracket.max)}
-          </p>
+          <div className="flex justify-between gap-3">
+            <span className="text-[var(--muted)]">Doprinosi (mjesečno × 12)</span>
+            <span className="font-mono">{formatEUR(animatedContributions)}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-[var(--muted)]">HOK članarina (kvartalno × 4)</span>
+            <span className="font-mono">{formatEUR(animatedHok)}</span>
+          </div>
+          <div className="flex justify-between gap-3 font-semibold pt-2 border-t border-[var(--border)]">
+            <span>Ukupno godišnje</span>
+            <span className="font-mono text-lg">{formatEUR(animatedTotal)}</span>
+          </div>
         </div>
-      )}
-
-      {revenue > 60000 && (
-        <p className="text-sm text-red-600 bg-red-50 p-3 rounded">
-          ⚠️ Paušalni obrt ima limit od 60.000 EUR godišnje. Za veće prihode razmotrite obrt na
-          dohodak ili d.o.o.
+        <p className="text-xs text-[var(--muted)]">
+          Porezni razred: {formatEUR(bracket.min)} – {formatEUR(bracket.max)}
         </p>
+      </div>
+
+      {revenue >= 55000 && (
+        <div className="rounded-xl border border-warning-100 bg-warning-50 p-3 text-sm text-warning-700">
+          Blizu ste limita 60.000€. Ako očekujete rast, otvorite{" "}
+          <Link
+            href="/usporedba/preko-praga"
+            className="font-semibold underline underline-offset-4"
+          >
+            što kada prijeđem prag
+          </Link>
+          .
+        </div>
       )}
     </div>
   )
@@ -86,7 +102,7 @@ export function TaxCalculator({ embedded = true }: Props) {
   }
 
   return (
-    <Card>
+    <Card className="card">
       <CardHeader>
         <CardTitle>Kalkulator paušalnog poreza 2025.</CardTitle>
       </CardHeader>

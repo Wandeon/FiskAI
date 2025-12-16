@@ -1,7 +1,8 @@
 // src/app/(marketing)/vodic/[slug]/page.tsx
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import { MDXRemote } from "next-mdx-remote/rsc"
-import { getGuideBySlug, getGuideSlugs } from "@/lib/knowledge-hub/mdx"
+import { getGuideBySlug } from "@/lib/knowledge-hub/mdx"
 import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
 import type { Metadata } from "next"
 
@@ -120,8 +121,20 @@ export default async function GuidePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <article className="prose prose-lg max-w-none">
+      <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+        <nav className="mb-6 text-sm text-[var(--muted)]">
+          <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+            Baza znanja
+          </Link>{" "}
+          <span className="px-2">/</span>
+          <Link href="/vodic" className="hover:text-[var(--foreground)]">
+            Vodiči
+          </Link>{" "}
+          <span className="px-2">/</span>
+          <span className="text-[var(--foreground)]">{guide.frontmatter.title}</span>
+        </nav>
+
+        <article className="prose prose-slate prose-lg max-w-none">
           <MDXRemote source={guide.content} components={mdxComponents} />
         </article>
       </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { MDXRemote } from "next-mdx-remote/rsc"
-import { ComparisonContent } from "@/lib/knowledge-hub/mdx"
+import { ComparisonContent, getGuideBySlug } from "@/lib/knowledge-hub/mdx"
 import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
 import { ComparisonTable } from "./ComparisonTable"
 import { ComparisonCalculator } from "./ComparisonCalculator"
@@ -13,35 +13,47 @@ interface ComparisonPageContentProps {
   searchParams: { [key: string]: string | undefined }
 }
 
-export function ComparisonPageContent({ comparison, searchParams }: ComparisonPageContentProps) {
+function mapCompareToGuideSlug(compareId: string): string | null {
+  if (compareId === "pausalni" || compareId.startsWith("pausalni-")) return "pausalni-obrt"
+  if (compareId === "obrt-dohodak") return "obrt-dohodak"
+  if (compareId === "jdoo" || compareId === "doo") return "doo"
+  if (compareId === "freelancer") return "freelancer"
+  return null
+}
+
+export function ComparisonPageContent({ comparison }: ComparisonPageContentProps) {
   const { frontmatter, content } = comparison
-  // TODO: Pass to child components for personalization (highlight recommended option, pre-fill calculator)
-  const highlightedType = searchParams.preporuka
-  const revenueLevel = searchParams.prihod
+  const guideSlugs = Array.from(
+    new Set(frontmatter.compares.map(mapCompareToGuideSlug).filter((s): s is string => !!s))
+  )
+  const guides = guideSlugs.map((slug) => getGuideBySlug(slug)).filter(Boolean)
+  const missingDeepDiveCount = frontmatter.compares.filter(
+    (id) => !mapCompareToGuideSlug(id)
+  ).length
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-4">
-        <Link href="/" className="hover:text-gray-700">
+      <nav className="text-sm text-[var(--muted)] mb-6">
+        <Link href="/" className="hover:text-[var(--foreground)]">
           Početna
         </Link>
-        {" > "}
-        <Link href="/baza-znanja" className="hover:text-gray-700">
+        <span className="px-2">/</span>
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
           Baza znanja
         </Link>
-        {" > "}
-        <span className="text-gray-900">{frontmatter.title}</span>
+        <span className="px-2">/</span>
+        <span className="text-[var(--foreground)]">{frontmatter.title}</span>
       </nav>
 
       {/* Hero */}
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{frontmatter.title}</h1>
-        <p className="text-lg text-gray-600">{frontmatter.description}</p>
+        <h1 className="text-display text-4xl font-semibold md:text-5xl">{frontmatter.title}</h1>
+        <p className="mt-4 text-lg text-[var(--muted)]">{frontmatter.description}</p>
       </header>
 
       {/* MDX Content (includes ComparisonTable, Calculator, etc.) */}
-      <article className="prose prose-gray max-w-none">
+      <article className="prose prose-slate max-w-none">
         <MDXRemote
           source={content}
           components={{
@@ -57,18 +69,33 @@ export function ComparisonPageContent({ comparison, searchParams }: ComparisonPa
       <section className="mt-12 border-t pt-8">
         <h2 className="text-xl font-semibold mb-4">Saznajte više</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          {frontmatter.compares.map((slug) => (
+          {guides.map((guide) => (
             <Link
-              key={slug}
-              href={`/vodic/${slug}`}
-              className="block p-4 border rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              key={guide!.slug}
+              href={`/vodic/${guide!.slug}`}
+              className="block rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 transition-colors hover:bg-[var(--surface-secondary)]"
             >
-              <span className="font-medium">Vodič: {slug}</span>
-              <span className="block text-sm text-gray-500">
-                Kompletan vodič sa svim detaljima →
+              <span className="font-medium">{guide!.frontmatter.title}</span>
+              <span className="block text-sm text-[var(--muted)]">
+                {guide!.frontmatter.description}
               </span>
+              <span className="mt-2 block text-sm font-semibold text-blue-700">Otvori vodič →</span>
             </Link>
           ))}
+          {missingDeepDiveCount > 0 && (
+            <Link
+              href="/wizard"
+              className="block rounded-xl border border-blue-200 bg-blue-50 p-4 transition-colors hover:bg-blue-100"
+            >
+              <span className="font-medium">Ne možete naći svoj slučaj?</span>
+              <span className="block text-sm text-[var(--muted)]">
+                Pokrenite čarobnjak i dobijte personaliziranu preporuku.
+              </span>
+              <span className="mt-2 block text-sm font-semibold text-blue-700">
+                Pokreni čarobnjak →
+              </span>
+            </Link>
+          )}
         </div>
       </section>
     </div>

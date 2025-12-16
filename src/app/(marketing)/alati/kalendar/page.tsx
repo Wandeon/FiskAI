@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import Link from "next/link"
 import { DeadlineCalendar } from "@/components/knowledge-hub/tools/DeadlineCalendar"
 
 export const metadata: Metadata = {
@@ -8,13 +9,27 @@ export const metadata: Metadata = {
 
 export default function CalendarPage() {
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Kalendar Rokova 2025</h1>
-        <p className="text-lg text-gray-600">Ne propustite važne rokove za prijave i uplate.</p>
+    <div className="mx-auto max-w-5xl px-4 py-14 md:px-6">
+      <nav className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+          Baza znanja
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <Link href="/alati" className="hover:text-[var(--foreground)]">
+          Alati
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <span className="text-[var(--foreground)]">Kalendar</span>
+      </nav>
+
+      <header>
+        <h1 className="text-display text-4xl font-semibold">Kalendar rokova 2025</h1>
+        <p className="mt-4 text-[var(--muted)]">Ne propustite važne rokove za prijave i uplate.</p>
       </header>
 
-      <DeadlineCalendar year={2025} />
+      <div className="mt-8">
+        <DeadlineCalendar year={2025} />
+      </div>
     </div>
   )
 }

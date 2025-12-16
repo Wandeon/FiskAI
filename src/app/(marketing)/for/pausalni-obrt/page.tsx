@@ -10,6 +10,8 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react"
+import { WorkflowScroller } from "@/components/marketing/WorkflowScroller"
+import { FaqAccordion } from "@/components/marketing/FaqAccordion"
 
 export const metadata: Metadata = {
   title: "FiskAI — Za paušalni obrt",
@@ -212,37 +214,14 @@ export default function PausalniObrtPage() {
 
       {/* Monthly workflow */}
       <div className="mb-16 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Vaš mjesečni radni tok s FiskAI</h2>
-        <div className="grid gap-6 md:grid-cols-4">
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
-              1
-            </div>
-            <p className="font-medium">Izdajte račune</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Klijentima preko emaila</p>
-          </div>
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
-              2
-            </div>
-            <p className="font-medium">Skenirajte troškove</p>
-            <p className="text-xs text-[var(--muted)] mt-1">AI prepoznavanje podataka</p>
-          </div>
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
-              3
-            </div>
-            <p className="font-medium">Označite plaćeno</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Kada stigne uplata</p>
-          </div>
-          <div className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-lg">
-              4
-            </div>
-            <p className="font-medium">Izvezite za knjigovođu</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Jedan klik za izvoz</p>
-          </div>
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl font-semibold">Vaš mjesečni radni tok s FiskAI</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--muted)]">
+            Umjesto “skupljam papire cijeli mjesec”, imate jasan proces i uredne podatke — bez
+            ručnog prepisivanja.
+          </p>
         </div>
+        <WorkflowScroller />
       </div>
 
       {/* Pricing section */}
@@ -300,37 +279,30 @@ export default function PausalniObrtPage() {
       {/* FAQ */}
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
         <h2 className="text-2xl font-semibold mb-6">Često postavljana pitanja za paušalni obrt</h2>
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-2">Može li moj knjigovođa koristiti FiskAI?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Da! Možete pozvati svog knjigovođu u FiskAI kao besplatnog korisnika. On će moći
-              pregledavati vaše podatke, izraditi izvještaje i komunicirati s vama direktno kroz
-              platformu.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Što ako premašim 50 računa mjesečno?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Automatski ćemo vas obavijestiti i ponuditi nadogradnju na plan s više računa.
-              Paušalni plan ima dodatak od 1€ po računu iznad 50, do maksimalno 200 računa mjesečno.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Kako izgleda izvoz za knjigovođu?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Dobivate ZIP datoteku koja sadrži: CSV s računima (broj, datum, klijent, iznos, PDV),
-              CSV s troškovima, PDF kopije svih računa, i preglednu tablicu po mjesecima/kvartalima.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Je li potrebna dugoročna obveza?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Ne. Možete koristiti FiskAI mjesec dana i otkazati bez penala. Također nudimo
-              14-dnevnu besplatnu probu da isprobate sve funkcije.
-            </p>
-          </div>
-        </div>
+        <FaqAccordion
+          items={[
+            {
+              question: "Može li moj knjigovođa koristiti FiskAI?",
+              answer:
+                "Da. Možete pozvati knjigovođu kao besplatnog korisnika. Ima pregled podataka, izvoze i audit trag, a komunikacija ide kroz platformu.",
+            },
+            {
+              question: "Što ako premašim 50 računa mjesečno?",
+              answer:
+                "Dobit ćete obavijest i opcije nadogradnje. Paušalni plan može imati dodatak po računu iznad 50, uz jasnu kontrolu troškova prije potvrde.",
+            },
+            {
+              question: "Kako izgleda izvoz za knjigovođu?",
+              answer:
+                "Dobivate ZIP paket: CSV/Excel s računima i troškovima, PDF kopije računa i sažetak po razdobljima (mjesečno/kvartalno/godišnje).",
+            },
+            {
+              question: "Je li potrebna dugoročna obveza?",
+              answer:
+                "Ne. Planovi su mjesečni i možete otkazati bilo kada. Besplatna proba je bez kreditne kartice.",
+            },
+          ]}
+        />
         <div className="mt-8 pt-6 border-t border-[var(--border)]">
           <p className="text-sm">
             Imate još pitanja?{" "}

@@ -10,32 +10,46 @@ export const metadata: Metadata = {
 
 export default function TaxCalculatorPage() {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <nav className="mb-8">
-        <Link href="/alati" className="text-blue-600 hover:underline">
-          ← Natrag na alate
-        </Link>
+    <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+      <nav className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+          Baza znanja
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <Link href="/alati" className="hover:text-[var(--foreground)]">
+          Alati
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <span className="text-[var(--foreground)]">Paušalni porez</span>
       </nav>
 
-      <h1 className="text-3xl font-bold mb-4">Kalkulator paušalnog poreza 2025.</h1>
-      <p className="text-gray-600 mb-8">
+      <h1 className="text-display text-4xl font-semibold">Kalkulator paušalnog poreza 2025.</h1>
+      <p className="mt-4 text-[var(--muted)]">
         Unesite očekivani godišnji prihod i izračunajte ukupne godišnje troškove uključujući porez,
         doprinose i HOK članarinu.
       </p>
 
-      <TaxCalculator embedded={false} />
+      <div className="mt-8">
+        <TaxCalculator embedded={false} />
+      </div>
 
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-semibold mb-2">Povezani vodiči</h3>
-        <ul className="space-y-2">
+      <div className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
+        <h2 className="text-lg font-semibold">Povezani sadržaj</h2>
+        <ul className="mt-4 space-y-2 text-sm">
           <li>
-            <Link href="/vodic/pausalni-obrt" className="text-blue-600 hover:underline">
+            <Link
+              href="/vodic/pausalni-obrt"
+              className="font-semibold text-blue-700 hover:underline"
+            >
               Paušalni obrt - kompletan vodič
             </Link>
           </li>
           <li>
-            <Link href="/alati/usporedba-oblika" className="text-blue-600 hover:underline">
-              Usporedba oblika poslovanja
+            <Link
+              href="/usporedba/pocinjem-solo"
+              className="font-semibold text-blue-700 hover:underline"
+            >
+              Usporedba: počinjem solo (paušal vs obrt vs j.d.o.o.)
             </Link>
           </li>
         </ul>

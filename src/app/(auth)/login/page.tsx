@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { startAuthentication } from "@simplewebauthn/browser"
 import type { PublicKeyCredentialRequestOptionsJSON } from "@simplewebauthn/browser"
-import { KeyRound } from "lucide-react"
+import { Chrome, KeyRound } from "lucide-react"
 import { toast } from "@/lib/toast"
+import { getProviders, signIn } from "next-auth/react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [isPasskeySupported, setIsPasskeySupported] = useState(false)
   const [showPasskeyEmail, setShowPasskeyEmail] = useState(false)
   const [passkeyEmail, setPasskeyEmail] = useState("")
+  const [googleAvailable, setGoogleAvailable] = useState(false)
 
   useEffect(() => {
     setIsPasskeySupported(
@@ -30,6 +32,16 @@ export default function LoginPage() {
         window?.PublicKeyCredential !== undefined &&
         navigator?.credentials !== undefined
     )
+  }, [])
+
+  useEffect(() => {
+    getProviders()
+      .then((providers) => {
+        setGoogleAvailable(!!providers?.google)
+      })
+      .catch(() => {
+        setGoogleAvailable(false)
+      })
   }, [])
 
   const {
@@ -120,109 +132,138 @@ export default function LoginPage() {
           <CardTitle className="text-2xl">Prijava u FiskAI</CardTitle>
         </CardHeader>
         <CardContent>
-          {showPasskeyEmail ? (
-            <div className="space-y-4">
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-              )}
-              <div className="space-y-2">
-                <label htmlFor="passkey-email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="passkey-email"
-                  type="email"
-                  placeholder="vas@email.com"
-                  value={passkeyEmail}
-                  onChange={(e) => setPasskeyEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handlePasskeyLogin()
-                    }
-                  }}
-                />
-              </div>
-              <Button onClick={handlePasskeyLogin} className="w-full" disabled={passkeyLoading}>
-                {passkeyLoading ? "Prijava..." : "Nastavi s passkey"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => {
-                  setShowPasskeyEmail(false)
-                  setPasskeyEmail("")
-                  setError(null)
-                }}
-              >
-                Povratak na prijavu s lozinkom
-              </Button>
-            </div>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div key={showPasskeyEmail ? "passkey" : "password"} className="animate-slide-up">
+            {showPasskeyEmail ? (
+              <div className="space-y-4">
                 {error && (
-                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+                  <div
+                    role="alert"
+                    className="animate-slide-down rounded-md bg-red-50 p-3 text-sm text-red-600"
+                  >
+                    {error}
+                  </div>
                 )}
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
+                  <label htmlFor="passkey-email" className="text-sm font-medium">
                     Email
                   </label>
                   <Input
-                    id="email"
+                    id="passkey-email"
                     type="email"
                     placeholder="vas@email.com"
-                    error={errors.email?.message}
-                    {...register("email")}
+                    value={passkeyEmail}
+                    onChange={(e) => setPasskeyEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handlePasskeyLogin()
+                      }
+                    }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Lozinka
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    error={errors.password?.message}
-                    {...register("password")}
-                  />
-                </div>
-                <div className="text-right">
-                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                    Zaboravljena lozinka?
-                  </Link>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Prijava..." : "Prijavi se"}
+                <Button onClick={handlePasskeyLogin} className="w-full" disabled={passkeyLoading}>
+                  {passkeyLoading ? "Prijava..." : "Nastavi s passkey"}
                 </Button>
-              </form>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500">ili</span>
-                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setShowPasskeyEmail(false)
+                    setPasskeyEmail("")
+                    setError(null)
+                  }}
+                >
+                  Povratak na prijavu s lozinkom
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                onClick={() => setShowPasskeyEmail(true)}
-                disabled={!isPasskeySupported}
-              >
-                <KeyRound className="h-4 w-4" />
-                Prijava s passkey
-              </Button>
-              <p className="mt-4 text-center text-sm text-gray-600">
-                Nemate racun?{" "}
-                <Link href="/register" className="text-blue-600 hover:underline">
-                  Registrirajte se
-                </Link>
-              </p>
-            </>
-          )}
+            ) : (
+              <>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  {error && (
+                    <div
+                      role="alert"
+                      className="animate-slide-down rounded-md bg-red-50 p-3 text-sm text-red-600"
+                    >
+                      {error}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="vas@email.com"
+                      error={errors.email?.message}
+                      {...register("email")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      Lozinka
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      error={errors.password?.message}
+                      {...register("password")}
+                    />
+                  </div>
+                  <div className="text-right">
+                    <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                      Zaboravljena lozinka?
+                    </Link>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Prijava..." : "Prijavi se"}
+                  </Button>
+                </form>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[var(--border)]" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-2 text-[var(--muted)]">ili</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {googleAvailable && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center gap-2"
+                      onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                    >
+                      <Chrome className="h-4 w-4" />
+                      Nastavi s Google
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full flex items-center gap-2"
+                    onClick={() => setShowPasskeyEmail(true)}
+                    disabled={!isPasskeySupported}
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Prijava s passkey
+                  </Button>
+                </div>
+
+                <p className="mt-4 text-center text-sm text-gray-600">
+                  Nemate račun?{" "}
+                  <Link href="/register" className="text-blue-600 hover:underline">
+                    Registrirajte se
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

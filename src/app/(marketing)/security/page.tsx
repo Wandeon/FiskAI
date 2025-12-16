@@ -9,7 +9,6 @@ import {
   Download,
   AlertTriangle,
   Users,
-  Server,
   Globe,
 } from "lucide-react"
 
@@ -326,7 +325,10 @@ export default function SecurityPage() {
       </div>
 
       <div className="mt-12 rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <h3 className="text-lg font-semibold mb-3">📋 Certifikati i usklađenost (u izradi)</h3>
+        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Shield className="h-5 w-5 text-blue-700" />
+          Certifikati i usklađenost (u izradi)
+        </h3>
         <div className="grid gap-4 md:grid-cols-3 text-sm">
           <div>
             <p className="font-medium">GDPR</p>

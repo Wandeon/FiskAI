@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { CheckCircle2, Shield, Users, FileText, Zap, Globe } from "lucide-react"
+import { FaqAccordion } from "@/components/marketing/FaqAccordion"
 
 export const metadata: Metadata = {
   title: "FiskAI — Cijene i paketi",
@@ -273,45 +274,35 @@ export default function PricingPage() {
       {/* FAQ */}
       <div className="mb-12 rounded-2xl border border-[var(--border)] bg-white p-8">
         <h2 className="text-2xl font-semibold mb-6">Često postavljana pitanja</h2>
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-2">Kako funkcionira besplatna proba?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Besplatna proba traje 14 dana za paušalni plan i 30 dana za d.o.o. plan. Ne trebate
-              kreditnu karticu. Nakon probnog razdoblja, automatski prelazite na odabrani plan koji
-              možete otkazati bilo kada.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Što ako premašim limit računa?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Automatski ćemo vas obavijestiti i ponuditi nadogradnju. Paušalni plan ima dodatak od
-              1€ po računu iznad 50, do maksimalno 200 računa mjesečno. D.O.O. plan ima dodatak od
-              0,50€ po računu iznad 200.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Kako funkcionira otkazivanje?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Možete otkazati bilo kada bez penala. Vaš pristup ostaje aktivan do kraja plaćenog
-              razdoblja. Nakon toga možete izvesti sve svoje podatke u CSV/JSON formatu.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Postoji li dugoročna obveza?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Ne. Svi planovi su mjesečni bez ugovorne obveze. Nudimo 10% popusta za godišnje
-              plaćanje ako želite.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Koje su opcije plaćanja?</h3>
-            <p className="text-sm text-[var(--muted)]">
-              Prihvaćamo kartice (Visa, Mastercard, Maestro), PayPal i bankovni transfer za hrvatske
-              tvrtke. Za d.o.o. tvrtke izdajemo račune s PDV-om.
-            </p>
-          </div>
-        </div>
+        <FaqAccordion
+          items={[
+            {
+              question: "Kako funkcionira besplatna proba?",
+              answer:
+                "Besplatna proba traje 14 dana za paušalni plan i 30 dana za d.o.o. plan. Ne trebate kreditnu karticu. Nakon probnog razdoblja možete nastaviti ili otkazati bez penala.",
+            },
+            {
+              question: "Što ako premašim limit računa?",
+              answer:
+                "Dobit ćete obavijest i opcije nadogradnje. Paušalni plan može imati dodatak po računu iznad 50 (do dogovorenog maksimuma), a d.o.o. plan po računu iznad 200.",
+            },
+            {
+              question: "Kako funkcionira otkazivanje?",
+              answer:
+                "Možete otkazati bilo kada. Pristup ostaje aktivan do kraja plaćenog razdoblja, a prije/poslije možete izvesti sve podatke (CSV/Excel/JSON).",
+            },
+            {
+              question: "Postoji li dugoročna obveza?",
+              answer:
+                "Ne. Svi planovi su mjesečni bez ugovorne obveze. Ako želite, nudimo popust za godišnje plaćanje.",
+            },
+            {
+              question: "Koje su opcije plaćanja?",
+              answer:
+                "Kartice (Visa/Mastercard/Maestro) i bankovni transfer za hrvatske tvrtke. Za d.o.o. tvrtke izdajemo račune s PDV-om.",
+            },
+          ]}
+        />
       </div>
 
       {/* Trust signals */}

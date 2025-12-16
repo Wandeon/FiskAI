@@ -1,5 +1,7 @@
 import { Metadata } from "next"
+import Link from "next/link"
 import { PaymentSlipGenerator } from "@/components/knowledge-hub/calculators/PaymentSlipGenerator"
+import { PAYMENT_IBANS, PAYMENT_MODEL } from "@/lib/knowledge-hub/constants"
 
 export const metadata: Metadata = {
   title: "Generator Uplatnica | FiskAI",
@@ -8,17 +10,32 @@ export const metadata: Metadata = {
 
 export default function PaymentSlipsPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Generator Uplatnica</h1>
-        <p className="text-lg text-gray-600">
-          Generirajte ispravne uplatnice za plaćanje doprinosa i poreza.
+    <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+      <nav className="mb-6 text-sm text-[var(--muted)]">
+        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
+          Baza znanja
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <Link href="/alati" className="hover:text-[var(--foreground)]">
+          Alati
+        </Link>{" "}
+        <span className="text-[var(--muted)]">/</span>{" "}
+        <span className="text-[var(--foreground)]">Uplatnice</span>
+      </nav>
+
+      <header>
+        <h1 className="text-display text-4xl font-semibold">Generator uplatnica (HUB3)</h1>
+        <p className="mt-4 text-[var(--muted)]">
+          Odaberite vrstu uplate, unesite OIB i generirajte barkod (PDF417) koji možete skenirati u
+          mobilnom bankarstvu.
         </p>
       </header>
 
-      <PaymentSlipGenerator embedded={false} />
+      <div className="mt-8">
+        <PaymentSlipGenerator embedded={false} />
+      </div>
 
-      <section className="mt-12 prose prose-gray max-w-none">
+      <section className="mt-12 prose prose-slate max-w-none">
         <h2>Kako koristiti?</h2>
         <ol>
           <li>Odaberite vrstu uplate (MIO, HZZO, porez...)</li>
@@ -30,18 +47,21 @@ export default function PaymentSlipsPage() {
         <h2>IBAN-ovi za uplate</h2>
         <ul>
           <li>
-            <strong>MIO I. stup:</strong> HR1210010051863000160
+            <strong>Državni proračun (MIO I / porezi):</strong> {PAYMENT_IBANS.STATE_BUDGET}
           </li>
           <li>
-            <strong>MIO II. stup:</strong> HR7610010051700036001
+            <strong>MIO II. stup:</strong> {PAYMENT_IBANS.MIO_II}
           </li>
           <li>
-            <strong>HZZO:</strong> HR6510010051550100001
+            <strong>HZZO:</strong> {PAYMENT_IBANS.HZZO}
           </li>
           <li>
-            <strong>Porez na dohodak:</strong> HR1210010051863000160
+            <strong>HOK:</strong> {PAYMENT_IBANS.HOK}
           </li>
         </ul>
+        <p>
+          <strong>Model:</strong> {PAYMENT_MODEL}
+        </p>
       </section>
     </div>
   )

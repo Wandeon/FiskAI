@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -10,11 +10,24 @@ import { register as registerUser } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Chrome } from "lucide-react"
+import { getProviders, signIn } from "next-auth/react"
 
 export default function RegisterPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [googleAvailable, setGoogleAvailable] = useState(false)
+
+  useEffect(() => {
+    getProviders()
+      .then((providers) => {
+        setGoogleAvailable(!!providers?.google)
+      })
+      .catch(() => {
+        setGoogleAvailable(false)
+      })
+  }, [])
 
   const {
     register,
@@ -44,6 +57,28 @@ export default function RegisterPage() {
         <CardTitle className="text-2xl">Registracija</CardTitle>
       </CardHeader>
       <CardContent>
+        {googleAvailable && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center gap-2"
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            >
+              <Chrome className="h-4 w-4" />
+              Nastavi s Google
+            </Button>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--border)]" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-[var(--muted)]">ili</span>
+              </div>
+            </div>
+          </>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
