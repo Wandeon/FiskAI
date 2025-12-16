@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         and(
           eq(newsItems.status, "pending"),
           gte(newsItems.publishedAt, todayStart),
-          sql`${newsItems.impact_level} IS NULL` // Not yet classified
+          sql`${newsItems.impactLevel} IS NULL` // Not yet classified
         )
       )
 
