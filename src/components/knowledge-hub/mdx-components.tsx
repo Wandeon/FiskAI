@@ -28,6 +28,11 @@ import { TLDRBox, QuickAnswer } from "./guide/TLDRBox"
 import { ToolUpsellCard } from "./guide/ToolUpsellCard"
 import { GuideUpsellSection } from "./guide/GuideUpsellSection"
 
+// Content strategy components (Phase 3)
+import { HowToSteps } from "@/components/content/HowToSteps"
+import { Sources } from "@/components/content/Sources"
+import { GlossaryCard } from "@/components/content/GlossaryCard"
+
 // HTML element overrides
 function H1(props: any) {
   return <h1 className="text-3xl font-bold mb-6" {...props} />
@@ -109,6 +114,11 @@ export const mdxComponents = {
   QuickAnswer,
   ToolUpsellCard,
   GuideUpsellSection,
+
+  // Content strategy components
+  HowToSteps,
+  Sources,
+  GlossaryCard,
 
   h1: H1,
   h2: H2,
