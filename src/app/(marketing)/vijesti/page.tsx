@@ -1,11 +1,13 @@
 import { Metadata } from "next"
 import { drizzleDb } from "@/lib/db/drizzle"
-import { newsPosts, newsCategories, newsPostSources } from "@/lib/db/schema"
-import { eq, desc, and, lte, isNull, sql } from "drizzle-orm"
+import { newsPosts, newsCategories, newsPostSources, newsItems, newsSources } from "@/lib/db/schema"
+import { eq, desc, and, lte, isNull, sql, isNotNull } from "drizzle-orm"
+import { format } from "date-fns"
+import { hr } from "date-fns/locale"
 import { HeroSection } from "@/components/news/HeroSection"
 import { CategorySection } from "@/components/news/CategorySection"
 import { DigestBanner } from "@/components/news/DigestBanner"
-import { Search, TrendingUp, Calendar } from "lucide-react"
+import { TrendingUp, Calendar, ArrowRight, Mail } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/primitives/button"
 import { Badge } from "@/components/ui/primitives/badge"
@@ -13,6 +15,7 @@ import { GlassCard } from "@/components/ui/patterns/GlassCard"
 import { GradientButton } from "@/components/ui/patterns/GradientButton"
 import { FadeIn } from "@/components/ui/motion/FadeIn"
 import { NewsSearch } from "@/components/news/NewsSearch"
+import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
 
 export const metadata: Metadata = {
   title: "Porezne Vijesti | FiskAI",
@@ -33,6 +36,15 @@ interface PostWithCategory {
   publishedAt: Date | null
   featuredImageUrl: string | null
   featuredImageSource: string | null
+  impactLevel: string | null
+}
+
+interface LatestSourceItem {
+  id: string
+  sourceName: string | null
+  sourceUrl: string
+  title: string
+  publishedAt: Date | null
   impactLevel: string | null
 }
 
@@ -61,6 +73,68 @@ async function getFeaturedPosts(): Promise<PostWithCategory[]> {
     )
     .orderBy(desc(newsPosts.publishedAt))
     .limit(4)
+
+  return posts as PostWithCategory[]
+}
+
+async function getLatestItems(limit = 10): Promise<LatestSourceItem[]> {
+  const items = await drizzleDb
+    .select({
+      id: newsItems.id,
+      sourceName: newsSources.name,
+      sourceUrl: newsItems.sourceUrl,
+      title: newsItems.originalTitle,
+      publishedAt: newsItems.publishedAt,
+      impactLevel: newsItems.impactLevel,
+    })
+    .from(newsItems)
+    .leftJoin(newsSources, eq(newsItems.sourceId, newsSources.id))
+    .where(and(isNotNull(newsItems.publishedAt), lte(newsItems.publishedAt, new Date())))
+    .orderBy(desc(newsItems.publishedAt))
+    .limit(limit)
+
+  return items as LatestSourceItem[]
+}
+
+async function getSources() {
+  return await drizzleDb
+    .select({
+      id: newsSources.id,
+      name: newsSources.name,
+      url: newsSources.url,
+      isActive: newsSources.isActive,
+    })
+    .from(newsSources)
+    .orderBy(desc(newsSources.isActive), newsSources.name)
+}
+
+async function getPopularPosts(limit = 5): Promise<PostWithCategory[]> {
+  const impactOrder = sql<number>`CASE ${newsPosts.impactLevel} WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END`
+
+  const posts = await drizzleDb
+    .select({
+      id: newsPosts.id,
+      slug: newsPosts.slug,
+      title: newsPosts.title,
+      excerpt: newsPosts.excerpt,
+      categoryName: newsCategories.nameHr,
+      categorySlug: newsCategories.slug,
+      publishedAt: newsPosts.publishedAt,
+      featuredImageUrl: newsPosts.featuredImageUrl,
+      featuredImageSource: newsPosts.featuredImageSource,
+      impactLevel: newsPosts.impactLevel,
+    })
+    .from(newsPosts)
+    .leftJoin(newsCategories, eq(newsPosts.categoryId, newsCategories.id))
+    .where(
+      and(
+        eq(newsPosts.status, "published"),
+        eq(newsPosts.type, "individual"),
+        lte(newsPosts.publishedAt, new Date())
+      )
+    )
+    .orderBy(impactOrder, desc(newsPosts.publishedAt))
+    .limit(limit)
 
   return posts as PostWithCategory[]
 }
@@ -157,10 +231,22 @@ interface PageProps {
 }
 
 export default async function VijestiPage({ searchParams }: PageProps) {
-  const [featuredPosts, mainCategories, todaysDigest] = await Promise.all([
+  const [
+    featuredPosts,
+    mainCategories,
+    todaysDigest,
+    popularPosts,
+    upcomingDeadlines,
+    latestItems,
+    sources,
+  ] = await Promise.all([
     getFeaturedPosts(),
     getMainCategories(),
     getTodaysDigest(),
+    getPopularPosts(),
+    getUpcomingDeadlines(45, undefined, 4),
+    getLatestItems(),
+    getSources(),
   ])
 
   // Get posts by main categories
@@ -185,8 +271,32 @@ export default async function VijestiPage({ searchParams }: PageProps) {
       </FadeIn>
 
       {/* Hero Section */}
-      {featuredPosts.length >= 4 && (
+      {featuredPosts.length >= 4 ? (
         <HeroSection featuredPost={featuredPosts[0]} secondaryPosts={featuredPosts.slice(1, 4)} />
+      ) : (
+        <FadeIn delay={0.05}>
+          <GlassCard hover={false} className="mb-12">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-white">
+                  Uskoro: AI sažeci i tjedni digest
+                </p>
+                <p className="text-sm text-white/60">
+                  Prikupljamo i pripremamo prve objave. U međuvremenu, istražite vodiče i alate —
+                  najbrži put do jasnih odgovora.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <GradientButton href="/vodic" size="sm" showArrow>
+                  Vodiči
+                </GradientButton>
+                <Button variant="secondary" size="sm" asChild>
+                  <Link href="/alati">Alati</Link>
+                </Button>
+              </div>
+            </div>
+          </GlassCard>
+        </FadeIn>
       )}
 
       {/* Category Navigation Bar */}
@@ -232,6 +342,45 @@ export default async function VijestiPage({ searchParams }: PageProps) {
         />
       ))}
 
+      {featuredPosts.length === 0 && latestItems.length > 0 && (
+        <FadeIn>
+          <section className="mb-12">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Najnovije iz izvora</h2>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+              >
+                Aktiviraj personalizirani digest <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <GlassCard hover={false} padding="sm">
+              <ul className="divide-y divide-white/10">
+                {latestItems.map((item) => (
+                  <li key={item.id}>
+                    <a
+                      href={item.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg px-3 py-3 transition-colors hover:bg-white/5"
+                    >
+                      <p className="text-sm font-medium text-white">{item.title}</p>
+                      <p className="mt-1 text-xs text-white/50">
+                        {item.sourceName ?? "Izvor"}
+                        {item.publishedAt
+                          ? ` • ${format(item.publishedAt, "d. MMM", { locale: hr })}`
+                          : ""}
+                        {item.impactLevel ? ` • ${item.impactLevel}` : ""}
+                      </p>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </GlassCard>
+          </section>
+        </FadeIn>
+      )}
+
       {/* Sidebar Content (could be moved to a 2-column layout) */}
       <aside className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Popular Posts */}
@@ -243,7 +392,36 @@ export default async function VijestiPage({ searchParams }: PageProps) {
               </Badge>
               <h3 className="text-lg font-semibold text-white">Popularno</h3>
             </div>
-            <p className="text-sm text-white/50">Uskoro...</p>
+            {popularPosts.length > 0 ? (
+              <ul className="space-y-3">
+                {popularPosts.map((post) => (
+                  <li key={post.id}>
+                    <Link
+                      href={`/vijesti/${post.slug}`}
+                      className="block rounded-lg px-2 py-1 transition-colors hover:bg-white/5"
+                    >
+                      <p className="text-sm font-medium text-white line-clamp-2">{post.title}</p>
+                      <p className="mt-1 text-xs text-white/50">
+                        {post.categoryName ?? "Vijesti"}
+                        {post.publishedAt
+                          ? ` • ${format(post.publishedAt, "d. MMM", { locale: hr })}`
+                          : ""}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-white/50">Nema dovoljno podataka još.</p>
+            )}
+            <div className="mt-4">
+              <Link
+                href="/vijesti"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+              >
+                Sve vijesti <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </GlassCard>
         </FadeIn>
 
@@ -256,19 +434,45 @@ export default async function VijestiPage({ searchParams }: PageProps) {
               </Badge>
               <h3 className="text-lg font-semibold text-white">Nadolazeći rokovi</h3>
             </div>
-            <p className="text-sm text-white/50">Uskoro...</p>
+            {upcomingDeadlines.length > 0 ? (
+              <ul className="space-y-3">
+                {upcomingDeadlines.map((deadline) => (
+                  <li key={deadline.id} className="rounded-lg bg-white/5 px-3 py-2">
+                    <p className="text-sm font-medium text-white line-clamp-2">{deadline.title}</p>
+                    <p className="mt-1 text-xs text-white/50">
+                      {format(new Date(deadline.deadlineDate), "d. MMM", { locale: hr })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-white/50">Nema rokova u sljedećih 45 dana.</p>
+            )}
+            <div className="mt-4">
+              <Link
+                href="/alati/kalendar"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+              >
+                Otvori kalendar <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </GlassCard>
         </FadeIn>
 
-        {/* Newsletter */}
+        {/* Newsletter / Digest Upsell */}
         <FadeIn delay={0.4}>
           <GlassCard hover>
-            <h3 className="mb-2 text-lg font-semibold text-white">Newsletter</h3>
+            <div className="mb-3 flex items-center gap-2">
+              <Badge variant="tech" size="sm">
+                <Mail className="h-4 w-4" />
+              </Badge>
+              <h3 className="text-lg font-semibold text-white">Tjedni pregled</h3>
+            </div>
             <p className="mb-4 text-sm text-white/60">
-              Primajte najvažnije vijesti direktno na email
+              Aktivirajte personalizirani digest i podsjetnike za rokove — bez spam-a, samo bitno.
             </p>
-            <GradientButton size="sm" className="w-full">
-              Pretplati se
+            <GradientButton href="/register" size="sm" showArrow className="w-full">
+              Aktiviraj besplatno
             </GradientButton>
           </GlassCard>
         </FadeIn>
@@ -278,10 +482,18 @@ export default async function VijestiPage({ searchParams }: PageProps) {
       <GlassCard hover={false} className="mt-12">
         <h2 className="mb-4 text-lg font-semibold text-white">Izvori vijesti</h2>
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <SourceCard name="Porezna uprava" url="https://www.porezna-uprava.hr" />
-          <SourceCard name="Narodne novine" url="https://narodne-novine.nn.hr" />
-          <SourceCard name="FINA" url="https://www.fina.hr" />
-          <SourceCard name="HGK" url="https://www.hgk.hr" />
+          {sources.length > 0 ? (
+            sources
+              .slice(0, 8)
+              .map((source) => <SourceCard key={source.id} name={source.name} url={source.url} />)
+          ) : (
+            <>
+              <SourceCard name="Porezna uprava" url="https://www.porezna-uprava.hr" />
+              <SourceCard name="Narodne novine" url="https://narodne-novine.nn.hr" />
+              <SourceCard name="FINA" url="https://www.fina.hr" />
+              <SourceCard name="HGK" url="https://www.hgk.hr" />
+            </>
+          )}
         </div>
       </GlassCard>
     </div>
