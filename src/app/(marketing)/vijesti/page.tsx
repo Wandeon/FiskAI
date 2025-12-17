@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/primitives/badge"
 import { GlassCard } from "@/components/ui/patterns/GlassCard"
 import { GradientButton } from "@/components/ui/patterns/GradientButton"
 import { FadeIn } from "@/components/ui/motion/FadeIn"
+import { NewsSearch } from "@/components/news/NewsSearch"
 
 export const metadata: Metadata = {
   title: "Porezne Vijesti | FiskAI",
@@ -151,7 +152,11 @@ async function getMainCategories() {
   return categories
 }
 
-export default async function VijestiPage() {
+interface PageProps {
+  searchParams?: { q?: string }
+}
+
+export default async function VijestiPage({ searchParams }: PageProps) {
   const [featuredPosts, mainCategories, todaysDigest] = await Promise.all([
     getFeaturedPosts(),
     getMainCategories(),
@@ -200,11 +205,8 @@ export default async function VijestiPage() {
                 </Button>
               </Link>
             ))}
-            <div className="ml-auto">
-              <Button variant="secondary" size="sm">
-                <Search className="h-4 w-4" />
-                Pretraži
-              </Button>
+            <div className="ml-auto flex-1 md:flex-initial md:min-w-[300px]">
+              <NewsSearch initialQuery={searchParams?.q} />
             </div>
           </div>
         </GlassCard>
