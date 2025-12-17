@@ -112,7 +112,7 @@ export function ReviewClient({ job, draft, factSheet }: Props) {
                         <p>{claim.statement}</p>
                         {claim.quote && (
                           <p className="text-xs text-muted-foreground mt-1 italic">
-                            "{claim.quote}"
+                            &quot;{claim.quote}&quot;
                           </p>
                         )}
                       </div>
