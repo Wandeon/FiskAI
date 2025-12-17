@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { drizzleDb } from "@/lib/db/drizzle"
-import { newsPosts, newsCategories } from "@/lib/db/schema"
-import { eq, desc, and, lte, isNull } from "drizzle-orm"
+import { newsPosts, newsCategories, newsPostSources } from "@/lib/db/schema"
+import { eq, desc, and, lte, isNull, sql } from "drizzle-orm"
 import { HeroSection } from "@/components/news/HeroSection"
 import { CategorySection } from "@/components/news/CategorySection"
 import { DigestBanner } from "@/components/news/DigestBanner"
@@ -104,11 +104,6 @@ async function getPostsByCategory(categorySlug: string): Promise<PostWithCategor
 }
 
 async function getTodaysDigest() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
   const digest = await drizzleDb
     .select({
       id: newsPosts.id,
@@ -127,7 +122,18 @@ async function getTodaysDigest() {
     .orderBy(desc(newsPosts.publishedAt))
     .limit(1)
 
-  return digest[0] || null
+  const post = digest[0]
+  if (!post) return null
+
+  const countResult = await drizzleDb
+    .select({ count: sql<number>`count(*)` })
+    .from(newsPostSources)
+    .where(eq(newsPostSources.postId, post.id))
+
+  return {
+    ...post,
+    itemCount: Number(countResult[0]?.count || 0),
+  }
 }
 
 async function getMainCategories() {
@@ -208,7 +214,7 @@ export default async function VijestiPage() {
       {todaysDigest && (
         <DigestBanner
           date={todaysDigest.publishedAt || new Date()}
-          itemCount={5}
+          itemCount={todaysDigest.itemCount}
           slug={todaysDigest.slug}
         />
       )}
