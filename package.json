@@ -71,6 +71,7 @@
     "drizzle-orm": "^0.45.1",
     "fast-xml-parser": "^4.5.0",
     "framer-motion": "^12.23.26",
+    "fuse.js": "^7.1.0",
     "googleapis": "^168.0.0",
     "gray-matter": "^4.0.3",
     "jsdom": "^27.3.0",
