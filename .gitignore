@@ -52,3 +52,6 @@ next-env.d.ts
 
 # uploads
 uploads/
+
+# Git worktrees
+.worktrees/
