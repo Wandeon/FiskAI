@@ -8,6 +8,7 @@ import { FAQ } from "@/components/content/FAQ"
 import { Sources } from "@/components/content/Sources"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { generateDefinedTermSchema, generateBreadcrumbSchema } from "@/lib/schema"
+import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
 
 interface Props {
   params: Promise<{ pojam: string }>
@@ -53,54 +54,56 @@ export default async function GlossaryTermPage({ params }: Props) {
         ]}
       />
 
-      <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
-        <nav className="mb-6 text-sm text-[var(--muted)]">
-          <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
-            Baza znanja
-          </Link>{" "}
-          <span>/</span>{" "}
-          <Link href="/rjecnik" className="hover:text-[var(--foreground)]">
-            Rječnik
-          </Link>{" "}
-          <span>/</span> <span className="text-[var(--foreground)]">{frontmatter.term}</span>
-        </nav>
+      <SectionBackground variant="gradient">
+        <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+          <nav className="mb-6 text-sm text-white/60">
+            <Link href="/baza-znanja" className="hover:text-white">
+              Baza znanja
+            </Link>{" "}
+            <span>/</span>{" "}
+            <Link href="/rjecnik" className="hover:text-white">
+              Rječnik
+            </Link>{" "}
+            <span>/</span> <span className="text-white">{frontmatter.term}</span>
+          </nav>
 
-        <Link
-          href="/rjecnik"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Svi pojmovi
-        </Link>
+          <Link
+            href="/rjecnik"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-cyan-400 hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Svi pojmovi
+          </Link>
 
-        <GlossaryCard
-          term={frontmatter.term}
-          definition={frontmatter.shortDefinition}
-          relatedTerms={frontmatter.relatedTerms}
-        />
+          <GlossaryCard
+            term={frontmatter.term}
+            definition={frontmatter.shortDefinition}
+            relatedTerms={frontmatter.relatedTerms}
+          />
 
-        {/* Extended content from MDX would go here */}
+          {/* Extended content from MDX would go here */}
 
-        {frontmatter.appearsIn && frontmatter.appearsIn.length > 0 && (
-          <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-6">
-            <h3 className="mb-3 font-semibold text-slate-900">Gdje se pojavljuje</h3>
-            <ul className="list-inside list-disc space-y-1 text-slate-600">
-              {frontmatter.appearsIn.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {frontmatter.appearsIn && frontmatter.appearsIn.length > 0 && (
+            <div className="mt-8 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+              <h3 className="mb-3 font-semibold text-white">Gdje se pojavljuje</h3>
+              <ul className="list-inside list-disc space-y-1 text-white/60">
+                {frontmatter.appearsIn.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        {frontmatter.faq && <FAQ items={frontmatter.faq} />}
+          {frontmatter.faq && <FAQ items={frontmatter.faq} />}
 
-        <Sources
-          sources={frontmatter.sources}
-          lastUpdated={frontmatter.lastUpdated}
-          lastReviewed={frontmatter.lastReviewed}
-          reviewer={frontmatter.reviewer}
-        />
-      </div>
+          <Sources
+            sources={frontmatter.sources}
+            lastUpdated={frontmatter.lastUpdated}
+            lastReviewed={frontmatter.lastReviewed}
+            reviewer={frontmatter.reviewer}
+          />
+        </div>
+      </SectionBackground>
     </>
   )
 }

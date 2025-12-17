@@ -6,6 +6,7 @@ import { FAQ } from "@/components/content/FAQ"
 import { Sources } from "@/components/content/Sources"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { generateBreadcrumbSchema, generateFAQSchema } from "@/lib/schema"
+import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
 
 export const metadata: Metadata = {
   title: "Fiskalizacija 2.0 | Sve što trebate znati | FiskAI",
@@ -59,113 +60,118 @@ export default function FiskalizacijaHubPage() {
     <>
       <JsonLd schemas={[generateBreadcrumbSchema(breadcrumbs), generateFAQSchema(faq)]} />
 
-      <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
-        <nav className="mb-6 text-sm text-[var(--muted)]">
-          <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
-            Baza znanja
-          </Link>{" "}
-          <span>/</span> <span className="text-[var(--foreground)]">Fiskalizacija 2.0</span>
-        </nav>
+      <SectionBackground variant="dark" showGrid={true} showOrbs={true}>
+        <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+          <nav className="mb-6 text-sm text-white/60">
+            <Link href="/baza-znanja" className="hover:text-white/90">
+              Baza znanja
+            </Link>{" "}
+            <span>/</span> <span className="text-white/90">Fiskalizacija 2.0</span>
+          </nav>
 
-        {/* Hero */}
-        <header className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700">
-            <AlertTriangle className="h-4 w-4" />
-            Rok: 31. prosinca 2025.
-          </div>
-          <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Fiskalizacija 2.0</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            Nova era e-fakturiranja u Hrvatskoj. Provjerite što se mijenja za vaše poslovanje i
-            pripremite se na vrijeme.
-          </p>
-        </header>
+          {/* Hero */}
+          <header className="mb-12 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 backdrop-blur-sm border border-red-500/20 px-4 py-2 text-sm font-medium text-red-400">
+              <AlertTriangle className="h-4 w-4" />
+              Rok: 31. prosinca 2025.
+            </div>
+            <h1 className="text-4xl font-bold text-white/90 md:text-5xl">Fiskalizacija 2.0</h1>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-white/60">
+              Nova era e-fakturiranja u Hrvatskoj. Provjerite što se mijenja za vaše poslovanje i
+              pripremite se na vrijeme.
+            </p>
+          </header>
 
-        {/* Key dates */}
-        <section className="mb-12">
-          <h2 className="mb-6 text-center text-2xl font-bold text-slate-900">Ključni datumi</h2>
-          <div className="grid gap-4 md:grid-cols-4">
-            {keyDates.map((item, i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white p-5 text-center">
-                <Calendar className="mx-auto mb-2 h-6 w-6 text-blue-600" />
-                <p className="font-bold text-slate-900">{item.date}</p>
-                <p className="mt-1 text-sm text-slate-600">{item.event}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+          {/* Key dates */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-center text-2xl font-bold text-white/90">Ključni datumi</h2>
+            <div className="grid gap-4 md:grid-cols-4">
+              {keyDates.map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 text-center"
+                >
+                  <Calendar className="mx-auto mb-2 h-6 w-6 text-cyan-400" />
+                  <p className="font-bold text-white/90">{item.date}</p>
+                  <p className="mt-1 text-sm text-white/60">{item.event}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
-        {/* Wizard */}
-        <section className="mb-12">
-          <h2 className="mb-6 text-center text-2xl font-bold text-slate-900">
-            Provjerite svoju spremnost
-          </h2>
-          <Fiskalizacija2Wizard />
-        </section>
+          {/* Wizard */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-center text-2xl font-bold text-white/90">
+              Provjerite svoju spremnost
+            </h2>
+            <Fiskalizacija2Wizard />
+          </section>
 
-        {/* Related guides */}
-        <section className="mb-12">
-          <h2 className="mb-6 text-2xl font-bold text-slate-900">Povezani vodiči</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Link
-              href="/kako-da/registrirati-informacijskog-posrednika"
-              className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 hover:border-blue-300 hover:shadow-md"
-            >
-              <div>
-                <h3 className="font-semibold text-slate-900 group-hover:text-blue-600">
-                  Kako registrirati informacijskog posrednika
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Korak po korak vodič za FiskAplikacija
-                </p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-            </Link>
-            <Link
-              href="/kako-da/izdati-prvi-fiskalizirani-racun"
-              className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 hover:border-blue-300 hover:shadow-md"
-            >
-              <div>
-                <h3 className="font-semibold text-slate-900 group-hover:text-blue-600">
-                  Kako izdati prvi fiskalizirani račun
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">Od certifikata do JIR-a</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-            </Link>
-          </div>
-        </section>
+          {/* Related guides */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-2xl font-bold text-white/90">Povezani vodiči</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Link
+                href="/kako-da/registrirati-informacijskog-posrednika"
+                className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 hover:border-cyan-500/20 hover:bg-cyan-500/10 hover:shadow-md"
+              >
+                <div>
+                  <h3 className="font-semibold text-white/90 group-hover:text-cyan-400">
+                    Kako registrirati informacijskog posrednika
+                  </h3>
+                  <p className="mt-1 text-sm text-white/50">
+                    Korak po korak vodič za FiskAplikacija
+                  </p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-cyan-400" />
+              </Link>
+              <Link
+                href="/kako-da/izdati-prvi-fiskalizirani-racun"
+                className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 hover:border-cyan-500/20 hover:bg-cyan-500/10 hover:shadow-md"
+              >
+                <div>
+                  <h3 className="font-semibold text-white/90 group-hover:text-cyan-400">
+                    Kako izdati prvi fiskalizirani račun
+                  </h3>
+                  <p className="mt-1 text-sm text-white/50">Od certifikata do JIR-a</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-cyan-400" />
+              </Link>
+            </div>
+          </section>
 
-        {/* FAQ */}
-        <FAQ items={faq} />
+          {/* FAQ */}
+          <FAQ items={faq} />
 
-        {/* Sources */}
-        <Sources sources={sources} lastUpdated="2025-12-16" reviewer="Porezni savjetnik" />
+          {/* Sources */}
+          <Sources sources={sources} lastUpdated="2025-12-16" reviewer="Porezni savjetnik" />
 
-        {/* CTA */}
-        <div className="mt-12 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 text-center">
-          <FileCheck className="mx-auto mb-4 h-12 w-12 text-blue-600" />
-          <h2 className="text-2xl font-bold text-slate-900">Spremni za Fiskalizaciju 2.0?</h2>
-          <p className="mx-auto mt-2 max-w-lg text-slate-600">
-            FiskAI automatski generira e-račune u UBL formatu, fiskalizira ih i šalje putem PEPPOL
-            mreže.
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-            >
-              Započni besplatno
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/features"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Saznaj više
-            </Link>
+          {/* CTA */}
+          <div className="mt-12 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm p-8 text-center">
+            <FileCheck className="mx-auto mb-4 h-12 w-12 text-cyan-400" />
+            <h2 className="text-2xl font-bold text-white/90">Spremni za Fiskalizaciju 2.0?</h2>
+            <p className="mx-auto mt-2 max-w-lg text-white/60">
+              FiskAI automatski generira e-račune u UBL formatu, fiskalizira ih i šalje putem PEPPOL
+              mreže.
+            </p>
+            <div className="mt-6 flex justify-center gap-4">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 font-medium text-white hover:opacity-90"
+              >
+                Započni besplatno
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/features"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-6 py-3 font-medium text-white/90 hover:bg-white/10"
+              >
+                Saznaj više
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </SectionBackground>
     </>
   )
 }

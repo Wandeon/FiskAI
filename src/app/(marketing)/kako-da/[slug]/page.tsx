@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { generateBreadcrumbSchema } from "@/lib/schema"
 import { MDXRemote } from "next-mdx-remote/rsc"
 import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
+import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -49,60 +50,62 @@ export default async function HowToPage({ params }: Props) {
     <>
       <JsonLd schemas={[generateBreadcrumbSchema(breadcrumbs)]} />
 
-      <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
-        <nav className="mb-6 text-sm text-[var(--muted)]">
-          <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
-            Baza znanja
-          </Link>{" "}
-          <span>/</span>{" "}
-          <Link href="/kako-da" className="hover:text-[var(--foreground)]">
-            Kako da...
-          </Link>{" "}
-          <span>/</span> <span className="text-[var(--foreground)]">{frontmatter.title}</span>
-        </nav>
+      <SectionBackground variant="hero" showGrid showOrbs>
+        <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
+          <nav className="mb-6 text-sm text-white/60">
+            <Link href="/baza-znanja" className="hover:text-white/90">
+              Baza znanja
+            </Link>{" "}
+            <span>/</span>{" "}
+            <Link href="/kako-da" className="hover:text-white/90">
+              Kako da...
+            </Link>{" "}
+            <span>/</span> <span className="text-white/90">{frontmatter.title}</span>
+          </nav>
 
-        <Link
-          href="/kako-da"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-green-600 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Svi vodiči
-        </Link>
+          <Link
+            href="/kako-da"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Svi vodiči
+          </Link>
 
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">{frontmatter.title}</h1>
-          <p className="mt-3 text-lg text-slate-600">{frontmatter.description}</p>
-          {frontmatter.totalTime && (
-            <p className="mt-2 text-sm text-slate-500">
-              Potrebno vrijeme: {frontmatter.totalTime.replace("PT", "").replace("M", " minuta")}
-            </p>
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold text-white md:text-4xl">{frontmatter.title}</h1>
+            <p className="mt-3 text-lg text-white/60">{frontmatter.description}</p>
+            {frontmatter.totalTime && (
+              <p className="mt-2 text-sm text-white/60">
+                Potrebno vrijeme: {frontmatter.totalTime.replace("PT", "").replace("M", " minuta")}
+              </p>
+            )}
+          </header>
+
+          {frontmatter.prerequisites && frontmatter.prerequisites.length > 0 && (
+            <div className="mb-8 rounded-xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-sm p-5">
+              <h2 className="mb-2 font-semibold text-amber-300">Prije nego počnete</h2>
+              <ul className="list-inside list-disc space-y-1 text-amber-200/80">
+                {frontmatter.prerequisites.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
           )}
-        </header>
 
-        {frontmatter.prerequisites && frontmatter.prerequisites.length > 0 && (
-          <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-5">
-            <h2 className="mb-2 font-semibold text-amber-800">Prije nego počnete</h2>
-            <ul className="list-inside list-disc space-y-1 text-amber-700">
-              {frontmatter.prerequisites.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          <article className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white prose-code:text-cyan-300 prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10">
+            <MDXRemote source={content} components={mdxComponents} />
+          </article>
 
-        <article className="prose prose-slate max-w-none">
-          <MDXRemote source={content} components={mdxComponents} />
-        </article>
+          {frontmatter.faq && <FAQ items={frontmatter.faq} />}
 
-        {frontmatter.faq && <FAQ items={frontmatter.faq} />}
-
-        <Sources
-          sources={frontmatter.sources}
-          lastUpdated={frontmatter.lastUpdated}
-          lastReviewed={frontmatter.lastReviewed}
-          reviewer={frontmatter.reviewer}
-        />
-      </div>
+          <Sources
+            sources={frontmatter.sources}
+            lastUpdated={frontmatter.lastUpdated}
+            lastReviewed={frontmatter.lastReviewed}
+            reviewer={frontmatter.reviewer}
+          />
+        </div>
+      </SectionBackground>
     </>
   )
 }

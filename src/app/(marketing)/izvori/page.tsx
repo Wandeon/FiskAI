@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { ExternalLink } from "lucide-react"
+import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
 
 export const metadata: Metadata = {
   title: "Službeni izvori | FiskAI",
@@ -67,50 +68,52 @@ export default function IzvoriPage() {
   const categories = [...new Set(sources.map((s) => s.category))]
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="mb-4 text-4xl font-bold text-white">Službeni izvori</h1>
-      <p className="mb-12 text-lg text-white/60">
-        FiskAI koristi isključivo službene izvore za ažuriranje sadržaja i kalkulatora. Ovdje je
-        potpuni popis.
-      </p>
-
-      {categories.map((category) => (
-        <div key={category} className="mb-10">
-          <h2 className="mb-4 text-xl font-semibold text-white">{category}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {sources
-              .filter((s) => s.category === category)
-              .map((source) => (
-                <a
-                  key={source.url}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group rounded-xl border border-white/10 bg-white/5 p-5 transition-colors hover:bg-white/10"
-                >
-                  <div className="mb-2 flex items-start justify-between">
-                    <h3 className="font-semibold text-white">{source.name}</h3>
-                    <ExternalLink className="h-4 w-4 text-white/40 group-hover:text-blue-400" />
-                  </div>
-                  <p className="text-sm text-white/60">{source.description}</p>
-                  <p className="mt-2 text-xs text-white/40">{new URL(source.url).hostname}</p>
-                </a>
-              ))}
-          </div>
-        </div>
-      ))}
-
-      <div className="mt-12 rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="mb-2 font-semibold text-white">Kako pratimo promjene?</h2>
-        <p className="text-sm text-white/60">
-          Automatizirano pratimo RSS feedove ključnih izvora. Svaka promjena propisa okida pregled
-          relevantnog sadržaja. Pogledajte našu{" "}
-          <a href="/urednicka-politika" className="text-blue-400 hover:underline">
-            uredničku politiku
-          </a>
-          .
+    <SectionBackground variant="dark" showGrid={true} showOrbs={true}>
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <h1 className="mb-4 text-4xl font-bold text-white">Službeni izvori</h1>
+        <p className="mb-12 text-lg text-white/60">
+          FiskAI koristi isključivo službene izvore za ažuriranje sadržaja i kalkulatora. Ovdje je
+          potpuni popis.
         </p>
+
+        {categories.map((category) => (
+          <div key={category} className="mb-10">
+            <h2 className="mb-4 text-xl font-semibold text-white">{category}</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {sources
+                .filter((s) => s.category === category)
+                .map((source) => (
+                  <a
+                    key={source.url}
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 transition-colors hover:bg-white/10"
+                  >
+                    <div className="mb-2 flex items-start justify-between">
+                      <h3 className="font-semibold text-white">{source.name}</h3>
+                      <ExternalLink className="h-4 w-4 text-white/40 group-hover:text-cyan-400" />
+                    </div>
+                    <p className="text-sm text-white/60">{source.description}</p>
+                    <p className="mt-2 text-xs text-white/40">{new URL(source.url).hostname}</p>
+                  </a>
+                ))}
+            </div>
+          </div>
+        ))}
+
+        <div className="mt-12 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+          <h2 className="mb-2 font-semibold text-white">Kako pratimo promjene?</h2>
+          <p className="text-sm text-white/60">
+            Automatizirano pratimo RSS feedove ključnih izvora. Svaka promjena propisa okida pregled
+            relevantnog sadržaja. Pogledajte našu{" "}
+            <a href="/urednicka-politika" className="text-cyan-400 hover:underline">
+              uredničku politiku
+            </a>
+            .
+          </p>
+        </div>
       </div>
-    </div>
+    </SectionBackground>
   )
 }

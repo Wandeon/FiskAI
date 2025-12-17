@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import { FileText, ArrowRight, Clock } from "lucide-react"
 import { getAllHowTos } from "@/lib/knowledge-hub/mdx"
+import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
 
 export const metadata: Metadata = {
   title: "Kako da... | Vodiči korak po korak | FiskAI",
@@ -13,53 +14,57 @@ export default async function HowToListingPage() {
   const howtos = await getAllHowTos()
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
-      <nav className="mb-6 text-sm text-[var(--muted)]">
-        <Link href="/baza-znanja" className="hover:text-[var(--foreground)]">
-          Baza znanja
-        </Link>{" "}
-        <span>/</span> <span className="text-[var(--foreground)]">Kako da...</span>
-      </nav>
+    <SectionBackground variant="hero" showGrid showOrbs>
+      <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+        <nav className="mb-6 text-sm text-white/60">
+          <Link href="/baza-znanja" className="hover:text-white/90">
+            Baza znanja
+          </Link>{" "}
+          <span>/</span> <span className="text-white/90">Kako da...</span>
+        </nav>
 
-      <header className="mb-10 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700">
-          <FileText className="h-4 w-4" />
-          Korak po korak
-        </div>
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Kako da...</h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-          Praktični vodiči za sve administrativne zadatke. S primjerima i screenshot-ima.
-        </p>
-      </header>
+        <header className="mb-10 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 text-sm font-medium text-white/90">
+            <FileText className="h-4 w-4" />
+            Korak po korak
+          </div>
+          <h1 className="text-4xl font-bold text-white md:text-5xl">Kako da...</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-white/60">
+            Praktični vodiči za sve administrativne zadatke. S primjerima i screenshot-ima.
+          </p>
+        </header>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {howtos.map((howto) => (
-          <Link
-            key={howto.slug}
-            href={`/kako-da/${howto.slug}`}
-            className="group flex flex-col rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-green-300 hover:shadow-md"
-          >
-            <h2 className="mb-2 text-lg font-semibold text-slate-900 group-hover:text-green-600">
-              {howto.frontmatter.title}
-            </h2>
-            <p className="mb-4 flex-1 text-slate-600">{howto.frontmatter.description}</p>
-            <div className="flex items-center justify-between">
-              {howto.frontmatter.totalTime && (
-                <span className="flex items-center gap-1 text-sm text-slate-500">
-                  <Clock className="h-4 w-4" />
-                  {howto.frontmatter.totalTime.replace("PT", "").replace("M", " min")}
+        <div className="grid gap-4 md:grid-cols-2">
+          {howtos.map((howto) => (
+            <Link
+              key={howto.slug}
+              href={`/kako-da/${howto.slug}`}
+              className="group flex flex-col rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all hover:border-cyan-500/30 hover:bg-white/10"
+            >
+              <h2 className="mb-2 text-lg font-semibold text-white group-hover:text-cyan-400">
+                {howto.frontmatter.title}
+              </h2>
+              <p className="mb-4 flex-1 text-white/60">{howto.frontmatter.description}</p>
+              <div className="flex items-center justify-between">
+                {howto.frontmatter.totalTime && (
+                  <span className="flex items-center gap-1 text-sm text-white/60">
+                    <Clock className="h-4 w-4" />
+                    {howto.frontmatter.totalTime.replace("PT", "").replace("M", " min")}
+                  </span>
+                )}
+                <span className="flex items-center gap-1 text-sm font-medium text-cyan-400">
+                  Čitaj vodič
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
-              )}
-              <span className="flex items-center gap-1 text-sm font-medium text-green-600">
-                Čitaj vodič
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
+              </div>
+            </Link>
+          ))}
+        </div>
 
-      {howtos.length === 0 && <p className="text-center text-slate-500">Vodiči dolaze uskoro...</p>}
-    </div>
+        {howtos.length === 0 && (
+          <p className="text-center text-white/60">Vodiči dolaze uskoro...</p>
+        )}
+      </div>
+    </SectionBackground>
   )
 }
