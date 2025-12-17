@@ -1,6 +1,12 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { ProductGrid } from "./components/product-grid"
+import { Cart } from "./components/cart"
+import { PaymentBar } from "./components/payment-bar"
+import { CashModal } from "./components/cash-modal"
+import { CardPaymentModal } from "./components/card-payment-modal"
+import { ReceiptModal } from "./components/receipt-modal"
 import type { PosProduct, CartItem } from "./types"
 import type { ProcessPosSaleResult } from "@/types/pos"
 
@@ -88,7 +94,6 @@ export function PosClient({ products, companyIban, terminalReaderId }: Props) {
     setSaleResult(null)
   }
 
-  // Placeholder UI until child components are created
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
@@ -103,30 +108,64 @@ export function PosClient({ products, companyIban, terminalReaderId }: Props) {
         </div>
       </header>
 
-      {/* Main content - placeholder */}
+      {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Product Grid placeholder */}
+        {/* Product Grid */}
         <div className="flex-1 overflow-auto p-4">
-          <div className="text-center text-gray-500 py-12">
-            <p>ProductGrid component placeholder</p>
-            <p className="text-sm">{products.length} proizvoda dostupno</p>
-          </div>
+          <ProductGrid
+            products={products}
+            onProductClick={addToCart}
+            onCustomItem={addCustomItem}
+          />
         </div>
 
-        {/* Cart placeholder */}
-        <div className="w-96 bg-white border-l flex flex-col p-4">
-          <h2 className="font-bold mb-4">Košarica</h2>
-          <p className="text-sm text-gray-500">{cartItems.length} stavki</p>
-          <p className="mt-4 font-bold">
-            Ukupno: {new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR" }).format(total)}
-          </p>
+        {/* Cart */}
+        <div className="w-96 bg-white border-l flex flex-col">
+          <Cart
+            items={cartItems}
+            onUpdateQuantity={updateQuantity}
+            onRemove={removeItem}
+          />
         </div>
       </div>
 
-      {/* Payment Bar placeholder */}
-      <div className="bg-white border-t p-4 text-center">
-        <p className="text-gray-500">PaymentBar component placeholder</p>
-      </div>
+      {/* Payment Bar */}
+      <PaymentBar
+        total={total}
+        disabled={cartItems.length === 0}
+        hasTerminal={!!terminalReaderId}
+        onCash={() => setShowCashModal(true)}
+        onCard={() => setShowCardModal(true)}
+        onClear={clearCart}
+      />
+
+      {/* Modals */}
+      {showCashModal && (
+        <CashModal
+          items={cartItems}
+          total={total}
+          onClose={() => setShowCashModal(false)}
+          onComplete={handleSaleComplete}
+        />
+      )}
+
+      {showCardModal && terminalReaderId && (
+        <CardPaymentModal
+          items={cartItems}
+          total={total}
+          readerId={terminalReaderId}
+          onClose={() => setShowCardModal(false)}
+          onComplete={handleSaleComplete}
+        />
+      )}
+
+      {saleResult && (
+        <ReceiptModal
+          result={saleResult}
+          onNewSale={handleNewSale}
+          onClose={() => setSaleResult(null)}
+        />
+      )}
     </div>
   )
 }
