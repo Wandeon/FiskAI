@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { MarketingHomeClient } from "@/components/marketing/MarketingHomeClient"
+import { getLatestPosts } from "@/lib/news/queries"
 
 export default async function MarketingHomePage() {
   const session = await auth()
@@ -8,5 +9,7 @@ export default async function MarketingHomePage() {
     redirect("/dashboard")
   }
 
-  return <MarketingHomeClient />
+  const latestNews = await getLatestPosts(4)
+
+  return <MarketingHomeClient latestNews={latestNews} />
 }

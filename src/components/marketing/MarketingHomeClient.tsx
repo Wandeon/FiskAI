@@ -11,6 +11,7 @@ import { Fiskalizacija2Wizard } from "@/components/marketing/Fiskalizacija2Wizar
 import { CountdownTimer } from "@/components/marketing/CountdownTimer"
 import { QuickAccessToolbar } from "@/components/marketing/QuickAccessToolbar"
 import { SwitchProviderCTA } from "@/components/marketing/SwitchProviderCTA"
+import { LatestNewsSection } from "@/components/news/LatestNewsSection"
 import {
   ArrowRight,
   Briefcase,
@@ -29,7 +30,17 @@ import {
   Zap,
 } from "lucide-react"
 
-export function MarketingHomeClient() {
+interface MarketingHomeClientProps {
+  latestNews: Array<{
+    slug: string
+    title: string
+    excerpt: string | null
+    categoryName: string | null
+    publishedAt: Date | null
+  }>
+}
+
+export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
   return (
     <div>
       {/* COCKPIT HERO SECTION */}
@@ -491,6 +502,9 @@ export function MarketingHomeClient() {
           </div>
         </div>
       </section>
+
+      {/* Latest News Section */}
+      <LatestNewsSection posts={latestNews} />
 
       {/* Testimonials & Trust Section */}
       <section className="bg-gradient-to-b from-white to-blue-50">
