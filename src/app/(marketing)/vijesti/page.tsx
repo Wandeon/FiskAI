@@ -45,8 +45,28 @@ interface LatestSourceItem {
   sourceName: string | null
   sourceUrl: string
   title: string
+  preview: string | null
   publishedAt: Date | null
   impactLevel: string | null
+}
+
+function toPreview(value: string | null | undefined, maxLen = 180) {
+  if (!value) return null
+  const stripped = value
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!stripped) return null
+  if (stripped.length <= maxLen) return stripped
+  return (
+    stripped
+      .slice(0, maxLen)
+      .replace(/\s+\S*$/, "")
+      .trim() + "…"
+  )
 }
 
 async function getFeaturedPosts(): Promise<PostWithCategory[]> {
@@ -85,6 +105,8 @@ async function getLatestItems(limit = 10): Promise<LatestSourceItem[]> {
       sourceName: newsSources.name,
       sourceUrl: newsItems.sourceUrl,
       title: newsItems.originalTitle,
+      summaryHr: newsItems.summaryHr,
+      originalContent: newsItems.originalContent,
       publishedAt: newsItems.publishedAt,
       impactLevel: newsItems.impactLevel,
     })
@@ -94,7 +116,15 @@ async function getLatestItems(limit = 10): Promise<LatestSourceItem[]> {
     .orderBy(desc(newsItems.publishedAt))
     .limit(limit)
 
-  return items as LatestSourceItem[]
+  return items.map((item: any) => ({
+    id: item.id,
+    sourceName: item.sourceName,
+    sourceUrl: item.sourceUrl,
+    title: item.title,
+    preview: item.summaryHr || toPreview(item.originalContent),
+    publishedAt: item.publishedAt,
+    impactLevel: item.impactLevel,
+  })) as LatestSourceItem[]
 }
 
 async function getSources() {
@@ -365,7 +395,10 @@ export default async function VijestiPage({ searchParams }: PageProps) {
                       rel="noopener noreferrer"
                       className="block rounded-lg px-3 py-3 transition-colors hover:bg-white/5"
                     >
-                      <p className="text-sm font-medium text-white">{item.title}</p>
+                      <p className="text-sm font-medium text-white line-clamp-2">{item.title}</p>
+                      {item.preview && (
+                        <p className="mt-1 text-sm text-white/60 line-clamp-2">{item.preview}</p>
+                      )}
                       <p className="mt-1 text-xs text-white/50">
                         {item.sourceName ?? "Izvor"}
                         {item.publishedAt

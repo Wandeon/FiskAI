@@ -21,14 +21,14 @@ export const newsSources: NewNewsSource[] = [
     isActive: true,
     fetchIntervalHours: 6,
   },
-  // General news portals for broader coverage
+  // General news portals for broader coverage (kept inactive by default to avoid noise)
   {
     id: "n1info",
     name: "N1 Info Hrvatska",
     url: "https://n1info.hr",
     feedType: "rss",
     feedUrl: "https://n1info.hr/feed/",
-    isActive: true,
+    isActive: false,
     fetchIntervalHours: 6,
   },
   {
@@ -37,7 +37,7 @@ export const newsSources: NewNewsSource[] = [
     url: "https://www.index.hr",
     feedType: "rss",
     feedUrl: "https://www.index.hr/rss/vijesti",
-    isActive: true,
+    isActive: false,
     fetchIntervalHours: 12,
   },
   {
@@ -46,7 +46,7 @@ export const newsSources: NewNewsSource[] = [
     url: "https://www.vecernji.hr",
     feedType: "rss",
     feedUrl: "https://www.vecernji.hr/feeds/latest",
-    isActive: true,
+    isActive: false,
     fetchIntervalHours: 12,
   },
   // Original sources - kept inactive until feeds are fixed

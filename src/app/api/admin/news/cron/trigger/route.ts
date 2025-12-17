@@ -23,8 +23,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json()
-    const { job } = body
+    const contentType = request.headers.get("content-type") || ""
+    let job: string | null = null
+
+    if (contentType.includes("application/json")) {
+      const body = await request.json()
+      job = typeof body?.job === "string" ? body.job : null
+    } else {
+      const form = await request.formData()
+      const value = form.get("job")
+      job = typeof value === "string" ? value : null
+    }
 
     if (!job || !(job in CRON_ENDPOINTS)) {
       return NextResponse.json(

@@ -112,7 +112,7 @@ export function ComparisonPageContent({ comparison, searchParams }: ComparisonPa
         </header>
 
         {/* MDX Content (includes ComparisonTable, Calculator, etc.) */}
-        <article className="prose prose-slate max-w-none">
+        <article className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
           <MDXRemote
             source={content}
             components={{

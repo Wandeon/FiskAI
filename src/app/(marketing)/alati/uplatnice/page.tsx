@@ -64,7 +64,7 @@ export default function PaymentSlipsPage() {
           <PaymentSlipGenerator embedded={false} />
         </div>
 
-        <section className="mt-12 prose prose-slate max-w-none">
+        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
           <h2>Kako koristiti?</h2>
           <ol>
             <li>Odaberite vrstu uplate (MIO, HZZO, porez...)</li>

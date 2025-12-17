@@ -65,7 +65,7 @@ export default function PDVCalculatorPage() {
           <PDVThresholdCalculator />
         </div>
 
-        <section className="mt-12 prose prose-slate max-w-none">
+        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
           <h2>Što je PDV prag?</h2>
           <p>
             Od 2025. godine, PDV prag u Hrvatskoj iznosi <strong>60.000 EUR</strong> godišnje. Kada

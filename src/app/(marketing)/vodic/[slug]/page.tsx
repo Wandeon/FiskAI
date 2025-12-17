@@ -180,7 +180,7 @@ export default async function GuidePage({ params }: Props) {
           </nav>
 
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
-            <article className="prose prose-slate prose-lg max-w-none">
+            <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
               <MDXRemote source={guide.content} components={mdxComponents} />
             </article>
             {tocItems.length > 0 && (

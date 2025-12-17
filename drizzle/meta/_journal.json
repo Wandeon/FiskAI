@@ -15,6 +15,13 @@
       "when": 1765911544297,
       "tag": "0001_elite_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765990922523,
+      "tag": "0002_news_system_alignment",
+      "breakpoints": true
     }
   ]
 }

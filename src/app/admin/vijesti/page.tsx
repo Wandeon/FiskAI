@@ -44,6 +44,11 @@ async function getPosts() {
 
 export default async function AdminNewsPage() {
   const [statusCounts, posts] = await Promise.all([getStatusCounts(), getPosts()])
+  const cronConfigured = Boolean(process.env.CRON_SECRET)
+  const aiConfigured = Boolean(process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY)
+  const aiProvider =
+    (process.env.NEWS_AI_PROVIDER || process.env.AI_PROVIDER || "").toLowerCase() ||
+    (process.env.DEEPSEEK_API_KEY ? "deepseek" : process.env.OPENAI_API_KEY ? "openai" : "")
 
   return (
     <div className="space-y-6">
@@ -54,6 +59,24 @@ export default async function AdminNewsPage() {
           <p className="text-sm text-[var(--muted)]">Upravljanje novostima i AI pipeline-om</p>
         </div>
       </div>
+
+      {(!cronConfigured || !aiConfigured) && (
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-card">
+          <div className="text-sm font-semibold">Napomena (konfiguracija)</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--muted)]">
+            {!cronConfigured && (
+              <li>`CRON_SECRET` nije postavljen — ručno pokretanje cron jobova neće raditi.</li>
+            )}
+            {!aiConfigured && (
+              <li>
+                AI ključ nije postavljen — fetch može povući izvore, ali ne može klasificirati i
+                napisati članke.
+              </li>
+            )}
+            {aiConfigured && aiProvider && <li>AI provider: {aiProvider}</li>}
+          </ul>
+        </div>
+      )}
 
       {/* Pipeline Status Cards */}
       <div className="grid grid-cols-4 gap-4">
