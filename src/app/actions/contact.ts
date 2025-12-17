@@ -2,7 +2,11 @@
 
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
+import {
+  requireAuth,
+  requireCompanyWithContext,
+  requireCompanyWithPermission,
+} from "@/lib/auth-utils"
 import { contactSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 
@@ -57,7 +61,7 @@ export async function updateContact(contactId: string, formData: z.infer<typeof 
 export async function deleteContact(contactId: string) {
   const user = await requireAuth()
 
-  return requireCompanyWithContext(user.id!, async () => {
+  return requireCompanyWithPermission(user.id!, "contact:delete", async () => {
     const contact = await db.contact.findFirst({
       where: { id: contactId },
     })

@@ -2,12 +2,17 @@
 
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
+import {
+  requireAuth,
+  requireCompanyWithContext,
+  requireCompanyWithPermission,
+} from "@/lib/auth-utils"
 import { eInvoiceSchema } from "@/lib/validations"
 import { createEInvoiceProvider, generateUBLInvoice } from "@/lib/e-invoice"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 import { decryptOptionalSecret } from "@/lib/secrets"
+import { generateInvoicePDF } from "@/lib/pdf/generate-invoice-pdf"
 import { getNextInvoiceNumber } from "@/lib/invoice-numbering"
 import { shouldFiscalizeInvoice, queueFiscalRequest } from "@/lib/fiscal/should-fiscalize"
 import { canCreateInvoice, getUsageStats } from "@/lib/billing/stripe"
@@ -290,7 +295,7 @@ export async function getEInvoice(eInvoiceId: string) {
 export async function deleteEInvoice(eInvoiceId: string) {
   const user = await requireAuth()
 
-  return requireCompanyWithContext(user.id!, async () => {
+  return requireCompanyWithPermission(user.id!, "invoice:delete", async () => {
     const eInvoice = await db.eInvoice.findFirst({
       where: {
         id: eInvoiceId,
@@ -353,7 +358,7 @@ export async function markInvoiceAsPaid(invoiceId: string) {
 export async function sendInvoiceEmail(invoiceId: string) {
   const user = await requireAuth()
 
-  return requireCompanyWithContext(user.id!, async () => {
+  return requireCompanyWithContext(user.id!, async (company) => {
     // Fetch invoice with buyer contact email (automatically filtered by tenant context)
     const invoice = await db.eInvoice.findFirst({
       where: { id: invoiceId },
@@ -380,23 +385,11 @@ export async function sendInvoiceEmail(invoiceId: string) {
     }
 
     try {
-      // Generate PDF using existing API endpoint
-      const baseUrl =
-        process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"
-      const pdfUrl = `${baseUrl}/api/invoices/${invoiceId}/pdf`
-
-      // For server-side, we need to use absolute URL
-      const pdfResponse = await fetch(pdfUrl, {
-        headers: {
-          "x-invoice-id": invoiceId,
-        },
+      // Generate PDF directly using shared module (no loopback HTTP call)
+      const { buffer: pdfBuffer } = await generateInvoicePDF({
+        invoiceId,
+        companyId: company.id,
       })
-
-      if (!pdfResponse.ok) {
-        return { error: "Failed to generate PDF" }
-      }
-
-      const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer())
 
       // Prepare email
       const { sendEmail } = await import("@/lib/email")

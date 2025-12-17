@@ -1,7 +1,9 @@
 // src/components/ui/combobox.tsx
 "use client"
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react"
+import * as React from "react"
+import * as Popover from "@radix-ui/react-popover"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface ComboboxOption {
@@ -29,30 +31,33 @@ export function Combobox({
   emptyMessage = "Nema rezultata",
   className,
   id,
-  disabled,
+  disabled = false,
 }: ComboboxProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [highlightedIndex, setHighlightedIndex] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
+  const [open, setOpen] = React.useState(false)
+  const [search, setSearch] = React.useState("")
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0)
+  const inputRef = React.useRef<HTMLInputElement>(null)
 
   const selectedOption = options.find((o) => o.value === value)
 
-  const filteredOptions = options.filter(
-    (option) =>
-      option.label.toLowerCase().includes(search.toLowerCase()) ||
-      option.description?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredOptions = React.useMemo(() => {
+    if (!search) return options
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(search.toLowerCase()) ||
+        option.description?.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [options, search])
 
-  useEffect(() => {
-    if (!isOpen) {
+  // Reset search and highlight when closing
+  React.useEffect(() => {
+    if (!open) {
       setSearch("")
       setHighlightedIndex(0)
     }
-  }, [isOpen])
+  }, [open])
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault()
@@ -66,92 +71,108 @@ export function Combobox({
         e.preventDefault()
         if (filteredOptions[highlightedIndex]) {
           onChange(filteredOptions[highlightedIndex].value)
-          setIsOpen(false)
+          setOpen(false)
         }
         break
       case "Escape":
-        setIsOpen(false)
+        setOpen(false)
         break
     }
   }
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue)
-    setIsOpen(false)
-    inputRef.current?.focus()
+    setOpen(false)
   }
 
   return (
-    <div className={cn("relative", className)}>
-      <input
-        ref={inputRef}
-        id={id}
-        type="text"
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-controls={`${id}-listbox`}
-        aria-activedescendant={
-          isOpen && filteredOptions[highlightedIndex]
-            ? `${id}-option-${highlightedIndex}`
-            : undefined
-        }
-        className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        placeholder={isOpen ? "Pretraži..." : placeholder}
-        value={isOpen ? search : (selectedOption?.label ?? "")}
-        onChange={(e) => setSearch(e.target.value)}
-        onFocus={() => setIsOpen(true)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        readOnly={!isOpen}
-      />
-
-      {/* Dropdown arrow */}
-      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-        <svg
-          className={cn("h-4 w-4 text-gray-400 transition-transform", isOpen && "rotate-180")}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-
-      {isOpen && (
-        <ul
-          ref={listRef}
-          id={`${id}-listbox`}
-          role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
-        >
-          {filteredOptions.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-gray-500">{emptyMessage}</li>
-          ) : (
-            filteredOptions.map((option, index) => (
-              <li
-                key={option.value}
-                id={`${id}-option-${index}`}
-                role="option"
-                aria-selected={option.value === value}
-                className={cn(
-                  "cursor-pointer px-3 py-2 text-sm",
-                  index === highlightedIndex && "bg-blue-50",
-                  option.value === value && "bg-blue-100 font-medium"
-                )}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onMouseDown={() => handleSelect(option.value)}
-              >
-                <div>{option.label}</div>
-                {option.description && (
-                  <div className="text-xs text-gray-500">{option.description}</div>
-                )}
-              </li>
-            ))
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild disabled={disabled}>
+        <button
+          type="button"
+          id={id}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          className={cn(
+            "flex h-10 w-full items-center justify-between rounded-md",
+            "border border-white/10 bg-white/5 px-3 py-2",
+            "text-sm text-white placeholder:text-white/40",
+            "hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            className
           )}
-        </ul>
-      )}
-    </div>
+        >
+          <span className={cn(!selectedOption && "text-white/40")}>
+            {selectedOption?.label || placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </button>
+      </Popover.Trigger>
+
+      <Popover.Portal>
+        <Popover.Content
+          className={cn(
+            "z-50 w-[var(--radix-popover-trigger-width)] rounded-md",
+            "border border-white/10 bg-gray-900 p-1 shadow-xl",
+            "animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          )}
+          sideOffset={4}
+          align="start"
+        >
+          {/* Search input */}
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Pretraži..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className={cn(
+              "w-full rounded-md border-0 bg-white/5 px-3 py-2 mb-1",
+              "text-sm text-white placeholder:text-white/40",
+              "focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+            )}
+            autoFocus
+          />
+
+          {/* Options list */}
+          <ul role="listbox" aria-label="Options" className="max-h-60 overflow-auto">
+            {filteredOptions.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-white/50">{emptyMessage}</li>
+            ) : (
+              filteredOptions.map((option, index) => (
+                <li
+                  key={option.value}
+                  role="option"
+                  aria-selected={option.value === value}
+                  onClick={() => handleSelect(option.value)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  className={cn(
+                    "flex cursor-pointer items-center rounded-md px-3 py-2",
+                    "text-sm text-white",
+                    index === highlightedIndex && "bg-white/10",
+                    option.value === value && "bg-blue-500/20"
+                  )}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      option.value === value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex-1">
+                    <div>{option.label}</div>
+                    {option.description && (
+                      <div className="text-xs text-white/50">{option.description}</div>
+                    )}
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }

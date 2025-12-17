@@ -2,7 +2,11 @@
 
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
+import {
+  requireAuth,
+  requireCompanyWithContext,
+  requireCompanyWithPermission,
+} from "@/lib/auth-utils"
 import { productSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 
@@ -109,7 +113,7 @@ export async function updateProductInline(
 export async function deleteProduct(productId: string) {
   const user = await requireAuth()
 
-  return requireCompanyWithContext(user.id!, async () => {
+  return requireCompanyWithPermission(user.id!, "product:delete", async () => {
     const product = await db.product.findFirst({
       where: { id: productId },
     })
