@@ -94,7 +94,51 @@ openssl rand -hex 32
 
 ## Database Migrations
 
-### Local Development
+FiskAI uses both Prisma and Drizzle ORM for database migrations. Drizzle is used for news system tables, while Prisma is used for the main application tables.
+
+### Drizzle Migrations (News System)
+
+#### Local Development
+
+```bash
+# Generate new migration after schema changes
+npm run db:generate
+
+# Apply all pending Drizzle migrations
+npm run db:migrate
+
+# Push schema changes directly (development only)
+npm run db:push
+
+# Open Drizzle Studio to view data
+npm run db:studio
+```
+
+#### Production Deployment
+
+**Automatic (Recommended)**: Drizzle migrations run automatically on container startup via `docker-entrypoint.sh`.
+
+**Manual (if needed)**:
+```bash
+# Inside the container
+docker exec -it fiskai-app npx drizzle-kit migrate
+
+# Or using docker-compose
+docker-compose exec fiskai-app npx drizzle-kit migrate
+```
+
+**Verify migrations were applied**:
+```sql
+-- Check if news tables exist
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_name IN ('compliance_deadlines', 'news_items', 'news_sources', 'news_posts', 'news_categories', 'news_tags');
+```
+
+### Prisma Migrations (Main Application)
+
+#### Local Development
 
 ```bash
 # Run all pending migrations
@@ -107,7 +151,7 @@ npx prisma migrate dev --name descriptive_migration_name
 npx prisma validate
 ```
 
-### Production Deployment
+#### Production Deployment
 
 ```bash
 # Before deploying, generate migration from schema changes
@@ -120,13 +164,22 @@ npx prisma migrate deploy
 npx prisma migrate status
 ```
 
+### Migration Execution Order
+
+On deployment, migrations run in this order:
+1. **Drizzle migrations** (automatic via docker-entrypoint.sh)
+2. **Prisma migrations** (manual via `prisma migrate deploy` if needed)
+
+The Docker entrypoint script (`docker-entrypoint.sh`) automatically applies Drizzle migrations before starting the application.
+
 ### Emergency: Rollback
 
-Prisma does not support automatic rollbacks. Instead:
+Neither Prisma nor Drizzle support automatic rollbacks. Instead:
 
-1. Review the migration SQL in `prisma/migrations/[timestamp]_[name]/migration.sql`
-2. Create a new migration to undo changes if needed
-3. Test thoroughly in staging before applying to production
+1. **Drizzle**: Review migration SQL in `drizzle/[number]_[name].sql`
+2. **Prisma**: Review migration SQL in `prisma/migrations/[timestamp]_[name]/migration.sql`
+3. Create a new migration to undo changes if needed
+4. Test thoroughly in staging before applying to production
 
 ---
 
@@ -389,12 +442,22 @@ export CRON_SECRET=$(openssl rand -hex 32)
 # 2. Build and run
 docker-compose -f docker-compose.prod.yml up -d
 
-# 3. Run migrations
-docker-compose -f docker-compose.prod.yml exec fiskai-app npx prisma migrate deploy
-
-# 4. Check logs
+# 3. Drizzle migrations run automatically on startup
+# Check logs to verify migrations completed
 docker-compose -f docker-compose.prod.yml logs -f fiskai-app
+
+# 4. (Optional) Run Prisma migrations if needed
+docker-compose -f docker-compose.prod.yml exec fiskai-app npx prisma migrate deploy
 ```
+
+### Migration Behavior on Deployment
+
+When the container starts:
+1. The `docker-entrypoint.sh` script runs Drizzle migrations automatically
+2. If migrations succeed, the application starts
+3. If migrations fail, the container exits with an error
+
+This ensures the database is always in sync with the application code.
 
 ---
 

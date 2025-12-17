@@ -4,8 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/lib/toast"
-import { convertToInvoice, deleteInvoice } from "@/app/actions/invoice"
-import { sendInvoiceEmail } from "@/app/actions/e-invoice"
+import { convertToInvoice, deleteInvoice, sendInvoiceEmail } from "@/app/actions/invoice"
 import type { EInvoice, Contact } from "@prisma/client"
 
 interface InvoiceActionsProps {

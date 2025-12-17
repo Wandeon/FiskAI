@@ -11,6 +11,7 @@
     "test:tenant": "node --import tsx --test src/lib/__tests__/tenant-isolation.test.ts",
     "test:knowledge-hub": "node --import tsx --test src/lib/knowledge-hub/__tests__/*.test.ts",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "prisma:generate": "prisma generate",

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { sendEInvoice, deleteEInvoice } from "@/app/actions/e-invoice"
+import { sendEInvoice, deleteEInvoice } from "@/app/actions/invoice"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/lib/toast"
 

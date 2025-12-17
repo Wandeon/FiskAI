@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
-import { getEInvoices } from "@/app/actions/e-invoice"
+import { getEInvoices } from "@/app/actions/invoice"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
