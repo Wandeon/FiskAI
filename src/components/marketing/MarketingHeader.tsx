@@ -42,6 +42,12 @@ const PRODUCT_MENU: NavMenuItem[] = [
     icon: Shield,
   },
   {
+    href: "/status",
+    label: "Status sustava",
+    description: "Dostupnost i povijest incidenata.",
+    icon: Shield,
+  },
+  {
     href: "/prelazak",
     label: "Prijeđi na FiskAI",
     description: "Migracija u par koraka — bez stresa.",
@@ -118,6 +124,18 @@ const KNOWLEDGE_MENU: NavMenuItem[] = [
     label: "Službeni izvori",
     description: "Linkovi na relevantne institucije i propise.",
     icon: Shield,
+  },
+  {
+    href: "/metodologija",
+    label: "Metodologija",
+    description: "Kako radimo vijesti, izvore i sažetke.",
+    icon: FileText,
+  },
+  {
+    href: "/urednicka-politika",
+    label: "Urednička politika",
+    description: "Načela, provjera izvora i ispravci.",
+    icon: Newspaper,
   },
 ]
 
