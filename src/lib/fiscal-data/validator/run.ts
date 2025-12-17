@@ -11,12 +11,16 @@
  *   npx tsx src/lib/fiscal-data/validator/run.ts
  *
  * Environment variables:
- *   - OLLAMA_API_URL: Ollama API endpoint (default: http://localhost:11434)
+ *   - OLLAMA_ENDPOINT: Ollama Cloud API endpoint (default: https://ollama.com)
+ *   - OLLAMA_API_KEY: Ollama Cloud API key (required for cloud)
  *   - OLLAMA_MODEL: Model to use (default: llama3.1)
  *   - GITHUB_TOKEN: GitHub token for creating PRs
  *   - GITHUB_REPO: Repository in format "owner/repo"
  *   - DRY_RUN: If "true", don't create PR, just report
  */
+
+// Load environment variables from .env file
+import "dotenv/config"
 
 import { validateAllSources, getValidationSummary, getChangesForPR } from "./validate"
 import { createUpdatePR, createValidationIssue } from "./create-pr"

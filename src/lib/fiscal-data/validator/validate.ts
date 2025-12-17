@@ -4,9 +4,21 @@ import type { ValidationResult, ValidationSource } from "../types"
 import { getValueByPath } from "../utils/get-value"
 import { getAllSources, getPrimarySources } from "./sources"
 
-// Ollama configuration
-const OLLAMA_API_URL = process.env.OLLAMA_API_URL || "http://localhost:11434"
+// Ollama Cloud configuration (matches project-wide pattern from ollama-client.ts)
+const OLLAMA_ENDPOINT = process.env.OLLAMA_ENDPOINT || "https://ollama.com"
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1"
+const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY
+
+/**
+ * Get headers for Ollama API requests, including auth if API key is set
+ */
+function getOllamaHeaders(): HeadersInit {
+  const headers: HeadersInit = { "Content-Type": "application/json" }
+  if (OLLAMA_API_KEY) {
+    headers["Authorization"] = `Bearer ${OLLAMA_API_KEY}`
+  }
+  return headers
+}
 
 /**
  * Fetch page content and convert to text
@@ -95,13 +107,14 @@ VAŽNO:
 - extractedText treba sadržavati rečenicu iz koje je vrijednost izvučena`
 
   try {
-    const response = await fetch(`${OLLAMA_API_URL}/api/chat`, {
+    const response = await fetch(`${OLLAMA_ENDPOINT}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getOllamaHeaders(),
       body: JSON.stringify({
         model: OLLAMA_MODEL,
         messages: [{ role: "user", content: prompt }],
         stream: false,
+        format: "json", // Request JSON format for more reliable parsing
         options: {
           temperature: 0.1, // Low temperature for factual extraction
         },
@@ -109,7 +122,10 @@ VAŽNO:
     })
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status}`)
+      const errorText = await response.text().catch(() => "")
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`
+      )
     }
 
     const data = await response.json()
