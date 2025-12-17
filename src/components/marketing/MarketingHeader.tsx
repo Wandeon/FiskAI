@@ -114,19 +114,45 @@ export function MarketingHeader() {
             {/* Actions */}
             <div className="flex items-center gap-3">
               {/* Istraži button - Desktop */}
-              <button
+              <motion.button
                 onClick={() => setPortalOpen(true)}
-                className="group relative hidden items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:border-white/30 hover:bg-white/10 md:inline-flex"
+                className="group relative hidden items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:border-transparent hover:bg-white/10 md:inline-flex"
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0 rgba(34, 211, 238, 0)",
+                    "0 0 20px 2px rgba(34, 211, 238, 0.15)",
+                    "0 0 0 0 rgba(34, 211, 238, 0)",
+                  ],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               >
-                {/* Animated gradient border */}
-                <span className="absolute -inset-px -z-10 rounded-lg bg-gradient-to-r from-cyan-500/50 via-blue-500/50 to-indigo-500/50 opacity-0 blur-sm transition-opacity group-hover:opacity-100" />
+                {/* Rotating gradient border */}
+                <span className="absolute -inset-px -z-10 overflow-hidden rounded-lg">
+                  <motion.span
+                    className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(34,211,238,0.8)_360deg)]"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                  <span className="absolute inset-px rounded-[7px] bg-slate-950/90" />
+                </span>
 
-                <Grid3X3 className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                {/* Glow on hover */}
+                <span className="absolute -inset-1 -z-20 rounded-xl bg-gradient-to-r from-cyan-500/40 via-blue-500/40 to-indigo-500/40 opacity-0 blur-md transition-opacity group-hover:opacity-100" />
+
+                <Grid3X3 className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
                 <span>Istraži</span>
                 <kbd className="ml-1 hidden rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white/50 lg:inline-block">
                   ⌘K
                 </kbd>
-              </button>
+              </motion.button>
 
               {/* Mobile menu button */}
               <button
@@ -140,13 +166,25 @@ export function MarketingHeader() {
               {/* Primary CTA */}
               <Link
                 href="/register"
-                className="group relative inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
               >
                 <span className="hidden sm:inline">Započni</span>
                 <span className="sm:hidden">Start</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
 
-                {/* Shine effect */}
+                {/* Shimmer effect */}
+                <motion.span
+                  className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{ x: ["0%", "200%"] }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    ease: "easeInOut",
+                  }}
+                />
+
+                {/* Glow on hover */}
                 <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
               </Link>
             </div>

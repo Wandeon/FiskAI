@@ -30,6 +30,7 @@ export function PortalCard({
   const cardRef = useRef<HTMLAnchorElement>(null)
   const [rotateX, setRotateX] = useState(0)
   const [rotateY, setRotateY] = useState(0)
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 })
   const [isHovered, setIsHovered] = useState(false)
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -48,11 +49,17 @@ export function PortalCard({
 
     setRotateX(rotateXValue)
     setRotateY(rotateYValue)
+
+    // Calculate mouse position as percentage for light effect
+    const xPercent = ((e.clientX - rect.left) / rect.width) * 100
+    const yPercent = ((e.clientY - rect.top) / rect.height) * 100
+    setMousePos({ x: xPercent, y: yPercent })
   }
 
   const handleMouseLeave = () => {
     setRotateX(0)
     setRotateY(0)
+    setMousePos({ x: 50, y: 50 })
     setIsHovered(false)
   }
 
@@ -95,11 +102,15 @@ export function PortalCard({
         >
           {/* Light reflection effect */}
           <motion.div
-            className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-xl"
+            animate={{
+              opacity: isHovered ? 1 : 0,
+            }}
+            transition={{ duration: 0.2 }}
             style={{
               background: `radial-gradient(
-                300px circle at ${isHovered ? "var(--mouse-x, 50%)" : "50%"} ${isHovered ? "var(--mouse-y, 50%)" : "50%"},
-                rgba(34, 211, 238, 0.15),
+                250px circle at ${mousePos.x}% ${mousePos.y}%,
+                rgba(34, 211, 238, 0.2),
                 transparent 60%
               )`,
             }}
