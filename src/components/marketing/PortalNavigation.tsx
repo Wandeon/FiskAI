@@ -1,0 +1,525 @@
+"use client"
+
+import { useEffect, useRef } from "react"
+import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  ArrowRight,
+  BookOpen,
+  Calculator,
+  Calendar,
+  ChevronDown,
+  FileText,
+  Newspaper,
+  Search,
+  Shield,
+  Sparkles,
+  Wrench,
+  X,
+  Scale,
+  Building2,
+  Receipt,
+  Briefcase,
+  TrendingUp,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { AuroraBackground } from "./AuroraBackground"
+import { PortalCard, PortalLink } from "./PortalCard"
+
+interface PortalNavigationProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+// Navigation data
+const PROIZVOD = [
+  {
+    href: "/features",
+    title: "Mogućnosti",
+    description: "Računi, OCR, banke, izvještaji",
+    icon: <Sparkles className="h-5 w-5" />,
+  },
+  {
+    href: "/security",
+    title: "Sigurnost",
+    description: "GDPR, passkeys, audit trag",
+    icon: <Shield className="h-5 w-5" />,
+  },
+  {
+    href: "/status",
+    title: "Status sustava",
+    description: "Dostupnost i incidenti",
+    icon: <Shield className="h-5 w-5" />,
+  },
+  {
+    href: "/prelazak",
+    title: "Prijeđi na FiskAI",
+    description: "Migracija bez stresa",
+    icon: <ArrowRight className="h-5 w-5" />,
+  },
+]
+
+const ALATI = [
+  {
+    href: "/alati",
+    title: "Svi alati",
+    description: "Kalkulatori i pomoćni alati",
+    icon: <Wrench className="h-5 w-5" />,
+    featured: true,
+  },
+  {
+    href: "/alati/pdv-kalkulator",
+    title: "PDV prag",
+    description: "Koliko ste blizu 60.000€",
+    icon: <Calculator className="h-5 w-5" />,
+  },
+  {
+    href: "/alati/posd-kalkulator",
+    title: "PO-SD kalkulator",
+    description: "Doprinosi i porezi (paušal)",
+    icon: <Calculator className="h-5 w-5" />,
+  },
+  {
+    href: "/alati/uplatnice",
+    title: "Generator uplatnica",
+    description: "HUB3 barkod za plaćanja",
+    icon: <Receipt className="h-5 w-5" />,
+  },
+  {
+    href: "/alati/kalendar",
+    title: "Kalendar rokova",
+    description: "Rokovi i podsjetnici",
+    icon: <Calendar className="h-5 w-5" />,
+  },
+  {
+    href: "/alati/oib-validator",
+    title: "OIB validator",
+    description: "Provjera OIB-a",
+    icon: <Shield className="h-5 w-5" />,
+  },
+]
+
+const VODICI = [
+  { href: "/vodic", title: "Svi vodiči", featured: true },
+  { href: "/vodic/pausalni-obrt", title: "Paušalni obrt" },
+  { href: "/vodic/obrt-dohodak", title: "Obrt na dohodak" },
+  { href: "/vodic/doo", title: "D.O.O. / J.D.O.O." },
+  { href: "/vodic/freelancer", title: "Freelancer" },
+  { href: "/vodic/posebni-oblici", title: "Posebni oblici" },
+]
+
+const USPOREDBE = [
+  { href: "/usporedba", title: "Sve usporedbe", featured: true },
+  {
+    href: "/usporedba/pocinjem-solo",
+    title: "Počinjem solo",
+    icon: <Briefcase className="h-4 w-4" />,
+  },
+  {
+    href: "/usporedba/dodatni-prihod",
+    title: "Dodatni prihod",
+    icon: <TrendingUp className="h-4 w-4" />,
+  },
+  { href: "/usporedba/firma", title: "Osnivam firmu", icon: <Building2 className="h-4 w-4" /> },
+  { href: "/usporedba/preko-praga", title: "Preko 60k praga", icon: <Scale className="h-4 w-4" /> },
+]
+
+const BRZI_PRISTUP = [
+  { href: "/vijesti", title: "Vijesti", icon: <Newspaper className="h-4 w-4" /> },
+  { href: "/pricing", title: "Cijene", icon: <Calculator className="h-4 w-4" /> },
+  { href: "/contact", title: "Kontakt", icon: <FileText className="h-4 w-4" /> },
+  { href: "/fiskalizacija", title: "Fiskalizacija 2.0", badge: "Novo" },
+]
+
+const RESURSI = [
+  { href: "/baza-znanja", title: "Baza znanja", featured: true },
+  { href: "/kako-da", title: "Kako da..." },
+  { href: "/rjecnik", title: "Rječnik" },
+  { href: "/izvori", title: "Službeni izvori" },
+  { href: "/metodologija", title: "Metodologija" },
+  { href: "/urednicka-politika", title: "Urednička politika" },
+]
+
+export function PortalNavigation({ isOpen, onClose }: PortalNavigationProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Focus search on open
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100)
+    }
+  }, [isOpen])
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown)
+      return () => window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isOpen, onClose])
+
+  // Lock body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+      return () => {
+        document.body.style.overflow = ""
+      }
+    }
+  }, [isOpen])
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+          />
+
+          {/* Portal overlay */}
+          <motion.div
+            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-slate-950/95"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+            }}
+          >
+            {/* Aurora background */}
+            <AuroraBackground intensity="subtle" />
+
+            {/* Content */}
+            <div className="relative z-10 flex h-full flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                  Zatvori
+                </button>
+                {/* Search */}
+                <div className="relative hidden md:block">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Pretraži... ⌘K"
+                    className="w-64 rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:border-cyan-400/30 focus:outline-none focus:ring-1 focus:ring-cyan-400/30"
+                  />
+                </div>
+                <div className="w-20" /> {/* Spacer for balance */}
+              </div>
+
+              {/* Navigation content */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Desktop layout */}
+                <div className="mx-auto hidden max-w-6xl px-6 py-8 md:block">
+                  <div className="grid grid-cols-4 gap-8">
+                    {/* Column 1: Proizvod */}
+                    <div>
+                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                        Proizvod
+                      </h3>
+                      <div className="space-y-2">
+                        {PROIZVOD.map((item, i) => (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                          >
+                            <PortalCard
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              onClick={onClose}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Column 2: Alati */}
+                    <div>
+                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                        Alati
+                      </h3>
+                      <div className="space-y-2">
+                        {ALATI.map((item, i) => (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 + i * 0.05 }}
+                          >
+                            <PortalCard
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              featured={item.featured}
+                              onClick={onClose}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Baza znanja */}
+                    <div>
+                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                        Baza znanja
+                      </h3>
+
+                      {/* Vodiči */}
+                      <div className="mb-6">
+                        <div className="mb-2 flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-white/50" />
+                          <span className="text-sm font-medium text-white/70">Vodiči</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {VODICI.map((item, i) => (
+                            <motion.div
+                              key={item.href}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.2 + i * 0.03 }}
+                            >
+                              <PortalLink
+                                href={item.href}
+                                onClick={onClose}
+                                className={item.featured ? "font-semibold text-white" : ""}
+                              >
+                                {item.title}
+                              </PortalLink>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Usporedbe */}
+                      <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          <Scale className="h-4 w-4 text-white/50" />
+                          <span className="text-sm font-medium text-white/70">Usporedbe</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {USPOREDBE.map((item, i) => (
+                            <motion.div
+                              key={item.href}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.3 + i * 0.03 }}
+                            >
+                              <PortalLink
+                                href={item.href}
+                                onClick={onClose}
+                                className={item.featured ? "font-semibold text-white" : ""}
+                              >
+                                {item.title}
+                              </PortalLink>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 4: Brzi pristup + Resursi */}
+                    <div>
+                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                        Brzi pristup
+                      </h3>
+                      <div className="mb-6 space-y-1">
+                        {BRZI_PRISTUP.map((item, i) => (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.15 + i * 0.03 }}
+                          >
+                            <Link
+                              href={item.href}
+                              onClick={onClose}
+                              className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-white/80 transition-all hover:bg-white/5 hover:text-white"
+                            >
+                              {item.icon && <span className="text-white/50">{item.icon}</span>}
+                              <span className="flex-1 font-medium">{item.title}</span>
+                              {item.badge && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" />
+                                  {item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                        Resursi
+                      </h3>
+                      <div className="space-y-0.5">
+                        {RESURSI.map((item, i) => (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.35 + i * 0.03 }}
+                          >
+                            <PortalLink
+                              href={item.href}
+                              onClick={onClose}
+                              className={item.featured ? "font-semibold text-white" : ""}
+                            >
+                              {item.title}
+                            </PortalLink>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout */}
+                <div className="px-4 py-6 md:hidden">
+                  {/* Mobile search */}
+                  <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <input
+                      type="text"
+                      placeholder="Pretraži..."
+                      className="w-full rounded-lg border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:border-cyan-400/30 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Mobile accordions */}
+                  <div className="space-y-3">
+                    <MobileSection title="Proizvod" items={PROIZVOD} onNavigate={onClose} />
+                    <MobileSection title="Alati" items={ALATI} onNavigate={onClose} defaultOpen />
+                    <MobileSection
+                      title="Vodiči"
+                      items={VODICI.map((v) => ({ ...v, description: undefined }))}
+                      onNavigate={onClose}
+                    />
+                    <MobileSection
+                      title="Usporedbe"
+                      items={USPOREDBE.map((u) => ({ ...u, description: undefined }))}
+                      onNavigate={onClose}
+                    />
+                    <MobileSection
+                      title="Resursi"
+                      items={RESURSI.map((r) => ({ ...r, description: undefined }))}
+                      onNavigate={onClose}
+                    />
+
+                    {/* Quick links */}
+                    <div className="border-t border-white/10 pt-4">
+                      {BRZI_PRISTUP.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={onClose}
+                          className="flex items-center gap-3 rounded-lg px-4 py-3 text-white/80 transition-colors hover:bg-white/5"
+                        >
+                          {item.icon}
+                          <span className="flex-1 font-medium">{item.title}</span>
+                          {item.badge && (
+                            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-white/10 px-6 py-4">
+                <div className="mx-auto flex max-w-6xl items-center justify-between">
+                  <Link
+                    href="/login"
+                    onClick={onClose}
+                    className="text-sm font-medium text-white/70 transition-colors hover:text-white"
+                  >
+                    Prijava
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={onClose}
+                    className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+                  >
+                    Započni besplatno
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// Mobile accordion section
+function MobileSection({
+  title,
+  items,
+  onNavigate,
+  defaultOpen = false,
+}: {
+  title: string
+  items: Array<{
+    href: string
+    title: string
+    description?: string
+    icon?: React.ReactNode
+    featured?: boolean
+  }>
+  onNavigate: () => void
+  defaultOpen?: boolean
+}) {
+  return (
+    <details className="group rounded-xl border border-white/10 bg-white/5" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+        <span className="text-sm font-semibold text-white">{title}</span>
+        <ChevronDown className="h-4 w-4 text-white/50 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-white/10 px-2 py-2">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-white/5",
+              item.featured ? "font-semibold text-white" : "text-white/70"
+            )}
+          >
+            {item.icon && <span className="text-white/50">{item.icon}</span>}
+            <span className="flex-1">{item.title}</span>
+            {item.description && <span className="text-xs text-white/40">{item.description}</span>}
+          </Link>
+        ))}
+      </div>
+    </details>
+  )
+}

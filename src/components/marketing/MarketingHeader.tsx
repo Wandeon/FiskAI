@@ -1,504 +1,173 @@
 "use client"
 
-import { useEffect, useId, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import * as Popover from "@radix-ui/react-popover"
-import {
-  ArrowRight,
-  BookOpen,
-  Calculator,
-  ChevronDown,
-  FileText,
-  Menu,
-  Newspaper,
-  Shield,
-  Sparkles,
-  Wrench,
-  X,
-} from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ArrowRight, Grid3X3 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ComplianceTrafficLight } from "./ComplianceTrafficLight"
+import { PortalNavigation } from "./PortalNavigation"
 
-type NavItem = { href: string; label: string }
-type NavMenuItem = {
-  href: string
-  label: string
-  description: string
-  icon?: React.ComponentType<{ className?: string }>
-}
-
-const PRODUCT_MENU: NavMenuItem[] = [
-  {
-    href: "/features",
-    label: "Mogućnosti",
-    description: "Što FiskAI radi — računi, OCR, banke, izvještaji.",
-    icon: Sparkles,
-  },
-  {
-    href: "/security",
-    label: "Sigurnost",
-    description: "GDPR, passkeys, audit trag i EU hosting.",
-    icon: Shield,
-  },
-  {
-    href: "/status",
-    label: "Status sustava",
-    description: "Dostupnost i povijest incidenata.",
-    icon: Shield,
-  },
-  {
-    href: "/prelazak",
-    label: "Prijeđi na FiskAI",
-    description: "Migracija u par koraka — bez stresa.",
-    icon: ArrowRight,
-  },
-]
-
-const TOOLS_MENU: NavMenuItem[] = [
-  {
-    href: "/alati",
-    label: "Svi alati",
-    description: "Kalkulatori i pomoćni alati za poduzetnike.",
-    icon: Wrench,
-  },
-  {
-    href: "/alati/pdv-kalkulator",
-    label: "PDV prag",
-    description: "Koliko ste blizu 60.000€ i što se mijenja.",
-    icon: Calculator,
-  },
-  {
-    href: "/alati/kalendar",
-    label: "Kalendar rokova",
-    description: "Rokovi, podsjetnici i usklađenost.",
-    icon: FileText,
-  },
-  {
-    href: "/alati/posd-kalkulator",
-    label: "PO‑SD kalkulator",
-    description: "Izračun doprinosa i poreza (paušalni obrt).",
-    icon: Calculator,
-  },
-  {
-    href: "/alati/oib-validator",
-    label: "OIB validator",
-    description: "Provjera OIB-a i osnovnih podataka.",
-    icon: Shield,
-  },
-]
-
-const KNOWLEDGE_MENU: NavMenuItem[] = [
-  {
-    href: "/baza-znanja",
-    label: "Baza znanja",
-    description: "Sve teme na jednom mjestu — vodiči, usporedbe, kako‑da.",
-    icon: BookOpen,
-  },
-  {
-    href: "/vodic",
-    label: "Vodiči",
-    description: "Paušalni obrt, obrt na dohodak, d.o.o. i obveze.",
-    icon: BookOpen,
-  },
-  {
-    href: "/usporedba",
-    label: "Usporedbe",
-    description: "Usporedite opcije uz tablice i kalkulatore.",
-    icon: Calculator,
-  },
-  {
-    href: "/kako-da",
-    label: "Kako da",
-    description: "Praktični koraci i predlošci za najčešće situacije.",
-    icon: FileText,
-  },
-  {
-    href: "/rjecnik",
-    label: "Rječnik",
-    description: "Pojmovi i objašnjenja bez žargona.",
-    icon: BookOpen,
-  },
-  {
-    href: "/izvori",
-    label: "Službeni izvori",
-    description: "Linkovi na relevantne institucije i propise.",
-    icon: Shield,
-  },
-  {
-    href: "/metodologija",
-    label: "Metodologija",
-    description: "Kako radimo vijesti, izvore i sažetke.",
-    icon: FileText,
-  },
-  {
-    href: "/urednicka-politika",
-    label: "Urednička politika",
-    description: "Načela, provjera izvora i ispravci.",
-    icon: Newspaper,
-  },
-]
-
-const PRIMARY_LINKS: NavItem[] = [
+const NAV_LINKS = [
+  { href: "/alati", label: "Alati" },
   { href: "/vijesti", label: "Vijesti" },
   { href: "/pricing", label: "Cijene" },
-  { href: "/contact", label: "Kontakt" },
 ]
 
-function NavLink({ href, label }: NavItem & { label: string }) {
-  const pathname = usePathname()
-  const isActive = pathname === href || (href !== "/" && pathname?.startsWith(`${href}/`))
-
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "text-sm font-medium transition-colors",
-        isActive ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
-      )}
-    >
-      {label}
-    </Link>
-  )
-}
-
-function isMenuActive(pathname: string | null, items: NavMenuItem[]) {
-  if (!pathname) return false
-  return items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
-}
-
-function NavMenu({
-  label,
-  items,
-  className,
-  align = "start",
-}: {
-  label: string
-  items: NavMenuItem[]
-  className?: string
-  align?: "start" | "center" | "end"
-}) {
-  const pathname = usePathname()
-  const [open, setOpen] = useState(false)
-  const active = isMenuActive(pathname, items)
-
-  return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors",
-            active
-              ? "text-[var(--foreground)]"
-              : "text-[var(--muted)] hover:text-[var(--foreground)]",
-            "hover:bg-[var(--surface-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/40 focus-visible:ring-offset-2",
-            className
-          )}
-          aria-expanded={open}
-          aria-haspopup="menu"
-        >
-          {label}
-          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
-        </button>
-      </Popover.Trigger>
-
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={10}
-          align={align}
-          className={cn(
-            "z-50 w-[min(92vw,380px)] rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-card",
-            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
-            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
-          )}
-        >
-          <div className="grid gap-1">
-            {items.map((item) => {
-              const Icon = item.icon
-              const itemActive =
-                pathname === item.href ||
-                (item.href !== "/" && pathname?.startsWith(`${item.href}/`))
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "group flex items-start gap-3 rounded-xl px-3 py-2 transition-colors",
-                    "hover:bg-[var(--surface-secondary)]",
-                    itemActive && "bg-[var(--surface-secondary)]"
-                  )}
-                >
-                  {Icon ? (
-                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/10 text-blue-700">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  ) : (
-                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-secondary)] text-[var(--muted)]">
-                      <ArrowRight className="h-4 w-4" />
-                    </span>
-                  )}
-                  <span className="flex-1">
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold text-[var(--foreground)]">
-                        {item.label}
-                      </span>
-                      <ArrowRight className="h-4 w-4 text-[var(--muted)] opacity-0 transition-opacity group-hover:opacity-100" />
-                    </span>
-                    <span className="mt-0.5 block text-xs text-[var(--muted)]">
-                      {item.description}
-                    </span>
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
-  )
-}
-
-function LinkButton({
-  href,
-  variant = "default",
-  children,
-}: {
-  href: string
-  variant?: "default" | "outline"
-  children: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "btn-press inline-flex min-h-[44px] items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:min-h-0",
-        variant === "default" && "bg-blue-600 text-white hover:bg-blue-700",
-        variant === "outline" &&
-          "border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]"
-      )}
-    >
-      {children}
-    </Link>
-  )
-}
-
 export function MarketingHeader() {
-  const [open, setOpen] = useState(false)
-  const panelId = useId()
+  const pathname = usePathname()
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [portalOpen, setPortalOpen] = useState(false)
 
+  // Track scroll position
   useEffect(() => {
-    if (!open) return
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+    }
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false)
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    handleScroll() // Check initial state
+
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  // Keyboard shortcut for portal (Cmd/Ctrl + K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        setPortalOpen((prev) => !prev)
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.body.style.overflow = originalOverflow
-    }
-  }, [open])
+  }, [])
 
   return (
-    <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--glass-surface)] backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        {/* Row 1: Brand + actions */}
-        <div className="flex items-center justify-between gap-3 py-3">
-          <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <span className="text-base font-semibold tracking-tight">FiskAI</span>
-            <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-              beta
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <ComplianceTrafficLight className="hidden lg:block" />
-            <LinkButton href="/login" variant="outline">
-              Prijava
-            </LinkButton>
-            <LinkButton href="/register">Započni</LinkButton>
-            <button
-              type="button"
-              className="btn-press inline-flex min-h-[44px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--foreground)] hover:bg-[var(--surface-secondary)] md:hidden"
-              aria-label={open ? "Zatvori izbornik" : "Otvori izbornik"}
-              aria-controls={panelId}
-              aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
-            >
-              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Row 2: Navigation (desktop) */}
-        <div className="hidden items-center justify-between pb-3 md:flex">
-          <nav className="flex items-center gap-1" aria-label="Glavna navigacija">
-            <NavMenu label="Proizvod" items={PRODUCT_MENU} />
-            <NavMenu label="Alati" items={TOOLS_MENU} />
-            <NavMenu label="Baza znanja" items={KNOWLEDGE_MENU} />
-            {PRIMARY_LINKS.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} />
-            ))}
-          </nav>
-
-          <Link
-            href="/fiskalizacija"
-            className={cn(
-              "group inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors",
-              "hover:bg-red-500/15"
-            )}
-          >
-            <FileText className="h-4 w-4" />
-            Fiskalizacija 2.0
-            <ArrowRight className="h-3.5 w-3.5 opacity-70 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-      </div>
-
-      <div
-        id={panelId}
+    <>
+      <motion.header
         className={cn(
-          "md:hidden",
-          open ? "pointer-events-auto" : "pointer-events-none",
-          "relative z-30"
+          "fixed left-0 right-0 top-0 z-30 transition-all duration-300",
+          isScrolled
+            ? "border-b border-white/10 bg-slate-950/85 shadow-lg shadow-black/20 backdrop-blur-xl backdrop-saturate-150"
+            : "border-b border-white/5 bg-transparent"
         )}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div
-          className={cn(
-            "fixed inset-0 bg-black/40 transition-opacity",
-            open ? "opacity-100" : "opacity-0"
-          )}
-          aria-hidden="true"
-          onClick={() => setOpen(false)}
-        />
-        <div
-          className={cn(
-            "fixed right-0 top-0 h-full w-[min(92vw,360px)] border-l border-[var(--border)] bg-[var(--surface)] shadow-elevated transition-transform",
-            open ? "translate-x-0" : "translate-x-full"
-          )}
-        >
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-            <p className="text-sm font-semibold">Navigacija</p>
-            <button
-              type="button"
-              className="btn-press inline-flex min-h-[44px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 hover:bg-[var(--surface-secondary)]"
-              aria-label="Zatvori izbornik"
-              onClick={() => setOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <div className="flex h-16 items-center justify-between gap-4">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="text-lg font-bold tracking-tight text-white">FiskAI</span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/70">
+                beta
+              </span>
+            </Link>
+
+            {/* Desktop nav */}
+            <nav className="hidden items-center gap-1 md:flex" aria-label="Glavna navigacija">
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`)
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "relative px-4 py-2 text-sm font-medium transition-all",
+                      isActive
+                        ? "text-white text-glow-cyan"
+                        : "text-white/70 hover:text-white hover:text-glow-cyan",
+                      "group"
+                    )}
+                  >
+                    <span className="relative z-10">{link.label}</span>
+
+                    {/* Glow effect on hover */}
+                    <span
+                      className={cn(
+                        "absolute inset-0 -z-10 rounded-lg opacity-0 transition-opacity",
+                        "bg-gradient-to-b from-white/5 to-transparent",
+                        "group-hover:opacity-100"
+                      )}
+                    />
+
+                    {/* Animated underline */}
+                    <motion.span
+                      className="absolute bottom-1 left-4 right-4 h-px bg-gradient-to-r from-cyan-400 to-blue-400"
+                      initial={false}
+                      animate={{
+                        scaleX: isActive ? 1 : 0,
+                        opacity: isActive ? 1 : 0,
+                      }}
+                      whileHover={{ scaleX: 1, opacity: 0.7 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ originX: 0 }}
+                    />
+                  </Link>
+                )
+              })}
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              {/* Istraži button - Desktop */}
+              <button
+                onClick={() => setPortalOpen(true)}
+                className="group relative hidden items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:border-white/30 hover:bg-white/10 md:inline-flex"
+              >
+                {/* Animated gradient border */}
+                <span className="absolute -inset-px -z-10 rounded-lg bg-gradient-to-r from-cyan-500/50 via-blue-500/50 to-indigo-500/50 opacity-0 blur-sm transition-opacity group-hover:opacity-100" />
+
+                <Grid3X3 className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                <span>Istraži</span>
+                <kbd className="ml-1 hidden rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white/50 lg:inline-block">
+                  ⌘K
+                </kbd>
+              </button>
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setPortalOpen(true)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white/90 transition-colors hover:bg-white/10 md:hidden"
+                aria-label="Otvori navigaciju"
+              >
+                <Grid3X3 className="h-5 w-5" />
+              </button>
+
+              {/* Primary CTA */}
+              <Link
+                href="/register"
+                className="group relative inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+              >
+                <span className="hidden sm:inline">Započni</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+
+                {/* Shine effect */}
+                <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
+              </Link>
+            </div>
           </div>
-          <nav className="flex flex-col gap-3 px-4 py-4" aria-label="Mobilna navigacija">
-            <MobileSection
-              title="Proizvod"
-              items={PRODUCT_MENU}
-              icon={<Sparkles className="h-4 w-4 text-blue-600" />}
-              onNavigate={() => setOpen(false)}
-            />
-            <MobileSection
-              title="Alati"
-              items={TOOLS_MENU}
-              icon={<Wrench className="h-4 w-4 text-blue-600" />}
-              onNavigate={() => setOpen(false)}
-              defaultOpen
-            />
-            <MobileSection
-              title="Baza znanja"
-              items={KNOWLEDGE_MENU}
-              icon={<BookOpen className="h-4 w-4 text-blue-600" />}
-              onNavigate={() => setOpen(false)}
-            />
-
-            <div className="grid gap-1">
-              <Link
-                href="/vijesti"
-                onClick={() => setOpen(false)}
-                className="list-item-interactive font-medium"
-              >
-                <Newspaper className="h-4 w-4 text-[var(--muted)]" />
-                Vijesti
-              </Link>
-              <Link
-                href="/pricing"
-                onClick={() => setOpen(false)}
-                className="list-item-interactive font-medium"
-              >
-                <Calculator className="h-4 w-4 text-[var(--muted)]" />
-                Cijene
-              </Link>
-              <Link
-                href="/contact"
-                onClick={() => setOpen(false)}
-                className="list-item-interactive font-medium"
-              >
-                <FileText className="h-4 w-4 text-[var(--muted)]" />
-                Kontakt
-              </Link>
-            </div>
-
-            <div className="mt-2 grid gap-2 border-t border-[var(--border)] pt-4">
-              <LinkButton href="/login" variant="outline">
-                Prijava
-              </LinkButton>
-              <LinkButton href="/register">Započni besplatno</LinkButton>
-            </div>
-          </nav>
         </div>
-      </div>
-    </header>
-  )
-}
 
-function MobileSection({
-  title,
-  items,
-  icon,
-  onNavigate,
-  defaultOpen = false,
-}: {
-  title: string
-  items: NavMenuItem[]
-  icon?: React.ReactNode
-  onNavigate: () => void
-  defaultOpen?: boolean
-}) {
-  return (
-    <details
-      className="group rounded-xl border border-[var(--border)] bg-[var(--surface)]"
-      defaultOpen={defaultOpen}
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-        <span className="flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]">
-          {icon}
-          {title}
-        </span>
-        <ChevronDown className="h-4 w-4 text-[var(--muted)] transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="border-t border-[var(--border)] px-2 py-2">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className="list-item-interactive"
-          >
-            <span className="flex-1">
-              <span className="text-sm font-medium">{item.label}</span>
-              <span className="mt-0.5 block text-xs text-[var(--muted)]">{item.description}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </details>
+        {/* Subtle bottom glow when scrolled */}
+        <AnimatePresence>
+          {isScrolled && (
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+          )}
+        </AnimatePresence>
+      </motion.header>
+
+      {/* Portal navigation */}
+      <PortalNavigation isOpen={portalOpen} onClose={() => setPortalOpen(false)} />
+    </>
   )
 }
