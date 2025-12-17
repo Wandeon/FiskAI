@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsCategories } from "@/lib/db/schema"
-import { eq, and, lte, desc, or } from "drizzle-orm"
+import { eq, and, lte, desc, or, sql } from "drizzle-orm"
 import { PostCard } from "@/components/news/PostCard"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
@@ -81,11 +81,9 @@ async function getCategoryPosts(categoryId: string, subcategoryIds: string[], pa
     .limit(POSTS_PER_PAGE)
     .offset(offset)
 
-  // Get total count
+  // Get total count with proper SQL count
   const countResult = await drizzleDb
-    .select({
-      count: newsPosts.id,
-    })
+    .select({ count: sql<number>`count(*)` })
     .from(newsPosts)
     .where(
       and(
@@ -98,7 +96,7 @@ async function getCategoryPosts(categoryId: string, subcategoryIds: string[], pa
 
   return {
     posts,
-    totalCount: countResult.length,
+    totalCount: Number(countResult[0]?.count || 0),
   }
 }
 
