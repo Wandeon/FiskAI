@@ -7,8 +7,14 @@
 **Deploy API Endpoint:**
 
 ```
-POST https://git.metrica.hr/api/v1/deploy?uuid=yosgwcswc8w88gg8wocwogok&force=false
+POST http://152.53.146.3:8000/api/v1/deploy?uuid=bsswgo8ggwgkw8c88wo8wcw8&force=false
 Authorization: Bearer <token>
+```
+
+**GitHub Webhook URL (for auto-deploy on push):**
+
+```
+http://152.53.146.3:8000/webhooks/source/github/events/manual
 ```
 
 **Note:** Token needs to be obtained from Coolify dashboard if expired.
