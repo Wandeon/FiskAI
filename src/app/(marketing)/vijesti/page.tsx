@@ -7,7 +7,7 @@ import { hr } from "date-fns/locale"
 import { HeroSection } from "@/components/news/HeroSection"
 import { CategorySection } from "@/components/news/CategorySection"
 import { DigestBanner } from "@/components/news/DigestBanner"
-import { TrendingUp, Calendar, ArrowRight, Mail } from "lucide-react"
+import { TrendingUp, Calendar, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/primitives/button"
 import { Badge } from "@/components/ui/primitives/badge"
@@ -15,6 +15,7 @@ import { GlassCard } from "@/components/ui/patterns/GlassCard"
 import { GradientButton } from "@/components/ui/patterns/GradientButton"
 import { FadeIn } from "@/components/ui/motion/FadeIn"
 import { NewsSearch } from "@/components/news/NewsSearch"
+import { NewsletterSignup } from "@/components/news/NewsletterSignup"
 import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
 
 export const metadata: Metadata = {
@@ -459,23 +460,8 @@ export default async function VijestiPage({ searchParams }: PageProps) {
           </GlassCard>
         </FadeIn>
 
-        {/* Newsletter / Digest Upsell */}
-        <FadeIn delay={0.4}>
-          <GlassCard hover>
-            <div className="mb-3 flex items-center gap-2">
-              <Badge variant="tech" size="sm">
-                <Mail className="h-4 w-4" />
-              </Badge>
-              <h3 className="text-lg font-semibold text-white">Tjedni pregled</h3>
-            </div>
-            <p className="mb-4 text-sm text-white/60">
-              Aktivirajte personalizirani digest i podsjetnike za rokove — bez spam-a, samo bitno.
-            </p>
-            <GradientButton href="/register" size="sm" showArrow className="w-full">
-              Aktiviraj besplatno
-            </GradientButton>
-          </GlassCard>
-        </FadeIn>
+        {/* Newsletter Signup */}
+        <NewsletterSignup />
       </aside>
 
       {/* Sources Footer */}
