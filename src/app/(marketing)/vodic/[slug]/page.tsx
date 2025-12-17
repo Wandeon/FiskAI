@@ -7,6 +7,7 @@ import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
 import { TableOfContents } from "@/components/knowledge-hub/guide/TableOfContents"
 import { slugifyHeading } from "@/lib/knowledge-hub/slugify"
 import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
+import { NextSteps } from "@/components/knowledge-hub/NextSteps"
 import type { Metadata } from "next"
 
 interface Props {
@@ -180,9 +181,48 @@ export default async function GuidePage({ params }: Props) {
           </nav>
 
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
-            <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
-              <MDXRemote source={guide.content} components={mdxComponents} />
-            </article>
+            <div>
+              <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
+                <MDXRemote source={guide.content} components={mdxComponents} />
+              </article>
+
+              <NextSteps
+                tools={[
+                  {
+                    title: "Kalkulator doprinosa",
+                    description: "Izračunajte mjesečne doprinose za MIO i HZZO",
+                    href: "/alati/kalkulator-doprinosa",
+                  },
+                  {
+                    title: "Kalkulator poreza",
+                    description: "Izračunajte paušalni porez na temelju prihoda",
+                    href: "/alati/kalkulator-poreza",
+                  },
+                  {
+                    title: "PDV prag (60.000€)",
+                    description: "Provjerite koliko ste blizu praga i kada postajete PDV obveznik",
+                    href: "/alati/pdv-kalkulator",
+                  },
+                  {
+                    title: "Kalendar rokova",
+                    description: "Podsjetnik za važne rokove prijava i uplata",
+                    href: "/alati/kalendar",
+                  },
+                ]}
+                comparisons={[
+                  {
+                    title: "Počinjem solo",
+                    description: "Usporedba paušalnog obrta, obrta na dohodak i d.o.o.",
+                    href: "/usporedba/pocinjem-solo",
+                  },
+                  {
+                    title: "Preko praga",
+                    description: "Što kada prihod prijeđe 60.000€?",
+                    href: "/usporedba/preko-praga",
+                  },
+                ]}
+              />
+            </div>
             {tocItems.length > 0 && (
               <aside aria-label="Sadržaj">
                 <TableOfContents items={tocItems} />

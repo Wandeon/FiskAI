@@ -10,6 +10,7 @@ import { generateBreadcrumbSchema } from "@/lib/schema"
 import { MDXRemote } from "next-mdx-remote/rsc"
 import { mdxComponents } from "@/components/knowledge-hub/mdx-components"
 import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
+import { NextSteps } from "@/components/knowledge-hub/NextSteps"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -97,6 +98,43 @@ export default async function HowToPage({ params }: Props) {
           </article>
 
           {frontmatter.faq && <FAQ items={frontmatter.faq} />}
+
+          <NextSteps
+            tools={[
+              {
+                title: "Kalkulator doprinosa",
+                description: "Izračunajte mjesečne doprinose za MIO i HZZO",
+                href: "/alati/kalkulator-doprinosa",
+              },
+              {
+                title: "Kalkulator poreza",
+                description: "Izračunajte paušalni porez na temelju prihoda",
+                href: "/alati/kalkulator-poreza",
+              },
+              {
+                title: "Generator uplatnica",
+                description: "Generirajte HUB3 barkod za uplate doprinosa i poreza",
+                href: "/alati/uplatnice",
+              },
+              {
+                title: "Kalendar rokova",
+                description: "Podsjetnik za važne rokove prijava i uplata",
+                href: "/alati/kalendar",
+              },
+            ]}
+            comparisons={[
+              {
+                title: "Počinjem solo",
+                description: "Usporedba paušalnog obrta, obrta na dohodak i d.o.o.",
+                href: "/usporedba/pocinjem-solo",
+              },
+              {
+                title: "Dodatni prihod",
+                description: "Kako zaraditi uz redovan posao?",
+                href: "/usporedba/dodatni-prihod",
+              },
+            ]}
+          />
 
           <Sources
             sources={frontmatter.sources}
