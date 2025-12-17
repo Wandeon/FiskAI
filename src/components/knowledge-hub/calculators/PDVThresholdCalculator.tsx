@@ -4,8 +4,9 @@ import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { useAnimatedNumber } from "@/hooks/use-animated-number"
 import { formatEUR } from "@/lib/knowledge-hub/calculations"
+import { THRESHOLDS } from "@/lib/fiscal-data"
 
-const PDV_THRESHOLD = 60000
+const PDV_THRESHOLD = THRESHOLDS.pdv.value
 
 export function PDVThresholdCalculator() {
   const [currentRevenue, setCurrentRevenue] = useState(35000)
