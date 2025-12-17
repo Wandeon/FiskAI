@@ -1,0 +1,119 @@
+// src/app/(dashboard)/pos/components/cart.tsx
+"use client"
+
+import { Button } from "@/components/ui/button"
+import type { CartItem } from "../types"
+
+interface Props {
+  items: CartItem[]
+  onUpdateQuantity: (id: string, quantity: number) => void
+  onRemove: (id: string) => void
+}
+
+export function Cart({ items, onUpdateQuantity, onRemove }: Props) {
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("hr-HR", {
+      style: "currency",
+      currency: "EUR",
+    }).format(price)
+
+  // Calculate totals
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  )
+
+  // Group VAT by rate
+  const vatByRate = items.reduce(
+    (acc, item) => {
+      const net = item.unitPrice * item.quantity
+      const vat = net * (item.vatRate / 100)
+      acc[item.vatRate] = (acc[item.vatRate] || 0) + vat
+      return acc
+    },
+    {} as Record<number, number>
+  )
+
+  const totalVat = Object.values(vatByRate).reduce((sum, v) => sum + v, 0)
+  const total = subtotal + totalVat
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="p-4 border-b">
+        <h2 className="font-bold">Košarica</h2>
+        <p className="text-sm text-gray-500">{items.length} stavki</p>
+      </div>
+
+      {/* Items */}
+      <div className="flex-1 overflow-auto p-4 space-y-3">
+        {items.length === 0 ? (
+          <p className="text-center text-gray-400 py-8">Košarica je prazna</p>
+        ) : (
+          items.map((item) => (
+            <div key={item.id} className="bg-gray-50 rounded-lg p-3">
+              <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{item.description}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatPrice(item.unitPrice)} × {item.quantity}
+                  </p>
+                </div>
+                <p className="font-bold">
+                  {formatPrice(item.unitPrice * item.quantity)}
+                </p>
+              </div>
+
+              {/* Quantity controls */}
+              <div className="flex items-center gap-2 mt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                >
+                  -
+                </Button>
+                <span className="w-8 text-center">{item.quantity}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                >
+                  +
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto text-red-500"
+                  onClick={() => onRemove(item.id)}
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Totals */}
+      <div className="p-4 border-t bg-gray-50 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">Osnovica:</span>
+          <span>{formatPrice(subtotal)}</span>
+        </div>
+
+        {Object.entries(vatByRate).map(([rate, amount]) => (
+          <div key={rate} className="flex justify-between text-sm">
+            <span className="text-gray-500">PDV {rate}%:</span>
+            <span>{formatPrice(amount)}</span>
+          </div>
+        ))}
+
+        <div className="flex justify-between text-lg font-bold pt-2 border-t">
+          <span>Ukupno:</span>
+          <span>{formatPrice(total)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
