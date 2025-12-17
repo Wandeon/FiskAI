@@ -1,20 +1,28 @@
 "use client"
 
+import type { ComponentPropsWithoutRef } from "react"
 import { cn } from "@/lib/utils"
 import { GlowOrb } from "@/components/ui/motion/GlowOrb"
-
-interface SectionBackgroundProps {
-  variant?: "hero" | "dark" | "subtle"
-  showGrid?: boolean
-  showOrbs?: boolean
-  children: React.ReactNode
-  className?: string
-}
 
 const variantStyles = {
   hero: "bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900",
   dark: "bg-slate-950",
   subtle: "bg-slate-900/50",
+  gradient: "bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900",
+  mesh: "bg-slate-950",
+} as const
+
+type SectionBackgroundVariant = keyof typeof variantStyles
+
+interface SectionBackgroundProps extends ComponentPropsWithoutRef<"section"> {
+  variant?: SectionBackgroundVariant
+  showGrid?: boolean
+  showOrbs?: boolean
+}
+
+function resolveVariant(variant: SectionBackgroundProps["variant"]) {
+  if (!variant) return "hero"
+  return variant in variantStyles ? variant : "hero"
 }
 
 export function SectionBackground({
@@ -23,9 +31,25 @@ export function SectionBackground({
   showOrbs = true,
   children,
   className,
+  ...props
 }: SectionBackgroundProps) {
+  const resolvedVariant = resolveVariant(variant)
+
   return (
-    <section className={cn("relative overflow-hidden", variantStyles[variant], className)}>
+    <section
+      {...props}
+      className={cn("dark relative overflow-hidden", variantStyles[resolvedVariant], className)}
+    >
+      {resolvedVariant === "mesh" && (
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 18% 28%, rgba(56,189,248,0.22), transparent 55%), radial-gradient(circle at 82% 18%, rgba(129,140,248,0.18), transparent 52%), radial-gradient(circle at 55% 82%, rgba(34,211,238,0.14), transparent 58%)",
+          }}
+        />
+      )}
+
       {/* Animated glow orbs */}
       {showOrbs && (
         <div className="pointer-events-none absolute inset-0">
