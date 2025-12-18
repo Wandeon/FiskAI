@@ -36,6 +36,13 @@
       "when": 1765991100000,
       "tag": "0004_add_source_chunk_embedding",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1734545000000,
+      "tag": "0005_add_pausalni_schema",
+      "breakpoints": true
     }
   ]
 }
