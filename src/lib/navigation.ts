@@ -22,6 +22,7 @@ export interface NavItem {
   badge?: number
   children?: { name: string; href: string }[]
   module?: "invoicing" | "eInvoicing" | "expenses" | "banking" | "reports" | "settings"
+  showFor?: string[] // Legal forms that should see this item (e.g., ["OBRT_PAUSAL"])
 }
 
 export interface NavSection {
@@ -52,6 +53,12 @@ export const navigation: NavSection[] = [
         ],
       },
       { name: "Banka", href: "/banking", icon: Building2, module: "banking" },
+      {
+        name: "Paušalni Hub",
+        href: "/pausalni",
+        icon: Calculator,
+        showFor: ["OBRT_PAUSAL"],
+      },
       {
         name: "Izvještaji",
         href: "/reports",

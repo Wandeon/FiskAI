@@ -19,6 +19,7 @@ interface SidebarProps {
     name: string
     eInvoiceProvider?: string | null
     isVatPayer: boolean
+    legalForm?: string | null
   }
 }
 
@@ -99,47 +100,54 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
 
               {/* Section Items */}
               <div className="space-y-1">
-                {section.items.map((item) => {
-                  const isActive = isNavItemActive(item, pathname)
-                  const Icon = item.icon
+                {section.items
+                  .filter((item) => {
+                    // Filter items based on showFor property
+                    if (!item.showFor) return true
+                    if (!company?.legalForm) return false
+                    return item.showFor.includes(company.legalForm)
+                  })
+                  .map((item) => {
+                    const isActive = isNavItemActive(item, pathname)
+                    const Icon = item.icon
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={isCollapsed ? item.name : undefined}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
-                          : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]",
-                        isCollapsed && "justify-center px-2"
-                      )}
-                    >
-                      <Icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        title={isCollapsed ? item.name : undefined}
                         className={cn(
-                          "h-5 w-5 flex-shrink-0",
-                          isActive ? "text-brand-600" : "text-[var(--muted)]"
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
+                            : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]",
+                          isCollapsed && "justify-center px-2"
                         )}
-                      />
-
-                      {!isCollapsed && (
-                        <>
-                          <span className="flex-1">{item.name}</span>
-                          {item.badge !== undefined && item.badge > 0 && (
-                            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
-                              {item.badge}
-                            </span>
+                      >
+                        <Icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            isActive ? "text-brand-600" : "text-[var(--muted)]"
                           )}
-                        </>
-                      )}
+                        />
 
-                      {isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                        <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-brand-500" />
-                      )}
-                    </Link>
-                  )
-                })}
+                        {!isCollapsed && (
+                          <>
+                            <span className="flex-1">{item.name}</span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
+                        )}
+
+                        {isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-brand-500" />
+                        )}
+                      </Link>
+                    )
+                  })}
               </div>
             </div>
           ))}
