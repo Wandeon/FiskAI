@@ -221,6 +221,86 @@ export const croatianDeadlines: Omit<NewComplianceDeadline, "id" | "createdAt" |
     severity: "high",
   },
 
+  // PO-SD quarterly submission deadlines for 2025
+  {
+    title: "PO-SD za Q1 2025",
+    description: "Obrazac PO-SD za I. kvartal - predaja do 20. travnja",
+    deadlineDate: "2025-04-20",
+    deadlineType: "posd",
+    appliesTo: ["pausalni"],
+    recurrence: null,
+    sourceUrl:
+      "https://www.porezna-uprava.hr/HR_porezni_obveznici/Stranice/Pausalno-oporezivanje.aspx",
+    sourceName: "Porezna uprava RH",
+    severity: "high",
+  },
+  {
+    title: "PO-SD za Q2 2025",
+    description: "Obrazac PO-SD za II. kvartal - predaja do 20. srpnja",
+    deadlineDate: "2025-07-20",
+    deadlineType: "posd",
+    appliesTo: ["pausalni"],
+    recurrence: null,
+    sourceUrl:
+      "https://www.porezna-uprava.hr/HR_porezni_obveznici/Stranice/Pausalno-oporezivanje.aspx",
+    sourceName: "Porezna uprava RH",
+    severity: "high",
+  },
+  {
+    title: "PO-SD za Q3 2025",
+    description: "Obrazac PO-SD za III. kvartal - predaja do 20. listopada",
+    deadlineDate: "2025-10-20",
+    deadlineType: "posd",
+    appliesTo: ["pausalni"],
+    recurrence: null,
+    sourceUrl:
+      "https://www.porezna-uprava.hr/HR_porezni_obveznici/Stranice/Pausalno-oporezivanje.aspx",
+    sourceName: "Porezna uprava RH",
+    severity: "high",
+  },
+  {
+    title: "PO-SD za Q4 2025",
+    description: "Obrazac PO-SD za IV. kvartal - predaja do 20. siječnja 2026",
+    deadlineDate: "2026-01-20",
+    deadlineType: "posd",
+    appliesTo: ["pausalni"],
+    recurrence: null,
+    sourceUrl:
+      "https://www.porezna-uprava.hr/HR_porezni_obveznici/Stranice/Pausalno-oporezivanje.aspx",
+    sourceName: "Porezna uprava RH",
+    severity: "high",
+  },
+
+  // Monthly contribution deadlines for paušalni obrt (2025)
+  ...Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1
+    const monthNames = [
+      "siječanj",
+      "veljača",
+      "ožujak",
+      "travanj",
+      "svibanj",
+      "lipanj",
+      "srpanj",
+      "kolovoz",
+      "rujan",
+      "listopad",
+      "studeni",
+      "prosinac",
+    ]
+    return {
+      title: `Uplata doprinosa za ${monthNames[i === 0 ? 11 : i - 1]}`,
+      description: "Mjesečni doprinosi za MIO i zdravstveno osiguranje",
+      deadlineDate: `2025-${String(month).padStart(2, "0")}-15`,
+      deadlineType: "doprinosi",
+      appliesTo: ["pausalni", "obrt"],
+      recurrence: null,
+      sourceUrl: "https://www.porezna-uprava.hr/HR_porezni_obveznici/Stranice/JOPPD.aspx",
+      sourceName: "Porezna uprava RH",
+      severity: "high",
+    }
+  }),
+
   // ROL obrazac (Izvješće o radnicima)
   {
     title: "ROL obrazac - Izvješće o zaposlenim radnicima",
