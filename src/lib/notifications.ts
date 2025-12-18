@@ -2,6 +2,7 @@ import { db, setTenantContext, getTenantContext } from "@/lib/db"
 import type { NotificationItem, NotificationType } from "@/types/notifications"
 import type { AuditAction, Company } from "@prisma/client"
 import { SupportTicketStatus } from "@prisma/client"
+import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
 
 type NotificationCenterContext = {
   userId: string
@@ -65,6 +66,7 @@ export async function getNotificationCenterFeed({
       staleTicketCount,
       unassignedTicketCount,
       overdueExpenseCount,
+      upcomingDeadlines,
     ] = await Promise.all([
       db.eInvoice.count({
         where: { companyId: company.id, status: "DRAFT" },
@@ -159,6 +161,7 @@ export async function getNotificationCenterFeed({
           date: { lt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30) },
         },
       }),
+      getUpcomingDeadlines(14, undefined, 5), // Next 14 days deadlines
     ])
 
     const alerts: NotificationItem[] = []
@@ -263,6 +266,34 @@ export async function getNotificationCenterFeed({
       })
     }
 
+    // Deadline notifications
+    const deadlineAlerts: NotificationItem[] = upcomingDeadlines
+      .filter(d => {
+        const daysLeft = Math.ceil(
+          (new Date(d.deadlineDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+        return daysLeft <= 7 // Only show deadlines within 7 days
+      })
+      .map(deadline => {
+        const daysLeft = Math.ceil(
+          (new Date(deadline.deadlineDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+        const isUrgent = daysLeft <= 3
+
+        return {
+          id: `deadline-${deadline.id}`,
+          type: isUrgent ? "warning" as NotificationType : "info" as NotificationType,
+          title: deadline.title,
+          description: daysLeft <= 0
+            ? "Rok je prošao!"
+            : daysLeft === 1
+              ? "Rok je sutra!"
+              : `Rok za ${daysLeft} dana`,
+          timestamp: new Date(deadline.deadlineDate).toLocaleDateString("hr-HR"),
+          action: { label: "Kalendar", href: "/alati/kalendar" },
+        }
+      })
+
     const invoiceNotifications: NotificationItem[] = recentInvoices.map((invoice) => {
       const amount = Number(invoice.totalAmount || 0)
       return {
@@ -312,11 +343,12 @@ export async function getNotificationCenterFeed({
     }))
 
     const items = [
+      ...deadlineAlerts, // Add deadline alerts first (high priority)
       ...alerts,
       ...ticketNotifications,
       ...invoiceNotifications,
       ...activityNotifications,
-    ].slice(0, 12)
+    ].slice(0, 15) // Increase limit to accommodate deadlines
     const latestEventAt = items.reduce<Date | null>((latest, item) => {
       if (!item.rawTimestamp) return latest
       const ts = new Date(item.rawTimestamp)
