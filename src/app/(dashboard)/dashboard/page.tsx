@@ -12,6 +12,9 @@ import { TodayActionsCard } from "@/components/dashboard/today-actions-card"
 import { VatOverviewCard } from "@/components/dashboard/vat-overview-card"
 import { InvoiceFunnelCard } from "@/components/dashboard/invoice-funnel-card"
 import { InsightsCard } from "@/components/dashboard/insights-card"
+import { PausalniStatusCard } from "@/components/dashboard/pausalni-status-card"
+import { DeadlineCountdownCard } from "@/components/dashboard/deadline-countdown-card"
+import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
 
 const Decimal = Prisma.Decimal
 
@@ -40,6 +43,7 @@ export default async function DashboardPage() {
     totalRevenue,
     revenueTrendRaw,
     statusBuckets,
+    ytdRevenue,
   ] = await Promise.all([
     db.eInvoice.count({ where: { companyId: company.id } }),
     db.contact.count({ where: { companyId: company.id } }),
@@ -84,9 +88,48 @@ export default async function DashboardPage() {
       _count: { id: true },
       _sum: { vatAmount: true },
     }),
+    db.eInvoice.aggregate({
+      where: {
+        companyId: company.id,
+        status: { in: revenueStatuses },
+        createdAt: {
+          gte: new Date(new Date().getFullYear(), 0, 1), // Jan 1 of current year
+        },
+      },
+      _sum: { totalAmount: true },
+    }),
   ])
 
   const totalRevenueValue = Number(totalRevenue._sum.totalAmount || new Decimal(0))
+
+  // Map legalForm to businessType for deadlines
+  const businessTypeMap: Record<string, string> = {
+    OBRT_PAUSAL: "pausalni",
+    OBRT_REAL: "obrt",
+    OBRT_VAT: "obrt",
+    JDOO: "doo",
+    DOO: "doo",
+  }
+  const businessType = businessTypeMap[company.legalForm || ""] || "all"
+
+  // Fetch upcoming deadlines
+  const upcomingDeadlines = await getUpcomingDeadlines(30, businessType, 5)
+
+  // Calculate next deadline for paušalni
+  const nextDeadline =
+    upcomingDeadlines.length > 0
+      ? {
+          title: upcomingDeadlines[0].title,
+          date: new Date(upcomingDeadlines[0].deadlineDate),
+          daysLeft: Math.ceil(
+            (new Date(upcomingDeadlines[0].deadlineDate).getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24)
+          ),
+          type: upcomingDeadlines[0].deadlineType?.includes("posd")
+            ? ("posd" as const)
+            : ("doprinosi" as const),
+        }
+      : null
 
   const trendBuckets = Array.from({ length: monthsWindow }).map((_, index) => {
     const date = new Date()
@@ -256,6 +299,15 @@ export default async function DashboardPage() {
             oib={company.oib}
             vatNumber={company.vatNumber}
           />
+          {company.legalForm === "OBRT_PAUSAL" && (
+            <PausalniStatusCard
+              ytdRevenue={Number(ytdRevenue._sum.totalAmount || 0)}
+              vatThreshold={60000}
+              nextDeadline={nextDeadline}
+              quarterlyIncome={{ q1: 0, q2: 0, q3: 0, q4: 0 }}
+            />
+          )}
+          <DeadlineCountdownCard deadlines={upcomingDeadlines} businessType={businessType} />
           <VatOverviewCard
             paidVat={vatPaid}
             pendingVat={vatPending}

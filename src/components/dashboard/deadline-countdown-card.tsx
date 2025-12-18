@@ -11,8 +11,8 @@ interface Deadline {
   title: string
   deadlineDate: string
   deadlineType: string
-  severity: string
-  description?: string
+  severity: string | null
+  description?: string | null
 }
 
 interface DeadlineCountdownCardProps {
@@ -28,7 +28,7 @@ function getDaysUntil(dateStr: string): number {
   return Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-function getSeverityColor(daysLeft: number, severity: string) {
+function getSeverityColor(daysLeft: number, severity: string | null) {
   if (daysLeft <= 0) return "destructive"
   if (daysLeft <= 3 || severity === "critical") return "destructive"
   if (daysLeft <= 7 || severity === "high") return "warning"
