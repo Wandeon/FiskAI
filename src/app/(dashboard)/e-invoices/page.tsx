@@ -155,9 +155,9 @@ export default async function EInvoicesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">E-Računi</h1>
         <VisibleButton id="action:create-invoice" asChild>
-          <Link href="/e-invoices/new">
-            <Button>Novi E-Račun</Button>
-          </Link>
+          <Button asChild>
+            <Link href="/e-invoices/new">Novi E-Račun</Link>
+          </Button>
         </VisibleButton>
       </div>
 
@@ -200,9 +200,9 @@ export default async function EInvoicesPage() {
                 description="E-računi omogućuju brzu i sigurnu razmjenu dokumenata s kupcima. Kreirajte račun, fiskalizirajte ga i pošaljite u par klikova."
                 action={
                   <VisibleButton id="action:create-invoice" asChild>
-                    <Link href="/e-invoices/new">
-                      <Button>Kreiraj prvi e-račun</Button>
-                    </Link>
+                    <Button asChild>
+                      <Link href="/e-invoices/new">Kreiraj prvi e-račun</Link>
+                    </Button>
                   </VisibleButton>
                 }
               />

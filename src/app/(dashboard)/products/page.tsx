@@ -54,9 +54,9 @@ export default async function ProductsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Proizvodi i usluge</h1>
         <VisibleButton id="action:create-product" asChild>
-          <Link href="/products/new">
-            <Button>Novi proizvod</Button>
-          </Link>
+          <Button asChild>
+            <Link href="/products/new">Novi proizvod</Link>
+          </Button>
         </VisibleButton>
       </div>
 
@@ -69,9 +69,9 @@ export default async function ProductsPage() {
               description="Proizvodi i usluge su temelj vaših računa. Dodajte ih ručno ili uvezite iz CSV datoteke."
               action={
                 <VisibleButton id="action:create-product" asChild>
-                  <Link href="/products/new">
-                    <Button>Dodaj prvi proizvod</Button>
-                  </Link>
+                  <Button asChild>
+                    <Link href="/products/new">Dodaj prvi proizvod</Link>
+                  </Button>
                 </VisibleButton>
               }
             />

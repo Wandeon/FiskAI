@@ -58,12 +58,12 @@ async function ContactList({
         action={
           !search && type === "ALL" ? (
             <VisibleButton id="action:create-contact" asChild>
-              <Link href="/contacts/new">
-                <Button>
+              <Button asChild>
+                <Link href="/contacts/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Dodaj kontakt
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </VisibleButton>
           ) : undefined
         }
@@ -125,12 +125,12 @@ export default async function ContactsPage({ searchParams }: PageProps) {
           <p className="text-sm text-[var(--muted)] mt-1">Upravljajte kupcima i dobavljačima</p>
         </div>
         <VisibleButton id="action:create-contact" asChild>
-          <Link href="/contacts/new">
-            <Button>
+          <Button asChild>
+            <Link href="/contacts/new">
               <Plus className="h-4 w-4 mr-2" />
               Novi kontakt
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </VisibleButton>
       </div>
 

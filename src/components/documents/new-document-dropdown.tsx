@@ -35,7 +35,7 @@ const DOCUMENT_OPTIONS = [
     href: "/expenses/new",
     icon: Receipt,
     description: "Evidentiraj trošak",
-    elementId: undefined, // No specific action ID for expenses
+    elementId: "action:create-expense" as ElementId,
   },
 ]
 
@@ -47,7 +47,7 @@ function DocumentOption({
   onClick: () => void
 }) {
   const Icon = option.icon
-  const status = useElementStatus(option.elementId || ("action:create-invoice" as ElementId))
+  const status = useElementStatus(option.elementId)
 
   // If element has an ID and is not visible, don't render
   if (option.elementId && !status.visible) {

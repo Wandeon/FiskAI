@@ -46,6 +46,7 @@ export const VISIBILITY_ELEMENTS = {
   "action:create-invoice": { type: "action", label: "Nova faktura" },
   "action:create-contact": { type: "action", label: "Novi kontakt" },
   "action:create-product": { type: "action", label: "Novi proizvod" },
+  "action:create-expense": { type: "action", label: "Novi trošak" },
   "action:import-statements": { type: "action", label: "Uvezi izvode" },
   "action:export-data": { type: "action", label: "Izvoz podataka" },
 
