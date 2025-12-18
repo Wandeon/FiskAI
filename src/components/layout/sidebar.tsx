@@ -7,6 +7,7 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { navigation, isNavItemActive } from "@/lib/navigation"
+import { ChecklistMiniView } from "@/components/guidance"
 
 interface SidebarProps {
   defaultCollapsed?: boolean
@@ -86,6 +87,9 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
             </div>
           </div>
         )}
+
+        {/* Checklist mini-view */}
+        <ChecklistMiniView collapsed={isCollapsed} className="mt-4" />
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin p-3">
