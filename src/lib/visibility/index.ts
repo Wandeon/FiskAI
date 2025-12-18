@@ -1,5 +1,7 @@
 // src/lib/visibility/index.ts
 // Public exports for the visibility system
+// NOTE: This file only exports client-safe code (no database/server dependencies)
+// For server utilities, import directly from "./server" or "./route-protection"
 
 // Elements
 export {
@@ -10,7 +12,7 @@ export {
   getElementsByType,
 } from "./elements"
 
-// Rules
+// Rules (pure functions, no database)
 export {
   type CompetenceLevel,
   type ProgressionStage,
@@ -54,13 +56,7 @@ export {
   type VisibleLinkProps,
 } from "./components"
 
-// Server utilities
-export {
-  getVisibilityData,
-  getServerVisibility,
-  getVisibilityProviderProps,
-  checkRouteAccess,
-  type ServerVisibilityData,
-  type ServerVisibilityResult,
-  type RouteProtectionResult,
-} from "./server"
+// NOTE: Server utilities are NOT exported here to prevent client-side bundling
+// Import server utilities directly:
+//   import { getServerVisibility, checkRouteAccess } from "@/lib/visibility/server"
+//   import { protectRoute } from "@/lib/visibility/route-protection"

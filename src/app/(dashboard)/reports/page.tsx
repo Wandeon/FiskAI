@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { deriveCapabilities } from "@/lib/capabilities"
 import { redirect } from "next/navigation"
+import { protectRoute } from "@/lib/visibility/route-protection"
 
 const REPORTS = [
   {
@@ -52,6 +53,9 @@ const REPORTS = [
 ]
 
 export default async function ReportsPage() {
+  // Visibility system route protection
+  await protectRoute("page:reports")
+
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
   const capabilities = deriveCapabilities(company)

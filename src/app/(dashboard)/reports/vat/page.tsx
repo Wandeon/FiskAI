@@ -4,12 +4,16 @@ import { setTenantContext } from "@/lib/prisma-extensions"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { protectRoute } from "@/lib/visibility/route-protection"
 
 export default async function VatReportPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>
 }) {
+  // Visibility system route protection - VAT reports require VAT visibility
+  await protectRoute("page:vat")
+
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
   const params = await searchParams
