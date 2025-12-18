@@ -48,22 +48,16 @@
   @apply gap-2;
 }
 
-/* Utility classes for conditional dense styling */
-.dense\:p-2 {
-  /* Will apply p-2 when .dense-mode parent is present */
+/* Dense variants using group */
+.group-dense .group-dense\:p-2 {
+  padding: 0.5rem;
 }
 
-@layer utilities {
-  /* Dense variants using group */
-  .group-dense .group-dense\:p-2 {
-    @apply p-2;
-  }
+.group-dense .group-dense\:gap-2 {
+  gap: 0.5rem;
+}
 
-  .group-dense .group-dense\:gap-2 {
-    @apply gap-2;
-  }
-
-  .group-dense .group-dense\:text-sm {
-    @apply text-sm;
-  }
+.group-dense .group-dense\:text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
