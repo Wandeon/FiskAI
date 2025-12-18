@@ -6,7 +6,7 @@ export const cardVariants = cva("rounded-2xl transition-all duration-200", {
   variants: {
     variant: {
       glass:
-        "border border-white/10 bg-white/5 backdrop-blur-sm hover:border-white/20 hover:bg-white/10",
+        "border border-[var(--border)] bg-[var(--surface)] backdrop-blur-sm hover:border-[var(--border)] hover:bg-[var(--surface-secondary)]",
       elevated:
         "bg-surface border border-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5",
       gradient: "bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 border border-white/10",

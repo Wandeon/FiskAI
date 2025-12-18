@@ -35,8 +35,8 @@ const urgencyStyles = {
   },
   optional: {
     icon: "⚪",
-    bg: "bg-white/5 border-white/10",
-    text: "text-white/60",
+    bg: "bg-[var(--surface-secondary)] border-[var(--border)]",
+    text: "text-[var(--muted)]",
   },
 }
 
@@ -85,7 +85,7 @@ export function ChecklistItem({
       className={cn(
         "group flex items-start gap-3 rounded-lg border p-3 transition-all",
         style.bg,
-        item.action.href && "hover:bg-white/5 cursor-pointer",
+        item.action.href && "hover:bg-[var(--surface-secondary)] cursor-pointer",
         className
       )}
     >
@@ -94,8 +94,8 @@ export function ChecklistItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="font-medium text-white">{item.title}</p>
-            <p className="text-sm text-white/60 mt-0.5">{item.description}</p>
+            <p className="font-medium text-[var(--foreground)]">{item.title}</p>
+            <p className="text-sm text-[var(--muted)] mt-0.5">{item.description}</p>
           </div>
 
           {item.dueDate && (
@@ -131,7 +131,7 @@ export function ChecklistItem({
                   handleDismiss()
                 }}
                 disabled={isLoading}
-                className="h-7 text-xs text-white/40 hover:text-white/60"
+                className="h-7 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <X className="h-3 w-3 mr-1" />
                 Odbaci
@@ -142,7 +142,7 @@ export function ChecklistItem({
       </div>
 
       {item.action.href && (
-        <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-white/60 transition-colors mt-0.5" />
+        <ChevronRight className="h-5 w-5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors mt-0.5" />
       )}
     </div>
   )
