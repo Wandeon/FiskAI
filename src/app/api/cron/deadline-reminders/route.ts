@@ -1,7 +1,11 @@
 // src/app/api/cron/deadline-reminders/route.ts
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
+import { drizzleDb } from "@/lib/db/drizzle"
+import { paymentObligation, OBLIGATION_STATUS } from "@/lib/db/schema/pausalni"
+import { updateObligationStatuses } from "@/lib/pausalni/obligation-generator"
+import { OBLIGATION_LABELS, CROATIAN_MONTHS_GENITIVE } from "@/lib/pausalni/constants"
+import { eq, or, and, lte } from "drizzle-orm"
 import { Resend } from "resend"
 
 // Vercel cron or external cron calls this endpoint
@@ -33,22 +37,43 @@ export async function GET(request: Request) {
       },
     })
 
-    const results: { companyId: string; emailsSent: number }[] = []
+    const results: { companyId: string; emailsSent: number; obligationsSent: number }[] = []
 
     for (const company of companies) {
-      // Get upcoming deadlines for paušalni
-      const deadlines = await getUpcomingDeadlines(7, "pausalni", 5)
+      // Update obligation statuses first
+      await updateObligationStatuses(company.id)
 
-      // Filter to deadlines that need reminders (7 days, 3 days, 1 day before)
-      const reminderDays = [7, 3, 1]
-      const deadlinesToRemind = deadlines.filter((d) => {
-        const daysLeft = Math.ceil(
-          (new Date(d.deadlineDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      // Get obligations that need reminders:
+      // - DUE_SOON (within 3 days)
+      // - OVERDUE (past due date)
+      // - PENDING obligations due within 7 days
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const sevenDaysFromNow = new Date(today)
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
+
+      const obligations = await drizzleDb
+        .select()
+        .from(paymentObligation)
+        .where(
+          and(
+            eq(paymentObligation.companyId, company.id),
+            or(
+              // Overdue obligations
+              eq(paymentObligation.status, OBLIGATION_STATUS.OVERDUE),
+              // Due soon obligations
+              eq(paymentObligation.status, OBLIGATION_STATUS.DUE_SOON),
+              // Pending obligations due within 7 days
+              and(
+                eq(paymentObligation.status, OBLIGATION_STATUS.PENDING),
+                lte(paymentObligation.dueDate, sevenDaysFromNow.toISOString().split("T")[0])
+              )
+            )
+          )
         )
-        return reminderDays.includes(daysLeft)
-      })
 
-      if (deadlinesToRemind.length === 0) {
+      if (obligations.length === 0) {
         continue
       }
 
@@ -61,11 +86,15 @@ export async function GET(request: Request) {
         await resend.emails.send({
           from: "FiskAI <noreply@fiskai.hr>",
           to: owner.user.email,
-          subject: `[FiskAI] Podsjetnik: ${deadlinesToRemind.length} rok(ova) uskoro`,
-          html: generateReminderEmailHtml(company.name, deadlinesToRemind),
+          subject: `[FiskAI] Podsjetnik: ${obligations.length} obvez${obligations.length === 1 ? "a" : "e"} za uplatu`,
+          html: generateReminderEmailHtml(company.name, company.id, obligations),
         })
 
-        results.push({ companyId: company.id, emailsSent: 1 })
+        results.push({
+          companyId: company.id,
+          emailsSent: 1,
+          obligationsSent: obligations.length,
+        })
       } catch (emailError) {
         console.error(`Failed to send email to ${owner.user.email}:`, emailError)
       }
@@ -82,27 +111,81 @@ export async function GET(request: Request) {
   }
 }
 
+interface ObligationForEmail {
+  id: string
+  obligationType: string
+  periodMonth: number
+  periodYear: number
+  amount: string
+  dueDate: string
+  status: string
+}
+
 function generateReminderEmailHtml(
   companyName: string,
-  deadlines: { title: string; deadlineDate: string; description?: string | null }[]
+  companyId: string,
+  obligations: ObligationForEmail[]
 ): string {
-  const deadlineRows = deadlines
-    .map((d) => {
+  const obligationRows = obligations
+    .map((ob) => {
       const daysLeft = Math.ceil(
-        (new Date(d.deadlineDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(ob.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       )
-      const urgency = daysLeft <= 1 ? "🔴" : daysLeft <= 3 ? "🟡" : "🟢"
+
+      let urgency = "🟢"
+      let statusText = "Uskoro"
+      let statusColor = "#6b7280"
+
+      if (ob.status === OBLIGATION_STATUS.OVERDUE) {
+        urgency = "🔴"
+        statusText = "KASNI!"
+        statusColor = "#dc2626"
+      } else if (ob.status === OBLIGATION_STATUS.DUE_SOON || daysLeft <= 3) {
+        urgency = "🟡"
+        statusText = daysLeft === 0 ? "Danas!" : daysLeft === 1 ? "Sutra!" : `Za ${daysLeft} dana`
+        statusColor = "#f59e0b"
+      } else {
+        statusText = daysLeft === 0 ? "Danas!" : daysLeft === 1 ? "Sutra!" : `Za ${daysLeft} dana`
+      }
+
+      const obligationLabel = OBLIGATION_LABELS[ob.obligationType] || ob.obligationType
+      const amount = parseFloat(ob.amount)
+      const formattedAmount = amount > 0 ? `${amount.toFixed(2)} EUR` : "-"
+
+      // Generate payment slip link
+      let paymentSlipLink = ""
+      if (
+        amount > 0 &&
+        (ob.obligationType.startsWith("DOPRINOSI_") ||
+          ob.obligationType === "PDV" ||
+          ob.obligationType === "HOK")
+      ) {
+        const slipType = ob.obligationType.replace("DOPRINOSI_", "")
+        paymentSlipLink = `
+          <br>
+          <a href="https://erp.metrica.hr/pausalni/obligations?slip=${ob.id}"
+             style="color: #0891b2; font-size: 12px; text-decoration: none;">
+            📄 Generiraj uplatnicu
+          </a>
+        `
+      }
 
       return `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-          ${urgency} <strong>${d.title}</strong>
-          ${d.description ? `<br><small style="color: #6b7280;">${d.description}</small>` : ""}
+          ${urgency} <strong>${obligationLabel}</strong>
+          <br><small style="color: #6b7280;">
+            ${getPeriodLabel(ob.obligationType, ob.periodMonth, ob.periodYear)}
+          </small>
+          ${paymentSlipLink}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
-          ${new Date(d.deadlineDate).toLocaleDateString("hr-HR")}<br>
-          <small style="color: ${daysLeft <= 1 ? "#dc2626" : "#6b7280"};">
-            ${daysLeft === 0 ? "Danas!" : daysLeft === 1 ? "Sutra!" : `za ${daysLeft} dana`}
+          <strong>${formattedAmount}</strong>
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+          ${new Date(ob.dueDate).toLocaleDateString("hr-HR")}<br>
+          <small style="color: ${statusColor}; font-weight: bold;">
+            ${statusText}
           </small>
         </td>
       </tr>
@@ -110,42 +193,83 @@ function generateReminderEmailHtml(
     })
     .join("")
 
+  const totalAmount = obligations.reduce((sum, ob) => sum + parseFloat(ob.amount), 0)
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
     </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #0891b2;">FiskAI - Podsjetnik na rokove</h2>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background-color: #f9fafb;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #0891b2; margin-top: 0;">FiskAI - Podsjetnik za plaćanje obveza</h2>
         <p>Poštovani,</p>
-        <p>Ovo je podsjetnik za tvrtku <strong>${companyName}</strong> o nadolazećim rokovima:</p>
+        <p>Ovo je podsjetnik za tvrtku <strong>${companyName}</strong> o nadolazećim obvezama za plaćanje:</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <thead>
             <tr style="background: #f3f4f6;">
-              <th style="padding: 12px; text-align: left;">Rok</th>
-              <th style="padding: 12px; text-align: right;">Datum</th>
+              <th style="padding: 12px; text-align: left;">Obveza</th>
+              <th style="padding: 12px; text-align: right;">Iznos</th>
+              <th style="padding: 12px; text-align: right;">Rok</th>
             </tr>
           </thead>
           <tbody>
-            ${deadlineRows}
+            ${obligationRows}
           </tbody>
+          ${
+            totalAmount > 0
+              ? `
+          <tfoot>
+            <tr style="background: #f9fafb; font-weight: bold;">
+              <td style="padding: 12px; border-top: 2px solid #0891b2;">UKUPNO</td>
+              <td style="padding: 12px; text-align: right; border-top: 2px solid #0891b2;">${totalAmount.toFixed(2)} EUR</td>
+              <td style="padding: 12px; border-top: 2px solid #0891b2;"></td>
+            </tr>
+          </tfoot>
+          `
+              : ""
+          }
         </table>
 
-        <p>
-          <a href="https://erp.metrica.hr/dashboard"
-             style="display: inline-block; padding: 12px 24px; background: #0891b2; color: white; text-decoration: none; border-radius: 6px;">
-            Otvori FiskAI
+        <div style="background: #ecfeff; border-left: 4px solid #0891b2; padding: 16px; margin: 20px 0; border-radius: 4px;">
+          <p style="margin: 0; color: #0e7490; font-size: 14px;">
+            <strong>💡 Savjet:</strong> Možete generirati uplatnice za sve doprinose odjednom klikom na "Generiraj uplatnicu" u aplikaciji.
+          </p>
+        </div>
+
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="https://erp.metrica.hr/pausalni/obligations"
+             style="display: inline-block; padding: 14px 28px; background: #0891b2; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            Pregled svih obveza
           </a>
         </p>
 
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-          Ovu poruku šalje FiskAI automatski. Možete promijeniti postavke obavijesti u aplikaciji.
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+        <p style="color: #6b7280; font-size: 12px; margin: 0;">
+          Ovu poruku šalje FiskAI automatski kao podsjetnik na rokove za plaćanje. <br>
+          Možete promijeniti postavke obavijesti u aplikaciji.
         </p>
       </div>
     </body>
     </html>
   `
+}
+
+function getPeriodLabel(obligationType: string, periodMonth: number, periodYear: number): string {
+  // For quarterly obligations (POREZ_DOHODAK, HOK)
+  if (obligationType === "POREZ_DOHODAK" || obligationType === "HOK") {
+    return `Q${periodMonth} ${periodYear}`
+  }
+
+  // For annual obligations (PO_SD)
+  if (obligationType === "PO_SD") {
+    return `Godina ${periodYear}`
+  }
+
+  // For monthly obligations
+  const monthName = CROATIAN_MONTHS_GENITIVE[periodMonth - 1] || `mjesec ${periodMonth}`
+  return `za ${monthName} ${periodYear}`
 }
