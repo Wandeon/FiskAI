@@ -176,24 +176,40 @@ CREATE TABLE IF NOT EXISTS "payment_obligation" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-DROP INDEX "idx_news_items_processed";--> statement-breakpoint
-DROP INDEX "idx_news_items_url";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_news_items_processed";--> statement-breakpoint
+DROP INDEX IF EXISTS "idx_news_items_url";--> statement-breakpoint
 ALTER TABLE "news_items" ALTER COLUMN "relevance_score" SET DATA TYPE varchar(10);--> statement-breakpoint
 ALTER TABLE "news_sources" ALTER COLUMN "scrape_selector" SET DATA TYPE text;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "source_url" varchar(1000) NOT NULL;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "original_title" varchar(500) NOT NULL;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "original_content" text;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "fetched_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "summary_en" text;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "impact_level" varchar(20);--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "assigned_to_post_id" uuid;--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "image_url" varchar(1000);--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "image_source" varchar(200);--> statement-breakpoint
-ALTER TABLE "news_items" ADD COLUMN "status" varchar(20) DEFAULT 'pending' NOT NULL;--> statement-breakpoint
-ALTER TABLE "news_categories" ADD CONSTRAINT "news_categories_parent_id_news_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."news_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "news_post_sources" ADD CONSTRAINT "news_post_sources_post_id_news_posts_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."news_posts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "news_post_sources" ADD CONSTRAINT "news_post_sources_news_item_id_news_items_id_fk" FOREIGN KEY ("news_item_id") REFERENCES "public"."news_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "news_posts" ADD CONSTRAINT "news_posts_category_id_news_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."news_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "source_url" varchar(1000) NOT NULL;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "original_title" varchar(500) NOT NULL;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "original_content" text;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "fetched_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "summary_en" text;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "impact_level" varchar(20);--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "assigned_to_post_id" uuid;--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "image_url" varchar(1000);--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "image_source" varchar(200);--> statement-breakpoint
+ALTER TABLE "news_items" ADD COLUMN IF NOT EXISTS "status" varchar(20) DEFAULT 'pending' NOT NULL;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_categories_parent_id_news_categories_id_fk') THEN
+    ALTER TABLE "news_categories" ADD CONSTRAINT "news_categories_parent_id_news_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."news_categories"("id") ON DELETE no action ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_post_sources_post_id_news_posts_id_fk') THEN
+    ALTER TABLE "news_post_sources" ADD CONSTRAINT "news_post_sources_post_id_news_posts_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."news_posts"("id") ON DELETE cascade ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_post_sources_news_item_id_news_items_id_fk') THEN
+    ALTER TABLE "news_post_sources" ADD CONSTRAINT "news_post_sources_news_item_id_news_items_id_fk" FOREIGN KEY ("news_item_id") REFERENCES "public"."news_items"("id") ON DELETE cascade ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_posts_category_id_news_categories_id_fk') THEN
+    ALTER TABLE "news_posts" ADD CONSTRAINT "news_posts_category_id_news_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."news_categories"("id") ON DELETE no action ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "checklist_interactions_user_company_idx" ON "checklist_interactions" USING btree ("user_id","company_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "checklist_interactions_reference_idx" ON "checklist_interactions" USING btree ("item_reference");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "user_guidance_preferences_user_idx" ON "user_guidance_preferences" USING btree ("user_id");--> statement-breakpoint
@@ -215,14 +231,18 @@ CREATE INDEX IF NOT EXISTS "eu_vendor_pattern_idx" ON "eu_vendor" USING btree ("
 CREATE INDEX IF NOT EXISTS "pausalni_profile_company_idx" ON "pausalni_profile" USING btree ("company_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "payment_obligation_company_status_idx" ON "payment_obligation" USING btree ("company_id","status");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "payment_obligation_due_date_idx" ON "payment_obligation" USING btree ("due_date");--> statement-breakpoint
-ALTER TABLE "news_items" ADD CONSTRAINT "news_items_assigned_to_post_id_news_posts_id_fk" FOREIGN KEY ("assigned_to_post_id") REFERENCES "public"."news_posts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_items_assigned_to_post_id_news_posts_id_fk') THEN
+    ALTER TABLE "news_items" ADD CONSTRAINT "news_items_assigned_to_post_id_news_posts_id_fk" FOREIGN KEY ("assigned_to_post_id") REFERENCES "public"."news_posts"("id") ON DELETE no action ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_news_items_status" ON "news_items" USING btree ("status");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_news_items_impact" ON "news_items" USING btree ("impact_level");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_news_items_assigned" ON "news_items" USING btree ("assigned_to_post_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_news_items_url" ON "news_items" USING btree ("source_url");--> statement-breakpoint
-ALTER TABLE "news_items" DROP COLUMN "title";--> statement-breakpoint
-ALTER TABLE "news_items" DROP COLUMN "content";--> statement-breakpoint
-ALTER TABLE "news_items" DROP COLUMN "url";--> statement-breakpoint
-ALTER TABLE "news_items" DROP COLUMN "processed";--> statement-breakpoint
-ALTER TABLE "news_sources" DROP COLUMN "last_success_at";--> statement-breakpoint
-ALTER TABLE "news_sources" DROP COLUMN "last_error";
+ALTER TABLE "news_items" DROP COLUMN IF EXISTS "title";--> statement-breakpoint
+ALTER TABLE "news_items" DROP COLUMN IF EXISTS "content";--> statement-breakpoint
+ALTER TABLE "news_items" DROP COLUMN IF EXISTS "url";--> statement-breakpoint
+ALTER TABLE "news_items" DROP COLUMN IF EXISTS "processed";--> statement-breakpoint
+ALTER TABLE "news_sources" DROP COLUMN IF EXISTS "last_success_at";--> statement-breakpoint
+ALTER TABLE "news_sources" DROP COLUMN IF EXISTS "last_error";
