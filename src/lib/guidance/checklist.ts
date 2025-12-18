@@ -9,7 +9,7 @@ import {
   CHECKLIST_ACTIONS,
   type GuidanceCategory,
 } from "@/lib/db/schema/guidance"
-import { eq, and, or, gte, lte, notInArray, sql } from "drizzle-orm"
+import { eq, and, or, gte, lte, notInArray, inArray, sql } from "drizzle-orm"
 import { OBLIGATION_LABELS } from "@/lib/pausalni/constants"
 import { getAllPatternInsights } from "./patterns"
 
@@ -111,7 +111,7 @@ async function getInteractedReferences(
       and(
         eq(checklistInteractions.userId, userId),
         eq(checklistInteractions.companyId, companyId),
-        sql`${checklistInteractions.action} = ANY(${actions})`
+        inArray(checklistInteractions.action, actions)
       )
     )
 

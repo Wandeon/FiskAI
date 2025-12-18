@@ -1,4 +1,6 @@
-import { pgTable, uuid, varchar, boolean, timestamp, index } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, boolean, timestamp, index, text } from "drizzle-orm/pg-core"
+
+// Note: userId and companyId use text() because Prisma User/Company models use CUIDs, not UUIDs
 
 // Competence levels
 export const COMPETENCE_LEVELS = {
@@ -30,7 +32,7 @@ export const userGuidancePreferences = pgTable(
   "user_guidance_preferences",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id").notNull(),
+    userId: text("user_id").notNull(),
 
     // Competence levels per category (beginner, average, pro)
     levelFakturiranje: varchar("level_fakturiranje", { length: 20 }).default("beginner").notNull(),
@@ -74,8 +76,8 @@ export const checklistInteractions = pgTable(
   "checklist_interactions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id").notNull(),
-    companyId: uuid("company_id").notNull(),
+    userId: text("user_id").notNull(),
+    companyId: text("company_id").notNull(),
 
     // Item identification
     itemType: varchar("item_type", { length: 50 }).notNull(),

@@ -3,7 +3,7 @@ import type { NotificationItem, NotificationType } from "@/types/notifications"
 import type { AuditAction, Company } from "@prisma/client"
 import { SupportTicketStatus } from "@prisma/client"
 import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
-import { getChecklistItems } from "@/lib/guidance/checklist"
+import { getChecklist } from "@/lib/guidance/checklist"
 
 type NotificationCenterContext = {
   userId: string
@@ -164,7 +164,7 @@ export async function getNotificationCenterFeed({
         },
       }),
       getUpcomingDeadlines(14, undefined, 5), // Next 14 days deadlines
-      getChecklistItems(company.id),
+      getChecklist({ userId, companyId: company.id, limit: 5 }),
     ])
 
     const alerts: NotificationItem[] = []
@@ -301,7 +301,7 @@ export async function getNotificationCenterFeed({
     // Add checklist deadlines to notifications
     const checklistAlerts: NotificationItem[] = []
     try {
-      const urgentItems = checklistItems.filter(
+      const urgentItems = (checklistItems?.items || []).filter(
         (item) =>
           !item.completedAt &&
           !item.dismissedAt &&
