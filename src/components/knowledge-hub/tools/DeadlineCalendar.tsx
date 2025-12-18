@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { PaymentSlipModal } from "@/components/pausalni/payment-slip-modal"
 
 interface Deadline {
   date: string // YYYY-MM-DD
@@ -10,6 +11,13 @@ interface Deadline {
   type: "doprinosi" | "pdv" | "dohodak" | "porez" | "joppd"
   description: string
   applies: string[] // ["pausalni", "obrt-dohodak", "doo"]
+  isObligation?: boolean
+  obligationId?: string
+  obligationType?: string
+  periodMonth?: number
+  periodYear?: number
+  amount?: string
+  status?: string
 }
 
 const DEADLINES_2025: Deadline[] = [
@@ -75,6 +83,15 @@ const typeColors = {
   joppd: "bg-red-600",
 }
 
+// Status colors for database-driven obligations
+const statusColors = {
+  PAID: "bg-green-600",
+  OVERDUE: "bg-red-600",
+  DUE_SOON: "bg-yellow-500",
+  PENDING: "bg-blue-600",
+  SKIPPED: "bg-gray-600",
+}
+
 interface DeadlineCalendarProps {
   year: number
 }
@@ -83,6 +100,8 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedDeadline, setSelectedDeadline] = useState<Deadline | null>(null)
   const [filter, setFilter] = useState<string>("all")
+  const [obligations, setObligations] = useState<Deadline[]>([])
+  const [showPaymentSlip, setShowPaymentSlip] = useState(false)
 
   const monthNames = [
     "Siječanj",
@@ -99,8 +118,66 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
     "Prosinac",
   ]
 
+  // Fetch obligations from database for pausalni users
+  useEffect(() => {
+    async function fetchObligations() {
+      try {
+        const res = await fetch(`/api/pausalni/obligations?year=${year}`)
+        if (res.ok) {
+          const data = await res.json()
+
+          // Convert obligations to Deadline format
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const obligationDeadlines: Deadline[] = data.obligations.map((ob: any) => {
+            const obligationType = ob.obligationType
+            let type: "doprinosi" | "pdv" | "dohodak" | "porez" | "joppd" = "doprinosi"
+            let title = obligationType
+
+            if (obligationType.includes("DOPRINOSI")) {
+              type = "doprinosi"
+              title = "Doprinosi"
+            } else if (obligationType === "PDV") {
+              type = "pdv"
+              title = "PDV"
+            } else if (obligationType.includes("DOHODAK")) {
+              type = "dohodak"
+              title = "Porez na dohodak"
+            } else if (obligationType === "HOK") {
+              type = "joppd"
+              title = "HOK članarina"
+            }
+
+            return {
+              date: ob.dueDate,
+              title,
+              type,
+              description: `${title} za ${ob.periodMonth}/${ob.periodYear}`,
+              applies: ["pausalni"],
+              isObligation: true,
+              obligationId: ob.id,
+              obligationType: ob.obligationType,
+              periodMonth: ob.periodMonth,
+              periodYear: ob.periodYear,
+              amount: ob.amount,
+              status: ob.status,
+            }
+          })
+
+          setObligations(obligationDeadlines)
+        }
+      } catch (error) {
+        console.error("Failed to fetch obligations:", error)
+      }
+    }
+
+    fetchObligations()
+  }, [year])
+
   const getDeadlinesForMonth = (month: number) => {
-    return DEADLINES_2025.filter((d) => {
+    // Combine hardcoded deadlines with database obligations
+    const allDeadlines = [...DEADLINES_2025, ...obligations]
+
+    return allDeadlines.filter((d) => {
       const deadlineMonth = parseInt(d.date.split("-")[1]) - 1
       const matchesMonth = deadlineMonth === month
       const matchesFilter = filter === "all" || d.applies.includes(filter)
@@ -221,19 +298,28 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
                   {day}
                 </span>
                 <div className="mt-1 space-y-1">
-                  {dayDeadlines.map((deadline, idx) => (
-                    <button
-                      type="button"
-                      key={idx}
-                      onClick={() => setSelectedDeadline(deadline)}
-                      className={cn(
-                        "btn-press w-full text-left text-xs p-1 rounded-md text-white truncate hover:opacity-95",
-                        typeColors[deadline.type]
-                      )}
-                    >
-                      {deadline.title}
-                    </button>
-                  ))}
+                  {dayDeadlines.map((deadline, idx) => {
+                    // Use status color for obligations, type color for hardcoded deadlines
+                    const bgColor =
+                      deadline.isObligation && deadline.status
+                        ? statusColors[deadline.status as keyof typeof statusColors] ||
+                          typeColors[deadline.type]
+                        : typeColors[deadline.type]
+
+                    return (
+                      <button
+                        type="button"
+                        key={idx}
+                        onClick={() => setSelectedDeadline(deadline)}
+                        className={cn(
+                          "btn-press w-full text-left text-xs p-1 rounded-md text-white truncate hover:opacity-95",
+                          bgColor
+                        )}
+                      >
+                        {deadline.title}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -248,6 +334,22 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
             <div>
               <h3 className="font-semibold text-white">{selectedDeadline.title}</h3>
               <p className="text-sm text-white/70">{selectedDeadline.date}</p>
+              {selectedDeadline.isObligation && selectedDeadline.status && (
+                <div className="mt-1">
+                  <span
+                    className={cn(
+                      "inline-block px-2 py-0.5 text-xs rounded-full text-white",
+                      statusColors[selectedDeadline.status as keyof typeof statusColors]
+                    )}
+                  >
+                    {selectedDeadline.status === "PAID" && "Plaćeno"}
+                    {selectedDeadline.status === "OVERDUE" && "Prosječen rok"}
+                    {selectedDeadline.status === "DUE_SOON" && "Uskoro dospijeva"}
+                    {selectedDeadline.status === "PENDING" && "Na čekanju"}
+                    {selectedDeadline.status === "SKIPPED" && "Preskočeno"}
+                  </span>
+                </div>
+              )}
             </div>
             <button
               type="button"
@@ -259,22 +361,74 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
             </button>
           </div>
           <p className="mt-2 text-sm text-white/90">{selectedDeadline.description}</p>
+          {selectedDeadline.amount && (
+            <div className="mt-2">
+              <span className="text-xs text-white/70">Iznos: </span>
+              <span className="text-sm font-semibold text-white">
+                {parseFloat(selectedDeadline.amount).toFixed(2)} EUR
+              </span>
+            </div>
+          )}
           <div className="mt-2">
             <span className="text-xs text-white/70">Primjenjuje se na: </span>
             <span className="text-xs text-white/90">{selectedDeadline.applies.join(", ")}</span>
           </div>
+          {selectedDeadline.isObligation && selectedDeadline.status !== "PAID" && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowPaymentSlip(true)}
+                className="btn-press w-full rounded-md border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Prikaži uplatnicu
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-sm">
-        {Object.entries(typeColors).map(([type, color]) => (
-          <div key={type} className="flex items-center gap-2">
-            <span className={cn("w-3 h-3 rounded", color)} />
-            <span className="capitalize text-white/70">{type}</span>
-          </div>
-        ))}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-4 text-sm">
+          <div className="font-semibold text-white/90 w-full">Vrste obveza:</div>
+          {Object.entries(typeColors).map(([type, color]) => (
+            <div key={type} className="flex items-center gap-2">
+              <span className={cn("w-3 h-3 rounded", color)} />
+              <span className="capitalize text-white/70">{type}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm pt-2 border-t border-white/10">
+          <div className="font-semibold text-white/90 w-full">Statusi obveza:</div>
+          {Object.entries(statusColors).map(([status, color]) => (
+            <div key={status} className="flex items-center gap-2">
+              <span className={cn("w-3 h-3 rounded", color)} />
+              <span className="text-white/70">
+                {status === "PAID" && "Plaćeno"}
+                {status === "OVERDUE" && "Prosječen rok"}
+                {status === "DUE_SOON" && "Uskoro dospijeva"}
+                {status === "PENDING" && "Na čekanju"}
+                {status === "SKIPPED" && "Preskočeno"}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Payment Slip Modal */}
+      {showPaymentSlip && selectedDeadline?.isObligation && (
+        <PaymentSlipModal
+          obligation={{
+            id: selectedDeadline.obligationId!,
+            obligationType: selectedDeadline.obligationType!,
+            periodMonth: selectedDeadline.periodMonth!,
+            periodYear: selectedDeadline.periodYear!,
+            amount: selectedDeadline.amount!,
+            dueDate: selectedDeadline.date,
+          }}
+          onClose={() => setShowPaymentSlip(false)}
+        />
+      )}
     </div>
   )
 }
