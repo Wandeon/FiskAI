@@ -163,7 +163,7 @@ async function getObligationItems(
         dueDate: new Date(ob.dueDate),
         urgency: calculateUrgency(new Date(ob.dueDate)),
         action: {
-          type: ACTION_TYPES.LINK as const,
+          type: ACTION_TYPES.LINK,
           href: `/pausalni/obligations?highlight=${ob.id}`,
         },
         reference,
@@ -208,7 +208,7 @@ async function getDeadlineItems(
         dueDate: new Date(d.deadlineDate),
         urgency: calculateUrgency(new Date(d.deadlineDate)),
         action: {
-          type: ACTION_TYPES.LINK as const,
+          type: ACTION_TYPES.LINK,
           href: `/rokovi/${d.id}`,
         },
         reference,
