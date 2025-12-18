@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
+import { drizzleDb } from "@/lib/db/drizzle"
+import { pausalniProfile } from "@/lib/db/schema/pausalni"
+import { eq } from "drizzle-orm"
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const company = await getCurrentCompany(user.id!)
+    if (!company) {
+      return NextResponse.json({ error: "No company selected" }, { status: 400 })
+    }
+
+    // Check if company is paušalni obrt
+    if (company.legalForm !== "OBRT_PAUSAL") {
+      return NextResponse.json({ error: "Not a paušalni obrt" }, { status: 400 })
+    }
+
+    // Get or create profile
+    let profile = await drizzleDb
+      .select()
+      .from(pausalniProfile)
+      .where(eq(pausalniProfile.companyId, company.id))
+      .limit(1)
+
+    if (profile.length === 0) {
+      // Create default profile
+      const newProfile = await drizzleDb
+        .insert(pausalniProfile)
+        .values({
+          companyId: company.id,
+          hasPdvId: false,
+          euActive: false,
+          tourismActivity: false,
+        })
+        .returning()
+
+      profile = newProfile
+    }
+
+    return NextResponse.json({ profile: profile[0] })
+  } catch (error) {
+    console.error("Error fetching paušalni profile:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const company = await getCurrentCompany(user.id!)
+    if (!company) {
+      return NextResponse.json({ error: "No company selected" }, { status: 400 })
+    }
+
+    if (company.legalForm !== "OBRT_PAUSAL") {
+      return NextResponse.json({ error: "Not a paušalni obrt" }, { status: 400 })
+    }
+
+    const body = await request.json()
+    const { hasPdvId, pdvId, pdvIdSince, euActive, hokMemberSince, tourismActivity } = body
+
+    // Validate PDV-ID format if provided
+    if (pdvId && !/^HR\d{11}$/.test(pdvId)) {
+      return NextResponse.json(
+        { error: "Invalid PDV-ID format. Expected: HR + 11 digits" },
+        { status: 400 }
+      )
+    }
+
+    const updated = await drizzleDb
+      .update(pausalniProfile)
+      .set({
+        hasPdvId: hasPdvId ?? false,
+        pdvId: hasPdvId ? pdvId : null,
+        pdvIdSince: hasPdvId && pdvIdSince ? new Date(pdvIdSince) : null,
+        euActive: euActive ?? false,
+        hokMemberSince: hokMemberSince ? new Date(hokMemberSince) : null,
+        tourismActivity: tourismActivity ?? false,
+        updatedAt: new Date(),
+      })
+      .where(eq(pausalniProfile.companyId, company.id))
+      .returning()
+
+    if (updated.length === 0) {
+      // Create if doesn't exist
+      const created = await drizzleDb
+        .insert(pausalniProfile)
+        .values({
+          companyId: company.id,
+          hasPdvId: hasPdvId ?? false,
+          pdvId: hasPdvId ? pdvId : null,
+          pdvIdSince: hasPdvId && pdvIdSince ? new Date(pdvIdSince) : null,
+          euActive: euActive ?? false,
+          hokMemberSince: hokMemberSince ? new Date(hokMemberSince) : null,
+          tourismActivity: tourismActivity ?? false,
+        })
+        .returning()
+
+      return NextResponse.json({ profile: created[0] })
+    }
+
+    return NextResponse.json({ profile: updated[0] })
+  } catch (error) {
+    console.error("Error updating paušalni profile:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
