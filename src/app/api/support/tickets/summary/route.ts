@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { SupportTicketStatus } from "@prisma/client"
 
 export async function GET() {
   try {
-    const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const company = await getCurrentCompany(user.id!)
+    if (!company) {
+      // Return empty summary for users without a company (onboarding)
+      return NextResponse.json({
+        openCount: 0,
+        assignedToMe: 0,
+        unassigned: 0,
+        unread: 0,
+        companyId: null,
+      })
+    }
 
     const tickets = await db.supportTicket.findMany({
       where: {

@@ -25,7 +25,20 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const preferences = await getGuidancePreferences(user.id!)
+    let preferences
+    try {
+      preferences = await getGuidancePreferences(user.id!)
+    } catch {
+      // Return default preferences if DB fails (e.g., during onboarding)
+      preferences = {
+        levelFakturiranje: "beginner",
+        levelFinancije: "beginner",
+        levelEu: "beginner",
+        globalLevel: null,
+        emailDigest: "weekly",
+        pushEnabled: true,
+      }
+    }
 
     return NextResponse.json({
       preferences,

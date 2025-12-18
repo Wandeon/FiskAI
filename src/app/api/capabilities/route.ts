@@ -11,10 +11,7 @@ export async function GET() {
 
   const company = await getCurrentCompany(user.id!)
 
-  if (!company) {
-    return NextResponse.json({ error: "No company found" }, { status: 404 })
-  }
-
+  // Return default capabilities if no company exists (user is onboarding)
   const capabilities = deriveCapabilities(company)
   return NextResponse.json(capabilities)
 }

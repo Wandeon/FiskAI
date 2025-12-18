@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
 
     const company = await getCurrentCompany(user.id!)
     if (!company) {
-      return NextResponse.json({ error: "No company found" }, { status: 404 })
+      // Return empty checklist for users without a company (onboarding)
+      return NextResponse.json({
+        items: [],
+        stats: { total: 0, completed: 0, critical: 0, soon: 0 },
+        meta: { limit: 20, returned: 0 },
+      })
     }
 
     const searchParams = request.nextUrl.searchParams
