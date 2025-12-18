@@ -8,7 +8,6 @@ import {
   Settings,
   UserCog,
   LifeBuoy,
-  KeyRound,
   ShoppingCart,
   Bot,
   Calculator,
@@ -88,10 +87,7 @@ export const navigation: NavSection[] = [
   },
   {
     title: "Sustav",
-    items: [
-      { name: "Računovođe", href: "/settings/accountants", icon: KeyRound },
-      { name: "Postavke", href: "/settings", icon: Settings, module: "settings" },
-    ],
+    items: [{ name: "Postavke", href: "/settings", icon: Settings, module: "settings" }],
   },
 ]
 
