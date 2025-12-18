@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
-import { ObligationTimeline } from "@/components/pausalni/obligation-timeline"
+import { PausalniDashboard } from "@/components/pausalni/pausalni-dashboard"
 
 export const metadata: Metadata = {
   title: "Paušalni Compliance Hub | FiskAI",
@@ -16,16 +16,5 @@ export default async function PausalniDashboardPage() {
     redirect("/dashboard")
   }
 
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Paušalni Compliance Hub</h1>
-          <p className="text-muted-foreground">Sve obveze vašeg paušalnog obrta na jednom mjestu</p>
-        </div>
-      </div>
-
-      <ObligationTimeline companyId={company.id} />
-    </div>
-  )
+  return <PausalniDashboard companyId={company.id} />
 }
