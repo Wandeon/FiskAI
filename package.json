@@ -54,6 +54,7 @@
     "@react-email/components": "^1.0.1",
     "@react-email/render": "^2.0.0",
     "@react-pdf/renderer": "^4.3.1",
+    "@rive-app/react-canvas": "^4.25.0",
     "@sentry/nextjs": "^10.30.0",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.3",
