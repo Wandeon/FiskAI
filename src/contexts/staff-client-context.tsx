@@ -1,0 +1,62 @@
+'use client'
+
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+
+interface StaffClient {
+  id: string
+  name: string
+  oib: string
+  entitlements: string[]
+}
+
+interface StaffClientContextType {
+  currentClient: StaffClient | null
+  setCurrentClient: (client: StaffClient | null) => void
+  switchClient: (clientId: string) => Promise<void>
+  clearClient: () => void
+  isWorkingOnClient: boolean
+}
+
+const StaffClientContext = createContext<StaffClientContextType | undefined>(undefined)
+
+export function StaffClientProvider({ children }: { children: ReactNode }) {
+  const [currentClient, setCurrentClient] = useState<StaffClient | null>(null)
+  const router = useRouter()
+
+  const switchClient = useCallback(async (clientId: string) => {
+    const response = await fetch(`/api/staff/clients/${clientId}`)
+    if (response.ok) {
+      const client = await response.json()
+      setCurrentClient(client)
+      router.push(`/clients/${clientId}`)
+    }
+  }, [router])
+
+  const clearClient = useCallback(() => {
+    setCurrentClient(null)
+    router.push('/staff-dashboard')
+  }, [router])
+
+  return (
+    <StaffClientContext.Provider
+      value={{
+        currentClient,
+        setCurrentClient,
+        switchClient,
+        clearClient,
+        isWorkingOnClient: currentClient !== null,
+      }}
+    >
+      {children}
+    </StaffClientContext.Provider>
+  )
+}
+
+export function useStaffClient() {
+  const context = useContext(StaffClientContext)
+  if (context === undefined) {
+    throw new Error('useStaffClient must be used within a StaffClientProvider')
+  }
+  return context
+}

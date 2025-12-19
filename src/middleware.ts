@@ -104,10 +104,57 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // Rewrite to appropriate route group based on subdomain
+  const url = request.nextUrl.clone()
+
+  // Map subdomain to route group
+  let routeGroup = ''
+  switch (subdomain) {
+    case 'admin':
+      routeGroup = '/(admin)'
+      break
+    case 'staff':
+      routeGroup = '/(staff)'
+      break
+    case 'app':
+      routeGroup = '/(app)'
+      break
+    case 'marketing':
+      routeGroup = '/(marketing)'
+      break
+    default:
+      routeGroup = '/(app)'
+  }
+
+  // Don't rewrite if already in the correct route group
+  if (!pathname.startsWith(routeGroup)) {
+    url.pathname = `${routeGroup}${pathname}`
+
+    const response = NextResponse.rewrite(url)
+    response.headers.set("x-request-id", requestId)
+    response.headers.set("x-subdomain", subdomain)
+    response.headers.set("x-route-group", routeGroup)
+    response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+
+    logger.info(
+      {
+        requestId,
+        subdomain,
+        systemRole,
+        pathname,
+        rewrittenPath: url.pathname,
+      },
+      "Request rewritten to route group"
+    )
+
+    return response
+  }
+
   // Add subdomain to headers for route group selection
   const response = NextResponse.next()
   response.headers.set("x-request-id", requestId)
   response.headers.set("x-subdomain", subdomain)
+  response.headers.set("x-route-group", routeGroup)
   response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
 
   logger.info(
