@@ -12,8 +12,8 @@ export function getSubdomain(host: string): Subdomain {
 
   // Handle localhost development
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    // Check for subdomain simulation via query param or header
-    return "app" // Default to app in development
+    // Default to marketing in development to allow access to public pages
+    return "marketing"
   }
 
   // Extract subdomain from hostname
