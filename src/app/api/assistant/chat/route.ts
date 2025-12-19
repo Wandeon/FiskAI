@@ -36,10 +36,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
     }
 
-    // Prepare baseURL - handle if user already included /v1 or not
-    let baseURL = process.env.OLLAMA_ENDPOINT || "http://localhost:11434"
-    if (!baseURL.endsWith("/v1")) {
-      baseURL = `${baseURL}/v1`
+    // Prepare baseURL - handle if user already included /api or not
+    let baseURL = process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
+    if (!baseURL.endsWith("/api")) {
+      baseURL = `${baseURL}/api`
     }
 
     const openai = new OpenAI({
