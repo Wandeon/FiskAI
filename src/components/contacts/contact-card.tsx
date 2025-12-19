@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Mail, Phone, MapPin, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContactType } from "@prisma/client"
-import { DeleteContactButton } from "@/app/(dashboard)/contacts/delete-button"
+import { DeleteContactButton } from "@/app/(app)/contacts/delete-button"
 
 interface ContactCardProps {
   contact: {
