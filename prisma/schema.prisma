@@ -88,7 +88,7 @@ model Company {
   updatedAt               DateTime  @updatedAt
   eInvoiceApiKeyEncrypted String?
   legalForm               String?
-  entitlements            Json?
+  entitlements            String[]  @default(["invoicing", "e-invoicing", "contacts", "products", "expenses", "reports-basic", "documents"])
   featureFlags            Json?
   fiscalEnabled           Boolean   @default(false)
   fiscalEnvironment       FiscalEnv @default(PROD)
