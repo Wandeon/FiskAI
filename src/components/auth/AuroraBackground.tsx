@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
-import { useRive, useStateMachineInput } from "@rive-app/react-canvas"
+import { useEffect, useMemo, useState } from "react"
 
 export type AuthState = "identify" | "authenticate" | "register" | "verify" | "success" | "error"
 
@@ -29,54 +28,83 @@ function CSSFallback({ state }: { state: AuthState }) {
   )
 }
 
+// Lazy-loaded Rive component (only loads if file exists)
+function RiveBackground({
+  state,
+  className,
+  onError,
+}: AuroraBackgroundProps & { onError: () => void }) {
+  const [RiveComponent, setRiveComponent] = useState<React.ComponentType<{
+    className?: string
+  }> | null>(null)
+  const [rive, setRive] = useState<{ play: () => void } | null>(null)
+
+  // State number mapping for Rive state machine
+  const stateNumbers: Record<AuthState, number> = useMemo(
+    () => ({
+      identify: 0,
+      authenticate: 1,
+      register: 2,
+      verify: 3,
+      success: 4,
+      error: 5,
+    }),
+    []
+  )
+
+  useEffect(() => {
+    let mounted = true
+
+    // Dynamically import Rive only when needed
+    import("@rive-app/react-canvas")
+      .then(({ useRive }) => {
+        if (!mounted) return
+
+        // Check if the file exists first
+        fetch("/rive/aurora.riv", { method: "HEAD" })
+          .then((res) => {
+            if (!res.ok || !mounted) {
+              onError()
+              return
+            }
+            // File exists, we can't use hooks here so fall back to CSS for now
+            // In production, consider using a proper Rive setup
+            onError()
+          })
+          .catch(() => {
+            if (mounted) onError()
+          })
+      })
+      .catch(() => {
+        if (mounted) onError()
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [onError])
+
+  // For now, always use CSS fallback since Rive file is pending
+  return <CSSFallback state={state} />
+}
+
 export function AuroraBackground({ state, className }: AuroraBackgroundProps) {
+  const [useCSS, setUseCSS] = useState(false)
+
   // Check for reduced motion preference
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === "undefined") return false
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }, [])
 
-  // State number mapping for Rive state machine
-  const stateNumbers: Record<AuthState, number> = {
-    identify: 0,
-    authenticate: 1,
-    register: 2,
-    verify: 3,
-    success: 4,
-    error: 5,
-  }
-
-  const { rive, RiveComponent } = useRive({
-    src: "/rive/aurora.riv",
-    stateMachines: "State Machine 1",
-    autoplay: !prefersReducedMotion,
-  })
-
-  const stateInput = useStateMachineInput(rive, "State Machine 1", "state")
-  const errorTrigger = useStateMachineInput(rive, "State Machine 1", "error")
-
-  useEffect(() => {
-    if (stateInput) {
-      stateInput.value = stateNumbers[state]
-    }
-  }, [state, stateInput])
-
-  useEffect(() => {
-    if (state === "error" && errorTrigger) {
-      errorTrigger.fire()
-    }
-  }, [state, errorTrigger])
-
-  // Use CSS fallback if Rive not available or reduced motion
-  if (prefersReducedMotion || !rive) {
+  // Use CSS fallback if reduced motion preferred or Rive failed to load
+  if (prefersReducedMotion || useCSS) {
     return <CSSFallback state={state} />
   }
 
-  return (
-    <div className={`fixed inset-0 -z-10 ${className || ""}`} aria-hidden="true">
-      <RiveComponent className="h-full w-full" />
-    </div>
-  )
+  // For now, always use CSS since Rive file is pending from designer
+  // When aurora.riv is available, this can be updated to use RiveBackground
+  return <CSSFallback state={state} />
 }
 
 export default AuroraBackground

@@ -6,7 +6,8 @@ import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { BottomNav } from "@/components/layout/bottom-nav"
-import { VisibilityProvider, getVisibilityProviderProps } from "@/lib/visibility"
+import { VisibilityProvider } from "@/lib/visibility"
+import { getVisibilityProviderProps } from "@/lib/visibility/server"
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await auth()
