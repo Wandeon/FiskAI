@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
 
 const SYSTEM_PROMPT = `
 Ti si FiskAI Asistent, stručni pomoćnik za hrvatsko računovodstvo, fiskalizaciju i korištenje FiskAI aplikacije.
@@ -36,34 +35,90 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
     }
 
-    // Prepare baseURL - handle if user already included /api or not
-    let baseURL = process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
-    if (!baseURL.endsWith("/api")) {
-      baseURL = `${baseURL}/api`
+    // Construct the endpoint
+    // Default to standard Ollama API endpoint
+    let endpoint = process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
+    // Remove trailing slash if present
+    if (endpoint.endsWith("/")) endpoint = endpoint.slice(0, -1)
+
+    // Ensure it ends with /chat (standard Ollama API)
+    // If the user provided a full path ending in /v1/chat/completions (OpenAI style),
+    // we might need to adjust, but let's assume standard Ollama for now as requested.
+    if (!endpoint.endsWith("/chat")) {
+      if (endpoint.endsWith("/api")) {
+        endpoint = `${endpoint}/chat`
+      } else {
+        endpoint = `${endpoint}/api/chat`
+      }
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OLLAMA_API_KEY || "ollama",
-      baseURL,
+    const apiKey = process.env.OLLAMA_API_KEY
+    const model = process.env.OLLAMA_MODEL || "llama3"
+
+    // Prepare messages
+    const apiMessages = [{ role: "system", content: SYSTEM_PROMPT }, ...messages]
+
+    console.log(`[Assistant] Sending request to ${endpoint} with model ${model}`)
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: apiMessages,
+        stream: true,
+      }),
     })
 
-    const response = await openai.chat.completions.create({
-      model: process.env.OLLAMA_MODEL || "llama3",
-      messages: apiMessages,
-      stream: true,
-      temperature: 0.7,
-    })
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("[Assistant] Upstream Error:", response.status, errorText)
+      throw new Error(`Ollama API Error (${response.status}): ${errorText}`)
+    }
 
-    // Create a ReadableStream from the OpenAI stream
+    // Transform Ollama's NDJSON stream to a simple text stream
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content || ""
-          if (content) {
-            controller.enqueue(new TextEncoder().encode(content))
-          }
+        if (!response.body) {
+          controller.close()
+          return
         }
-        controller.close()
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ""
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split("\n")
+
+            // Keep the last incomplete line in the buffer
+            buffer = lines.pop() || ""
+
+            for (const line of lines) {
+              if (!line.trim()) continue
+              try {
+                const json = JSON.parse(line)
+                if (json.message?.content) {
+                  controller.enqueue(new TextEncoder().encode(json.message.content))
+                }
+                if (json.done) {
+                  // End of stream
+                }
+              } catch (e) {
+                console.warn("[Assistant] JSON Parse Error:", e)
+              }
+            }
+          }
+        } finally {
+          controller.close()
+        }
       },
     })
 
@@ -73,12 +128,7 @@ export async function POST(req: Request) {
       },
     })
   } catch (error: any) {
-    console.error("AI Assistant Error:", error)
-
-    // Return detailed error for debugging
-    const errorMessage = error.message || "Unknown error occurred"
-    const errorStatus = error.status || 500
-
-    return NextResponse.json({ error: `AI Error: ${errorMessage}` }, { status: errorStatus })
+    console.error("[Assistant] Server Error:", error)
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 })
   }
 }

@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { BottomNav } from "@/components/layout/bottom-nav"
 import { DashboardBackground } from "@/components/layout/DashboardBackground"
+import { AssistantPopup } from "@/components/assistant/AssistantPopup"
 import { VisibilityProvider } from "@/lib/visibility"
 import { getVisibilityProviderProps } from "@/lib/visibility/server"
 
@@ -69,6 +70,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           </div>
         </main>
       </div>
+
+      {/* Global Assistant Popup */}
+      <AssistantPopup />
 
       {/* Mobile bottom navigation */}
       <BottomNav />
