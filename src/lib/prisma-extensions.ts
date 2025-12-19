@@ -72,7 +72,8 @@ const TENANT_MODELS = [
   "BusinessPremises",
   "PaymentDevice",
   "InvoiceSequence",
-  "CompanyUser", // Protect access to company-user relationships
+  // Note: CompanyUser intentionally NOT included - it's filtered by userId, not companyId
+  // Including it breaks getCurrentCompany() which queries CompanyUser before tenant context exists
 ] as const
 
 // Models to audit (exclude AuditLog itself to prevent infinite loops)

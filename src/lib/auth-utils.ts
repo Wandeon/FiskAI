@@ -23,8 +23,32 @@ export async function getCurrentCompany(userId: string) {
       userId,
       isDefault: true,
     },
-    include: {
-      company: true,
+    select: {
+      company: {
+        select: {
+          id: true,
+          name: true,
+          oib: true,
+          vatNumber: true,
+          address: true,
+          city: true,
+          postalCode: true,
+          country: true,
+          email: true,
+          phone: true,
+          iban: true,
+          isVatPayer: true,
+          eInvoiceProvider: true,
+          legalForm: true,
+          fiscalEnabled: true,
+          fiscalEnvironment: true,
+          premisesCode: true,
+          deviceCode: true,
+          createdAt: true,
+          updatedAt: true,
+          // Note: entitlements String[] excluded - causes pg adapter bug
+        },
+      },
     },
   })
 
@@ -32,7 +56,32 @@ export async function getCurrentCompany(userId: string) {
     // Get first company if no default
     const firstCompany = await db.companyUser.findFirst({
       where: { userId },
-      include: { company: true },
+      select: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            oib: true,
+            vatNumber: true,
+            address: true,
+            city: true,
+            postalCode: true,
+            country: true,
+            email: true,
+            phone: true,
+            iban: true,
+            isVatPayer: true,
+            eInvoiceProvider: true,
+            legalForm: true,
+            fiscalEnabled: true,
+            fiscalEnvironment: true,
+            premisesCode: true,
+            deviceCode: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     })
     return firstCompany?.company ?? null
   }
