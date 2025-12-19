@@ -105,7 +105,9 @@ body {
 @layer components {
   /* Card base styles */
   .card {
-    @apply bg-[var(--surface)] border border-[var(--border)] rounded-card shadow-card;
+    @apply rounded-card shadow-card backdrop-blur-xl;
+    background-color: color-mix(in srgb, var(--surface), transparent 30%);
+    border: 1px solid color-mix(in srgb, var(--border), transparent 40%);
   }
 
   .card-hover {

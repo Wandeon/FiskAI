@@ -57,14 +57,14 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
   return (
     <aside
       className={cn(
-        "sticky top-16 h-[calc(100vh-4rem)] border-r border-[var(--border)] bg-[var(--surface)] transition-all duration-300",
+        "sticky top-16 h-[calc(100vh-4rem)] border-r border-[var(--border)]/50 bg-[var(--surface)]/50 backdrop-blur-xl transition-all duration-300",
         isCollapsed ? "w-[var(--sidebar-collapsed-width)]" : "w-[var(--sidebar-width)]"
       )}
     >
       <div className="flex h-full flex-col">
         {!isCollapsed && (
-          <div className="border-b border-[var(--border)] p-3">
-            <div className="rounded-2xl surface-glass px-3 py-3">
+          <div className="border-b border-[var(--border)]/50 p-3">
+            <div className="rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-md shadow-sm border border-white/20 px-3 py-3">
               <div className="flex items-center gap-3">
                 {user.image ? (
                   <Image

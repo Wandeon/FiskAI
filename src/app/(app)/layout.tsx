@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { BottomNav } from "@/components/layout/bottom-nav"
+import { DashboardBackground } from "@/components/layout/DashboardBackground"
 import { VisibilityProvider } from "@/lib/visibility"
 import { getVisibilityProviderProps } from "@/lib/visibility/server"
 
@@ -35,7 +36,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)]">
+    <div className="flex min-h-screen flex-col relative">
+      <DashboardBackground />
       <Header />
       <div className="flex flex-1">
         {/* Desktop Sidebar - hidden on mobile */}
