@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     await sendEmail({
       to: email,
-      subject: `Vaš FiskAI kod: ${code}`,
+      subject: "Vaš FiskAI verifikacijski kod",
       react: OTPCodeEmail({ code, userName, type: emailType }),
     })
 

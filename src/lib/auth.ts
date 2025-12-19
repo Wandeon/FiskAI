@@ -67,6 +67,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        // Check for OTP verification authentication
+        if (password.startsWith("__OTP_VERIFIED__")) {
+          const userId = password.replace("__OTP_VERIFIED__", "")
+          const user = await db.user.findUnique({
+            where: { id: userId, email: credentials.email as string },
+          })
+          if (user) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+            }
+          }
+          return null
+        }
+
         const user = await db.user.findUnique({
           where: { email: credentials.email as string },
         })

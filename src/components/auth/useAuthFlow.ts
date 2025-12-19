@@ -175,12 +175,23 @@ export function useAuthFlow() {
         return false
       }
 
-      // Sign in the user
-      if (type === "EMAIL_VERIFY") {
-        await signIn("credentials", {
+      // Sign in the user after successful OTP verification
+      if (type === "EMAIL_VERIFY" || type === "LOGIN_VERIFY") {
+        if (!data.userId) {
+          setError("Greška pri prijavi")
+          return false
+        }
+
+        const result = await signIn("credentials", {
           email: state.email,
+          password: `__OTP_VERIFIED__${data.userId}`,
           redirect: false,
         })
+
+        if (result?.error) {
+          setError("Greška pri prijavi")
+          return false
+        }
       }
 
       setState((s) => ({ ...s, step: "success", isLoading: false }))
