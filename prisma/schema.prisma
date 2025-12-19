@@ -21,6 +21,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   sessions            Session[]
   webAuthnCredentials WebAuthnCredential[]
+  verificationCodes   VerificationCode[]
 
   // Staff assignment relations
   staffAssignments    StaffAssignment[] @relation("StaffAssignments")
@@ -59,6 +60,27 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model VerificationCode {
+  id        String               @id @default(cuid())
+  email     String
+  userId    String?
+  codeHash  String
+  type      VerificationCodeType
+  expiresAt DateTime
+  attempts  Int                  @default(0)
+  createdAt DateTime             @default(now())
+  user      User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+enum VerificationCodeType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  LOGIN_VERIFY
 }
 
 model PasswordResetToken {
