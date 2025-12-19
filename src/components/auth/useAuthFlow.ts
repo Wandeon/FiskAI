@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { AuthStep, AuthFlowState, UserInfo } from "./types"
+import { setFaviconState, resetFavicon, flashFavicon } from "@/lib/favicon"
 
 const initialState: AuthFlowState = {
   step: "identify",
@@ -19,16 +20,29 @@ export function useAuthFlow() {
   const [state, setState] = useState<AuthFlowState>(initialState)
   const router = useRouter()
 
+  // Reset favicon on unmount
+  useEffect(() => {
+    return () => resetFavicon()
+  }, [])
+
   const setStep = useCallback((step: AuthStep) => {
     setState((s) => ({ ...s, step, error: null }))
   }, [])
 
   const setError = useCallback((error: string | null) => {
     setState((s) => ({ ...s, error, isLoading: false }))
+    if (error) {
+      flashFavicon("error", 2000)
+    }
   }, [])
 
   const setLoading = useCallback((isLoading: boolean) => {
     setState((s) => ({ ...s, isLoading }))
+    if (isLoading) {
+      setFaviconState("loading")
+    } else {
+      resetFavicon()
+    }
   }, [])
 
   const checkEmail = useCallback(
@@ -121,6 +135,7 @@ export function useAuthFlow() {
 
         // Success - redirect based on role
         setState((s) => ({ ...s, step: "success", isLoading: false }))
+        setFaviconState("success") // Amber glow on success
         setTimeout(() => router.push("/dashboard"), 1500)
       } catch (error) {
         setError("Greška pri prijavi")
@@ -205,6 +220,7 @@ export function useAuthFlow() {
         }
 
         setState((s) => ({ ...s, step: "success", isLoading: false }))
+        setFaviconState("success") // Amber glow on success
         setTimeout(() => router.push("/dashboard"), 1500)
         return true
       } catch (error) {
@@ -277,6 +293,7 @@ export function useAuthFlow() {
         }
 
         setState((s) => ({ ...s, step: "success", isLoading: false }))
+        setFaviconState("success") // Amber glow on success
         setTimeout(() => router.push("/dashboard"), 1500)
         return true
       } catch (error) {
