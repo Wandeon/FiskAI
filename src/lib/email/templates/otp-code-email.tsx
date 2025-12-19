@@ -4,12 +4,10 @@ import {
   Head,
   Heading,
   Html,
+  Link,
   Preview,
   Section,
   Text,
-  Hr,
-  Row,
-  Column,
 } from "@react-email/components"
 
 interface OTPCodeEmailProps {
@@ -19,220 +17,185 @@ interface OTPCodeEmailProps {
 }
 
 export function OTPCodeEmail({ code, userName, type = "verify" }: OTPCodeEmailProps) {
-  const digits = code.split("")
-
-  const titles = {
-    verify: "Potvrdite svoju email adresu",
+  const subjects = {
+    verify: "Potvrdite email za FiskAI",
     login: "Vaš kod za prijavu",
-    reset: "Kod za resetiranje lozinke",
+    reset: "Resetirajte lozinku",
+  }
+
+  const preheaders = {
+    verify: "Ovaj kod vrijedi 10 minuta.",
+    login: "Ovaj kod vrijedi 10 minuta.",
+    reset: "Ovaj kod vrijedi 10 minuta.",
+  }
+
+  const headlines = {
+    verify: "Potvrdite svoju email adresu",
+    login: "Prijavite se na FiskAI",
+    reset: "Resetirajte lozinku",
   }
 
   const descriptions = {
-    verify: "Unesite ovaj kod u aplikaciju kako biste dovršili registraciju.",
-    login: "Unesite ovaj kod za prijavu na vaš FiskAI račun.",
-    reset: "Unesite ovaj kod za resetiranje vaše lozinke.",
+    verify: "Unesite kod ispod na fiskai.eu za dovršetak registracije.",
+    login: "Unesite kod ispod na fiskai.eu za prijavu.",
+    reset: "Unesite kod ispod na fiskai.eu za resetiranje lozinke.",
   }
 
   return (
     <Html>
-      <Head>
-        <style>
-          {`
-            @media only screen and (max-width: 600px) {
-              .digit-box {
-                width: 40px !important;
-                height: 48px !important;
-                font-size: 24px !important;
-              }
-            }
-          `}
-        </style>
-      </Head>
-      <Preview>Vaš FiskAI kod: {code}</Preview>
+      <Head />
+      <Preview>{preheaders[type]}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Logo/Brand header */}
+          {/* Clean logo */}
           <Section style={logoSection}>
-            <Text style={logoText}>FiskAI</Text>
+            <Text style={logo}>FiskAI</Text>
           </Section>
 
-          <Heading style={h1}>{titles[type]}</Heading>
+          {/* Content */}
+          <Section style={content}>
+            {/* Greeting */}
+            {userName && <Text style={greeting}>Pozdrav {userName},</Text>}
 
-          <Text style={greeting}>
-            {userName ? `Pozdrav ${userName},` : "Pozdrav,"}
-          </Text>
+            {/* Headline */}
+            <Heading style={headline}>{headlines[type]}</Heading>
 
-          <Text style={description}>{descriptions[type]}</Text>
+            {/* One sentence description */}
+            <Text style={description}>{descriptions[type]}</Text>
 
-          {/* Premium OTP Code Display */}
-          <Section style={codeSection}>
-            <Row style={codeRow}>
-              {digits.map((digit, i) => (
-                <Column key={i} style={digitColumn}>
-                  <Text style={digitBox} className="digit-box">{digit}</Text>
-                </Column>
-              ))}
-            </Row>
-          </Section>
+            {/* The code - large and clear */}
+            <Section style={codeContainer}>
+              <Text style={codeText}>{code}</Text>
+            </Section>
 
-          <Text style={expiryText}>
-            Ovaj kod vrijedi <strong>10 minuta</strong>
-          </Text>
+            {/* Expiry */}
+            <Text style={expiry}>Kod vrijedi 10 minuta</Text>
 
-          {/* Security notice */}
-          <Section style={securityBox}>
-            <Text style={securityText}>
-              Ako niste zatražili ovaj kod, možete ga zanemariti.
-              <br />
-              Nikada ne dijelite ovaj kod s drugima.
+            {/* Plain text fallback note */}
+            <Text style={fallback}>
+              Ako imate problema, kopirajte kod: <strong>{code}</strong>
             </Text>
           </Section>
 
-          <Hr style={hr} />
-
-          <Text style={footer}>
-            S poštovanjem,
-            <br />
-            <strong>FiskAI Tim</strong>
-          </Text>
-
-          <Text style={footerSmall}>
-            Ovo je automatizirana poruka. Molimo ne odgovarajte na ovaj email.
-          </Text>
+          {/* Footer */}
+          <Section style={footer}>
+            <Text style={footerText}>
+              Niste zatražili ovaj kod?{" "}
+              <Link href="https://fiskai.eu/kontakt" style={footerLink}>
+                Javite nam se
+              </Link>
+            </Text>
+            <Text style={footerSmall}>© {new Date().getFullYear()} FiskAI · Zagreb, Hrvatska</Text>
+          </Section>
         </Container>
       </Body>
     </Html>
   )
 }
 
-// Styles
+// Minimal, premium styles
 const main = {
-  backgroundColor: "#f0f4f8",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif",
-  padding: "40px 0",
+  backgroundColor: "#f8fafc",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 }
 
 const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  maxWidth: "480px",
-  borderRadius: "16px",
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-  overflow: "hidden",
+  margin: "40px auto",
+  maxWidth: "400px",
 }
 
 const logoSection = {
-  backgroundColor: "#0891b2",
-  padding: "24px 40px",
+  padding: "32px 0",
   textAlign: "center" as const,
 }
 
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
+const logo = {
+  color: "#0891b2",
+  fontSize: "24px",
+  fontWeight: "700" as const,
   margin: "0",
   letterSpacing: "-0.5px",
 }
 
-const h1 = {
-  color: "#1f2937",
-  fontSize: "22px",
-  fontWeight: "600",
-  margin: "32px 40px 0",
+const content = {
+  backgroundColor: "#ffffff",
+  borderRadius: "12px",
+  padding: "40px 32px",
   textAlign: "center" as const,
 }
 
 const greeting = {
-  color: "#374151",
-  fontSize: "16px",
-  lineHeight: "24px",
-  margin: "24px 40px 8px",
+  color: "#64748b",
+  fontSize: "15px",
+  margin: "0 0 8px",
+}
+
+const headline = {
+  color: "#0f172a",
+  fontSize: "20px",
+  fontWeight: "600" as const,
+  margin: "0 0 12px",
+  lineHeight: "28px",
 }
 
 const description = {
-  color: "#6b7280",
+  color: "#64748b",
   fontSize: "15px",
   lineHeight: "24px",
-  margin: "0 40px 24px",
+  margin: "0 0 32px",
 }
 
-const codeSection = {
-  padding: "24px 40px",
-  backgroundColor: "#f9fafb",
-  borderTop: "1px solid #e5e7eb",
-  borderBottom: "1px solid #e5e7eb",
-}
-
-const codeRow = {
-  width: "100%",
-}
-
-const digitColumn = {
-  width: "16.666%",
-  textAlign: "center" as const,
-  padding: "0 4px",
-}
-
-const digitBox = {
-  display: "inline-block",
-  width: "48px",
-  height: "56px",
-  lineHeight: "56px",
-  fontSize: "28px",
-  fontWeight: "700",
-  fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace",
-  color: "#0891b2",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
-  border: "2px solid #e5e7eb",
-  margin: "0",
-  letterSpacing: "0",
-}
-
-const expiryText = {
-  color: "#6b7280",
-  fontSize: "14px",
-  textAlign: "center" as const,
-  margin: "24px 40px 0",
-}
-
-const securityBox = {
-  margin: "24px 40px",
-  padding: "16px",
-  backgroundColor: "#fef3c7",
+const codeContainer = {
+  backgroundColor: "#f1f5f9",
   borderRadius: "8px",
-  border: "1px solid #fbbf24",
+  padding: "24px",
+  margin: "0 0 16px",
 }
 
-const securityText = {
-  color: "#92400e",
+const codeText = {
+  color: "#0891b2",
+  fontSize: "32px",
+  fontWeight: "700" as const,
+  fontFamily: "'SF Mono', 'Fira Code', Consolas, monospace",
+  letterSpacing: "8px",
+  margin: "0",
+}
+
+const expiry = {
+  color: "#94a3b8",
+  fontSize: "13px",
+  margin: "0 0 24px",
+}
+
+const fallback = {
+  color: "#64748b",
   fontSize: "13px",
   lineHeight: "20px",
   margin: "0",
-  textAlign: "center" as const,
-}
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "0 40px",
+  padding: "16px 0 0",
+  borderTop: "1px solid #e2e8f0",
 }
 
 const footer = {
-  color: "#374151",
-  fontSize: "14px",
-  lineHeight: "22px",
-  margin: "24px 40px 12px",
+  padding: "24px 32px",
   textAlign: "center" as const,
 }
 
+const footerText = {
+  color: "#64748b",
+  fontSize: "13px",
+  margin: "0 0 8px",
+}
+
+const footerLink = {
+  color: "#0891b2",
+  textDecoration: "underline",
+}
+
 const footerSmall = {
-  color: "#9ca3af",
+  color: "#94a3b8",
   fontSize: "12px",
-  lineHeight: "18px",
-  margin: "0 40px 32px",
-  textAlign: "center" as const,
+  margin: "0",
 }
 
 export default OTPCodeEmail
