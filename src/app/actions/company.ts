@@ -39,12 +39,19 @@ export async function createCompany(formData: z.input<typeof companySchema>) {
 
       if (userMembership || isOrphaned) {
         // Safe to update
+        // Merge competence into existing featureFlags
+        const existingFlags = (existingCompany.featureFlags as Record<string, unknown>) || {}
+        const newFeatureFlags = data.competence
+          ? { ...existingFlags, competence: data.competence }
+          : existingFlags
+
         const updated = await db.company.update({
           where: { id: existingCompany.id },
           data: {
             ...data,
             vatNumber: data.isVatPayer ? `HR${data.oib}` : existingCompany.vatNumber,
             legalForm: data.legalForm || existingCompany.legalForm || "DOO",
+            featureFlags: Object.keys(newFeatureFlags).length > 0 ? newFeatureFlags : undefined,
             entitlements:
               existingCompany.entitlements && (existingCompany.entitlements as any[]).length > 0
                 ? existingCompany.entitlements
@@ -78,6 +85,7 @@ export async function createCompany(formData: z.input<typeof companySchema>) {
           ...data,
           vatNumber: data.isVatPayer ? `HR${data.oib}` : null,
           legalForm: data.legalForm || "DOO",
+          featureFlags: data.competence ? { competence: data.competence } : undefined,
           entitlements: DEFAULT_ENTITLEMENTS,
           users: {
             create: {

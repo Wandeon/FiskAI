@@ -57,17 +57,24 @@ export async function Header() {
       companyUser?.notificationSeenAt ?? null
     )
 
-    const steps = [
-      Boolean(currentCompany.oib && currentCompany.address),
-      Boolean(currentCompany.eInvoiceProvider),
-      contactCount > 0,
-      productCount > 0,
-      eInvoiceCount > 0,
+    // Track the 4-step onboarding wizard completion, not business milestones
+    // Step 1: Basic Info (name, oib, legalForm)
+    // Step 2: Competence Level (featureFlags.competence)
+    // Step 3: Address (address, postalCode, city)
+    // Step 4: Contact & Tax (email, iban)
+    const featureFlags = currentCompany.featureFlags as Record<string, unknown> | null
+    const hasCompetence = !!featureFlags?.competence
+
+    const wizardSteps = [
+      Boolean(currentCompany.name && currentCompany.oib && currentCompany.legalForm), // Step 1
+      hasCompetence, // Step 2
+      Boolean(currentCompany.address && currentCompany.postalCode && currentCompany.city), // Step 3
+      Boolean(currentCompany.email && currentCompany.iban), // Step 4
     ]
 
     onboardingProgress = {
-      completed: steps.filter(Boolean).length,
-      total: steps.length,
+      completed: wizardSteps.filter(Boolean).length,
+      total: wizardSteps.length,
     }
 
     capabilities = deriveCapabilities(currentCompany)

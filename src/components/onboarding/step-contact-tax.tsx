@@ -31,25 +31,59 @@ export function StepContactTax({ isExistingCompany = false }: StepContactTaxProp
       // Paušalni obrt cannot be VAT payer
       const isVatPayer = data.legalForm === "OBRT_PAUSAL" ? false : data.isVatPayer || false
 
-      const result = await createCompany({
-        name: data.name!,
-        oib: data.oib!,
-        address: data.address!,
-        postalCode: data.postalCode!,
-        city: data.city!,
-        country: data.country!,
-        email: data.email!,
-        phone: data.phone || "",
-        iban: data.iban!,
-        isVatPayer,
-        legalForm: data.legalForm,
-      })
+      let success = false
+      let errorMsg: string | null = null
 
-      if (result.error) {
-        setError(result.error)
-        toast.error("Greška", result.error)
-      } else if (result.success) {
-        // Save competence level to guidance preferences
+      if (isExistingCompany) {
+        // Update existing company with saveOnboardingData
+        const result = await saveOnboardingData({
+          name: data.name!,
+          oib: data.oib!,
+          legalForm: data.legalForm!,
+          competence: data.competence,
+          address: data.address!,
+          postalCode: data.postalCode!,
+          city: data.city!,
+          country: data.country!,
+          email: data.email!,
+          phone: data.phone || undefined,
+          iban: data.iban!,
+          isVatPayer,
+        })
+
+        if ("error" in result && result.error) {
+          errorMsg = result.error
+        } else {
+          success = true
+        }
+      } else {
+        // Create new company
+        const result = await createCompany({
+          name: data.name!,
+          oib: data.oib!,
+          address: data.address!,
+          postalCode: data.postalCode!,
+          city: data.city!,
+          country: data.country!,
+          email: data.email!,
+          phone: data.phone || "",
+          iban: data.iban!,
+          isVatPayer,
+          legalForm: data.legalForm,
+        })
+
+        if (result.error) {
+          errorMsg = result.error
+        } else if (result.success) {
+          success = true
+        }
+      }
+
+      if (errorMsg) {
+        setError(errorMsg)
+        toast.error("Greška", errorMsg)
+      } else if (success) {
+        // Save competence level to guidance preferences (for both new and existing)
         if (data.competence) {
           try {
             await saveCompetenceLevel(data.competence)
@@ -60,7 +94,10 @@ export function StepContactTax({ isExistingCompany = false }: StepContactTaxProp
 
         // Finalize analytics and store
         trackEvent(AnalyticsEvents.ONBOARDING_COMPLETED, { competence: data.competence })
-        toast.success("Tvrtka kreirana!", "Možete početi s radom")
+        toast.success(
+          isExistingCompany ? "Podaci ažurirani!" : "Tvrtka kreirana!",
+          "Možete početi s radom"
+        )
 
         // Wait a tiny bit for the toast to be seen
         setTimeout(() => {
