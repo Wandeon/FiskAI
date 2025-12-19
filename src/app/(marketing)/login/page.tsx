@@ -161,8 +161,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative">
-      <Card>
+    <div className="flex min-h-[calc(100vh-200px)] items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Prijava u FiskAI</CardTitle>
         </CardHeader>
