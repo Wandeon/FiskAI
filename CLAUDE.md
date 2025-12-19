@@ -18,7 +18,7 @@
 
 **Server:** `152.53.146.3` (Hetzner ARM64)
 
-**Coolify Dashboard:** https://git.metrica.hr
+**Coolify Dashboard:** https://ci.fiskai.hr (or http://152.53.146.3:8000)
 
 **Deploy API:**
 
