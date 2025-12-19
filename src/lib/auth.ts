@@ -120,6 +120,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true
     },
+    async redirect({ url, baseUrl }) {
+      // Handle callback URLs
+      const callbackUrl = new URL(url, baseUrl)
+
+      // If redirecting to login or auth pages, allow it
+      if (callbackUrl.pathname.startsWith('/login') ||
+          callbackUrl.pathname.startsWith('/register') ||
+          callbackUrl.pathname.startsWith('/auth')) {
+        return url
+      }
+
+      // If there's a specific callback URL requested, use it
+      if (url.startsWith(baseUrl)) {
+        return url
+      }
+
+      // Default redirect based on user role will be handled by the default behavior
+      return baseUrl
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id

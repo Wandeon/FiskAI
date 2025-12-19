@@ -136,6 +136,14 @@ export async function login(formData: z.infer<typeof loginSchema>) {
     throw error
   }
 
+  // Check if user has multiple roles and redirect accordingly
+  const { hasMultipleRoles } = await import("@/lib/auth/system-role")
+  const systemRole = user.systemRole || "USER"
+
+  if (hasMultipleRoles(systemRole as "USER" | "STAFF" | "ADMIN")) {
+    redirect("/select-role")
+  }
+
   redirect("/dashboard")
 }
 
@@ -256,6 +264,7 @@ export async function loginWithPasskey(userId: string) {
   try {
     const user = await db.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true, systemRole: true },
     })
 
     if (!user) {
@@ -270,7 +279,15 @@ export async function loginWithPasskey(userId: string) {
       redirect: false,
     })
 
-    return { success: true }
+    // Check if user has multiple roles and return the redirect path
+    const { hasMultipleRoles } = await import("@/lib/auth/system-role")
+    const systemRole = user.systemRole || "USER"
+
+    const redirectPath = hasMultipleRoles(systemRole as "USER" | "STAFF" | "ADMIN")
+      ? "/select-role"
+      : "/dashboard"
+
+    return { success: true, redirect: redirectPath }
   } catch (error) {
     console.error("Passkey login error:", error)
     if (error instanceof AuthError) {

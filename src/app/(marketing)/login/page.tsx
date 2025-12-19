@@ -143,7 +143,8 @@ export default function LoginPage() {
       }
 
       toast.success("Uspjesna prijava!")
-      router.push("/dashboard")
+      const redirectPath = sessionResult.redirect || "/dashboard"
+      router.push(redirectPath)
       router.refresh()
     } catch (error) {
       console.error("Passkey login error:", error)
