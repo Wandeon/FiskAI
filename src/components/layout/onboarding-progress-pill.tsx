@@ -15,38 +15,64 @@ export function OnboardingProgressPill({
 }: OnboardingProgressPillProps) {
   const percent = Math.round((completed / total) * 100)
 
+  // Determine variant based on progress
+  const isComplete = percent === 100
+  const isStarted = percent > 0
+
+  if (isComplete) return null
+
   return (
     <div
       className={cn(
-        "hidden items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)]/60 px-4 py-2 text-sm text-[var(--foreground)] shadow-sm lg:flex",
+        "hidden items-center gap-3 rounded-full border border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-md px-3 py-1.5 text-sm shadow-sm lg:flex transition-all hover:border-brand-300 hover:shadow-md",
         className
       )}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+      <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
         <Sparkles className="h-4 w-4" />
+        {/* Progress ring SVG could go here */}
+        <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 36 36">
+          <path
+            className="text-brand-100"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
+          <path
+            className="text-brand-500 transition-all duration-1000 ease-out"
+            strokeDasharray={`${percent}, 100`}
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
+        </svg>
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-          Onboarding
-        </p>
-        <p className="text-sm font-semibold text-[var(--foreground)]">
-          {completed}/{total} dovršeno ({percent}%)
-        </p>
-      </div>
-      <div className="flex flex-col gap-1 text-right">
-        <Link
-          href="/onboarding"
-          className="text-xs font-semibold text-brand-600 hover:text-brand-700"
-        >
-          Nastavi postavke
-        </Link>
-        <Link
-          href="mailto:?subject=Pozovi%20računovođu%20na%20FiskAI&body=Pridruži%20se%20mojoj%20tvrtki%20na%20FiskAI"
-          className="inline-flex items-center justify-end gap-1 text-xs text-[var(--muted)] hover:text-brand-600"
-        >
-          <UserPlus className="h-3 w-3" />
-          Pozovi računovođu
-        </Link>
+
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-[var(--foreground)]">
+            Postavljanje računa
+          </span>
+          <span className="text-[10px] font-medium text-[var(--muted)]">{percent}%</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <Link
+            href="/onboarding"
+            className="font-medium text-brand-600 hover:text-brand-700 hover:underline"
+          >
+            Nastavi
+          </Link>
+          <span className="text-[var(--border)]">|</span>
+          <Link
+            href="mailto:?subject=Pozivnica&body=Pridruži se"
+            className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--foreground)]"
+          >
+            <UserPlus className="h-3 w-3" />
+            <span>Pozovi</span>
+          </Link>
+        </div>
       </div>
     </div>
   )

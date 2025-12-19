@@ -12,43 +12,11 @@ import {
   ChevronRight,
   ArrowUpRight,
   ListChecks,
-  Shield,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PlanSettingsForm } from "./plan-settings-form"
-
-const tabs = [
-  {
-    id: "company",
-    label: "Tvrtka",
-    description: "Naziv, adrese i IBAN",
-    icon: Building2,
-  },
-  {
-    id: "einvoice",
-    label: "E-računi",
-    description: "Informacijski posrednik i API ključevi",
-    icon: ReceiptText,
-  },
-  {
-    id: "security",
-    label: "Sigurnost",
-    description: "Passkeys i autentifikacija",
-    icon: KeyRound,
-  },
-  {
-    id: "plan",
-    label: "Plan & pravna forma",
-    description: "Pravna forma, PDV status i moduli",
-    icon: ShieldCheck,
-  },
-  {
-    id: "compliance",
-    label: "Usklađenost",
-    description: "Status fiskalizacije i obveza e-računa",
-    icon: ShieldCheck,
-  },
-] as const
+import { deriveCapabilities } from "@/lib/capabilities"
+import { redirect } from "next/navigation"
 
 interface PageProps {
   searchParams: Promise<{ tab?: string }>
@@ -58,8 +26,68 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
   const params = await searchParams
+
+  // Derive capabilities to check enabled modules
+  const capabilities = deriveCapabilities(company)
+  const { modules } = capabilities
+
+  // Define tabs with their required module entitlement
+  const allTabs = [
+    {
+      id: "company",
+      label: "Tvrtka",
+      description: "Naziv, adrese i IBAN",
+      icon: Building2,
+      requiredModule: null, // Always visible
+    },
+    {
+      id: "einvoice",
+      label: "E-računi",
+      description: "Informacijski posrednik i API ključevi",
+      icon: ReceiptText,
+      requiredModule: "e-invoicing",
+    },
+    {
+      id: "security",
+      label: "Sigurnost",
+      description: "Passkeys i autentifikacija",
+      icon: KeyRound,
+      requiredModule: null,
+    },
+    {
+      id: "plan",
+      label: "Plan & pravna forma",
+      description: "Pravna forma, PDV status i moduli",
+      icon: ShieldCheck,
+      requiredModule: null,
+    },
+    {
+      id: "compliance",
+      label: "Usklađenost",
+      description: "Status fiskalizacije i obveza e-računa",
+      icon: ListChecks,
+      requiredModule: null,
+    },
+  ] as const
+
+  // Filter tabs based on entitlements
+  // We explicitly check if the module key exists in the modules map and is enabled
+  const visibleTabs = allTabs.filter((tab) => {
+    if (!tab.requiredModule) return true
+    const mod = modules[tab.requiredModule as keyof typeof modules]
+    return mod?.enabled
+  })
+
   const requestedTab = params.tab ?? "company"
-  const activeTab = tabs.some((tab) => tab.id === requestedTab) ? requestedTab : "company"
+
+  // Check if requested tab is valid and visible
+  const isTabVisible = visibleTabs.some((t) => t.id === requestedTab)
+  const activeTab = isTabVisible ? requestedTab : "company"
+
+  // Redirect if trying to access a hidden/invalid tab
+  if (!isTabVisible && params.tab) {
+    redirect("/settings?tab=company")
+  }
 
   return (
     <div className="space-y-6">
@@ -74,7 +102,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-[260px,1fr] max-w-6xl">
         <nav className="space-y-4">
           <div className="flex flex-col gap-2">
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const isActive = tab.id === activeTab
               const Icon = tab.icon
               return (
@@ -175,7 +203,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               <CardHeader>
                 <CardTitle>Plan & pravna forma</CardTitle>
                 <CardDescription>
-                  Odaberite pravnu formu, PDV status i module dostupne ovom klijentu
+                  Odaberite pravnu formu, PDV status i moduli dostupne ovom klijentu
                 </CardDescription>
               </CardHeader>
               <CardContent>
