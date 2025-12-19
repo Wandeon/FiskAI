@@ -1,4 +1,3 @@
-// src/components/auth/steps/IdentifyStep.tsx
 "use client"
 
 import { useState } from "react"
@@ -36,8 +35,8 @@ export function IdentifyStep({ onSubmit, onGoogleSignIn, isLoading, error }: Ide
       className="space-y-6"
     >
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Dobrodošli u FiskAI</h1>
-        <p className="mt-2 text-gray-600">Unesite email za nastavak</p>
+        <h1 className="text-2xl font-bold text-white">Dobrodošli u FiskAI</h1>
+        <p className="mt-2 text-white/70">Unesite email za nastavak</p>
       </div>
 
       <div className="space-y-2">
@@ -51,10 +50,11 @@ export function IdentifyStep({ onSubmit, onGoogleSignIn, isLoading, error }: Ide
             autoComplete="email"
             autoFocus
             className={cn(
-              "w-full h-12 px-4 text-base rounded-xl border-2 transition-all",
-              "focus:outline-none focus:ring-2 focus:ring-cyan-500/20",
-              showError ? "border-red-500" : "border-gray-200 focus:border-cyan-500",
-              isValidEmail && touched && "border-green-500"
+              "w-full h-12 px-4 text-base rounded-xl border transition-all",
+              "bg-white/10 text-white placeholder:text-white/40 backdrop-blur-sm",
+              "focus:outline-none focus:ring-2 focus:ring-cyan-400/30",
+              showError ? "border-red-400" : "border-white/20 focus:border-cyan-400",
+              isValidEmail && touched && "border-green-400"
             )}
           />
         </motion.div>
@@ -63,7 +63,7 @@ export function IdentifyStep({ onSubmit, onGoogleSignIn, isLoading, error }: Ide
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-500"
+            className="text-sm text-red-400"
           >
             Unesite valjanu email adresu
           </motion.p>
@@ -73,34 +73,30 @@ export function IdentifyStep({ onSubmit, onGoogleSignIn, isLoading, error }: Ide
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-500"
+            className="text-sm text-red-400"
           >
             {error}
           </motion.p>
         )}
       </div>
 
-      <AnimatedButton
-        type="submit"
-        state={isLoading ? "loading" : "idle"}
-        disabled={!isValidEmail}
-      >
+      <AnimatedButton type="submit" state={isLoading ? "loading" : "idle"} disabled={!isValidEmail}>
         Nastavi
       </AnimatedButton>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
+          <div className="w-full border-t border-white/20" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-4 text-gray-500">ili</span>
+          <span className="bg-transparent px-4 text-white/50">ili</span>
         </div>
       </div>
 
       <button
         type="button"
         onClick={onGoogleSignIn}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white transition-all hover:bg-white/20 backdrop-blur-sm"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path

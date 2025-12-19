@@ -1,4 +1,4 @@
-export type AuthStep = "identify" | "authenticate" | "register" | "verify" | "success"
+export type AuthStep = "identify" | "authenticate" | "register" | "verify" | "reset" | "success"
 
 export interface AuthFlowState {
   step: AuthStep

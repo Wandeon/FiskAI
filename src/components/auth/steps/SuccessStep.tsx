@@ -1,4 +1,3 @@
-// src/components/auth/steps/SuccessStep.tsx
 "use client"
 
 import { motion } from "framer-motion"
@@ -20,7 +19,7 @@ export function SuccessStep({ isNewUser, userName }: SuccessStepProps) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
-        className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500"
+        className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 shadow-lg shadow-cyan-500/30"
       >
         <svg
           className="h-10 w-10 text-white"
@@ -44,16 +43,18 @@ export function SuccessStep({ isNewUser, userName }: SuccessStepProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="text-2xl font-bold text-gray-900"
+        className="text-2xl font-bold text-white"
       >
-        {isNewUser ? "Dobrodošli u FiskAI!" : `Dobrodošli natrag${userName ? `, ${userName.split(" ")[0]}` : ""}!`}
+        {isNewUser
+          ? "Dobrodošli u FiskAI!"
+          : `Dobrodošli natrag${userName ? `, ${userName.split(" ")[0]}` : ""}!`}
       </motion.h1>
 
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-2 text-gray-600"
+        className="mt-2 text-white/70"
       >
         {isNewUser ? "Vaš račun je kreiran." : "Prijava uspješna."} Preusmjeravamo vas...
       </motion.p>
@@ -68,7 +69,7 @@ export function SuccessStep({ isNewUser, userName }: SuccessStepProps) {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="h-2 w-2 rounded-full bg-cyan-500"
+              className="h-2 w-2 rounded-full bg-cyan-400"
               animate={{ y: [0, -6, 0] }}
               transition={{
                 duration: 0.6,
