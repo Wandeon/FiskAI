@@ -12,6 +12,7 @@ model User {
   name                String?
   emailVerified       DateTime?
   image               String?
+  systemRole          SystemRole           @default(USER)
   passwordHash        String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -793,6 +794,12 @@ enum Role {
   MEMBER
   ACCOUNTANT
   VIEWER
+}
+
+enum SystemRole {
+  USER   // Regular clients
+  STAFF  // Internal accountants
+  ADMIN  // Platform owner
 }
 
 enum ContactType {
