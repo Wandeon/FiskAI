@@ -7,6 +7,27 @@
 **Status:** Canonical - Single Source of Truth
 **Scope:** Every flow, every button, every permission, every scenario
 
+### Document Status Legend
+
+Throughout this document:
+
+- ✅ **Implemented** - In production, working
+- ⚠️ **Partial** - Some features working, others in progress
+- 🚧 **In Development** - Actively being built
+- 📋 **Planned** - Designed but not started
+- ❌ **Not Planned** - Out of scope
+
+### Version Alignment
+
+| Component         | Bible Version | Code Version | Status     |
+| ----------------- | ------------- | ------------ | ---------- |
+| Core Architecture | 4.1.0         | Current      | ✅ Aligned |
+| Module System     | 4.1.0         | Current      | ✅ Aligned |
+| Visibility System | 4.1.0         | Current      | ✅ Aligned |
+| Pricing Tiers     | 4.1.0         | Stripe       | ⚠️ Partial |
+| Staff Portal      | 4.1.0         | Current      | ⚠️ Partial |
+| Admin Portal      | 4.1.0         | Current      | ⚠️ Partial |
+
 ---
 
 ## Table of Contents
@@ -1666,6 +1687,11 @@ if (result.status === "succeeded") {
 
 ## 11. Tax & Regulatory Data
 
+> **Data Source:** All values in this section are derived from `/src/lib/fiscal-data/`. Changes to tax rates, thresholds, or deadlines should be made in code, then this document updated to match.
+>
+> **Last Verified:** 2025-01-15
+> **Verification Schedule:** Monthly review against official sources
+
 ### 11.1 Key Thresholds (2025)
 
 | Threshold            | Amount        | Consequence                                   |
@@ -1675,6 +1701,8 @@ if (result.status === "succeeded") {
 | Cash B2B Limit       | 700 EUR       | Fines for both parties if exceeded            |
 | Asset Capitalization | 665.00 EUR    | Must depreciate over useful life (2025 value) |
 | Small Business       | 1,000,000 EUR | Corporate tax 10% vs 18%                      |
+
+_Source: `/src/lib/fiscal-data/data/thresholds.ts`, verified against Porezna Uprava_
 
 ### 11.2 Tax Rates
 
@@ -1714,6 +1742,8 @@ Base rate: 12% (excluding municipal surtax)
 
 _Source: Porezna Uprava, effective 2025-01-01_
 
+_Source: `/src/lib/fiscal-data/data/tax-rates.ts`, verified against Porezna Uprava_
+
 ### 11.3 Contribution Rates (2025)
 
 | Contribution        | Rate      | Minimum Monthly |
@@ -1725,6 +1755,8 @@ _Source: Porezna Uprava, effective 2025-01-01_
 
 Minimum base: 719.2 EUR/month
 
+_Source: `/src/lib/fiscal-data/data/contributions.ts`, verified against Porezna Uprava_
+
 ### 11.4 Payment IBANs
 
 | Payment Type | IBAN                  | Model |
@@ -1733,6 +1765,8 @@ Minimum base: 719.2 EUR/month
 | MIO II       | HR8724070001007120013 | HR68  |
 | HZZO         | HR6510010051550100001 | HR68  |
 | HOK          | HR1223400091100106237 | HR68  |
+
+_Source: `/src/lib/fiscal-data/data/payment-details.ts`, verified against Porezna Uprava_
 
 ### 11.5 Deadlines Calendar
 
@@ -1756,6 +1790,8 @@ Minimum base: 719.2 EUR/month
 | 15.01 | PO-SD | Paušalni |
 | 28.02 | DOH | Obrt dohodak |
 | 30.04 | PDO | D.O.O. |
+
+_Source: `/src/lib/fiscal-data/data/deadlines.ts`, verified against Porezna Uprava_
 
 ---
 
