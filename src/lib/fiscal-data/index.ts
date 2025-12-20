@@ -76,6 +76,18 @@ export {
   getTZGroupByNKD,
 } from "./data/chamber-fees"
 
+export {
+  POSTAL_CODES,
+  lookupPostalCode,
+  getAllCounties,
+  getCitiesByCounty,
+  getMunicipalitiesWithPrirez,
+  searchByCityName,
+  getAveragePrirezRate,
+  getPrirezRateRange,
+} from "./data/postal-codes"
+export type { PostalCodeData } from "./data/postal-codes"
+
 // =============================================================================
 // UTILITY EXPORTS
 // =============================================================================
