@@ -351,12 +351,12 @@ export const POSTAL_CODES: PostalCodeData[] = [
 
 /**
  * Look up postal code data by postal code
- * Returns exact match or undefined
+ * Returns exact match or null if not found
  */
-export function lookupPostalCode(postalCode: string): PostalCodeData | undefined {
+export function lookupPostalCode(postalCode: string): PostalCodeData | null {
   // Normalize postal code (remove spaces, ensure 5 digits)
   const normalized = postalCode.replace(/\s+/g, "").padStart(5, "0")
-  return POSTAL_CODES.find((pc) => pc.postalCode === normalized)
+  return POSTAL_CODES.find((pc) => pc.postalCode === normalized) ?? null
 }
 
 /**
