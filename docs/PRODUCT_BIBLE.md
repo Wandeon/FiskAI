@@ -2825,10 +2825,38 @@ async function handleSubmit(data: InvoiceData) {
 
 | Version | Date       | Author | Changes                          |
 | ------- | ---------- | ------ | -------------------------------- |
+| 4.1.0   | 2025-12-20 | Claude | Critical fixes & alignment       |
 | 4.0.0   | 2025-12-19 | Claude | Complete rewrite - unified bible |
 | 3.1.0   | 2025-12-19 | Gemini | V3.1 Expansion                   |
 | 2.0.0   | 2025-12-19 | Codex  | V2 Rewrite                       |
 | 1.0.0   | 2025-12-19 | Gemini | Initial draft                    |
+
+### v4.1.0 Changes
+
+**Critical Fixes:**
+
+- Fixed all 40k thresholds to 60k EUR (paušalni/PDV exit threshold per 2025 Croatian Tax Reform)
+- Corrected competence terminology: "Foundation" and "Growth" (removed outdated "standard"/"expert" references)
+- Updated asset capitalization threshold to 665 EUR (previously 464.53 EUR)
+- Fixed paušalni income tiers to 7-tier structure (0-60k EUR range)
+- Corrected minimal wage to 970 EUR and contribution base to 719.20 EUR
+
+**New Sections:**
+
+- Section 16: API Reference (Legacy) - documented actual API routes vs server actions
+- Section 17: Server Actions Reference - comprehensive CRUD operations inventory
+- Section 18: Drizzle ORM & Database Schema - migration from Prisma documentation
+- Section 19: AI Agents & Automation - Watchdog, Matcher, and Legal Archive specs
+- Section 20: Mobile Navigation & Responsive Design - sidebar behavior documentation
+
+**Alignments:**
+
+- Sidebar navigation aligned with actual implementation (dynamic visibility, mobile behavior)
+- Module system aligned with code (defaultEnabled flags, entitlement logic)
+- Visibility components documented (RequiresModule, RequiresPlan, etc.)
+- Mobile navigation patterns standardized
+- Pricing tier documentation updated to match Stripe configuration
+- Bank sync and e-invoice provider status clarified
 
 ---
 
@@ -2837,6 +2865,8 @@ async function handleSubmit(data: InvoiceData) {
 ---
 
 ## Appendix 1: Strategic Technical Specification (Gaps + Proof)
+
+> **Status:** Most items in this appendix have been incorporated into the main document in v4.1.0. This appendix is retained for audit trail purposes.
 
 **Vision Alignment**
 
@@ -2929,6 +2959,8 @@ Critical missing compliance features for the Croatian market.
 ---
 
 ## Appendix 2: Improvement Ledger (Audit + Fixes)
+
+> **Status:** All items in this audit ledger have been reviewed and addressed in v4.1.0. See Document History for change summary.
 
 **How to use this appendix**
 
