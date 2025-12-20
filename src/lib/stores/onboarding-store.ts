@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware"
 import type { LegalForm } from "@/lib/capabilities"
 import type { CompetenceLevel } from "@/lib/visibility/rules"
 
-export type OnboardingStep = 1 | 2 | 3 | 4
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5
 
 export interface OnboardingData {
   // Step 1: Basic Info
@@ -26,6 +26,16 @@ export interface OnboardingData {
   phone: string
   iban: string
   isVatPayer: boolean
+
+  // Step 5: Paušalni Profile (only for OBRT_PAUSAL)
+  acceptsCash: boolean
+  hasEmployees: boolean
+  employedElsewhere: boolean
+  hasEuVatId: boolean
+  taxBracket: number // 1-7
+  municipality: string
+  county: string
+  prirezRate: number
 }
 
 interface OnboardingState {
@@ -42,6 +52,12 @@ interface OnboardingState {
 const initialData: Partial<OnboardingData> = {
   country: "HR",
   isVatPayer: false,
+  acceptsCash: false,
+  hasEmployees: false,
+  employedElsewhere: false,
+  hasEuVatId: false,
+  taxBracket: 1,
+  prirezRate: 0,
 }
 
 export const useOnboardingStore = create<OnboardingState>()(
@@ -81,6 +97,23 @@ export const useOnboardingStore = create<OnboardingState>()(
             )
           case 4:
             return !!(data.email?.includes("@") && data.iban?.trim())
+          case 5:
+            // Only validate Step 5 for OBRT_PAUSAL legal form
+            if (data.legalForm !== "OBRT_PAUSAL") {
+              return true // Skip validation for other legal forms
+            }
+            return !!(
+              typeof data.acceptsCash === "boolean" &&
+              typeof data.hasEmployees === "boolean" &&
+              typeof data.employedElsewhere === "boolean" &&
+              typeof data.hasEuVatId === "boolean" &&
+              data.taxBracket &&
+              data.taxBracket >= 1 &&
+              data.taxBracket <= 7 &&
+              data.municipality?.trim() &&
+              data.county?.trim() &&
+              typeof data.prirezRate === "number"
+            )
           default:
             return false
         }
