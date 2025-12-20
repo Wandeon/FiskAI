@@ -30,6 +30,11 @@
 
 ---
 
+- [Appendix 1: Strategic Technical Specification (Gaps + Proof)](#appendix-1-strategic-technical-specification-gaps--proof)
+- [Appendix 2: Improvement Ledger (Audit + Fixes)](#appendix-2-improvement-ledger-audit--fixes)
+
+---
+
 ## 1. Vision & Non-Negotiables
 
 ### 1.1 What FiskAI Is
@@ -136,7 +141,7 @@ PostgreSQL
 | Attribute         | Value                                                                           |
 | ----------------- | ------------------------------------------------------------------------------- |
 | **Legal Form**    | `OBRT_PAUSAL`                                                                   |
-| **Revenue**       | < 40,000 EUR/year                                                               |
+| **Revenue**       | < 60,000 EUR/year                                                               |
 | **VAT Status**    | Not in system                                                                   |
 | **Employees**     | None                                                                            |
 | **Cash Payments** | Occasionally                                                                    |
@@ -156,7 +161,7 @@ STAGE 1: SETUP (0 invoices)
 ├── Dashboard: Hero Banner + Setup Checklist
 ├── Tasks: "Create your first contact", "Create your first invoice"
 ├── Hidden: Charts, Advanced Reports, AI Insights
-└── Visible: Paušalni Status Card (40k limit at 0%)
+└── Visible: Paušalni Status Card (60k limit at 0%)
 
 STAGE 2: ACTIVE (1+ invoice)
 ├── Dashboard: + Recent Activity, Revenue Trend, Invoice Funnel
@@ -176,7 +181,7 @@ STAGE 3: STRATEGIC (10+ invoices OR VAT)
 | ----------------------- | -------- | --------------------------------- |
 | VAT fields on invoices  | NO       | "Nije u sustavu PDV-a" auto-added |
 | PDV reports             | NO       | Not a VAT payer                   |
-| Paušalni Status Card    | YES      | Shows 40k limit progress          |
+| Paušalni Status Card    | YES      | Shows 60k limit progress          |
 | PO-SD Generator         | YES      | Annual tax form                   |
 | HOK Payment Reminder    | YES      | Quarterly chamber fee             |
 | Contribution Calculator | YES      | Monthly MIO/HZZO                  |
@@ -190,10 +195,10 @@ STAGE 3: STRATEGIC (10+ invoices OR VAT)
 | Attribute       | Value                                                              |
 | --------------- | ------------------------------------------------------------------ |
 | **Legal Form**  | `OBRT_REAL` (or `OBRT_VAT` if VAT-registered)                      |
-| **Revenue**     | 40,000 - 150,000 EUR/year                                          |
+| **Revenue**     | 60,000 - 150,000 EUR/year                                          |
 | **VAT Status**  | May or may not be registered                                       |
 | **Employees**   | 0-2                                                                |
-| **Competence**  | Standard                                                           |
+| **Competence**  | Average                                                            |
 | **Pain Points** | "How do I track expenses?", "What can I deduct?", "Do I need VAT?" |
 
 **What Ana Needs (vs Marko):**
@@ -219,7 +224,7 @@ STAGE 3: STRATEGIC (10+ invoices OR VAT)
 | **Revenue**     | Any                                                            |
 | **VAT Status**  | Always YES                                                     |
 | **Employees**   | 0+                                                             |
-| **Competence**  | Standard/Expert                                                |
+| **Competence**  | Average/Pro                                                    |
 | **Pain Points** | "Corporate tax calculation", "VAT returns", "Employee payroll" |
 
 **What Ivan Needs:**
@@ -298,11 +303,11 @@ Per-Client View (same as client app, but with accountant role)
 
 | Legal Form     | Code          | Min Capital | Tax Regime    | Accounting   | VAT      |
 | -------------- | ------------- | ----------- | ------------- | ------------ | -------- |
-| Paušalni Obrt  | `OBRT_PAUSAL` | 0           | Flat-rate 12% | Single-entry | NO       |
-| Obrt (Dohodak) | `OBRT_REAL`   | 0           | Income tax    | Single-entry | Optional |
-| Obrt (PDV)     | `OBRT_VAT`    | 0           | Income + VAT  | Single-entry | YES      |
-| j.d.o.o.       | `JDOO`        | 10 HRK      | Corporate     | Double-entry | YES      |
-| d.o.o.         | `DOO`         | 20,000 HRK  | Corporate     | Double-entry | YES      |
+| Paušalni Obrt  | `OBRT_PAUSAL` | 0 EUR       | Flat-rate 12% | Single-entry | NO       |
+| Obrt (Dohodak) | `OBRT_REAL`   | 0 EUR       | Income tax    | Single-entry | Optional |
+| Obrt (PDV)     | `OBRT_VAT`    | 0 EUR       | Income + VAT  | Single-entry | YES      |
+| j.d.o.o.       | `JDOO`        | 1 EUR       | Corporate     | Double-entry | YES      |
+| d.o.o.         | `DOO`         | 2,500 EUR   | Corporate     | Double-entry | YES      |
 
 ### 4.2 Module Requirements by Legal Form
 
@@ -347,11 +352,11 @@ Every possible combination of legal form × VAT × cash × employees:
 | 19  | d.o.o.     | Yes   | No   | Yes       | + **JOPPD**                     |
 | 20  | d.o.o.     | Yes   | Yes  | Yes       | + **Fiscalization, JOPPD**      |
 
-\*Paušalni with VAT = exceeded 40k threshold
+\*Paušalni with VAT = exceeded 60k threshold
 
 ### 4.4 Invoice Requirements by VAT Status
 
-**NOT in VAT system (Paušalni < 40k):**
+**NOT in VAT system (Paušalni < 60k):**
 
 ```
 MUST include:
@@ -412,7 +417,7 @@ Stored in `Company.entitlements[]` as kebab-case strings:
 | `contacts`         | CRM directory            | ✅ FREE |
 | `products`         | Product catalog          | ✅ FREE |
 | `expenses`         | Expense tracking         | ✅ FREE |
-| `banking`          | Bank import & sync       | ✅ FREE |
+| `banking`          | Bank import & sync       | PAID    |
 | `documents`        | Document vault (archive) | ✅ FREE |
 | `reports-basic`    | KPR, aging, P&L          | ✅ FREE |
 | `fiscalization`    | CIS integration          | PAID    |
@@ -424,7 +429,11 @@ Stored in `Company.entitlements[]` as kebab-case strings:
 | `pos`              | Point of sale            | PAID    |
 | `ai-assistant`     | AI chat & extraction     | PAID    |
 
-\*AUTO = Automatically enabled based on `legalForm`
+\*AUTO modules are recommended based on `legalForm` but must be explicitly added to entitlements. The visibility system hides irrelevant modules (e.g., VAT widgets for non-VAT payers) regardless of entitlements.
+
+**Current behavior:** Legal-form-specific features are controlled by the visibility system (`src/lib/visibility/rules.ts`), not by auto-enabling entitlements.
+
+**Planned:** Future versions may auto-add relevant entitlements during onboarding based on legalForm selection.
 
 ### 5.2 Module Definition Structure
 
@@ -445,18 +454,30 @@ export const MODULES = {
 
 ### 5.3 Entitlement Checking
 
-```typescript
-// In route protection
-const moduleAccess = createModuleAccess(company.entitlements)
-if (!moduleAccess.canAccessRoute(pathname)) {
-  redirect("/dashboard?error=module_required")
-}
+**Route Protection (Sidebar):**
 
-// In components
-<ModuleGate module="ai-assistant">
-  <AIAssistantButton />
-</ModuleGate>
+```typescript
+// src/components/layout/sidebar.tsx
+if (item.module && company && !entitlements.includes(item.module)) {
+  return false // Item hidden from navigation
+}
 ```
+
+**Component Visibility:**
+
+```tsx
+// Using visibility system (checks legal form, stage, competence)
+;<Visible id="card:pausalni-status">
+  <PausalniStatusCard />
+</Visible>
+
+// Direct entitlement check in component
+{
+  entitlements.includes("ai-assistant") && <AIAssistantButton />
+}
+```
+
+**Note:** Entitlements are checked separately from the visibility system. Visibility handles legal form, progression stage, and competence level. Entitlements are checked directly in sidebar navigation and individual components.
 
 ---
 
@@ -554,8 +575,8 @@ strategic   → 10+ invoices OR VAT registered
 ```typescript
 // User's self-declared expertise
 beginner → Hide advanced settings, show all help
-standard → Normal UI
-expert   → Show everything, minimal hand-holding
+average  → Normal UI
+pro      → Show everything, minimal hand-holding
 ```
 
 ### 7.2 Element Visibility Rules
@@ -564,14 +585,14 @@ expert   → Show everything, minimal hand-holding
 | --------------------------- | ----------- | --------- | ---------- | ------------- |
 | `card:hero-banner`          | All         | setup+    | All        | Core          |
 | `card:checklist-widget`     | All         | setup     | beginner   | Guidance      |
-| `card:recent-activity`      | All         | active+   | standard+  | Core          |
-| `card:revenue-trend`        | All         | active+   | standard+  | invoicing     |
-| `card:invoice-funnel`       | All         | active+   | standard+  | invoicing     |
+| `card:recent-activity`      | All         | active+   | average+   | Core          |
+| `card:revenue-trend`        | All         | active+   | average+   | invoicing     |
+| `card:invoice-funnel`       | All         | active+   | average+   | invoicing     |
 | `card:pausalni-status`      | OBRT_PAUSAL | setup+    | All        | pausalni      |
-| `card:vat-overview`         | VAT payers  | active+   | standard+  | vat           |
+| `card:vat-overview`         | VAT payers  | active+   | average+   | vat           |
 | `card:fiscalization-status` | Cash payers | setup+    | All        | fiscalization |
 | `card:insights-widget`      | All         | strategic | All        | ai-assistant  |
-| `card:corporate-tax`        | DOO/JDOO    | strategic | expert     | corporate-tax |
+| `card:corporate-tax`        | DOO/JDOO    | strategic | pro        | corporate-tax |
 
 ### 7.3 Visibility Component Usage
 
@@ -614,18 +635,26 @@ expert   → Show everything, minimal hand-holding
 **Completion Logic:**
 
 ```typescript
-isOnboardingComplete = Boolean(
-  company.name &&
-  company.oib &&
-  company.legalForm &&
-  company.address &&
-  company.postalCode &&
-  company.city &&
-  company.email &&
-  company.iban &&
-  company.featureFlags?.competence
+// Actual implementation (src/lib/visibility/server.ts)
+const hasCompletedOnboarding = Boolean(
+  company.oib && company.address && company.city && company.iban && company.email
 )
 ```
+
+**Required Fields for Completion:**
+| Field | Required | Validation |
+|-------|----------|------------|
+| OIB | ✅ | 11 digits |
+| Address | ✅ | Non-empty |
+| City | ✅ | Non-empty |
+| IBAN | ✅ | Valid format |
+| Email | ✅ | Valid email |
+| Name | ❌ | Optional |
+| PostalCode | ❌ | Optional |
+| LegalForm | ❌ | Defaults to DOO |
+| Competence | ❌ | Stored in featureFlags, not required |
+
+**Note:** Competence level is collected in wizard Step 2 and stored in `featureFlags.competence`, but is not required for onboarding completion.
 
 ---
 
@@ -647,7 +676,7 @@ isOnboardingComplete = Boolean(
 │  □ Upload fiscal certificate        │                   │
 ├─────────────────────────────────────────────────────────┤
 │  [Paušalni Status Card]             │  Deadlines        │
-│  40k Limit: 0 EUR (0%)              │  Next: MIO 15.01  │
+│  60k Limit: 0 EUR (0%)              │  Next: MIO 15.01  │
 │  "You haven't earned anything yet"  │                   │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -718,16 +747,16 @@ isOnboardingComplete = Boolean(
 | --------------- | ----------------------------- | ------------- | ---------- | --------- |
 | Hero Banner     | `hero-banner.tsx`             | Core          | All        | setup+    |
 | Setup Checklist | `ChecklistWidget.tsx`         | Guidance      | beginner   | setup     |
-| Recent Activity | `recent-activity.tsx`         | Core          | standard+  | active+   |
-| Revenue Trend   | `revenue-trend-card.tsx`      | invoicing     | standard+  | active+   |
-| Invoice Funnel  | `invoice-funnel-card.tsx`     | invoicing     | standard+  | active+   |
+| Recent Activity | `recent-activity.tsx`         | Core          | average+   | active+   |
+| Revenue Trend   | `revenue-trend-card.tsx`      | invoicing     | average+   | active+   |
+| Invoice Funnel  | `invoice-funnel-card.tsx`     | invoicing     | average+   | active+   |
 | Paušalni Status | `pausalni-status-card.tsx`    | pausalni      | All        | setup+    |
-| VAT Overview    | `vat-overview-card.tsx`       | vat           | standard+  | active+   |
+| VAT Overview    | `vat-overview-card.tsx`       | vat           | average+   | active+   |
 | Fiscal Status   | `fiscalization-status.tsx`    | fiscalization | All        | setup+    |
 | AI Insights     | `insights-card.tsx`           | ai-assistant  | All        | strategic |
 | Deadlines       | `deadline-countdown-card.tsx` | Core          | All        | setup+    |
 | Action Cards    | `action-cards.tsx`            | ai-assistant  | All        | active+   |
-| Quick Stats     | `quick-stats.tsx`             | Core          | standard+  | active+   |
+| Quick Stats     | `quick-stats.tsx`             | Core          | average+   | active+   |
 
 ---
 
@@ -744,7 +773,7 @@ isOnboardingComplete = Boolean(
 | Company Status Pill | Tablet                         | Shows e-invoice connection |
 | Onboarding Progress | Desktop, if incomplete         | Click → /onboarding        |
 | Plan Badge          | XL screens                     | Shows subscription tier    |
-| Quick Level Toggle  | Desktop                        | beginner/standard/expert   |
+| Quick Level Toggle  | Desktop                        | beginner/average/pro       |
 | Command Palette     | Always                         | ⌘K to open                 |
 | Quick Actions       | Desktop                        | + dropdown                 |
 | Notifications       | Always                         | Bell + unread count        |
@@ -843,10 +872,10 @@ isOnboardingComplete = Boolean(
 <CompetenceCard level="beginner"
   title="Početnik"
   description="Pokazuj mi sve savjete i upute" />
-<CompetenceCard level="standard"
-  title="Prosječan"
+<CompetenceCard level="average"
+  title="Iskusan"
   description="Standardni prikaz" />
-<CompetenceCard level="expert"
+<CompetenceCard level="pro"
   title="Stručnjak"
   description="Minimalne upute, maksimalna kontrola" />
 ```
@@ -905,7 +934,7 @@ Every list/table has an empty state:
 
 - Success: "Račun uspješno kreiran!"
 - Error: "Greška pri spremanju. Pokušajte ponovno."
-- Warning: "Blizu ste limita od 40.000 EUR"
+- Warning: "Blizu ste limita od 60.000 EUR"
 - Info: "Novi izvještaj je dostupan"
 
 ---
@@ -1054,13 +1083,13 @@ Annual PO-SD Submission:
 
 ### 11.1 Key Thresholds (2025)
 
-| Threshold            | Amount        | Consequence                         |
-| -------------------- | ------------- | ----------------------------------- |
-| VAT Registration     | 60,000 EUR    | Must register for VAT within 8 days |
-| Paušalni Limit       | 60,000 EUR    | Must switch to real income basis    |
-| Cash B2B Limit       | 700 EUR       | Fines for both parties if exceeded  |
-| Asset Capitalization | 464.53 EUR    | Must depreciate over useful life    |
-| Small Business       | 1,000,000 EUR | Corporate tax 10% vs 18%            |
+| Threshold            | Amount        | Consequence                                   |
+| -------------------- | ------------- | --------------------------------------------- |
+| VAT Registration     | 60,000 EUR    | Must register for VAT within 8 days           |
+| Paušalni Limit       | 60,000 EUR    | Must switch to real income basis              |
+| Cash B2B Limit       | 700 EUR       | Fines for both parties if exceeded            |
+| Asset Capitalization | 665.00 EUR    | Must depreciate over useful life (2025 value) |
+| Small Business       | 1,000,000 EUR | Corporate tax 10% vs 18%                      |
 
 ### 11.2 Tax Rates
 
@@ -1084,8 +1113,21 @@ Annual PO-SD Submission:
 | 5% | Bread, milk, books, medicines |
 | 0% | Exports, financial services |
 
-**Paušalni Tax (12% base):**
-7 brackets from 1,695 EUR to 9,000 EUR base amounts.
+**Paušalni Tax Brackets (2025):**
+
+Base rate: 12% (excluding municipal surtax)
+
+| Tier | Annual Revenue (EUR)  | Tax Base (EUR) | Quarterly Tax (EUR) |
+| ---- | --------------------- | -------------- | ------------------- |
+| 1    | 0.00 - 11,300.00      | 1,695.00       | 50.85               |
+| 2    | 11,300.01 - 15,300.00 | 2,295.00       | 68.85               |
+| 3    | 15,300.01 - 19,900.00 | 2,985.00       | 89.55               |
+| 4    | 19,900.01 - 30,600.00 | 4,590.00       | 137.70              |
+| 5    | 30,600.01 - 40,000.00 | 6,000.00       | 180.00              |
+| 6    | 40,000.01 - 50,000.00 | 7,500.00       | 225.00              |
+| 7    | 50,000.01 - 60,000.00 | 9,000.00       | 270.00              |
+
+_Source: Porezna Uprava, effective 2025-01-01_
 
 ### 11.3 Contribution Rates (2025)
 
@@ -1136,35 +1178,35 @@ Minimum base: 719.2 EUR/month
 
 ### 12.1 External Systems
 
-| System        | Purpose                 | Status        |
-| ------------- | ----------------------- | ------------- |
-| FINA CIS      | Fiscalization (JIR/ZKI) | ⚠️ 60%        |
-| IE-Računi     | E-invoice intermediary  | ✅ Production |
-| Gocardless    | PSD2 bank sync          | ✅ Production |
-| SaltEdge      | PSD2 bank sync          | ✅ Production |
-| Stripe        | Payments + Terminal     | ✅ Production |
-| Resend        | Transactional email     | ✅ Production |
-| Cloudflare R2 | Document storage        | ✅ Production |
+| System        | Purpose                 | Status        | Notes                   |
+| ------------- | ----------------------- | ------------- | ----------------------- |
+| FINA CIS      | Fiscalization (JIR/ZKI) | ⚠️ 60%        | Core logic ready        |
+| IE-Računi     | E-invoice intermediary  | ⚠️ Planned    | API integration pending |
+| Gocardless    | PSD2 bank sync          | ✅ Production | Primary bank provider   |
+| SaltEdge      | PSD2 bank sync          | ⚠️ Planned    | Secondary provider      |
+| Stripe        | Payments + Terminal     | ✅ Production | Subscriptions active    |
+| Resend        | Transactional email     | ✅ Production | All email flows         |
+| Cloudflare R2 | Document storage        | ✅ Production | 11-year archive         |
 
 ### 12.2 E-Invoice Providers
 
-| Provider   | Type         | Our Support |
-| ---------- | ------------ | ----------- |
-| IE-Računi  | Intermediary | ✅ Full     |
-| FINA       | Direct       | ⚠️ Planned  |
-| Moj-eRačun | Intermediary | ❌ Not yet  |
-| Solo       | Intermediary | ❌ Not yet  |
-| Mock       | Testing      | ✅ Full     |
+| Provider   | Type         | Status     | Notes                    |
+| ---------- | ------------ | ---------- | ------------------------ |
+| Mock       | Testing      | ✅ Full    | Development/testing only |
+| IE-Računi  | Intermediary | ⚠️ Planned | Q1 2025 target           |
+| FINA       | Direct       | ⚠️ Planned | Requires certification   |
+| Moj-eRačun | Intermediary | ❌ Not yet | Low priority             |
 
 ### 12.3 Bank Import Formats
 
-| Format        | Extension | Support |
-| ------------- | --------- | ------- |
-| CSV (generic) | .csv      | ✅      |
-| CAMT.053      | .xml      | ✅      |
-| MT940         | .sta      | ✅      |
-| PBZ Export    | .csv      | ✅      |
-| Erste Export  | .csv      | ✅      |
+| Format         | Extension | Status | Notes                  |
+| -------------- | --------- | ------ | ---------------------- |
+| CSV (generic)  | .csv      | ✅     | Manual column mapping  |
+| CAMT.053       | .xml      | ✅     | ISO 20022 standard     |
+| Erste CSV      | .csv      | ✅     | Pre-configured mapping |
+| Raiffeisen CSV | .csv      | ✅     | Pre-configured mapping |
+| PBZ Export     | .csv      | ⚠️ WIP | Parser in development  |
+| MT940          | .sta      | ❌     | Not yet implemented    |
 
 ---
 
@@ -1172,13 +1214,15 @@ Minimum base: 719.2 EUR/month
 
 ### 13.1 Tier Structure
 
-| Tier           | Price     | Includes                                                                   |
-| -------------- | --------- | -------------------------------------------------------------------------- |
-| **Free**       | 0 EUR     | Invoicing, Contacts, Products, Expenses, Banking, Basic Reports, Documents |
-| **Paušalni**   | 9 EUR/mo  | Free + Paušalni module, Contributions tracking                             |
-| **Pro**        | 19 EUR/mo | Free + Fiscalization, Reconciliation, Advanced Reports                     |
-| **Business**   | 39 EUR/mo | Pro + VAT, Corporate Tax, AI Assistant                                     |
-| **Enterprise** | Custom    | Business + Staff assignments, Multi-user                                   |
+| Tier           | Price     | Status     | Includes                                                                 |
+| -------------- | --------- | ---------- | ------------------------------------------------------------------------ |
+| **Free**       | 0 EUR     | ✅ Active  | Invoicing, Contacts, Products, Expenses, Basic Reports, Documents        |
+| **Paušalni**   | 9 EUR/mo  | ✅ Active  | Free + Paušalni module, Contributions tracking, Banking                  |
+| **Pro**        | 19 EUR/mo | ✅ Active  | Paušalni + Fiscalization, Reconciliation, Advanced Reports, AI Assistant |
+| **Business**   | 39 EUR/mo | ⚠️ Planned | Pro + VAT, Corporate Tax, Multi-user                                     |
+| **Enterprise** | Custom    | ⚠️ Planned | Business + Staff assignments, Custom integrations                        |
+
+**Note:** Business and Enterprise tiers are planned but not yet available in Stripe. Current production supports Free, Paušalni, and Pro.
 
 ### 13.2 Module-to-Tier Mapping
 
@@ -1189,7 +1233,7 @@ Minimum base: 719.2 EUR/month
 | contacts         | ✅   | ✅       | ✅  | ✅       | ✅         |
 | products         | ✅   | ✅       | ✅  | ✅       | ✅         |
 | expenses         | ✅   | ✅       | ✅  | ✅       | ✅         |
-| banking          | ✅   | ✅       | ✅  | ✅       | ✅         |
+| banking          | ❌   | ✅       | ✅  | ✅       | ✅         |
 | documents        | ✅   | ✅       | ✅  | ✅       | ✅         |
 | reports-basic    | ✅   | ✅       | ✅  | ✅       | ✅         |
 | pausalni         | ❌   | ✅       | ❌  | ❌       | ✅         |
@@ -1537,3 +1581,360 @@ GET    /api/pausalni/calendar       Tax calendar
 ---
 
 **This document is the single source of truth for FiskAI product definition.**
+
+---
+
+## Appendix 1: Strategic Technical Specification (Gaps + Proof)
+
+**Vision Alignment**
+
+- This appendix serves as the engineering blueprint to bridge the gap between v4.0.0 theory and 2025/2026 production reality.
+- Methodology: **Legal Drift Audit** + **Algorithmic Specification** + **Market Gap Analysis**.
+
+### A1.1 Legal Threshold & Regulatory Drift (2025 Updates)
+
+The following mandatory updates must be implemented to keep FiskAI compliant with the 2025 Croatian Tax Reform.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:139` `PRODUCT_BIBLE.md:165` `PRODUCT_BIBLE.md:170` `PRODUCT_BIBLE.md:179` `PRODUCT_BIBLE.md:908` `PRODUCT_BIBLE.md:1059` `PRODUCT_BIBLE.md:1060`
+  **Issue**: Legacy income/VAT thresholds.
+  **Evidence**: Official Porezna Uprava 2025 update (Thresholds for mandatory entry into VAT and exit from Paušalni).
+  **Proof**: The limit has officially increased from 40,000.00 EUR to **60,000.00 EUR**.
+  **Fix**: Update global `CONSTANTS` in `lib/fiscal-data`. Recalibrate `card:pausalni-status` progress bar. Trigger "Strategic Stage" at 50k instead of 35k.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:1087` `PRODUCT_BIBLE.md:1088`
+  **Issue**: Incomplete Paušalni tax tier table.
+  **Evidence**: Law on Income Tax (Zakon o porezu na dohodak) 2025.
+  **Proof**: Brackets expanded to 7 tiers.
+  **Fix**: Update `src/lib/pausalni/calculator.ts` with the following tiers:
+  1. 0 - 11,300.00 EUR (Base: 1,695.00)
+  2. 11,300.01 - 15,300.00 EUR (Base: 2,295.00)
+  3. 15,300.01 - 19,900.00 EUR (Base: 2,985.00)
+  4. 19,900.01 - 30,600.00 EUR (Base: 4,590.00)
+  5. 30,600.01 - 40,000.00 EUR (Base: 6,000.00)
+  6. 40,000.01 - 50,000.00 EUR (Base: 7,500.00)
+  7. 50,000.01 - 60,000.00 EUR (Base: 9,000.00)
+
+- **Doc refs**: `PRODUCT_BIBLE.md:1062` `PRODUCT_BIBLE.md:1249` `PRODUCT_BIBLE.md:1381`
+  **Issue**: Legacy asset capitalization threshold.
+  **Evidence**: Regulation on Amortization (Pravilnik o amortizaciji) 2025.
+  **Proof**: Items are now capitalized at **665.00 EUR** (previously 464.53 EUR).
+  **Fix**: Update `Expense Vault` AI logic to trigger "Asset Suggestion" only if `total >= 665.00`.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:1094` `PRODUCT_BIBLE.md:1097` `PRODUCT_BIBLE.md:1401`
+  **Issue**: Legacy minimal wage and contribution base.
+  **Evidence**: Government Decree on Minimal Wage 2025 (Uredba o visini minimalne plaće).
+  **Proof**: Minimal gross wage is now **970.00 EUR**. Contribution base for entrepreneurs is **719.20 EUR**.
+  **Fix**: Update `lib/fiscal-data/contributions.ts` and automated payment slip generator (`src/lib/pausalni/obligations.ts`).
+
+- **Doc refs**: `PRODUCT_BIBLE.md:1068` `PRODUCT_BIBLE.md:1071`
+  **Issue**: Surtax (Prirez) is obsolete.
+  **Evidence**: Local Tax Law (Zakon o lokalnim porezima) abolition of prirez.
+  **Proof**: Surtax is 0. Cities now set direct income tax rates (e.g., Zagreb ~23.6% lower tier).
+  **Fix**: Remove "Surtax" fields from calculators. Add "Municipality Selection" to Step 3 of Onboarding to resolve local tax rate.
+
+### A1.2 Technical Logic Gaps (AI & Data Flow)
+
+Specifications for autonomous features promised but not detailed in v4.0.0.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:170` `PRODUCT_BIBLE.md:1201` `PRODUCT_BIBLE.md:1246`
+  **The Watchdog Agent (Spec)**:
+  - Input: `db.eInvoice.sum(totalAmount)` where `year = current`.
+  - Logic: Monitor proximity to 60k limit.
+  - 85% Trigger: Toast + Dashboard Warning.
+  - 95% Trigger: Modal blocking creation of further invoices without "Legal Review" checkbox.
+  - Target: Zero unplanned VAT entries for paušalni users.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:982` `PRODUCT_BIBLE.md:1197`
+  **The Matcher Agent (Reconciliation)**:
+  - Input: Bank CSV/XML Transaction + Unpaid Invoices.
+  - Algorithm: Fuzzy match on (1) Amount == Total, (2) Reference Number match, (3) Payer Name == Contact Name.
+  - Priority: If `Reference Number` matches exactly, auto-reconcile. If only `Payer Name` matches, suggest match with 70% confidence.
+
+- **Doc refs**: `PRODUCT_BIBLE.md:46` `PRODUCT_BIBLE.md:1147` `PRODUCT_BIBLE.md:1239`
+  **Legal Archive Integrity (XAdES)**:
+  - Spec: Storing in Cloudflare R2 is insufficient for the 11-year Archive Law (Zakon o računovodstvu).
+  - Implementation: Implement **Digital Notarization**. Store a `SHA-256` hash of every final PDF in a write-once ledger. Generate a monthly "Trust Manifest" signed by FiskAI's master certificate.
+
+### A1.3 Market-Ready Feature Roadmap (The 100 Things - Priority P0)
+
+Critical missing compliance features for the Croatian market.
+
+1. **Travel Orders (Putni Nalozi)**:
+   - Dependency: Essential for owners to payout tax-free mileage.
+   - Requirements: Odometer log, purpose of trip, per diem (30€/15€) calculation.
+2. **Locco Driving Log**:
+   - Simplified mileage tracker for city travel (under 30km).
+3. **Internal Warehouse (Skladište)**:
+   - Mandatory for retail `legalForm`. Tracks entry/exit of goods (Primke).
+4. **GDPR Data Retention Automator**:
+   - Logic: Auto-delete employee personal data 5 years after termination (unless pension relevant), but keep Invoices for 11 years.
+
+### A1.4 Strategic Proof Points
+
+- **Timeline**: B2B E-Invoicing is mandatory starting **Jan 1, 2026** (Fiskalizacija 2.0).
+- **Integrity**: Every document issued must include a **QR Code** for verification via the Porezna Uprava portal (even if non-cash).
+
+---
+
+## Appendix 2: Improvement Ledger (Audit + Fixes)
+
+**How to use this appendix**
+
+- Doc refs point to exact lines in `docs/PRODUCT_BIBLE.md` (v4.0.0, pre-append).
+- Evidence points to current repo files showing the implemented behavior.
+- Each item ends with a concrete fix (doc update, code update, or both).
+
+### A2.1 High-impact mismatches (fix before external launch)
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1175` `docs/PRODUCT_BIBLE.md:1181` `docs/PRODUCT_BIBLE.md:1185` `docs/PRODUCT_BIBLE.md:1202`
+  Issue: Pricing tiers and module-to-tier mapping in the bible do not match Stripe plan config (doc: Free/Paušalni/Pro/Business/Enterprise vs code: pausalni/standard/pro).
+  Evidence: `src/lib/billing/stripe.ts:26` `src/lib/billing/stripe.ts:47`.
+  Fix: Decide canonical tiers and update both bible + `PLANS` (including entitlements and UI labels).
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1139` `docs/PRODUCT_BIBLE.md:1144` `docs/PRODUCT_BIBLE.md:1151` `docs/PRODUCT_BIBLE.md:1154`
+  Issue: IE-Računi and SaltEdge are marked production-ready but providers are not implemented/available.
+  Evidence: `src/lib/e-invoice/provider.ts:33` `src/lib/bank-sync/providers/index.ts:4`.
+  Fix: Downgrade status in bible or implement providers; adjust Implementation Status matrix.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1424` `docs/PRODUCT_BIBLE.md:1442` `docs/PRODUCT_BIBLE.md:1461`
+  Issue: API reference lists invoice CRUD and `/api/banking/transactions`, but only PDF + banking import/reconciliation endpoints exist.
+  Evidence: `src/app/api/invoices/[id]/pdf/route.ts:6` `src/app/api/banking/reconciliation/match/route.ts:1` `src/app/api/banking/import/upload/route.ts:1`.
+  Fix: Replace API list with actual route inventory and explicitly note server actions for CRUD.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:406` `docs/PRODUCT_BIBLE.md:415`
+  Issue: Banking is labeled FREE/default in the bible, but `defaultEnabled` is false in module definitions.
+  Evidence: `src/lib/modules/definitions.ts:80` `src/lib/modules/definitions.ts:86`.
+  Fix: Decide whether banking should be default-on; align module defaults, doc table, and seed entitlements.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:406` `docs/PRODUCT_BIBLE.md:427`
+  Issue: AUTO entitlements (pausalni/vat/corporate-tax) are described as legalForm-based, but code only checks entitlements.
+  Evidence: `src/lib/capabilities.ts:51` `src/lib/capabilities.ts:53`.
+  Fix: Implement auto-entitlements or update bible to state manual toggles + visibility rules.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:446` `docs/PRODUCT_BIBLE.md:456`
+  Issue: Bible uses `createModuleAccess`/`ModuleGate` for gating; app uses `deriveCapabilities` + visibility components and no ModuleGate exists.
+  Evidence: `src/lib/modules/access.ts:10` `src/lib/visibility/components.tsx:32` `src/components/layout/sidebar.tsx:136`.
+  Fix: Update gating examples or implement a ModuleGate and use it consistently.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:139` `docs/PRODUCT_BIBLE.md:159` `docs/PRODUCT_BIBLE.md:350` `docs/PRODUCT_BIBLE.md:908`
+  Issue: Mixed 40k/60k thresholds create contradictions across personas, UI copy, and tax data.
+  Evidence: `src/lib/fiscal-data/data/thresholds.ts:20` `src/lib/fiscal-data/data/thresholds.ts:35` (60k) vs `src/app/(app)/reports/vat-threshold/page.tsx:31` (40k).
+  Fix: Use `THRESHOLDS.pdv/pausalni` everywhere and show effective-year values.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1454` `docs/PRODUCT_BIBLE.md:1456`
+  Issue: E-invoice endpoints in bible do not match actual inbox/receive routes.
+  Evidence: `src/app/api/e-invoices/inbox/route.ts:1` `src/app/api/e-invoices/receive/route.ts:1`.
+  Fix: Update API reference and flow narratives to the inbox/receive model.
+
+### A2.2 Module system & entitlements consistency
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:429` `docs/PRODUCT_BIBLE.md:439`
+  Issue: Module definition snippet uses `requiredFor` and `navItems` objects; actual ModuleDefinition has `navItems: string[]` and no `requiredFor`.
+  Evidence: `src/lib/modules/definitions.ts:22` `src/lib/modules/definitions.ts:27`.
+  Fix: Update snippet or extend module definitions to include `requiredFor` and rich nav metadata.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:406` `docs/PRODUCT_BIBLE.md:408`
+  Issue: Entitlements are described as `Company.entitlements[]` but schema stores nullable JSON with no enforced shape.
+  Evidence: `prisma/schema.prisma:87` `prisma/schema.prisma:105`.
+  Fix: Document JSON array shape + validation, or migrate to `String[]`.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:410` `docs/PRODUCT_BIBLE.md:417`
+  Issue: Default entitlements diverge across code paths (module defaults vs capabilities defaults vs plan settings defaults).
+  Evidence: `src/lib/modules/definitions.ts:162` `src/lib/capabilities.ts:27` `src/app/(app)/settings/plan-settings-form.tsx:32`.
+  Fix: Create a single source of truth for defaults and reference it in the bible.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:446` `docs/PRODUCT_BIBLE.md:451`
+  Issue: Several pages check non-existent module keys (`reports`, `eInvoicing`, `invoicing` for products).
+  Evidence: `src/app/(app)/reports/page.tsx:62` `src/app/(app)/e-invoices/page.tsx:58` `src/app/(app)/products/page.tsx:20`.
+  Fix: Update code to use canonical kebab-case module keys from the bible.
+
+### A2.3 Visibility, guidance, onboarding alignment
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:552` `docs/PRODUCT_BIBLE.md:558` `docs/PRODUCT_BIBLE.md:839`
+  Issue: Competence levels in bible (beginner/standard/expert) do not match implemented levels (beginner/average/pro).
+  Evidence: `src/lib/visibility/rules.ts:11` `src/lib/guidance/constants.ts:5` `src/components/onboarding/step-competence.tsx:17`.
+  Fix: Standardize terminology across guidance, onboarding, and docs.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:606` `docs/PRODUCT_BIBLE.md:612`
+  Issue: Onboarding completion logic references `featureFlags?.competence`, but visibility uses only core company fields.
+  Evidence: `src/lib/visibility/server.ts:89` `src/components/layout/header.tsx:60`.
+  Fix: Clarify which flow controls "onboarding complete" and align doc/logic.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:576` `docs/PRODUCT_BIBLE.md:587`
+  Issue: Doc says `Visible` checks entitlements; actual visibility ignores entitlements.
+  Evidence: `src/lib/visibility/context.tsx:136` `src/lib/visibility/context.tsx:142`.
+  Fix: Add entitlements to visibility or update the doc to state entitlements are checked separately.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:561` `docs/PRODUCT_BIBLE.md:575`
+  Issue: Element IDs in the bible do not fully match the canonical registry (e.g., `card:insights` exists but is not listed).
+  Evidence: `src/lib/visibility/elements.ts:13` `src/lib/visibility/elements.ts:15`.
+  Fix: Replace the table with the canonical `ElementId` registry.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:839` `docs/PRODUCT_BIBLE.md:851`
+  Issue: Competence is described as global + category levels in onboarding; only global is collected there.
+  Evidence: `src/components/onboarding/step-competence.tsx:10` `src/lib/db/schema/guidance.ts:30`.
+  Fix: Document category-level controls in `/settings/guidance` and keep onboarding global-only.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:917` `docs/PRODUCT_BIBLE.md:939`
+  Issue: Passkey login is described, but the UI flow is TODO.
+  Evidence: `src/components/auth/AuthFlow.tsx:28`.
+  Fix: Mark passkeys as planned or implement the flow.
+
+### A2.4 Navigation & UI alignment
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:753` `docs/PRODUCT_BIBLE.md:767`
+  Issue: Sidebar sections in bible do not match the live navigation registry.
+  Evidence: `src/lib/navigation.ts:33` `src/lib/navigation.ts:92`.
+  Fix: Update sidebar spec to mirror the `navigation` source of truth.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:770` `docs/PRODUCT_BIBLE.md:773`
+  Issue: Doc claims nav hides locked items; actual UI shows locked state with a lock icon.
+  Evidence: `src/lib/visibility/components.tsx:134` `src/components/layout/sidebar.tsx:157`.
+  Fix: Update doc to reflect locked nav state (or remove lock UI).
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:775` `docs/PRODUCT_BIBLE.md:783`
+  Issue: Mobile UI described as bottom navigation; implementation uses a slide-out drawer.
+  Evidence: `src/components/layout/mobile-nav.tsx:63`.
+  Fix: Update doc or implement the bottom nav.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:785` `docs/PRODUCT_BIBLE.md:790`
+  Issue: Action drawer is not implemented; mobile uses command palette FAB.
+  Evidence: `src/components/layout/mobile-nav.tsx:203`.
+  Fix: Replace action drawer spec with command palette behavior or build the drawer.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:738` `docs/PRODUCT_BIBLE.md:747`
+  Issue: Header spec mentions Quick Level Toggle without tying it to guidance preferences.
+  Evidence: `src/components/layout/header.tsx:128` `src/components/guidance/QuickLevelToggle.tsx:7`.
+  Fix: Add guidance preference wiring in the header spec.
+
+### A2.5 Staff & Admin portals
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:247` `docs/PRODUCT_BIBLE.md:254`
+  Issue: Staff portal spec focuses on "Pending Actions/Quick Export" while actual navigation is Dashboard/Clients/Calendar/Tasks/Tickets/Documents.
+  Evidence: `src/components/staff/sidebar.tsx:17` `src/app/(staff)/clients/page.tsx:1`.
+  Fix: Update staff IA in bible or implement the specified features.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:247` `docs/PRODUCT_BIBLE.md:260`
+  Issue: Staff dashboard claims multi-client deadlines/activity, but code has TODOs.
+  Evidence: `src/components/staff/dashboard.tsx:22` `src/components/staff/dashboard.tsx:41`.
+  Fix: Mark these as planned until implemented.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:272` `docs/PRODUCT_BIBLE.md:280`
+  Issue: Admin portal feature list (News, Metrics) does not match actual admin sidebar (Subscriptions, Services, Audit Log).
+  Evidence: `src/components/admin/sidebar.tsx:17` `src/components/admin/dashboard.tsx:45`.
+  Fix: Align admin portal spec with nav or build missing sections.
+
+### A2.6 Data models & enums
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1294` `docs/PRODUCT_BIBLE.md:1307`
+  Issue: Company model in bible shows required fields; schema allows nullable `legalForm`, `email`, `iban`, and `entitlements`.
+  Evidence: `prisma/schema.prisma:87` `prisma/schema.prisma:105`.
+  Fix: Update bible to match schema or explicitly mark as target state.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1331` `docs/PRODUCT_BIBLE.md:1344`
+  Issue: EInvoice model fields in bible do not match schema field names.
+  Evidence: `prisma/schema.prisma:227` `prisma/schema.prisma:240`.
+  Fix: Update model snippet and downstream flow docs to use canonical field names.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1337` `docs/PRODUCT_BIBLE.md:1339`
+  Issue: Status and invoice type enums in bible are incomplete.
+  Evidence: `prisma/schema.prisma:1300` `prisma/schema.prisma:1318`.
+  Fix: Add `ARCHIVED`, `ERROR`, and `DEBIT_NOTE` to the bible.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1365` `docs/PRODUCT_BIBLE.md:1404`
+  Issue: "Missing Models" list ignores models already present (StaffAssignment, BankAccount, BankTransaction, Statement, SupportTicket, EmailConnection).
+  Evidence: `prisma/schema.prisma:167` `prisma/schema.prisma:464` `prisma/schema.prisma:677` `prisma/schema.prisma:748` `prisma/schema.prisma:563`.
+  Fix: Move implemented models into core models; keep only true gaps.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1328`
+  Issue: Guidance preferences (global + per-category levels) are stored via Drizzle and not documented.
+  Evidence: `src/lib/db/drizzle.ts:1` `src/lib/db/schema/guidance.ts:30`.
+  Fix: Add a "Guidance Preferences" model subsection.
+
+### A2.7 API & integration inventory
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1424` `docs/PRODUCT_BIBLE.md:1437`
+  Issue: API reference omits several real routes (guidance, deadlines, receipts, compliance).
+  Evidence: `src/app/api/guidance/preferences/route.ts:1` `src/app/api/deadlines/route.ts:1` `src/app/api/receipts/upload/route.ts:1` `src/app/api/compliance/en16931/route.ts:1`.
+  Fix: Expand API list to include these groups.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1439` `docs/PRODUCT_BIBLE.md:1447`
+  Issue: Invoice CRUD is documented as REST; actual CRUD is server actions and only PDF is exposed as API.
+  Evidence: `src/app/api/invoices/[id]/pdf/route.ts:6` `src/app/actions/invoice.ts:375`.
+  Fix: Update API reference and clarify server action usage.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1459` `docs/PRODUCT_BIBLE.md:1465`
+  Issue: Banking endpoints in doc omit `/api/bank/*` connect/callback and list a non-existent `transactions` endpoint.
+  Evidence: `src/app/api/bank/connect/route.ts:1` `src/app/api/banking/reconciliation/route.ts:1`.
+  Fix: Split banking API into bank-connect vs bank-import/reconciliation sections.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1159` `docs/PRODUCT_BIBLE.md:1167`
+  Issue: Bank import formats list includes MT940/PBZ not implemented; actual support is CAMT.053 XML + CSV (Erste/Raiffeisen/generic).
+  Evidence: `src/lib/banking/import/processor.ts:87` `src/lib/banking/csv-parser.ts:42`.
+  Fix: Update formats list or implement missing parsers.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1135` `docs/PRODUCT_BIBLE.md:1158`
+  Issue: Compliance API (EN16931/Croatian validation) and sandbox endpoints are not mentioned.
+  Evidence: `src/app/api/compliance/en16931/route.ts:1` `src/app/api/sandbox/e-invoice/route.ts:1`.
+  Fix: Add compliance + sandbox endpoints under integrations.
+
+### A2.8 Tax & regulatory data governance
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1055` `docs/PRODUCT_BIBLE.md:1064`
+  Issue: Tax data is manually embedded without `lastVerified` or `source`, despite coded fiscal data containing those fields.
+  Evidence: `src/lib/fiscal-data/data/thresholds.ts:13` `src/lib/fiscal-data/data/thresholds.ts:15`.
+  Fix: Add source + lastVerified to bible and reference `fiscal-data` as canonical.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1067` `docs/PRODUCT_BIBLE.md:1088`
+  Issue: Income/corporate tax rates should be tied to `fiscal-data` for auto-updates.
+  Evidence: `src/lib/fiscal-data/data/tax-rates.ts:16` `src/lib/fiscal-data/data/tax-rates.ts:45`.
+  Fix: Add a "data source" callout pointing to `TAX_RATES`.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1092` `docs/PRODUCT_BIBLE.md:1099`
+  Issue: Contribution rates are correct but should cite the canonical data source and verification date.
+  Evidence: `src/lib/fiscal-data/data/contributions.ts:13` `src/lib/fiscal-data/data/contributions.ts:16`.
+  Fix: Include `lastVerified` and `source`.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1103` `docs/PRODUCT_BIBLE.md:1108`
+  Issue: IBAN list should align with `PAYMENT_DETAILS` and include "poziv na broj" format.
+  Evidence: `src/lib/fiscal-data/data/payment-details.ts:21` `src/lib/fiscal-data/data/payment-details.ts:58`.
+  Fix: Add the `pozivNaBrojFormat` notes.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1112` `docs/PRODUCT_BIBLE.md:1124`
+  Issue: Deadlines list should reference the canonical `DEADLINES` data (and clarify PDV quarterly dates).
+  Evidence: `src/lib/fiscal-data/data/deadlines.ts:12` `src/lib/fiscal-data/data/deadlines.ts:78`.
+  Fix: Note that deadlines are generated from `fiscal-data` and should not be hand-edited.
+
+### A2.9 Architecture + documentation coverage gaps
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:65` `docs/PRODUCT_BIBLE.md:70`
+  Issue: Stack omits Drizzle usage for guidance tables.
+  Evidence: `src/lib/db/drizzle.ts:1`.
+  Fix: Add Drizzle to tech stack and explain why (guidance prefs/checklists).
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:80` `docs/PRODUCT_BIBLE.md:105`
+  Issue: Directory structure omits major systems (guidance, visibility, admin/staff components, bank-sync, drizzle schema).
+  Evidence: `src/lib/visibility/rules.ts:1` `src/components/staff/sidebar.tsx:1` `src/lib/bank-sync/providers/index.ts:1`.
+  Fix: Expand directory tree or add "Notable folders" list.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1491` `docs/PRODUCT_BIBLE.md:1508`
+  Issue: Glossary missing key terms like EN16931, UBL, CAMT.053, Hub3, R1/R2.
+  Evidence: `src/app/api/compliance/en16931/route.ts:1` `src/lib/banking/import/processor.ts:87`.
+  Fix: Extend glossary to cover compliance + banking terms.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:1512` `docs/PRODUCT_BIBLE.md:1524`
+  Issue: File locations appendix omits `capabilities`, `visibility`, `guidance`, `admin/staff` components, and `drizzle`.
+  Evidence: `src/lib/capabilities.ts:1` `src/lib/visibility/context.tsx:1` `src/components/admin/sidebar.tsx:1` `src/lib/db/drizzle.ts:1`.
+  Fix: Expand Appendix B to include these paths.
+
+### A2.10 External verification backlog (needs online confirmation)
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:299` `docs/PRODUCT_BIBLE.md:305`
+  Issue: Min capital amounts are listed in HRK (pre-euro) and require official EUR update.
+  Evidence: No canonical value in repo.
+  Fix: Verify via official registry/law and update to EUR values.
+
+- Doc refs: `docs/PRODUCT_BIBLE.md:371` `docs/PRODUCT_BIBLE.md:373`
+  Issue: VAT invoice requirements should be cross-checked against current law for 2025 revisions.
+  Evidence: No explicit validator in repo for invoice header text.
+  Fix: Verify against official sources and update phrasing if needed.
