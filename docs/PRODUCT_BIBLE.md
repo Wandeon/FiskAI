@@ -302,19 +302,19 @@ Staff Dashboard
 
 ```
 Admin Dashboard
-├── Dashboard (platform metrics - partial)
 ├── Tenants (company management)
 ├── Staff (staff user management)
 ├── Subscriptions (Stripe subscription management)
 ├── Services (feature flag management)
 ├── Support (ticket management)
-└── Audit Log (system-wide activity)
+├── Audit Log (system-wide activity)
+└── Settings (admin settings)
 ```
 
 **Planned Features:**
 
+- Dashboard (platform metrics)
 - News management (create/edit announcements)
-- Full metrics dashboard
 - Support ticket escalation
 - Tenant impersonation
 
@@ -475,21 +475,21 @@ Stored in `Company.entitlements[]` as kebab-case strings:
 // src/lib/modules/definitions.ts
 interface ModuleDefinition {
   key: ModuleKey
-  name: string // Croatian display name
-  description: string // Croatian description
+  name: string // English display name
+  description: string // English description
   routes: string[] // Protected route patterns
   navItems: string[] // Nav item identifiers (not objects)
   defaultEnabled: boolean
 }
 
 export const MODULES: Record<ModuleKey, ModuleDefinition> = {
-  invoicing: {
-    key: "invoicing",
-    name: "Invoicing",
-    description: "Create and manage invoices, quotes, proformas",
-    routes: ["/invoices", "/invoices/new", "/invoices/[id]"],
-    navItems: ["invoices"], // References nav registry
-    defaultEnabled: true,
+  fiscalization: {
+    key: "fiscalization",
+    name: "Fiscalization",
+    description: "Fiscal receipts, JIR/ZKI, CIS integration",
+    routes: ["/settings/fiscalisation", "/settings/premises"],
+    navItems: ["fiscalization"],
+    defaultEnabled: false,
   },
   // ... 15 more modules
 }
@@ -786,13 +786,13 @@ pro      → Show everything, minimal hand-holding
 | `nav:expenses`      | Expenses        |
 | `nav:documents`     | Documents       |
 | `nav:import`        | Import          |
-| `nav:banking`       | Bank accounts   |
-| `nav:pos`           | Point of sale   |
-| `nav:pausalni`      | Paušalni hub    |
 | `nav:vat`           | VAT management  |
+| `nav:pausalni`      | Paušalni hub    |
 | `nav:reports`       | Reports section |
 | `nav:doprinosi`     | Contributions   |
 | `nav:corporate-tax` | Corporate tax   |
+| `nav:bank`          | Bank accounts   |
+| `nav:pos`           | Point of sale   |
 | `nav:settings`      | Settings        |
 | `nav:api-settings`  | API settings    |
 | `nav:checklist`     | Checklist       |
