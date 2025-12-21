@@ -57,6 +57,7 @@ export async function collectMetrics(): Promise<PipelineMetrics> {
     rulesDraft,
     rulesApproved,
     rulesActive,
+    rulesStale,
     conflictsOpen,
     conflictsResolved,
     releasesTotal,
@@ -92,6 +93,14 @@ export async function collectMetrics(): Promise<PipelineMetrics> {
     db.regulatoryRule.count({ where: { status: "APPROVED" } }),
     db.regulatoryRule.count({ where: { status: "PUBLISHED" } }),
 
+    // Stale rules (effectiveUntil has passed)
+    db.regulatoryRule.count({
+      where: {
+        status: "PUBLISHED",
+        effectiveUntil: { lt: new Date() },
+      },
+    }),
+
     // Conflicts
     db.regulatoryConflict.count({ where: { status: "OPEN" } }),
     db.regulatoryConflict.count({ where: { status: "RESOLVED" } }),
@@ -121,7 +130,7 @@ export async function collectMetrics(): Promise<PipelineMetrics> {
     rulesDraft,
     rulesApproved,
     rulesActive,
-    rulesStale: 0, // TODO: Calculate based on effectiveUntil
+    rulesStale,
     conflictsOpen,
     conflictsResolved,
     releasesTotal,
