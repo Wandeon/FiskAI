@@ -2,13 +2,6 @@
 
 import { createHash } from "crypto"
 import { db } from "@/lib/db"
-import {
-  SentinelInputSchema,
-  SentinelOutputSchema,
-  type SentinelInput,
-  type SentinelOutput,
-} from "../schemas"
-import { runAgent } from "./runner"
 
 // =============================================================================
 // FETCH HELPERS
@@ -65,14 +58,15 @@ function computeContentHash(content: string): string {
 
 export interface SentinelResult {
   success: boolean
-  output: SentinelOutput | null
   evidenceId: string | null
   hasChanged: boolean
   error: string | null
 }
 
 /**
- * Run the Sentinel agent to monitor a regulatory source
+ * Run the Sentinel to monitor a regulatory source
+ * Note: This is a simplified version that just fetches and stores evidence.
+ * The LLM-based analysis is deferred to the Extractor agent.
  */
 export async function runSentinel(sourceId: string): Promise<SentinelResult> {
   // Get source from database
@@ -83,7 +77,6 @@ export async function runSentinel(sourceId: string): Promise<SentinelResult> {
   if (!source) {
     return {
       success: false,
-      output: null,
       evidenceId: null,
       hasChanged: false,
       error: `Source not found: ${sourceId}`,
@@ -96,32 +89,6 @@ export async function runSentinel(sourceId: string): Promise<SentinelResult> {
     const contentHash = computeContentHash(content)
     const hasChanged = source.lastContentHash !== contentHash
 
-    // Build input for agent
-    const input: SentinelInput = {
-      sourceUrl: source.url,
-      previousHash: source.lastContentHash,
-      sourceId: source.id,
-    }
-
-    // Run the agent to analyze changes
-    const result = await runAgent<SentinelInput, SentinelOutput>({
-      agentType: "SENTINEL",
-      input,
-      inputSchema: SentinelInputSchema,
-      outputSchema: SentinelOutputSchema,
-      temperature: 0.1,
-    })
-
-    if (!result.success || !result.output) {
-      return {
-        success: false,
-        output: null,
-        evidenceId: null,
-        hasChanged: false,
-        error: result.error,
-      }
-    }
-
     // Store evidence
     const evidence = await db.evidence.create({
       data: {
@@ -131,7 +98,7 @@ export async function runSentinel(sourceId: string): Promise<SentinelResult> {
         contentType,
         url: source.url,
         hasChanged,
-        changeSummary: result.output.change_summary,
+        changeSummary: hasChanged ? "Content changed since last fetch" : null,
       },
     })
 
@@ -146,7 +113,6 @@ export async function runSentinel(sourceId: string): Promise<SentinelResult> {
 
     return {
       success: true,
-      output: result.output,
       evidenceId: evidence.id,
       hasChanged,
       error: null,
@@ -154,7 +120,6 @@ export async function runSentinel(sourceId: string): Promise<SentinelResult> {
   } catch (error) {
     return {
       success: false,
-      output: null,
       evidenceId: null,
       hasChanged: false,
       error: `Sentinel error: ${error}`,
