@@ -1,6 +1,7 @@
 // src/lib/regulatory-truth/__tests__/sentinel.test.ts
 
-import { describe, it, expect } from "vitest"
+import { describe, it } from "node:test"
+import assert from "node:assert"
 import { SentinelOutputSchema, validateSentinelOutput, isSentinelOutputValid } from "../schemas"
 
 describe("Sentinel Schema", () => {
@@ -20,42 +21,42 @@ describe("Sentinel Schema", () => {
 
   it("should validate correct sentinel output", () => {
     const result = SentinelOutputSchema.safeParse(validOutput)
-    expect(result.success).toBe(true)
+    assert.strictEqual(result.success, true)
   })
 
   it("should reject invalid content_hash length", () => {
     const invalid = { ...validOutput, content_hash: "tooshort" }
     const result = SentinelOutputSchema.safeParse(invalid)
-    expect(result.success).toBe(false)
+    assert.strictEqual(result.success, false)
   })
 
   it("should reject invalid content_type", () => {
     const invalid = { ...validOutput, content_type: "docx" }
     const result = SentinelOutputSchema.safeParse(invalid)
-    expect(result.success).toBe(false)
+    assert.strictEqual(result.success, false)
   })
 
   it("should reject invalid fetch_status", () => {
     const invalid = { ...validOutput, fetch_status: "pending" }
     const result = SentinelOutputSchema.safeParse(invalid)
-    expect(result.success).toBe(false)
+    assert.strictEqual(result.success, false)
   })
 
   it("should accept null previous_hash for first fetch", () => {
     const firstFetch = { ...validOutput, previous_hash: null, has_changed: false }
     const result = SentinelOutputSchema.safeParse(firstFetch)
-    expect(result.success).toBe(true)
+    assert.strictEqual(result.success, true)
   })
 
   it("validateSentinelOutput should throw on invalid input", () => {
-    expect(() => validateSentinelOutput({ invalid: true })).toThrow()
+    assert.throws(() => validateSentinelOutput({ invalid: true }))
   })
 
   it("isSentinelOutputValid should return false for invalid input", () => {
-    expect(isSentinelOutputValid({ invalid: true })).toBe(false)
+    assert.strictEqual(isSentinelOutputValid({ invalid: true }), false)
   })
 
   it("isSentinelOutputValid should return true for valid input", () => {
-    expect(isSentinelOutputValid(validOutput)).toBe(true)
+    assert.strictEqual(isSentinelOutputValid(validOutput), true)
   })
 })
