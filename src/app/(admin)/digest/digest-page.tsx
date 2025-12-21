@@ -15,8 +15,8 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react"
-import type { WeeklyDigestData } from "@/lib/admin/weekly-digest"
-import { formatDigestEmail } from "@/lib/admin/weekly-digest"
+import type { WeeklyDigestData } from "@/lib/admin/weekly-digest-types"
+import { formatDigestEmail } from "@/lib/admin/weekly-digest-format"
 import { toast } from "@/lib/toast"
 
 interface DigestPageProps {

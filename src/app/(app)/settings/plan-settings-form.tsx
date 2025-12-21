@@ -7,14 +7,6 @@ import { updateCompanyPlan } from "@/app/actions/company"
 import type { Company } from "@prisma/client"
 import type { ModuleKey, LegalForm } from "@/lib/capabilities"
 
-const legalForms = [
-  { value: "OBRT_PAUSAL", label: "Obrt (paušal)" },
-  { value: "OBRT_REAL", label: "Obrt (realno)" },
-  { value: "OBRT_VAT", label: "Obrt (PDV)" },
-  { value: "JDOO", label: "j.d.o.o." },
-  { value: "DOO", label: "d.o.o." },
-] as const
-
 import { MODULES, MODULE_KEYS } from "@/lib/modules/definitions"
 
 const legalForms = [
