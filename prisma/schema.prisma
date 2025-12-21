@@ -1937,3 +1937,21 @@ model MonitoringAlert {
   @@index([createdAt])
   @@index([resolvedAt])
 }
+
+// =============================================================================
+// AUDIT LOG - Legal Defense Layer
+// =============================================================================
+
+model RegulatoryAuditLog {
+  id           String   @id @default(cuid())
+  action       String   // RULE_CREATED, RULE_APPROVED, RULE_REJECTED, CONFLICT_RESOLVED, RELEASE_PUBLISHED
+  entityType   String   // RULE, CONFLICT, RELEASE, EVIDENCE
+  entityId     String
+  performedBy  String?  // User ID or "SYSTEM"
+  performedAt  DateTime @default(now())
+  metadata     Json?    // Additional context
+
+  @@index([entityType, entityId])
+  @@index([performedAt])
+  @@index([action])
+}
