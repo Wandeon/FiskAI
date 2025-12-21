@@ -11,3 +11,4 @@ export {
 } from "./composer"
 export { runReviewer, type ReviewerResult } from "./reviewer"
 export { runReleaser, type ReleaserResult } from "./releaser"
+export { runArbiter, runArbiterBatch, getPendingConflicts, type ArbiterResult } from "./arbiter"
