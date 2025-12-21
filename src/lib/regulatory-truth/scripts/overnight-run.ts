@@ -21,7 +21,7 @@ try {
 import { Pool } from "pg"
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const RATE_LIMIT_DELAY = 60000 // 60 seconds between LLM calls
+const RATE_LIMIT_DELAY = 120000 // 120 seconds between LLM calls for heavy rate limiting
 
 async function sleep(ms: number) {
   console.log(`[overnight] Waiting ${ms / 1000}s for rate limit...`)
@@ -50,7 +50,7 @@ async function main() {
        WHERE NOT EXISTS (
          SELECT 1 FROM "SourcePointer" sp WHERE sp."evidenceId" = e.id
        )
-       ORDER BY s."riskTier" DESC
+       ORDER BY s.hierarchy ASC
        LIMIT 10`
     )
 
@@ -127,7 +127,7 @@ async function main() {
       `SELECT id, "conceptSlug", "riskTier"
        FROM "RegulatoryRule"
        WHERE status = 'DRAFT'
-       ORDER BY "riskTier" DESC
+       ORDER BY "conceptSlug" ASC
        LIMIT 10`
     )
 

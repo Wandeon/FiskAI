@@ -109,18 +109,22 @@ export async function runAgent<TInput, TOutput>(
       // Build user message with input
       const userMessage = `INPUT:\n${JSON.stringify(input, null, 2)}\n\nPlease process this input and return the result in the specified JSON format.`
 
-      // Call Ollama
+      // Call Ollama - don't use format:"json" as qwen3-next model returns empty content with it
       const response = await fetch(`${OLLAMA_ENDPOINT}/api/chat`, {
         method: "POST",
         headers: getOllamaHeaders(),
         body: JSON.stringify({
           model: OLLAMA_MODEL,
           messages: [
-            { role: "system", content: systemPrompt },
+            {
+              role: "system",
+              content:
+                systemPrompt +
+                "\n\nCRITICAL: Your response must be ONLY valid JSON. No thinking, no explanation, no markdown code blocks, just the raw JSON object.",
+            },
             { role: "user", content: userMessage },
           ],
           stream: false,
-          format: "json",
           options: {
             temperature,
             num_predict: 8192, // Allow longer responses for complex extractions
@@ -133,14 +137,30 @@ export async function runAgent<TInput, TOutput>(
       }
 
       const data = await response.json()
-      const content = data.message?.content || "{}"
+      const rawContent = data.message?.content || ""
+
+      // Extract JSON from response (handle markdown code blocks, whitespace, etc.)
+      let jsonContent = rawContent.trim()
+
+      // Remove markdown code blocks if present
+      const codeBlockMatch = jsonContent.match(/```(?:json)?\s*([\s\S]*?)```/)
+      if (codeBlockMatch) {
+        jsonContent = codeBlockMatch[1].trim()
+      }
+
+      // Try to find JSON object in response
+      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        throw new Error(`No JSON object found in response: ${rawContent.slice(0, 200)}`)
+      }
+      jsonContent = jsonMatch[0]
 
       // Parse JSON from response
       let parsed: unknown
       try {
-        parsed = JSON.parse(content)
+        parsed = JSON.parse(jsonContent)
       } catch {
-        throw new Error(`Failed to parse JSON response: ${content.slice(0, 200)}`)
+        throw new Error(`Failed to parse JSON response: ${jsonContent.slice(0, 200)}`)
       }
 
       // Validate output
