@@ -1519,3 +1519,249 @@ enum ArticleStatus {
   PUBLISHED
   REJECTED
 }
+
+// =============================================================================
+// REGULATORY TRUTH LAYER
+// =============================================================================
+
+enum RiskTier {
+  T0  // Critical: Tax rates, legal deadlines, penalties
+  T1  // High: Thresholds, contribution bases
+  T2  // Medium: Procedural requirements, form fields
+  T3  // Low: UI labels, help text
+}
+
+enum AgentType {
+  SENTINEL
+  EXTRACTOR
+  COMPOSER
+  REVIEWER
+  RELEASER
+  ARBITER
+}
+
+enum RuleStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  DEPRECATED
+  REJECTED
+}
+
+enum ConflictType {
+  SOURCE_CONFLICT
+  TEMPORAL_CONFLICT
+  SCOPE_CONFLICT
+  INTERPRETATION_CONFLICT
+}
+
+enum ConflictStatus {
+  OPEN
+  RESOLVED
+  ESCALATED
+}
+
+enum AlertSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertType {
+  SOURCE_CHANGED
+  SOURCE_UNAVAILABLE
+  RULE_SUPERSEDED
+  CONFLICT_DETECTED
+  DEADLINE_APPROACHING
+  CONFIDENCE_DEGRADED
+  COVERAGE_GAP
+}
+
+model RegulatorySource {
+  id                String    @id @default(cuid())
+  slug              String    @unique  // e.g., "porezna-pausalni"
+  name              String               // "Porezna uprava - Paušalno oporezivanje"
+  url               String
+  hierarchy         Int       @default(5)  // 1=Ustav, 2=Zakon, 3=Podzakonski, 4=Pravilnik, 5=Uputa, 6=Mišljenje, 7=Praksa
+  fetchIntervalHours Int      @default(24)
+  lastFetchedAt     DateTime?
+  lastContentHash   String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  evidence          Evidence[]
+
+  @@index([isActive])
+  @@index([lastFetchedAt])
+}
+
+model Evidence {
+  id              String   @id @default(cuid())
+  sourceId        String
+  fetchedAt       DateTime @default(now())
+  contentHash     String
+  rawContent      String   // Full HTML/PDF text
+  contentType     String   @default("html")  // html, pdf, xml
+  url             String
+  hasChanged      Boolean  @default(false)
+  changeSummary   String?
+
+  source          RegulatorySource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourcePointers  SourcePointer[]
+  agentRuns       AgentRun[]
+
+  @@index([sourceId])
+  @@index([fetchedAt])
+  @@index([contentHash])
+}
+
+model SourcePointer {
+  id              String   @id @default(cuid())
+  evidenceId      String
+  domain          String   // pausalni, pdv, doprinosi, fiskalizacija, etc.
+  valueType       String   // currency, percentage, date, threshold, text
+  extractedValue  String   // Stored as string, parsed by application
+  displayValue    String   // Human-readable format
+  exactQuote      String   // Exact text from source
+  contextBefore   String?  // Previous sentence/paragraph
+  contextAfter    String?  // Following sentence/paragraph
+  selector        String?  // CSS selector or XPath
+  confidence      Float    @default(0.8)
+  extractionNotes String?
+  createdAt       DateTime @default(now())
+
+  evidence        Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  rules           RegulatoryRule[] @relation("RuleSourcePointers")
+
+  @@index([evidenceId])
+  @@index([domain])
+  @@index([confidence])
+}
+
+model RegulatoryRule {
+  id                String     @id @default(cuid())
+  conceptSlug       String     // e.g., "pausalni-revenue-threshold"
+  titleHr           String
+  titleEn           String?
+  riskTier          RiskTier
+  appliesWhen       String     // AppliesWhen DSL expression
+  value             String     // The regulatory value (stored as string)
+  valueType         String     // percentage, currency_hrk, currency_eur, count, date, text
+  explanationHr     String?
+  explanationEn     String?
+  effectiveFrom     DateTime
+  effectiveUntil    DateTime?
+  supersedesId      String?    // Previous rule this supersedes
+  status            RuleStatus @default(DRAFT)
+  confidence        Float      @default(0.8)
+  composerNotes     String?
+  reviewerNotes     String?
+  approvedBy        String?    // User ID who approved (for T0/T1)
+  approvedAt        DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  supersedes        RegulatoryRule?  @relation("RuleSupersession", fields: [supersedesId], references: [id])
+  supersededBy      RegulatoryRule[] @relation("RuleSupersession")
+  sourcePointers    SourcePointer[]  @relation("RuleSourcePointers")
+  releases          RuleRelease[]    @relation("ReleaseRules")
+  conflictsA        RegulatoryConflict[] @relation("ConflictItemA")
+  conflictsB        RegulatoryConflict[] @relation("ConflictItemB")
+  agentRuns         AgentRun[]
+
+  @@unique([conceptSlug, effectiveFrom])
+  @@index([status])
+  @@index([riskTier])
+  @@index([conceptSlug])
+  @@index([effectiveFrom])
+}
+
+model RuleRelease {
+  id              String   @id @default(cuid())
+  version         String   // semver: "1.0.0"
+  releaseType     String   // major, minor, patch
+  releasedAt      DateTime @default(now())
+  effectiveFrom   DateTime
+  contentHash     String   // SHA-256 of rule content
+  changelogHr     String?
+  changelogEn     String?
+  approvedBy      String[] // List of approver user IDs
+  auditTrail      Json?    // { sourceEvidenceCount, sourcePointerCount, reviewCount, humanApprovals }
+
+  rules           RegulatoryRule[] @relation("ReleaseRules")
+
+  @@unique([version])
+  @@index([releasedAt])
+  @@index([effectiveFrom])
+}
+
+model AgentRun {
+  id              String    @id @default(cuid())
+  agentType       AgentType
+  status          String    @default("running")  // running, completed, failed
+  input           Json      // The input provided to the agent
+  output          Json?     // The output from the agent (null if failed)
+  error           String?   // Error message if failed
+  tokensUsed      Int?
+  durationMs      Int?
+  confidence      Float?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  // Optional relations based on what the agent processed
+  evidenceId      String?
+  ruleId          String?
+
+  evidence        Evidence?       @relation(fields: [evidenceId], references: [id])
+  rule            RegulatoryRule? @relation(fields: [ruleId], references: [id])
+
+  @@index([agentType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+model RegulatoryConflict {
+  id                String         @id @default(cuid())
+  conflictType      ConflictType
+  status            ConflictStatus @default(OPEN)
+  itemAId           String
+  itemBId           String
+  description       String
+  resolution        Json?          // { winningItemId, strategy, rationaleHr, rationaleEn }
+  confidence        Float?
+  requiresHumanReview Boolean      @default(false)
+  humanReviewReason String?
+  resolvedBy        String?        // User ID
+  resolvedAt        DateTime?
+  createdAt         DateTime       @default(now())
+
+  itemA             RegulatoryRule @relation("ConflictItemA", fields: [itemAId], references: [id])
+  itemB             RegulatoryRule @relation("ConflictItemB", fields: [itemBId], references: [id])
+
+  @@index([status])
+  @@index([conflictType])
+  @@index([createdAt])
+}
+
+model MonitoringAlert {
+  id                  String        @id @default(cuid())
+  severity            AlertSeverity
+  type                AlertType
+  affectedRuleIds     String[]
+  sourceId            String?
+  description         String
+  autoAction          Json?         // { action, executed, result }
+  humanActionRequired Boolean       @default(false)
+  acknowledgedBy      String?
+  acknowledgedAt      DateTime?
+  resolvedAt          DateTime?
+  createdAt           DateTime      @default(now())
+
+  @@index([severity])
+  @@index([type])
+  @@index([createdAt])
+  @@index([resolvedAt])
+}
