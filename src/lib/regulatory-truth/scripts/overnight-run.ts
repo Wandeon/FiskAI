@@ -33,6 +33,7 @@ export async function main() {
   const { runExtractor } = await import("../agents/extractor")
   const { runComposer, groupSourcePointersByDomain } = await import("../agents/composer")
   const { runReviewer } = await import("../agents/reviewer")
+  const { runArbiter } = await import("../agents/arbiter")
   const { runReleaser } = await import("../agents/releaser")
 
   const client = await pool.connect()
@@ -181,6 +182,44 @@ export async function main() {
       console.log(`\n[review] Complete: ${reviewSuccess} success, ${reviewFailed} failed`)
     } else {
       console.log("No pending rules to review")
+    }
+
+    // Phase 3.5: Resolve open conflicts
+    console.log("\n=== PHASE 3.5: CONFLICT RESOLUTION ===")
+    const openConflicts = await client.query(
+      `SELECT id, "conflictType", description
+       FROM "RegulatoryConflict"
+       WHERE status = 'OPEN'
+       LIMIT 5`
+    )
+
+    if (openConflicts.rows.length > 0) {
+      console.log(`Found ${openConflicts.rows.length} open conflicts to resolve`)
+
+      let arbiterSuccess = 0
+      let arbiterFailed = 0
+
+      for (const conflict of openConflicts.rows) {
+        console.log(`\n[arbiter] Processing: ${conflict.conflictType} (${conflict.id})`)
+        try {
+          const result = await runArbiter(conflict.id)
+          if (result.success) {
+            arbiterSuccess++
+            console.log(`[arbiter] ✓ Resolution: ${result.resolution}`)
+          } else {
+            arbiterFailed++
+            console.log(`[arbiter] ✗ ${result.error}`)
+          }
+        } catch (error) {
+          arbiterFailed++
+          console.error(`[arbiter] ✗ ${error}`)
+        }
+        await sleep(RATE_LIMIT_DELAY)
+      }
+
+      console.log(`\n[arbiter] Complete: ${arbiterSuccess} success, ${arbiterFailed} failed`)
+    } else {
+      console.log("No open conflicts to resolve")
     }
 
     // Phase 4: Release approved rules
