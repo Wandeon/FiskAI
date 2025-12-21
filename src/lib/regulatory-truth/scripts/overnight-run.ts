@@ -29,6 +29,7 @@ async function sleep(ms: number) {
 }
 
 async function main() {
+  const { runSentinel, fetchDiscoveredItems } = await import("../agents/sentinel")
   const { runExtractor } = await import("../agents/extractor")
   const { runComposer, groupSourcePointersByDomain } = await import("../agents/composer")
   const { runReviewer } = await import("../agents/reviewer")
@@ -41,6 +42,28 @@ async function main() {
   console.log(`Rate limit delay: ${RATE_LIMIT_DELAY / 1000}s between calls\n`)
 
   try {
+    // Phase 0: Discovery (Sentinel)
+    console.log("=== PHASE 0: DISCOVERY ===")
+
+    // Run Sentinel for CRITICAL endpoints
+    const criticalResult = await runSentinel("CRITICAL")
+    console.log(
+      `[sentinel] CRITICAL: ${criticalResult.endpointsChecked} checked, ${criticalResult.newItemsDiscovered} discovered`
+    )
+
+    // Run Sentinel for HIGH priority endpoints
+    const highResult = await runSentinel("HIGH")
+    console.log(
+      `[sentinel] HIGH: ${highResult.endpointsChecked} checked, ${highResult.newItemsDiscovered} discovered`
+    )
+
+    // Fetch discovered items (up to 100)
+    const fetchResult = await fetchDiscoveredItems(100)
+    console.log(`[sentinel] Fetch: ${fetchResult.fetched} fetched, ${fetchResult.failed} failed`)
+
+    console.log("\n[discovery] Complete")
+    await sleep(RATE_LIMIT_DELAY)
+
     // Phase 1: Extract from unprocessed evidence
     console.log("=== PHASE 1: EXTRACTION ===")
     const unprocessedEvidence = await client.query(
