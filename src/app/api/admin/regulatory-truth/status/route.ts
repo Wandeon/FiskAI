@@ -2,8 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/auth-utils"
 
 /**
  * GET /api/admin/regulatory-truth/status
@@ -13,8 +12,8 @@ import { authOptions } from "@/lib/auth"
 export async function GET(request: NextRequest) {
   try {
     // Check authentication and admin role
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.systemRole !== "ADMIN") {
+    const user = await getCurrentUser()
+    if (!user || user.systemRole !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
