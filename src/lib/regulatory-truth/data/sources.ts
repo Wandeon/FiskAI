@@ -238,6 +238,427 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
     priority: "medium",
     domains: ["porez_dohodak", "pausalni"],
   },
+
+  // ==========================================================================
+  // PRIORITY 12: Additional Laws (Narodne novine)
+  // ==========================================================================
+  {
+    slug: "nn-zakon-pdv",
+    name: "Narodne novine - Zakon o porezu na dodanu vrijednost",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_07_73_1715.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "critical",
+    domains: ["pdv"],
+  },
+  {
+    slug: "nn-zakon-fiskalizacija",
+    name: "Narodne novine - Zakon o fiskalizaciji u prometu gotovinom",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_12_133_2833.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["fiskalizacija"],
+  },
+  {
+    slug: "nn-zakon-racunovodstvo",
+    name: "Narodne novine - Zakon o računovodstvu",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2015_07_78_1493.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["obrasci"],
+  },
+  {
+    slug: "nn-zakon-obrtu",
+    name: "Narodne novine - Zakon o obrtu",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_12_143_3065.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["pausalni"],
+  },
+  {
+    slug: "nn-opci-porezni-zakon",
+    name: "Narodne novine - Opći porezni zakon",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2017_12_115_2629.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["pausalni", "pdv", "porez_dohodak"],
+  },
+  {
+    slug: "nn-zakon-mirovinsko",
+    name: "Narodne novine - Zakon o mirovinskom osiguranju",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2018_12_115_2262.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["doprinosi"],
+  },
+  {
+    slug: "nn-zakon-zdravstveno",
+    name: "Narodne novine - Zakon o obveznom zdravstvenom osiguranju",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_06_80_1669.html",
+    hierarchy: 2,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["doprinosi"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 13: Additional Porezna uprava Pages
+  // ==========================================================================
+  {
+    slug: "porezna-porezne-kartice",
+    name: "Porezna uprava - Porezne kartice",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/porezne_kartice.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["porez_dohodak"],
+  },
+  {
+    slug: "porezna-posebni-porezi",
+    name: "Porezna uprava - Posebni porezi",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/posebni_porezi.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "low",
+    domains: ["pdv"],
+  },
+  {
+    slug: "porezna-porezna-osnovica",
+    name: "Porezna uprava - Porezna osnovica",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/porezna_osnovica.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["porez_dohodak", "pausalni"],
+  },
+  {
+    slug: "porezna-predujam",
+    name: "Porezna uprava - Predujam poreza",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/predujam_poreza.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["porez_dohodak"],
+  },
+  {
+    slug: "porezna-godisnja-prijava",
+    name: "Porezna uprava - Godišnja porezna prijava",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/godisnja_porezna_prijava.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["porez_dohodak", "obrasci"],
+  },
+  {
+    slug: "porezna-joppd",
+    name: "Porezna uprava - JOPPD obrazac",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/joppd.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["obrasci", "doprinosi"],
+  },
+  {
+    slug: "porezna-eporezna",
+    name: "Porezna uprava - ePorezna",
+    url: "https://www.porezna-uprava.hr/Stranice/ePorezna.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["obrasci"],
+  },
+  {
+    slug: "porezna-obrasci",
+    name: "Porezna uprava - Obrasci",
+    url: "https://www.porezna-uprava.hr/HR_obrasci/Stranice/Obrasci.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["obrasci"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 14: FINA Services
+  // ==========================================================================
+  {
+    slug: "fina-eracun",
+    name: "FINA - eRačun",
+    url: "https://www.fina.hr/e-racun",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["fiskalizacija"],
+  },
+  {
+    slug: "fina-bop",
+    name: "FINA - Jedinstveni registar računa",
+    url: "https://www.fina.hr/jedinstveni-registar-racuna",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["obrasci"],
+  },
+  {
+    slug: "fina-oib",
+    name: "FINA - OIB",
+    url: "https://www.fina.hr/oib",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["obrasci"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 15: HNB (Croatian National Bank)
+  // ==========================================================================
+  {
+    slug: "hnb-tecajevi",
+    name: "HNB - Tečajna lista",
+    url: "https://www.hnb.hr/temeljne-funkcije/monetarna-politika/tecajna-lista",
+    hierarchy: 5,
+    fetchIntervalHours: 4, // Every 4 hours for exchange rates
+    priority: "critical",
+    domains: ["pdv", "pausalni"],
+  },
+  {
+    slug: "hnb-euro-konverzija",
+    name: "HNB - Euro konverzija",
+    url: "https://www.hnb.hr/o-nama/euro/konverzija",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["pdv", "pausalni"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 16: Ministry of Finance
+  // ==========================================================================
+  {
+    slug: "mfin-porezni-sustav",
+    name: "Ministarstvo financija - Porezni sustav",
+    url: "https://mfin.gov.hr/istaknute-teme/porezi/porezni-sustav-128/128",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["pausalni", "pdv", "porez_dohodak"],
+  },
+  {
+    slug: "mfin-proracun",
+    name: "Ministarstvo financija - Državni proračun",
+    url: "https://mfin.gov.hr/proracun-86/86",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "low",
+    domains: ["rokovi"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 17: Chamber Sources (HOK, HGK)
+  // ==========================================================================
+  {
+    slug: "hok-obrtnici",
+    name: "HOK - Portal za obrtnike",
+    url: "https://www.hok.hr/",
+    hierarchy: 7,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["pausalni"],
+  },
+  {
+    slug: "hok-registar",
+    name: "HOK - Obrtni registar",
+    url: "https://www.hok.hr/obrtni-registar",
+    hierarchy: 7,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["pausalni"],
+  },
+  {
+    slug: "hgk-pravni-okvir",
+    name: "HGK - Pravni okvir",
+    url: "https://www.hgk.hr/",
+    hierarchy: 7,
+    fetchIntervalHours: 168,
+    priority: "low",
+    domains: ["pausalni"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 18: DZS (Statistics)
+  // ==========================================================================
+  {
+    slug: "dzs-place",
+    name: "DZS - Prosječne plaće",
+    url: "https://dzs.gov.hr/",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["doprinosi"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 19: Additional PDV Sources
+  // ==========================================================================
+  {
+    slug: "porezna-pdv-prijava",
+    name: "Porezna uprava - PDV prijava",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/pdv_prijava.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["pdv", "obrasci"],
+  },
+  {
+    slug: "porezna-pdv-oslobodjenja",
+    name: "Porezna uprava - PDV oslobođenja",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/pdv_oslobodjenja.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["pdv"],
+  },
+  {
+    slug: "porezna-pdv-povrat",
+    name: "Porezna uprava - Povrat PDV-a",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/povrat_pdv.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["pdv"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 20: Regulations (Pravilnici)
+  // ==========================================================================
+  {
+    slug: "nn-pravilnik-pdv",
+    name: "Narodne novine - Pravilnik o PDV-u",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_07_79_1633.html",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["pdv"],
+  },
+  {
+    slug: "nn-pravilnik-dohodak",
+    name: "Narodne novine - Pravilnik o porezu na dohodak",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2017_01_10_247.html",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["porez_dohodak", "pausalni"],
+  },
+  {
+    slug: "nn-pravilnik-fiskalizacija",
+    name: "Narodne novine - Pravilnik o fiskalizaciji",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_12_146_3131.html",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["fiskalizacija"],
+  },
+  {
+    slug: "nn-pravilnik-doprinosi",
+    name: "Narodne novine - Pravilnik o doprinosima",
+    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2009_01_2_44.html",
+    hierarchy: 4,
+    fetchIntervalHours: 168,
+    priority: "high",
+    domains: ["doprinosi"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 21: Official Interpretations
+  // ==========================================================================
+  {
+    slug: "porezna-misljenja",
+    name: "Porezna uprava - Mišljenja i upute",
+    url: "https://www.porezna-uprava.hr/HR_publikacije/Stranice/Misljenja_Upute.aspx",
+    hierarchy: 6,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["pausalni", "pdv", "porez_dohodak"],
+  },
+  {
+    slug: "porezna-tumacenja",
+    name: "Porezna uprava - Tumačenja propisa",
+    url: "https://www.porezna-uprava.hr/HR_publikacije/Stranice/Tumacenja_propisa.aspx",
+    hierarchy: 6,
+    fetchIntervalHours: 24,
+    priority: "medium",
+    domains: ["pausalni", "pdv", "porez_dohodak"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 22: EU Sources (affecting Croatian law)
+  // ==========================================================================
+  {
+    slug: "eu-vat-directive",
+    name: "EU - VAT Directive 2006/112/EC",
+    url: "https://eur-lex.europa.eu/legal-content/HR/TXT/?uri=CELEX:32006L0112",
+    hierarchy: 1, // EU law above national
+    fetchIntervalHours: 336, // Bi-weekly
+    priority: "medium",
+    domains: ["pdv"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 23: Additional Contribution Sources
+  // ==========================================================================
+  {
+    slug: "hzmo-osnovica",
+    name: "HZMO - Osnovica za obračun doprinosa",
+    url: "https://www.mirovinsko.hr/hr/osnovice-za-obracun-doprinosa/188",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "critical",
+    domains: ["doprinosi"],
+  },
+  {
+    slug: "hzmo-staze",
+    name: "HZMO - Staž osiguranja",
+    url: "https://www.mirovinsko.hr/hr/staz-osiguranja/60",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["doprinosi"],
+  },
+  {
+    slug: "hzzo-osnovica",
+    name: "HZZO - Osnovica za obračun doprinosa",
+    url: "https://www.hzzo.hr/osnovica-za-obracun-doprinosa/",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "critical",
+    domains: ["doprinosi"],
+  },
+
+  // ==========================================================================
+  // PRIORITY 24: Deadlines and Calendar
+  // ==========================================================================
+  {
+    slug: "porezna-kalendar",
+    name: "Porezna uprava - Porezni kalendar",
+    url: "https://www.porezna-uprava.hr/HR_publikacije/Stranice/Porezni_kalendar.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "critical",
+    domains: ["rokovi"],
+  },
+  {
+    slug: "porezna-zatezne-kamate",
+    name: "Porezna uprava - Zatezne kamate",
+    url: "https://www.porezna-uprava.hr/HR_Porezni_sustav/Stranice/zatezne_kamate.aspx",
+    hierarchy: 5,
+    fetchIntervalHours: 24,
+    priority: "high",
+    domains: ["rokovi"],
+  },
 ]
 
 /**
