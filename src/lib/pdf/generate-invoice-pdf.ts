@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { InvoicePDFDocument } from "@/lib/pdf/invoice-template"
 import { generateInvoiceBarcodeDataUrl } from "@/lib/barcode"
+import { generateFiscalQRCode } from "@/lib/fiscal/qr-generator"
 
 export interface GenerateInvoicePDFOptions {
   invoiceId: string
@@ -122,8 +123,21 @@ export async function generateInvoicePDF({
     })
   }
 
+  // Generate fiscal QR code if invoice is fiscalized
+  let fiscalQRDataUrl: string | null = null
+  if (pdfData.invoice.jir && pdfData.invoice.zki) {
+    fiscalQRDataUrl = await generateFiscalQRCode({
+      jir: pdfData.invoice.jir,
+      zki: pdfData.invoice.zki,
+      invoiceNumber: pdfData.invoice.invoiceNumber,
+      issuerOib: pdfData.seller.oib,
+      amount: pdfData.invoice.totalAmount,
+      dateTime: pdfData.invoice.issueDate,
+    })
+  }
+
   // Generate PDF
-  const doc = InvoicePDFDocument({ ...pdfData, barcodeDataUrl })
+  const doc = InvoicePDFDocument({ ...pdfData, barcodeDataUrl, fiscalQRDataUrl })
   const pdfBuffer = await renderToBuffer(doc)
 
   return {

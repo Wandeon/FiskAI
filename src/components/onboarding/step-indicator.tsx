@@ -4,12 +4,14 @@
 import { cn } from "@/lib/utils"
 import { OnboardingStep, useOnboardingStore } from "@/lib/stores/onboarding-store"
 
-const steps = [
+const baseSteps = [
   { number: 1, title: "Osnovni podaci" },
   { number: 2, title: "Razina iskustva" },
   { number: 3, title: "Adresa" },
   { number: 4, title: "Kontakt i porez" },
 ] as const
+
+const pausalniStep = { number: 5, title: "Paušalni profil" } as const
 
 interface StepIndicatorProps {
   currentStep: OnboardingStep
@@ -17,7 +19,11 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ currentStep, isStepValid }: StepIndicatorProps) {
-  const setStep = useOnboardingStore((s) => s.setStep)
+  const { data, setStep } = useOnboardingStore()
+
+  // Show 5 steps for OBRT_PAUSAL, 4 steps for others
+  const isPausalniObrt = data.legalForm === "OBRT_PAUSAL"
+  const steps = isPausalniObrt ? [...baseSteps, pausalniStep] : baseSteps
 
   const handleStepClick = (stepNumber: number) => {
     // Allow navigating to any step that:

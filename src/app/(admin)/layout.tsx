@@ -2,7 +2,8 @@ import { ReactNode } from "react"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { AdminSidebar } from "@/components/admin/sidebar"
-import { AdminHeader } from "@/components/admin/header"
+import { AdminHeaderWrapper } from "@/components/admin/admin-header-wrapper"
+import { AdminSkipLinks } from "@/components/a11y/skip-link"
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth()
@@ -17,14 +18,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="flex h-screen bg-[var(--background)]">
+      <AdminSkipLinks />
       <AdminSidebar />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader />
+        <AdminHeaderWrapper />
 
         {/* Main content area */}
-        <main className="flex-1 overflow-auto p-6">
+        <main id="main-content" className="flex-1 overflow-auto p-6" tabIndex={-1}>
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>

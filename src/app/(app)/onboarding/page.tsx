@@ -8,15 +8,16 @@ import { StepBasicInfo } from "@/components/onboarding/step-basic-info"
 import { StepCompetence } from "@/components/onboarding/step-competence"
 import { StepAddress } from "@/components/onboarding/step-address"
 import { StepContactTax } from "@/components/onboarding/step-contact-tax"
+import { StepPausalniProfile } from "@/components/onboarding/step-pausalni-profile"
 import { Card, CardContent } from "@/components/ui/card"
 import { getOnboardingData, type OnboardingData } from "@/app/actions/onboarding"
 import { Loader2 } from "lucide-react"
 
 /**
  * Calculate which onboarding step should be shown based on completion
- * Returns 1-4 for first incomplete step, or 5 if all complete
+ * Returns 1-5 for first incomplete step, or 6 if all complete (treated as 5 for display)
  */
-function calculateOnboardingStep(data: OnboardingData | null): 1 | 2 | 3 | 4 | 5 {
+function calculateOnboardingStep(data: OnboardingData | null): 1 | 2 | 3 | 4 | 5 | 6 {
   if (!data) return 1
 
   // Step 1: Basic Info (name, oib, legalForm)
@@ -40,12 +41,24 @@ function calculateOnboardingStep(data: OnboardingData | null): 1 | 2 | 3 | 4 | 5
   const step4Complete = !!(data.email?.includes("@") && data.iban?.trim())
   if (!step4Complete) return 4
 
+  // Step 5: Paušalni Profile (only for OBRT_PAUSAL)
+  if (data.legalForm === "OBRT_PAUSAL") {
+    const step5Complete = !!(
+      data.acceptsCash !== undefined &&
+      data.hasEmployees !== undefined &&
+      data.employedElsewhere !== undefined &&
+      data.hasEuVatId !== undefined &&
+      data.taxBracket
+    )
+    if (!step5Complete) return 5
+  }
+
   // All complete
-  return 5
+  return 6
 }
 
 export default function OnboardingPage() {
-  const { currentStep, isStepValid, hydrate } = useOnboardingStore()
+  const { currentStep, isStepValid, hydrate, data } = useOnboardingStore()
   const [isLoading, setIsLoading] = useState(true)
   const [isExistingCompany, setIsExistingCompany] = useState(false)
 
@@ -60,9 +73,14 @@ export default function OnboardingPage() {
 
           // Calculate which step to start on based on completion
           const calculatedStep = calculateOnboardingStep(serverData)
-          // If all steps complete (5), show last step (4) for review
-          const startStep: OnboardingStep =
-            calculatedStep >= 5 ? 4 : (calculatedStep as OnboardingStep)
+          // If all steps complete (6), show last step for review
+          // For OBRT_PAUSAL, last step is 5; for others, it's 4
+          let startStep: OnboardingStep
+          if (calculatedStep >= 6) {
+            startStep = serverData.legalForm === "OBRT_PAUSAL" ? 5 : 4
+          } else {
+            startStep = calculatedStep as OnboardingStep
+          }
 
           // Hydrate store with server data and correct starting step
           hydrate(
@@ -104,11 +122,15 @@ export default function OnboardingPage() {
     )
   }
 
+  const stepCount = data.legalForm === "OBRT_PAUSAL" ? 5 : 4
+
   return (
     <div className="mx-auto max-w-xl py-12">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Dobrodošli u FiskAI</h1>
-        <p className="mt-2 text-gray-600">Postavite svoju tvrtku u 4 jednostavna koraka</p>
+        <p className="mt-2 text-gray-600">
+          Postavite svoju tvrtku u {stepCount} jednostavna koraka
+        </p>
       </div>
 
       <StepIndicator currentStep={currentStep} isStepValid={isStepValid} />
@@ -119,6 +141,7 @@ export default function OnboardingPage() {
           {currentStep === 2 && <StepCompetence />}
           {currentStep === 3 && <StepAddress />}
           {currentStep === 4 && <StepContactTax isExistingCompany={isExistingCompany} />}
+          {currentStep === 5 && <StepPausalniProfile />}
         </CardContent>
       </Card>
 

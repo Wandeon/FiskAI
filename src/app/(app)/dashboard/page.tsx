@@ -17,6 +17,13 @@ import { DeadlineCountdownCard } from "@/components/dashboard/deadline-countdown
 import { getUpcomingDeadlines } from "@/lib/deadlines/queries"
 import { ChecklistWidget, InsightsWidget } from "@/components/guidance"
 import { Visible } from "@/lib/visibility"
+import { TutorialProgressWidget } from "@/components/tutorials/tutorial-progress-widget"
+import { ContextualHelpBanner } from "@/components/tutorials/contextual-help-banner"
+import { getTrackForLegalForm } from "@/lib/tutorials/tracks"
+import { getTutorialProgress } from "@/lib/tutorials/progress"
+import { getActiveTriggersForContext } from "@/lib/tutorials/triggers"
+import { ComplianceStatusCard } from "@/components/dashboard/compliance-status-card"
+import { getCertificateStatus, getFiscalizationStats } from "@/lib/compliance/data"
 
 const Decimal = Prisma.Decimal
 
@@ -103,6 +110,28 @@ export default async function DashboardPage() {
   ])
 
   const totalRevenueValue = Number(totalRevenue._sum.totalAmount || new Decimal(0))
+
+  // Get tutorial track and progress for paušalni users
+  const tutorialTrack =
+    company.legalForm === "OBRT_PAUSAL" ? getTrackForLegalForm("OBRT_PAUSAL") : null
+
+  const tutorialProgress =
+    tutorialTrack && user.id
+      ? await getTutorialProgress(user.id, company.id, tutorialTrack.id)
+      : null
+
+  // Get contextual triggers
+  const triggers = await getActiveTriggersForContext({
+    companyId: company.id,
+    invoiceCount: eInvoiceCount,
+    yearlyRevenue: Number(ytdRevenue._sum.totalAmount || 0),
+    hasFiscalCert: !!company.fiscalEnabled,
+  })
+
+  // Get compliance status for fiscalization-enabled companies
+  const [certificateStatus, fiscalizationStats] = company.fiscalEnabled
+    ? await Promise.all([getCertificateStatus(company.id), getFiscalizationStats(company.id)])
+    : [null, null]
 
   // Map legalForm to businessType for deadlines
   const businessTypeMap: Record<string, string> = {
@@ -294,6 +323,14 @@ export default async function DashboardPage() {
             />
           </Visible>
 
+          {/* Contextual Help */}
+          {triggers.length > 0 && <ContextualHelpBanner triggers={triggers} />}
+
+          {/* Tutorial Progress for Paušalni */}
+          {tutorialTrack && (
+            <TutorialProgressWidget track={tutorialTrack} progress={tutorialProgress} />
+          )}
+
           <Visible id="card:checklist-widget">
             <ChecklistWidget />
           </Visible>
@@ -318,6 +355,12 @@ export default async function DashboardPage() {
               vatNumber={company.vatNumber}
             />
           </Visible>
+
+          {certificateStatus && fiscalizationStats && (
+            <Visible id="card:compliance-status">
+              <ComplianceStatusCard certificate={certificateStatus} stats={fiscalizationStats} />
+            </Visible>
+          )}
 
           <Visible id="card:pausalni-status">
             <PausalniStatusCard

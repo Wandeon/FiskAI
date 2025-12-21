@@ -5,6 +5,7 @@ import { useOnboardingStore } from "@/lib/stores/onboarding-store"
 import { Button } from "@/components/ui/button"
 import { trackEvent, AnalyticsEvents } from "@/lib/analytics"
 import type { CompetenceLevel } from "@/lib/visibility/rules"
+import { COMPETENCE_DESCRIPTIONS } from "@/lib/guidance/help-density"
 import { Sparkles, TrendingUp, Zap } from "lucide-react"
 
 const COMPETENCE_OPTIONS: {
@@ -119,6 +120,12 @@ export function StepCompetence() {
                     </li>
                   ))}
                 </ul>
+
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 italic">
+                    {COMPETENCE_DESCRIPTIONS[option.value]}
+                  </p>
+                </div>
               </div>
 
               {isSelected && (

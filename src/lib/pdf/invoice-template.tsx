@@ -1,5 +1,6 @@
 import React from "react"
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer"
+import { generateFiscalQRCode } from "@/lib/fiscal/qr-generator"
 
 // Type definitions
 type InvoiceData = {
@@ -50,6 +51,7 @@ type InvoiceData = {
   }>
   bankAccount?: string
   barcodeDataUrl?: string | null
+  fiscalQRDataUrl?: string | null
 }
 
 // Styles
@@ -235,6 +237,40 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 1.5,
   },
+  fiscalQRSection: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: "#f0f9ff",
+    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  fiscalQRBox: {
+    width: 100,
+    height: 100,
+    marginRight: 15,
+  },
+  fiscalQRContent: {
+    flex: 1,
+  },
+  fiscalQRTitle: {
+    fontSize: 9,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#1e40af",
+  },
+  fiscalQRText: {
+    fontSize: 8,
+    lineHeight: 1.5,
+    color: "#666",
+    marginBottom: 3,
+  },
+  fiscalQRInstruction: {
+    fontSize: 7,
+    color: "#666",
+    marginTop: 5,
+    fontStyle: "italic",
+  },
 })
 
 // Format currency
@@ -396,6 +432,23 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
                 <Text style={styles.fiscalValue}>{invoice.zki}</Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Fiscal QR Code Section */}
+        {data.fiscalQRDataUrl && invoice.jir && invoice.zki && (
+          <View style={styles.fiscalQRSection}>
+            <View style={styles.fiscalQRBox}>
+              <Image src={data.fiscalQRDataUrl} style={{ width: 100, height: 100 }} />
+            </View>
+            <View style={styles.fiscalQRContent}>
+              <Text style={styles.fiscalQRTitle}>Ovaj račun je prijavljen Poreznoj upravi</Text>
+              <Text style={styles.fiscalQRText}>JIR: {invoice.jir}</Text>
+              <Text style={styles.fiscalQRText}>ZKI: {invoice.zki}</Text>
+              <Text style={styles.fiscalQRInstruction}>
+                Skenirajte QR kod za provjeru na porezna.gov.hr
+              </Text>
+            </View>
           </View>
         )}
 
