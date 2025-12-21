@@ -11,6 +11,7 @@
     "test": "node --import tsx --test src/lib/__tests__/*.test.ts src/lib/e-invoice/__tests__/*.test.ts",
     "test:tenant": "node --import tsx --test src/lib/__tests__/tenant-isolation.test.ts",
     "test:knowledge-hub": "node --import tsx --test src/lib/knowledge-hub/__tests__/*.test.ts",
+    "audit:marketing": "tsx scripts/marketing-content-audit/run-audit.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -117,6 +118,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsdom": "^27.0.0",
@@ -127,6 +129,7 @@
     "@types/react-dom": "^19",
     "@types/xml2js": "^0.4.14",
     "autoprefixer": "^10.4.22",
+    "axe-core": "^4.11.0",
     "eslint": "^8",
     "eslint-config-next": "^15.5.0",
     "husky": "^9.1.7",
