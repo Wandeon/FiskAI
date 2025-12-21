@@ -230,10 +230,10 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
       changelogEn: releaseOutput.changelog_en,
       approvedBy: releaseOutput.approved_by,
       auditTrail: {
-        source_evidence_count: evidenceIds.size,
-        source_pointer_count: sourcePointerIds.size,
-        review_count: reviewCount,
-        human_approvals: humanApprovals,
+        sourceEvidenceCount: evidenceIds.size,
+        sourcePointerCount: sourcePointerIds.size,
+        reviewCount: reviewCount,
+        humanApprovals: humanApprovals,
       },
       rules: {
         connect: approvedRuleIds.map((id) => ({ id })),
