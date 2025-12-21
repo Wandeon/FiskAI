@@ -1,12 +1,26 @@
 // src/lib/regulatory-truth/scripts/run-extractor.ts
 
 import { config } from "dotenv"
-import { Pool } from "pg"
-import { runExtractor } from "../agents/extractor"
+import { readFileSync } from "fs"
+import { parse } from "dotenv"
 
-// Load environment variables
+// Load environment variables BEFORE importing any modules that use them
+// .env.local has DATABASE_URL for local dev, .env has working OLLAMA keys
 config({ path: ".env.local" })
-config({ path: ".env" })
+
+// Load .env but only use OLLAMA vars (the API key in .env works)
+try {
+  const envContent = readFileSync(".env", "utf-8")
+  const parsed = parse(envContent)
+  // Override only OLLAMA vars from .env
+  if (parsed.OLLAMA_API_KEY) process.env.OLLAMA_API_KEY = parsed.OLLAMA_API_KEY
+  if (parsed.OLLAMA_ENDPOINT) process.env.OLLAMA_ENDPOINT = parsed.OLLAMA_ENDPOINT
+  if (parsed.OLLAMA_MODEL) process.env.OLLAMA_MODEL = parsed.OLLAMA_MODEL
+} catch {
+  // .env may not exist
+}
+
+import { Pool } from "pg"
 
 // Create pool for direct SQL
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
@@ -15,6 +29,9 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL })
  * Run Extractor agent on evidence records
  */
 async function main() {
+  // Dynamic import after env is loaded
+  const { runExtractor } = await import("../agents/extractor")
+
   const args = process.argv.slice(2)
   const evidenceId = args[0]
 
