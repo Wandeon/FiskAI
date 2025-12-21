@@ -186,10 +186,12 @@ export async function main() {
     // Phase 4: Release approved rules
     console.log("\n=== PHASE 4: RELEASE ===")
     const approvedRules = await client.query(
-      `SELECT id, "conceptSlug"
-       FROM "RegulatoryRule"
-       WHERE status = 'APPROVED'
-       AND "releaseId" IS NULL
+      `SELECT r.id, r."conceptSlug"
+       FROM "RegulatoryRule" r
+       WHERE r.status = 'APPROVED'
+       AND NOT EXISTS (
+         SELECT 1 FROM "_ReleaseRules" rr WHERE rr."A" = r.id
+       )
        LIMIT 20`
     )
 
@@ -219,8 +221,8 @@ export async function main() {
         (SELECT COUNT(*) FROM "SourcePointer") as pointers,
         (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'DRAFT') as draft_rules,
         (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'APPROVED') as approved_rules,
-        (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'ACTIVE') as active_rules,
-        (SELECT COUNT(*) FROM "RegulatoryRelease") as releases
+        (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'PUBLISHED') as published_rules,
+        (SELECT COUNT(*) FROM "RuleRelease") as releases
     `)
 
     const s = status.rows[0]
@@ -229,7 +231,7 @@ export async function main() {
     console.log(`Source Pointers: ${s.pointers}`)
     console.log(`Draft Rules: ${s.draft_rules}`)
     console.log(`Approved Rules: ${s.approved_rules}`)
-    console.log(`Active Rules: ${s.active_rules}`)
+    console.log(`Published Rules: ${s.published_rules}`)
     console.log(`Releases: ${s.releases}`)
     console.log(`\nCompleted at: ${new Date().toISOString()}`)
   } finally {
