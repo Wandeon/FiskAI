@@ -1524,6 +1524,50 @@ enum ArticleStatus {
 // REGULATORY TRUTH LAYER
 // =============================================================================
 
+enum DiscoveryEndpointType {
+  SITEMAP_INDEX
+  SITEMAP_ISSUE
+  NEWS_LISTING
+  LEGAL_ACTS
+  CONSULTATIONS
+  TECHNICAL_DOCS
+  FORMS
+  CODE_LISTS
+  ANNOUNCEMENTS
+  STATISTICS
+}
+
+enum DiscoveryPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ScrapeFrequency {
+  EVERY_RUN
+  DAILY
+  TWICE_WEEKLY
+  WEEKLY
+  MONTHLY
+}
+
+enum ListingStrategy {
+  SITEMAP_XML
+  HTML_LIST
+  HTML_TABLE
+  PAGINATION
+  DATE_FILTERED
+}
+
+enum DiscoveredItemStatus {
+  PENDING
+  FETCHED
+  PROCESSED
+  SKIPPED
+  FAILED
+}
+
 enum RiskTier {
   T0  // Critical: Tax rates, legal deadlines, penalties
   T1  // High: Thresholds, contribution bases
@@ -1597,6 +1641,57 @@ model RegulatorySource {
 
   @@index([isActive])
   @@index([lastFetchedAt])
+}
+
+model DiscoveryEndpoint {
+  id                String                @id @default(cuid())
+  domain            String                // e.g., "hzzo.hr"
+  path              String                // e.g., "/novosti"
+  name              String                // Human-readable name
+  endpointType      DiscoveryEndpointType
+  priority          DiscoveryPriority
+  scrapeFrequency   ScrapeFrequency
+  listingStrategy   ListingStrategy
+  urlPattern        String?               // Regex for extracting item URLs
+  paginationPattern String?               // e.g., "?page={N}"
+  lastScrapedAt     DateTime?
+  lastContentHash   String?               // SHA-256 of page content
+  itemCount         Int                   @default(0)
+  errorCount        Int                   @default(0)
+  consecutiveErrors Int                   @default(0)
+  lastError         String?
+  isActive          Boolean               @default(true)
+  metadata          Json?                 // Additional endpoint-specific config
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  discoveries       DiscoveredItem[]
+
+  @@unique([domain, path])
+  @@index([priority])
+  @@index([lastScrapedAt])
+}
+
+model DiscoveredItem {
+  id            String               @id @default(cuid())
+  endpointId    String
+  url           String
+  title         String?
+  publishedAt   DateTime?
+  contentHash   String?
+  status        DiscoveredItemStatus @default(PENDING)
+  processedAt   DateTime?
+  evidenceId    String?              // Link to Evidence if fetched
+  errorMessage  String?
+  retryCount    Int                  @default(0)
+  createdAt     DateTime             @default(now())
+
+  endpoint      DiscoveryEndpoint    @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@unique([endpointId, url])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([evidenceId])
 }
 
 model Evidence {
