@@ -1737,9 +1737,29 @@ model SourcePointer {
   @@index([confidence])
 }
 
+model Concept {
+  id          String   @id @default(cuid())
+  slug        String   @unique  // e.g., "pausalni-obrt"
+  nameHr      String
+  nameEn      String?
+  aliases     String[] // Alternative names
+  tags        String[] // Categorization tags
+  description String?  @db.Text
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent      Concept?  @relation("ConceptHierarchy", fields: [parentId], references: [id])
+  children    Concept[] @relation("ConceptHierarchy")
+  rules       RegulatoryRule[]
+
+  @@index([parentId])
+}
+
 model RegulatoryRule {
   id                String     @id @default(cuid())
   conceptSlug       String     // e.g., "pausalni-revenue-threshold"
+  conceptId         String?
   titleHr           String
   titleEn           String?
   riskTier          RiskTier
@@ -1760,6 +1780,7 @@ model RegulatoryRule {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
+  concept           Concept?  @relation(fields: [conceptId], references: [id])
   supersedes        RegulatoryRule?  @relation("RuleSupersession", fields: [supersedesId], references: [id])
   supersededBy      RegulatoryRule[] @relation("RuleSupersession")
   sourcePointers    SourcePointer[]  @relation("RuleSourcePointers")
