@@ -1,10 +1,19 @@
 import { Suspense } from "react"
+import dynamic from "next/dynamic"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { getTenantList } from "@/lib/admin/tenant-list"
+import { getCachedTenantList } from "@/lib/cache"
 import type { TenantFilters, TenantSort, TenantPagination } from "@/lib/admin/tenant-list"
-import { TenantListView } from "./tenant-list"
 
-export const dynamic = "force-dynamic"
+// Dynamic import for heavy TenantListView component
+const TenantListView = dynamic(
+  () => import("./tenant-list").then((mod) => ({ default: mod.TenantListView })),
+  {
+    loading: () => <LoadingSpinner />,
+    ssr: true,
+  }
+)
+
+export const revalidate = 60 // 1 minute cache
 
 interface SearchParams {
   legalForm?: string
@@ -45,8 +54,8 @@ export default async function AdminTenantsPage({ searchParams }: { searchParams:
     pageSize: parseInt(searchParams.pageSize || "20", 10),
   }
 
-  // Fetch tenant list
-  const result = await getTenantList(filters, sort, pagination)
+  // Fetch tenant list with caching
+  const result = await getCachedTenantList(filters, sort, pagination)
 
   return (
     <Suspense fallback={<LoadingSpinner />}>

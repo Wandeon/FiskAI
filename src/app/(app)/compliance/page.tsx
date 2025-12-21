@@ -1,8 +1,18 @@
 import { Metadata } from "next"
+import dynamic from "next/dynamic"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
-import { ComplianceDashboard } from "./compliance-dashboard"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import type { CertificateStatus, FiscalizationStats, ComplianceData } from "./compliance-dashboard"
+
+// Dynamic import for heavy ComplianceDashboard component
+const ComplianceDashboard = dynamic(
+  () => import("./compliance-dashboard").then((mod) => ({ default: mod.ComplianceDashboard })),
+  {
+    loading: () => <LoadingSpinner />,
+    ssr: true,
+  }
+)
 
 export const metadata: Metadata = {
   title: "Usklađenost | FiskAI",
