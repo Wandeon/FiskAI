@@ -4,6 +4,7 @@ export interface AuthFlowState {
   step: AuthStep
   email: string
   name: string
+  systemRole?: "USER" | "STAFF" | "ADMIN"
   isNewUser: boolean
   hasPasskey: boolean
   error: string | null
@@ -15,5 +16,6 @@ export interface UserInfo {
   emailVerified?: boolean
   hasPasskey?: boolean
   name?: string
+  systemRole?: "USER" | "STAFF" | "ADMIN"
   error?: string
 }

@@ -59,19 +59,45 @@ export function getRouteGroupForSubdomain(subdomain: Subdomain): string {
 
 export function getRedirectUrlForSystemRole(
   systemRole: "USER" | "STAFF" | "ADMIN",
-  baseUrl: string
+  currentUrl: string
 ): string {
-  const url = new URL(baseUrl)
-  const baseDomain = url.hostname.replace(/^(app|staff|admin)\./, "")
+  try {
+    const url = new URL(currentUrl)
+    const protocol = url.protocol
+    const port = url.port ? `:${url.port}` : ""
+    let hostname = url.hostname
 
-  switch (systemRole) {
-    case "ADMIN":
-      return `${url.protocol}//admin.${baseDomain}`
-    case "STAFF":
-      return `${url.protocol}//staff.${baseDomain}`
-    case "USER":
-    default:
-      return `${url.protocol}//app.${baseDomain}`
+    // Strip www. if present
+    if (hostname.startsWith("www.")) {
+      hostname = hostname.replace(/^www\./, "")
+    }
+
+    // Strip existing subdomains (app, staff, admin) to get the base domain
+    // We strictly match the known subdomains to avoid stripping parts of the actual domain name
+    const baseDomain = hostname.replace(/^(app|staff|admin)\./, "")
+
+    let targetSubdomain = ""
+    switch (systemRole) {
+      case "ADMIN":
+        targetSubdomain = "admin."
+        break
+      case "STAFF":
+        targetSubdomain = "staff."
+        break
+      case "USER":
+      default:
+        targetSubdomain = "app."
+        break
+    }
+
+    // Special handling for localhost/preview URLs if they don't support subdomains
+    // But typically for this architecture, we assume app.localhost is configured in /etc/hosts
+    // or we are pointing to a domain that supports wildcard/subdomains.
+
+    return `${protocol}//${targetSubdomain}${baseDomain}${port}`
+  } catch (e) {
+    // Fallback if URL parsing fails
+    return "/dashboard"
   }
 }
 

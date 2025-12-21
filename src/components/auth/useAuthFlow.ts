@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { signIn, getSession } from "next-auth/react"
 import { AuthStep, AuthFlowState, UserInfo } from "./types"
 import { setFaviconState, resetFavicon, flashFavicon } from "@/lib/favicon"
+import { getRedirectUrlForSystemRole } from "@/lib/middleware/subdomain"
 
 const initialState: AuthFlowState = {
   step: "identify",
@@ -19,6 +20,7 @@ const initialState: AuthFlowState = {
 export function useAuthFlow() {
   const [state, setState] = useState<AuthFlowState>(initialState)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Reset favicon on unmount
   useEffect(() => {
@@ -111,6 +113,62 @@ export function useAuthFlow() {
     [state.email, setLoading, setError]
   )
 
+  const handleSuccess = useCallback(async () => {
+    setState((s) => ({ ...s, step: "success", isLoading: false }))
+    setFaviconState("success") // Amber glow on success
+
+    // Check for callbackUrl in query params
+    const callbackUrl = searchParams?.get("callbackUrl")
+
+    setTimeout(async () => {
+      try {
+        // Fetch the session to get the latest system role securely
+        const session = await getSession()
+        const role = (session?.user?.systemRole as "USER" | "STAFF" | "ADMIN") || "USER"
+
+        // If we have a valid callbackUrl, use it
+        if (callbackUrl) {
+          try {
+            const url = new URL(callbackUrl)
+            // Basic security check: ensure it's http/https and matches our domain structure ideally
+            // For now, we trust NextAuth's internal handling, but since we are doing manual redirection:
+            if (url.protocol.startsWith("http")) {
+              window.location.href = url.toString()
+              return
+            }
+          } catch (e) {
+            // Invalid URL, fall through to role-based redirect
+          }
+        }
+
+        // Construct the correct URL based on the user's role and current environment
+        const destinationBase = getRedirectUrlForSystemRole(role, window.location.href)
+
+        // If the destination hostname is different (e.g., app.fiskai.hr vs fiskai.hr),
+        // use window.location.href to ensure a full redirect that picks up cookies correctly
+        const currentHost = window.location.host
+        const destUrl = new URL(destinationBase)
+
+        // Add /dashboard if it's not already there (getRedirectUrlForSystemRole returns base domain)
+        if (
+          !destUrl.pathname.startsWith("/dashboard") &&
+          !destUrl.pathname.startsWith("/select-role")
+        ) {
+          destUrl.pathname = "/dashboard"
+        }
+
+        if (destUrl.host !== currentHost) {
+          window.location.href = destUrl.toString()
+        } else {
+          router.push(destUrl.pathname + destUrl.search)
+        }
+      } catch (error) {
+        // Fallback to simple dashboard redirect
+        router.push("/dashboard")
+      }
+    }, 1500)
+  }, [router, searchParams])
+
   const authenticate = useCallback(
     async (password: string) => {
       setLoading(true)
@@ -134,14 +192,12 @@ export function useAuthFlow() {
         }
 
         // Success - redirect based on role
-        setState((s) => ({ ...s, step: "success", isLoading: false }))
-        setFaviconState("success") // Amber glow on success
-        setTimeout(() => router.push("/dashboard"), 1500)
+        handleSuccess()
       } catch (error) {
         setError("Greška pri prijavi")
       }
     },
-    [state.email, router, setLoading, setError, sendVerificationCode]
+    [state.email, setLoading, setError, sendVerificationCode, handleSuccess]
   )
 
   const register = useCallback(
@@ -219,16 +275,14 @@ export function useAuthFlow() {
           }
         }
 
-        setState((s) => ({ ...s, step: "success", isLoading: false }))
-        setFaviconState("success") // Amber glow on success
-        setTimeout(() => router.push("/dashboard"), 1500)
+        handleSuccess()
         return true
       } catch (error) {
         setError("Greška pri verifikaciji")
         return false
       }
     },
-    [state.email, router, setLoading, setError]
+    [state.email, setLoading, setError, handleSuccess]
   )
 
   const startPasswordReset = useCallback(async () => {
@@ -292,16 +346,14 @@ export function useAuthFlow() {
           return false
         }
 
-        setState((s) => ({ ...s, step: "success", isLoading: false }))
-        setFaviconState("success") // Amber glow on success
-        setTimeout(() => router.push("/dashboard"), 1500)
+        handleSuccess()
         return true
       } catch (error) {
         setError("Greška pri resetiranju lozinke")
         return false
       }
     },
-    [state.email, router, setLoading, setError]
+    [state.email, setLoading, setError, handleSuccess]
   )
 
   const goBack = useCallback(() => {
