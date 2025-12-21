@@ -147,6 +147,41 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
     },
   })
 
+  // Create or update Concept for this rule
+  const concept = await db.concept.upsert({
+    where: { slug: draftRule.concept_slug },
+    create: {
+      slug: draftRule.concept_slug,
+      nameHr: draftRule.title_hr,
+      nameEn: draftRule.title_en,
+      description: draftRule.explanation_hr,
+      tags: [draftRule.risk_tier, authorityLevel],
+    },
+    update: {
+      // Update names if they're longer/better
+      nameHr: draftRule.title_hr,
+      nameEn: draftRule.title_en,
+    },
+  })
+
+  // Link rule to concept
+  await db.regulatoryRule.update({
+    where: { id: rule.id },
+    data: { conceptId: concept.id },
+  })
+
+  // Create AMENDS edge if this rule supersedes another
+  if (draftRule.supersedes) {
+    await db.graphEdge.create({
+      data: {
+        fromRuleId: rule.id,
+        toRuleId: draftRule.supersedes,
+        relation: "AMENDS",
+        validFrom: rule.effectiveFrom,
+      },
+    })
+  }
+
   // Log audit event for rule creation
   await logAuditEvent({
     action: "RULE_CREATED",
