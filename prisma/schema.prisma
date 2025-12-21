@@ -1632,6 +1632,24 @@ enum GraphEdgeType {
   SUPERSEDES
 }
 
+enum AuthorityLevel {
+  LAW           // Legally binding (Narodne novine)
+  GUIDANCE      // Interpretation (Porezna uprava)
+  PROCEDURE     // Technical execution (FINA, HZMO, HZZO)
+  PRACTICE      // What passes inspections
+}
+
+enum AutomationPolicy {
+  ALLOW         // Safe for full automation
+  CONFIRM       // Requires user confirmation
+  BLOCK         // Manual only, no automation
+}
+
+enum RuleStability {
+  STABLE        // Rarely changes
+  VOLATILE      // Changes frequently
+}
+
 model RegulatorySource {
   id                String    @id @default(cuid())
   slug              String    @unique  // e.g., "porezna-pausalni"
@@ -1766,28 +1784,32 @@ model Concept {
 }
 
 model RegulatoryRule {
-  id                String     @id @default(cuid())
-  conceptSlug       String     // e.g., "pausalni-revenue-threshold"
+  id                String           @id @default(cuid())
+  conceptSlug       String           // e.g., "pausalni-revenue-threshold"
   conceptId         String?
   titleHr           String
   titleEn           String?
   riskTier          RiskTier
-  appliesWhen       String     @db.Text  // AppliesWhen DSL expression
-  value             String     // The regulatory value (stored as string)
-  valueType         String     // percentage, currency_hrk, currency_eur, count, date, text
-  explanationHr     String?    @db.Text
-  explanationEn     String?    @db.Text
+  authorityLevel    AuthorityLevel   @default(GUIDANCE)  // LAW, GUIDANCE, PROCEDURE, PRACTICE
+  automationPolicy  AutomationPolicy @default(CONFIRM)   // ALLOW, CONFIRM, BLOCK
+  ruleStability     RuleStability    @default(STABLE)    // STABLE, VOLATILE
+  appliesWhen       String           @db.Text            // AppliesWhen DSL expression
+  value             String           // The regulatory value (stored as string)
+  valueType         String           // percentage, currency_hrk, currency_eur, count, date, text
+  outcome           Json?            // Structured outcome (VALUE, OBLIGATION, PROCEDURE)
+  explanationHr     String?          @db.Text
+  explanationEn     String?          @db.Text
   effectiveFrom     DateTime
   effectiveUntil    DateTime?
-  supersedesId      String?    // Previous rule this supersedes
-  status            RuleStatus @default(DRAFT)
-  confidence        Float      @default(0.8)
+  supersedesId      String?          // Previous rule this supersedes
+  status            RuleStatus       @default(DRAFT)
+  confidence        Float            @default(0.8)
   composerNotes     String?
   reviewerNotes     String?
-  approvedBy        String?    // User ID who approved (for T0/T1)
+  approvedBy        String?          // User ID who approved (for T0/T1)
   approvedAt        DateTime?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   concept           Concept?  @relation(fields: [conceptId], references: [id])
   supersedes        RegulatoryRule?  @relation("RuleSupersession", fields: [supersedesId], references: [id])

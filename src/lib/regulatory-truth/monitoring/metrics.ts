@@ -90,7 +90,7 @@ export async function collectMetrics(): Promise<PipelineMetrics> {
     // Rules
     db.regulatoryRule.count({ where: { status: "DRAFT" } }),
     db.regulatoryRule.count({ where: { status: "APPROVED" } }),
-    db.regulatoryRule.count({ where: { status: "ACTIVE" } }),
+    db.regulatoryRule.count({ where: { status: "PUBLISHED" } }),
 
     // Conflicts
     db.regulatoryConflict.count({ where: { status: "OPEN" } }),
