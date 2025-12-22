@@ -218,6 +218,13 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
     },
   })
 
+  // Get actual approvers from the rules being released
+  const approverIds = [
+    ...new Set(
+      rules.map((r) => r.approvedBy).filter((id): id is string => id !== null && id !== undefined)
+    ),
+  ]
+
   // Create Release record
   const release = await db.ruleRelease.create({
     data: {
@@ -228,7 +235,7 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
       contentHash,
       changelogHr: releaseOutput.changelog_hr,
       changelogEn: releaseOutput.changelog_en,
-      approvedBy: releaseOutput.approved_by,
+      approvedBy: approverIds,
       auditTrail: {
         sourceEvidenceCount: evidenceIds.size,
         sourcePointerCount: sourcePointerIds.size,
