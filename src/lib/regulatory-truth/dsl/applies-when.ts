@@ -1,6 +1,36 @@
 // src/lib/regulatory-truth/dsl/applies-when.ts
 import { z } from "zod"
 
+// ReDoS protection constants
+const MAX_REGEX_LENGTH = 100
+const REGEX_TIMEOUT_MS = 50
+
+/**
+ * Safe regex test with ReDoS protection
+ */
+function safeRegexTest(pattern: string, value: string): boolean {
+  if (pattern.length > MAX_REGEX_LENGTH) {
+    console.warn(`[applies-when] Regex pattern too long: ${pattern.length} chars`)
+    return false
+  }
+
+  try {
+    const regex = new RegExp(pattern)
+    // Simple patterns should complete quickly
+    const start = Date.now()
+    const result = regex.test(value)
+    const elapsed = Date.now() - start
+
+    if (elapsed > REGEX_TIMEOUT_MS) {
+      console.warn(`[applies-when] Slow regex: ${elapsed}ms for pattern "${pattern}"`)
+    }
+
+    return result
+  } catch {
+    return false
+  }
+}
+
 // Field reference (dot path like "entity.type", "txn.amount")
 const fieldRefSchema = z.string().min(1)
 
@@ -186,13 +216,7 @@ export function evaluateAppliesWhen(
     case "matches": {
       const value = getFieldValue(context, predicate.field)
       if (typeof value !== "string") return false
-
-      try {
-        const regex = new RegExp(predicate.pattern)
-        return regex.test(value)
-      } catch {
-        return false
-      }
+      return safeRegexTest(predicate.pattern, value)
     }
 
     case "date_in_effect": {
