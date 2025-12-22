@@ -68,6 +68,26 @@ describe("deterministic-validators", () => {
     })
   })
 
+  describe("validateNumericRange", () => {
+    it("accepts values within range", () => {
+      assert.strictEqual(validateNumericRange(50, 0, 100).valid, true)
+      assert.strictEqual(validateNumericRange(0, 0, 100).valid, true)
+      assert.strictEqual(validateNumericRange(100, 0, 100).valid, true)
+    })
+
+    it("rejects values below minimum", () => {
+      const result = validateNumericRange(-1, 0, 100)
+      assert.strictEqual(result.valid, false)
+      assert.ok(result.error?.includes("below minimum"))
+    })
+
+    it("rejects values above maximum", () => {
+      const result = validateNumericRange(101, 0, 100)
+      assert.strictEqual(result.valid, false)
+      assert.ok(result.error?.includes("above maximum"))
+    })
+  })
+
   describe("validateExtraction", () => {
     it("passes valid extraction", () => {
       const result = validateExtraction({
