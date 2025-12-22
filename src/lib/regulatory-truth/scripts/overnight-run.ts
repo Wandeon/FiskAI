@@ -21,7 +21,7 @@ try {
 import { Pool } from "pg"
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const RATE_LIMIT_DELAY = 120000 // 120 seconds between LLM calls for heavy rate limiting
+const RATE_LIMIT_DELAY = parseInt(process.env.AGENT_RATE_LIMIT_MS || "3000") // 3 seconds
 
 async function sleep(ms: number) {
   console.log(`[overnight] Waiting ${ms / 1000}s for rate limit...`)
