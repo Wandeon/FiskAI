@@ -1,0 +1,85 @@
+// src/lib/regulatory-truth/workers/extractor.worker.ts
+import { Job } from "bullmq"
+import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
+import { composeQueue } from "./queues"
+import { jobsProcessed, jobDuration } from "./metrics"
+import { llmLimiter, getDomainDelay } from "./rate-limiter"
+import { runExtractor } from "../agents/extractor"
+import { db } from "@/lib/db"
+
+interface ExtractJobData {
+  evidenceId: string
+  runId: string
+  parentJobId?: string
+}
+
+async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
+  const start = Date.now()
+  const { evidenceId, runId } = job.data
+
+  try {
+    // Get evidence with source info for rate limiting
+    const evidence = await db.evidence.findUnique({
+      where: { id: evidenceId },
+      include: { source: true },
+    })
+
+    if (!evidence) {
+      return { success: false, duration: 0, error: `Evidence not found: ${evidenceId}` }
+    }
+
+    // Rate limit LLM calls
+    const result = await llmLimiter.schedule(() => runExtractor(evidenceId))
+
+    if (result.success && result.sourcePointerIds.length > 0) {
+      // Group pointers by domain and queue compose jobs
+      const pointers = await db.sourcePointer.findMany({
+        where: { id: { in: result.sourcePointerIds } },
+        select: { id: true, domain: true },
+      })
+
+      const byDomain = new Map<string, string[]>()
+      for (const p of pointers) {
+        const ids = byDomain.get(p.domain) || []
+        ids.push(p.id)
+        byDomain.set(p.domain, ids)
+      }
+
+      // Queue compose job for each domain
+      for (const [domain, pointerIds] of byDomain) {
+        await composeQueue.add(
+          "compose",
+          { pointerIds, domain, runId, parentJobId: job.id },
+          { delay: getDomainDelay(domain) }
+        )
+      }
+    }
+
+    const duration = Date.now() - start
+    jobsProcessed.inc({ worker: "extractor", status: "success", queue: "extract" })
+    jobDuration.observe({ worker: "extractor", queue: "extract" }, duration / 1000)
+
+    return {
+      success: true,
+      duration,
+      data: { pointersCreated: result.sourcePointerIds.length },
+    }
+  } catch (error) {
+    jobsProcessed.inc({ worker: "extractor", status: "failed", queue: "extract" })
+    return {
+      success: false,
+      duration: Date.now() - start,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
+// Create and start worker
+const worker = createWorker<ExtractJobData>("extract", processExtractJob, {
+  name: "extractor",
+  concurrency: 2,
+})
+
+setupGracefulShutdown([worker])
+
+console.log("[extractor] Worker started")
