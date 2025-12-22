@@ -1731,6 +1731,7 @@ model Evidence {
   url             String
   hasChanged      Boolean  @default(false)
   changeSummary   String?
+  deletedAt       DateTime?
 
   source          RegulatorySource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   sourcePointers  SourcePointer[]
@@ -1755,8 +1756,9 @@ model SourcePointer {
   confidence      Float    @default(0.8)
   extractionNotes String?
   createdAt       DateTime @default(now())
+  deletedAt       DateTime?
 
-  evidence        Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evidence        Evidence @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
   rules           RegulatoryRule[] @relation("RuleSourcePointers")
 
   @@index([evidenceId])
