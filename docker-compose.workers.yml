@@ -29,7 +29,7 @@ services:
       - REDIS_PORT=6379
       - BULL_PREFIX=fiskai
     ports:
-      - "3001:3000"
+      - "3003:3000"
     depends_on:
       redis:
         condition: service_healthy
