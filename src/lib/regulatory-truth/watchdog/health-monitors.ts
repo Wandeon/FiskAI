@@ -123,7 +123,7 @@ export async function checkScraperFailureRate(): Promise<HealthCheckResult[]> {
       where: {
         sourceId: stat.sourceId,
         fetchedAt: { gte: cutoff },
-        OR: [{ content: "" }, { content: null as any }],
+        OR: [{ rawContent: "" }, { rawContent: null as any }],
       },
     })
 

@@ -77,7 +77,7 @@ async function selectRandomRules(runDate: Date, count: number = 5) {
   const highConf = shuffled.filter((r) => r.confidence >= 0.9)
   const lowConf = shuffled.filter((r) => r.confidence < 0.9)
 
-  const selected = []
+  const selected: typeof shuffled = []
   if (highConf.length > 0) selected.push(highConf[0])
   if (lowConf.length > 0) selected.push(lowConf[0])
 
@@ -121,7 +121,7 @@ async function auditRule(
   const evidence = primaryPointer.evidence
 
   // Check 2: Quote in content (weight 8)
-  const quoteExists = evidence?.content?.includes(primaryPointer.exactQuote) ?? false
+  const quoteExists = evidence?.rawContent?.includes(primaryPointer.exactQuote) ?? false
   checks.push({
     name: "quote_in_content",
     passed: quoteExists,
@@ -131,7 +131,7 @@ async function auditRule(
 
   // Check 3: Content hash matches (weight 7) - skip if no stored hash
   if (evidence?.contentHash) {
-    const currentHash = hashContent(evidence.content || "")
+    const currentHash = hashContent(evidence.rawContent || "")
     const hashMatches = currentHash === evidence.contentHash
     checks.push({
       name: "content_hash_matches",
@@ -171,7 +171,7 @@ async function auditRule(
   })
 
   // Check 6: Value extractable (weight 9)
-  const valueInContent = evidence?.content?.includes(String(rule.value)) ?? false
+  const valueInContent = evidence?.rawContent?.includes(String(rule.value)) ?? false
   checks.push({
     name: "value_extractable",
     passed: valueInContent,

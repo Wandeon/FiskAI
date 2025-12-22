@@ -35,7 +35,7 @@ async function runScoutPhase(): Promise<PhaseResult> {
     // Get active endpoints
     const endpoints = await db.regulatorySource.findMany({
       where: { isActive: true },
-      orderBy: { priority: "asc" },
+      orderBy: { hierarchy: "asc" },
     })
 
     const timeoutAt = Date.now() + SCOUT_TIMEOUT_MS
@@ -52,8 +52,8 @@ async function runScoutPhase(): Promise<PhaseResult> {
       await sleep(delay)
 
       try {
-        // Run sentinel for this endpoint's priority
-        const result = await runSentinel(endpoint.priority as any)
+        // Run sentinel for this endpoint's hierarchy
+        const result = await runSentinel(endpoint.hierarchy as any)
         itemsProcessed += result.endpointsChecked
         console.log(`[watchdog] Scouted ${endpoint.name}: ${result.newItemsDiscovered} new items`)
       } catch (error) {
