@@ -37,6 +37,137 @@ services:
       - default
       - coolify
 
+  # Worker services
+  worker-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-orchestrator
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/orchestrator.worker.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_TYPE=orchestrator
+      - WORKER_CONCURRENCY=1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
+
+  worker-sentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-sentinel
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/sentinel.worker.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_TYPE=sentinel
+      - WORKER_CONCURRENCY=1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
+
+  worker-extractor:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-extractor
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/extractor.worker.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - WORKER_TYPE=extractor
+      - WORKER_CONCURRENCY=2
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+    networks:
+      - default
+      - coolify
+
+  worker-composer:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-composer
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/composer.worker.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - WORKER_TYPE=composer
+      - WORKER_CONCURRENCY=1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
+
+  worker-reviewer:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-reviewer
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/reviewer.worker.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - WORKER_TYPE=reviewer
+      - WORKER_CONCURRENCY=1
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
+
+  worker-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fiskai-worker-scheduler
+    restart: unless-stopped
+    command: node dist/lib/regulatory-truth/workers/scheduler.service.js
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - WATCHDOG_TIMEZONE=Europe/Zagreb
+      - WORKER_TYPE=scheduler
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
+
 volumes:
   fiskai_redis_data:
 
