@@ -109,6 +109,10 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
         contextBefore: extraction.context_before,
         contextAfter: extraction.context_after,
         selector: extraction.selector,
+        // Article anchoring
+        articleNumber: extraction.article_number,
+        paragraphNumber: extraction.paragraph_number,
+        lawReference: extraction.law_reference,
         confidence: extraction.confidence,
         extractionNotes: extraction.extraction_notes,
       },

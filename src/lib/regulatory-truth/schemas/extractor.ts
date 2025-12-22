@@ -28,6 +28,12 @@ export const ExtractionItemSchema = z.object({
   context_before: z.string().nullish().default(""),
   context_after: z.string().nullish().default(""),
   selector: z.string().nullish().default(""),
+
+  // Article-level anchoring
+  article_number: z.string().nullish().default(null),
+  paragraph_number: z.string().nullish().default(null),
+  law_reference: z.string().nullish().default(null),
+
   confidence: ConfidenceSchema,
   extraction_notes: z.string().nullish().default(""),
 })
