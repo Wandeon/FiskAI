@@ -1,117 +1,100 @@
 // src/lib/regulatory-truth/scheduler/cron.ts
-import { CronJob } from "cron"
-import { Resend } from "resend"
 
-interface SchedulerConfig {
-  timezone: string
-  enabled: boolean
-}
+import cron from "node-cron"
+import { runWatchdogPipeline, runStandaloneAudit, sendDigest } from "../watchdog/orchestrator"
 
-const DEFAULT_CONFIG: SchedulerConfig = {
-  timezone: "Europe/Zagreb",
-  enabled: process.env.REGULATORY_CRON_ENABLED === "true",
-}
+const TIMEZONE = process.env.WATCHDOG_TIMEZONE || "Europe/Zagreb"
+const WATCHDOG_ENABLED = process.env.WATCHDOG_ENABLED === "true"
 
-let dailyJob: CronJob | null = null
+let isRunning = false
 
 /**
- * Run the overnight pipeline.
- * This is called by the cron job at 06:00 AM Zagreb time.
+ * Start the watchdog scheduler
  */
-async function runOvernightPipeline(): Promise<void> {
-  console.log("[scheduler] Starting overnight pipeline at " + new Date().toISOString())
-
-  try {
-    // Dynamic import to avoid loading heavy modules at startup
-    const { main } = await import("../scripts/overnight-run")
-    await main()
-
-    console.log("[scheduler] Overnight pipeline complete")
-  } catch (error) {
-    console.error("[scheduler] Overnight pipeline failed:", error)
-    // Send alert email
-    try {
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "FiskAI <noreply@fiskai.hr>",
-        to: process.env.ADMIN_ALERT_EMAIL || "admin@fiskai.hr",
-        subject: "🚨 Regulatory Pipeline Failed",
-        html: `
-          <h2>Overnight Pipeline Failure</h2>
-          <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-          <p><strong>Error:</strong> ${error instanceof Error ? error.message : String(error)}</p>
-          <p><a href="https://admin.fiskai.hr/regulatory">View Dashboard</a></p>
-        `,
-      })
-      console.log("[scheduler] Alert email sent")
-    } catch (emailError) {
-      console.error("[scheduler] Failed to send alert email:", emailError)
-    }
-  }
-}
-
-/**
- * Start the cron scheduler.
- * Schedules:
- * - 06:00 AM Zagreb time: Full overnight pipeline
- */
-export function startScheduler(config: Partial<SchedulerConfig> = {}): void {
-  const mergedConfig = { ...DEFAULT_CONFIG, ...config }
-
-  if (!mergedConfig.enabled) {
-    console.log("[scheduler] Cron scheduler disabled")
+export function startScheduler(): void {
+  if (!WATCHDOG_ENABLED) {
+    console.log("[scheduler] Watchdog disabled via WATCHDOG_ENABLED env var")
     return
   }
 
-  // Daily at 06:00 AM Zagreb time
-  dailyJob = new CronJob(
-    "0 6 * * *", // At 06:00
-    runOvernightPipeline,
-    null,
-    true, // Start immediately
-    mergedConfig.timezone
+  console.log("[scheduler] Starting watchdog scheduler...")
+  console.log(`[scheduler] Timezone: ${TIMEZONE}`)
+
+  // Main pipeline at 06:00 daily
+  cron.schedule(
+    "0 6 * * *",
+    async () => {
+      if (isRunning) {
+        console.log("[scheduler] Pipeline already running, skipping")
+        return
+      }
+
+      isRunning = true
+      try {
+        await runWatchdogPipeline()
+      } finally {
+        isRunning = false
+      }
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: Main pipeline at 06:00")
+
+  // Daily digest at 08:00
+  cron.schedule(
+    "0 8 * * *",
+    async () => {
+      await sendDigest()
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: Daily digest at 08:00")
+
+  // Random audit 1: between 10:00-14:00
+  const audit1Hour = 10 + Math.floor(Math.random() * 4)
+  const audit1Minute = Math.floor(Math.random() * 60)
+  cron.schedule(
+    `${audit1Minute} ${audit1Hour} * * *`,
+    async () => {
+      await runStandaloneAudit()
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log(
+    `[scheduler] Scheduled: Audit 1 at ${audit1Hour}:${audit1Minute.toString().padStart(2, "0")}`
   )
 
-  console.log("[scheduler] Cron scheduler started (timezone: " + mergedConfig.timezone + ")")
-  const nextRun = dailyJob.nextDate()
-  console.log("[scheduler] Next run:", nextRun ? nextRun.toISO() : "N/A")
-}
-
-/**
- * Stop the cron scheduler.
- */
-export function stopScheduler(): void {
-  if (dailyJob) {
-    dailyJob.stop()
-    dailyJob = null
-    console.log("[scheduler] Cron scheduler stopped")
+  // Random audit 2: between 16:00-20:00 (50% chance)
+  if (Math.random() < 0.5) {
+    const audit2Hour = 16 + Math.floor(Math.random() * 4)
+    const audit2Minute = Math.floor(Math.random() * 60)
+    cron.schedule(
+      `${audit2Minute} ${audit2Hour} * * *`,
+      async () => {
+        await runStandaloneAudit()
+      },
+      { timezone: TIMEZONE }
+    )
+    console.log(
+      `[scheduler] Scheduled: Audit 2 at ${audit2Hour}:${audit2Minute.toString().padStart(2, "0")}`
+    )
   }
+
+  console.log("[scheduler] Watchdog scheduler started")
 }
 
 /**
- * Get scheduler status.
+ * Run pipeline manually (for testing)
  */
-export function getSchedulerStatus(): {
-  enabled: boolean
-  running: boolean
-  nextRun: string | null
-  lastRun: string | null
-} {
-  const nextDate = dailyJob?.nextDate()
-  const lastDate = dailyJob?.lastDate()
-
-  return {
-    enabled: DEFAULT_CONFIG.enabled,
-    running: dailyJob !== null,
-    nextRun: nextDate ? nextDate.toISO() : null,
-    lastRun: lastDate ? lastDate.toISO() : null,
+export async function runManually(): Promise<void> {
+  if (isRunning) {
+    throw new Error("Pipeline already running")
   }
-}
 
-/**
- * Manually trigger the overnight pipeline.
- */
-export async function triggerManualRun(): Promise<void> {
-  console.log("[scheduler] Manual run triggered")
-  await runOvernightPipeline()
+  isRunning = true
+  try {
+    await runWatchdogPipeline()
+  } finally {
+    isRunning = false
+  }
 }
