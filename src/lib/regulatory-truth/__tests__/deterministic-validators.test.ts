@@ -7,6 +7,7 @@ import {
   validateDate,
   validateNumericRange,
   validateExtraction,
+  validateValueInQuote,
 } from "../utils/deterministic-validators"
 
 describe("deterministic-validators", () => {
@@ -111,6 +112,34 @@ describe("deterministic-validators", () => {
       })
       assert.strictEqual(result.valid, false)
       assert.ok(result.errors.length > 0)
+    })
+  })
+
+  describe("validateValueInQuote", () => {
+    it("accepts when value appears in quote", () => {
+      const result = validateValueInQuote("25", "PDV stopa iznosi 25%")
+      assert.strictEqual(result.valid, true)
+    })
+
+    it("accepts numeric match with formatting", () => {
+      const result = validateValueInQuote("40000", "Prag iznosi 40.000 EUR")
+      assert.strictEqual(result.valid, true)
+    })
+
+    it("accepts date match", () => {
+      const result = validateValueInQuote("2025-01-15", "do 15. siječnja 2025.")
+      assert.strictEqual(result.valid, true)
+    })
+
+    it("rejects when value NOT in quote", () => {
+      const result = validateValueInQuote("30", "PDV stopa iznosi 25%")
+      assert.strictEqual(result.valid, false)
+      assert.ok(result.error?.includes("not found"))
+    })
+
+    it("rejects inferred values", () => {
+      const result = validateValueInQuote("39816.84", "Paušalni obrt ima prag prihoda")
+      assert.strictEqual(result.valid, false)
     })
   })
 })

@@ -111,6 +111,88 @@ const VALID_VALUE_TYPES = [
   "count",
 ]
 
+/**
+ * Normalize a number for matching: remove formatting like "40.000" → "40000"
+ */
+function normalizeNumber(value: string): string[] {
+  const cleaned = value.replace(/[.,\s]/g, "")
+  return [value, cleaned]
+}
+
+/**
+ * Convert ISO date to Croatian format patterns for matching
+ */
+function dateToPatterns(isoDate: string): string[] {
+  const months = [
+    "siječnja",
+    "veljače",
+    "ožujka",
+    "travnja",
+    "svibnja",
+    "lipnja",
+    "srpnja",
+    "kolovoza",
+    "rujna",
+    "listopada",
+    "studenoga",
+    "prosinca",
+  ]
+
+  const [year, month, day] = isoDate.split("-")
+  const monthNum = parseInt(month)
+  const dayNum = parseInt(day)
+
+  return [
+    isoDate,
+    `${dayNum}. ${months[monthNum - 1]} ${year}`,
+    `${dayNum}.${month}.${year}`,
+    `${dayNum}.${monthNum}.${year}`,
+    `${day}.${month}.${year}`,
+    `${dayNum}/${month}/${year}`,
+  ]
+}
+
+/**
+ * Validate that the extracted value actually appears in the exact quote.
+ * This prevents AI "inference" where values are derived but not explicitly stated.
+ */
+export function validateValueInQuote(
+  extractedValue: string | number,
+  exactQuote: string
+): ValidationResult {
+  const value = String(extractedValue)
+  const quote = exactQuote.toLowerCase()
+
+  let patterns: string[] = []
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    patterns = dateToPatterns(value)
+  } else if (/^[\d.,]+$/.test(value)) {
+    patterns = normalizeNumber(value)
+  } else {
+    patterns = [value]
+  }
+
+  const quoteLower = quote.toLowerCase()
+  const found = patterns.some((pattern) => {
+    const patternLower = pattern.toLowerCase()
+    if (/^\d+$/.test(patternLower)) {
+      const numRegex = new RegExp(patternLower.split("").join("[.,\\s]?"), "i")
+      return numRegex.test(quote)
+    }
+    return quoteLower.includes(patternLower)
+  })
+
+  if (!found) {
+    return {
+      valid: false,
+      error: `Value "${value}" not found in quote. Possible inference detected.`,
+    }
+  }
+
+  return { valid: true }
+}
+
 // Validate a complete extraction before it goes to AI review
 export function validateExtraction(extraction: {
   domain: string
@@ -162,6 +244,14 @@ export function validateExtraction(extraction: {
       const result = validateNumericRange(numValue, 0, 1_000_000_000)
       if (!result.valid) errors.push(result.error!)
       break
+    }
+  }
+
+  // NO-INFERENCE CHECK: Value must appear in quote
+  if (extraction.value_type !== "text") {
+    const quoteCheck = validateValueInQuote(extraction.extracted_value, extraction.exact_quote)
+    if (!quoteCheck.valid) {
+      errors.push(quoteCheck.error!)
     }
   }
 
