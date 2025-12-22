@@ -1,38 +1,31 @@
 // src/app/api/regulatory/status/route.ts
 import { NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/auth-utils"
-import {
-  collectMetrics,
-  getEndpointHealth,
-  getRecentAgentRuns,
-} from "@/lib/regulatory-truth/monitoring/metrics"
-import { getSchedulerStatus } from "@/lib/regulatory-truth/scheduler/cron"
+import { allQueues, checkRedisHealth } from "@/lib/regulatory-truth/workers"
+import { getCircuitBreakerStatus } from "@/lib/regulatory-truth/workers/circuit-breaker"
 
 export async function GET() {
   try {
-    // Check authentication
-    const user = await getCurrentUser()
-    if (!user || user.systemRole !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const redisHealthy = await checkRedisHealth()
+
+    // Get queue depths
+    const queueStatus: Record<string, { waiting: number; active: number; failed: number }> = {}
+    for (const [name, queue] of Object.entries(allQueues)) {
+      const counts = await queue.getJobCounts("waiting", "active", "failed")
+      queueStatus[name] = {
+        waiting: counts.waiting,
+        active: counts.active,
+        failed: counts.failed,
+      }
     }
 
-    // Collect all status information
-    const [metrics, endpointHealth, recentRuns] = await Promise.all([
-      collectMetrics(),
-      getEndpointHealth(),
-      getRecentAgentRuns(20),
-    ])
-
-    const schedulerStatus = getSchedulerStatus()
-
     return NextResponse.json({
-      metrics,
-      endpointHealth,
-      recentRuns,
-      scheduler: schedulerStatus,
+      status: redisHealthy ? "healthy" : "degraded",
+      redis: redisHealthy ? "connected" : "disconnected",
+      queues: queueStatus,
+      circuitBreakers: getCircuitBreakerStatus(),
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("[api/regulatory/status] Error:", error)
-    return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 })
+    return NextResponse.json({ status: "error", error: String(error) }, { status: 500 })
   }
 }
