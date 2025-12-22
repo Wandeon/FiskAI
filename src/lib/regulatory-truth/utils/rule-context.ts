@@ -19,15 +19,18 @@ export interface RuleContext {
 export async function findRelevantRules(query: string, limit: number = 5): Promise<RuleContext[]> {
   const keywords = extractKeywords(query)
 
-  if (keywords.length === 0) return []
+  if (keywords.length === 0) {
+    console.log("[rule-context] No keywords extracted from query:", query)
+    return []
+  }
 
   const rules = await db.regulatoryRule.findMany({
     where: {
       status: "PUBLISHED",
-      OR: [
-        { conceptSlug: { contains: keywords[0], mode: "insensitive" } },
-        { titleHr: { contains: keywords[0], mode: "insensitive" } },
-      ],
+      OR: keywords.flatMap((kw) => [
+        { conceptSlug: { contains: kw, mode: "insensitive" } },
+        { titleHr: { contains: kw, mode: "insensitive" } },
+      ]),
     },
     include: {
       sourcePointers: {
@@ -41,19 +44,21 @@ export async function findRelevantRules(query: string, limit: number = 5): Promi
     orderBy: { confidence: "desc" },
   })
 
-  return rules.map((rule) => {
-    const pointer = rule.sourcePointers[0]
-    return {
-      ruleId: rule.id,
-      conceptSlug: rule.conceptSlug,
-      value: rule.value,
-      exactQuote: pointer?.exactQuote || "",
-      sourceUrl: pointer?.evidence?.url || "",
-      fetchedAt: pointer?.evidence?.fetchedAt || new Date(),
-      articleNumber: pointer?.articleNumber || undefined,
-      lawReference: pointer?.lawReference || undefined,
-    }
-  })
+  return rules
+    .filter((rule) => rule.sourcePointers.length > 0 && rule.sourcePointers[0]?.evidence)
+    .map((rule) => {
+      const pointer = rule.sourcePointers[0]!
+      return {
+        ruleId: rule.id,
+        conceptSlug: rule.conceptSlug,
+        value: rule.value,
+        exactQuote: pointer.exactQuote,
+        sourceUrl: pointer.evidence!.url,
+        fetchedAt: pointer.evidence!.fetchedAt,
+        articleNumber: pointer.articleNumber || undefined,
+        lawReference: pointer.lawReference || undefined,
+      }
+    })
 }
 
 function extractKeywords(query: string): string[] {
@@ -73,12 +78,19 @@ function extractKeywords(query: string): string[] {
     "s",
     "i",
     "a",
+    "li",
+    "biti",
+    "može",
+    "hoće",
+    "kada",
+    "gdje",
   ]
   return query
     .toLowerCase()
+    .replace(/[^\w\sčćžšđ]/g, "") // Strip punctuation, preserve Croatian chars
     .split(/\s+/)
     .filter((w) => w.length > 2 && !stopwords.includes(w))
-    .slice(0, 3)
+    .slice(0, 5) // Increased from 3 to 5
 }
 
 /**
