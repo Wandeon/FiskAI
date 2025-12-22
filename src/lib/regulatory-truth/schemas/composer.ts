@@ -24,18 +24,30 @@ export type ComposerInput = z.infer<typeof ComposerInputSchema>
 // DRAFT RULE
 // =============================================================================
 
+// Preprocess applies_when: LLM may return object (DSL) or string (serialized DSL)
+const appliesWhenSchema = z.preprocess(
+  (val) => (typeof val === "object" && val !== null ? JSON.stringify(val) : val),
+  z.string().min(1)
+)
+
+// Preprocess effective_from: ensure it's never null (use current date as fallback)
+const effectiveFromSchema = z.preprocess(
+  (val) => (val === null || val === undefined ? new Date().toISOString().split("T")[0] : val),
+  ISODateSchema
+)
+
 export const DraftRuleSchema = z.object({
   concept_slug: z.string().regex(/^[a-z0-9-]+$/, "Must be kebab-case"),
   title_hr: z.string().min(1),
   title_en: z.string().min(1),
   risk_tier: RiskTierSchema,
-  applies_when: z.string().min(1), // AppliesWhen DSL expression
+  applies_when: appliesWhenSchema, // AppliesWhen DSL expression (string or object auto-stringified)
   value: z.union([z.string(), z.number()]),
   value_type: ValueTypeSchema,
   explanation_hr: z.string(),
   explanation_en: z.string(),
   source_pointer_ids: z.array(z.string()).min(1),
-  effective_from: ISODateSchema,
+  effective_from: effectiveFromSchema,
   effective_until: ISODateSchema.nullable(),
   supersedes: z.string().nullable(),
   confidence: ConfidenceSchema,
