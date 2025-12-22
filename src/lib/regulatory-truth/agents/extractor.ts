@@ -9,6 +9,7 @@ import {
 } from "../schemas"
 import { runAgent } from "./runner"
 import { cleanContent, getCleaningStats } from "../utils/content-cleaner"
+import { validateExtraction } from "../utils/deterministic-validators"
 
 // =============================================================================
 // EXTRACTOR AGENT
@@ -76,8 +77,27 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
 
   // Store source pointers
   const sourcePointerIds: string[] = []
+  const rejectedExtractions: Array<{ extraction: any; errors: string[] }> = []
 
   for (const extraction of result.output.extractions) {
+    // Validate extraction before storing
+    const validation = validateExtraction(extraction)
+
+    if (!validation.valid) {
+      rejectedExtractions.push({ extraction, errors: validation.errors })
+      console.warn(
+        `[extractor] Rejected extraction for ${extraction.domain}.${extraction.value_type}: ${validation.errors.join(", ")}`
+      )
+      continue
+    }
+
+    // Log warnings for low-confidence extractions
+    if (validation.warnings.length > 0) {
+      console.warn(
+        `[extractor] Warning for ${extraction.domain}.${extraction.value_type}: ${validation.warnings.join(", ")}`
+      )
+    }
+
     const pointer = await db.sourcePointer.create({
       data: {
         evidenceId: evidence.id,
@@ -94,6 +114,13 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
       },
     })
     sourcePointerIds.push(pointer.id)
+  }
+
+  // Log rejection stats
+  if (rejectedExtractions.length > 0) {
+    console.warn(
+      `[extractor] Rejected ${rejectedExtractions.length}/${result.output.extractions.length} extractions`
+    )
   }
 
   return {
