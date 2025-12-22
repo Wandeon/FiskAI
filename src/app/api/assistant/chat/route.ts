@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { findRelevantRules, formatRulesForPrompt } from "@/lib/regulatory-truth/utils/rule-context"
 
 const SYSTEM_PROMPT = `
 Ti si FiskAI Asistent, stručni pomoćnik za hrvatsko računovodstvo, fiskalizaciju i korištenje FiskAI aplikacije.
@@ -35,6 +36,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
     }
 
+    // Fetch relevant rules for context
+    const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()
+    const rules = await findRelevantRules(lastUserMessage?.content || "")
+    const ruleContext = formatRulesForPrompt(rules)
+
+    // Inject rules into system prompt
+    const systemPrompt = ruleContext ? `${SYSTEM_PROMPT}\n\n${ruleContext}` : SYSTEM_PROMPT
+
     // Construct the endpoint
     // Default to standard Ollama API endpoint
     let endpoint = process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
@@ -56,9 +65,12 @@ export async function POST(req: Request) {
     const model = process.env.OLLAMA_MODEL || "llama3"
 
     // Prepare messages
-    const apiMessages = [{ role: "system", content: SYSTEM_PROMPT }, ...messages]
+    const apiMessages = [{ role: "system", content: systemPrompt }, ...messages]
 
     console.log(`[Assistant] Sending request to ${endpoint} with model ${model}`)
+    if (rules.length > 0) {
+      console.log(`[Assistant] Injected ${rules.length} regulatory rules into context`)
+    }
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -109,7 +121,23 @@ export async function POST(req: Request) {
                   controller.enqueue(new TextEncoder().encode(json.message.content))
                 }
                 if (json.done) {
-                  // End of stream
+                  // End of stream - append citation metadata
+                  if (rules.length > 0) {
+                    const citationMetadata = {
+                      citations: rules.map((r) => ({
+                        ruleId: r.ruleId,
+                        conceptSlug: r.conceptSlug,
+                        sourceUrl: r.sourceUrl,
+                        exactQuote: r.exactQuote,
+                        fetchedAt: r.fetchedAt.toISOString(),
+                      })),
+                    }
+                    controller.enqueue(
+                      new TextEncoder().encode(
+                        `\n\n__CITATIONS__${JSON.stringify(citationMetadata)}__END_CITATIONS__`
+                      )
+                    )
+                  }
                 }
               } catch (e) {
                 console.warn("[Assistant] JSON Parse Error:", e)
