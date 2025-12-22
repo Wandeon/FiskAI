@@ -4,6 +4,10 @@ import path from "path"
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Enable instrumentation for server startup hooks
+  experimental: {
+    instrumentationHook: true,
+  },
   // Silence monorepo root inference issues when multiple lockfiles exist on host
   outputFileTracingRoot: path.join(__dirname),
   eslint: {

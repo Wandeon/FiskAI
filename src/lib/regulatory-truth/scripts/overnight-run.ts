@@ -20,7 +20,20 @@ try {
 
 import { Pool } from "pg"
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+// Use DATABASE_URL from env, or fallback to local connection
+// Docker network uses fiskai-postgres hostname, but local dev uses localhost:5434
+function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL || ""
+
+  // If running outside Docker and URL uses Docker hostname, convert to localhost
+  if (url.includes("fiskai-postgres") && !process.env.DOCKER_CONTAINER) {
+    return url.replace("fiskai-postgres:5432", "localhost:5434")
+  }
+
+  return url
+}
+
+const pool = new Pool({ connectionString: getDatabaseUrl() })
 const RATE_LIMIT_DELAY = parseInt(process.env.AGENT_RATE_LIMIT_MS || "3000") // 3 seconds
 
 async function sleep(ms: number) {
@@ -32,10 +45,11 @@ export async function main() {
   const { runSentinel, fetchDiscoveredItems } = await import("../agents/sentinel")
   const { runExtractor } = await import("../agents/extractor")
   const { runComposer, groupSourcePointersByDomain } = await import("../agents/composer")
-  const { runReviewer } = await import("../agents/reviewer")
+  const { runReviewer, autoApproveEligibleRules } = await import("../agents/reviewer")
   const { runArbiter } = await import("../agents/arbiter")
   const { runReleaser } = await import("../agents/releaser")
   const { runTier1Fetchers } = await import("../fetchers")
+  const { buildKnowledgeGraph } = await import("../graph/knowledge-graph")
 
   const client = await pool.connect()
 
@@ -208,8 +222,23 @@ export async function main() {
       console.log("No pending rules to review")
     }
 
-    // Phase 3.5: Resolve open conflicts
-    console.log("\n=== PHASE 3.5: CONFLICT RESOLUTION ===")
+    // Phase 3.5: Auto-approve eligible PENDING_REVIEW rules
+    console.log("\n=== PHASE 3.5: AUTO-APPROVAL ===")
+    try {
+      const autoApproveResult = await autoApproveEligibleRules()
+      console.log(
+        `[auto-approve] ${autoApproveResult.approved} approved, ${autoApproveResult.skipped} skipped`
+      )
+      if (autoApproveResult.errors.length > 0) {
+        console.log(`[auto-approve] Errors: ${autoApproveResult.errors.join(", ")}`)
+      }
+    } catch (error) {
+      console.error("[auto-approve] Error:", error)
+    }
+    await sleep(RATE_LIMIT_DELAY)
+
+    // Phase 3.6: Resolve open conflicts
+    console.log("\n=== PHASE 3.6: CONFLICT RESOLUTION ===")
     const openConflicts = await client.query(
       `SELECT id, "conflictType", description
        FROM "RegulatoryConflict"
@@ -277,6 +306,20 @@ export async function main() {
       console.log("No approved rules to release")
     }
 
+    // Phase 5: Build/Update Knowledge Graph
+    console.log("\n=== PHASE 5: KNOWLEDGE GRAPH ===")
+    try {
+      const graphResult = await buildKnowledgeGraph()
+      console.log(
+        `[graph] ${graphResult.conceptsCreated} concepts, ${graphResult.conceptsLinked} links, ${graphResult.edgesCreated} edges`
+      )
+      if (graphResult.errors.length > 0) {
+        console.log(`[graph] ${graphResult.errors.length} errors encountered`)
+      }
+    } catch (error) {
+      console.error("[graph] Error building knowledge graph:", error)
+    }
+
     // Final status
     console.log("\n=== FINAL STATUS ===")
     const status = await client.query(`
@@ -285,9 +328,12 @@ export async function main() {
         (SELECT COUNT(*) FROM "Evidence") as evidence,
         (SELECT COUNT(*) FROM "SourcePointer") as pointers,
         (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'DRAFT') as draft_rules,
+        (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'PENDING_REVIEW') as pending_rules,
         (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'APPROVED') as approved_rules,
         (SELECT COUNT(*) FROM "RegulatoryRule" WHERE status = 'PUBLISHED') as published_rules,
-        (SELECT COUNT(*) FROM "RuleRelease") as releases
+        (SELECT COUNT(*) FROM "RuleRelease") as releases,
+        (SELECT COUNT(*) FROM "Concept") as concepts,
+        (SELECT COUNT(*) FROM "GraphEdge") as graph_edges
     `)
 
     const s = status.rows[0]
@@ -295,9 +341,12 @@ export async function main() {
     console.log(`Evidence Records: ${s.evidence}`)
     console.log(`Source Pointers: ${s.pointers}`)
     console.log(`Draft Rules: ${s.draft_rules}`)
+    console.log(`Pending Review Rules: ${s.pending_rules}`)
     console.log(`Approved Rules: ${s.approved_rules}`)
     console.log(`Published Rules: ${s.published_rules}`)
     console.log(`Releases: ${s.releases}`)
+    console.log(`Concepts: ${s.concepts}`)
+    console.log(`Graph Edges: ${s.graph_edges}`)
     console.log(`\nCompleted at: ${new Date().toISOString()}`)
   } finally {
     client.release()

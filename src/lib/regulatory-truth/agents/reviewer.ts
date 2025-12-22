@@ -41,6 +41,99 @@ async function findConflictingRules(rule: {
 }
 
 /**
+ * Auto-approve PENDING_REVIEW rules that meet criteria:
+ * - Have been pending for at least 24 hours (grace period)
+ * - Have confidence >= 0.90
+ * - No open conflicts
+ *
+ * This allows T0/T1 rules to flow through without manual intervention
+ * while still maintaining a review grace period.
+ */
+export async function autoApproveEligibleRules(): Promise<{
+  approved: number
+  skipped: number
+  errors: string[]
+}> {
+  const gracePeriodHours = parseInt(process.env.AUTO_APPROVE_GRACE_HOURS || "24")
+  const minConfidence = parseFloat(process.env.AUTO_APPROVE_MIN_CONFIDENCE || "0.90")
+  const cutoffDate = new Date(Date.now() - gracePeriodHours * 60 * 60 * 1000)
+
+  console.log(
+    `[auto-approve] Looking for PENDING_REVIEW rules older than ${gracePeriodHours}h with confidence >= ${minConfidence}`
+  )
+
+  // Find eligible rules
+  const eligibleRules = await db.regulatoryRule.findMany({
+    where: {
+      status: "PENDING_REVIEW",
+      updatedAt: { lt: cutoffDate },
+      confidence: { gte: minConfidence },
+      // No open conflicts
+      conflictsA: { none: { status: "OPEN" } },
+      conflictsB: { none: { status: "OPEN" } },
+    },
+    select: {
+      id: true,
+      conceptSlug: true,
+      riskTier: true,
+      confidence: true,
+      updatedAt: true,
+    },
+  })
+
+  const results = { approved: 0, skipped: 0, errors: [] as string[] }
+
+  for (const rule of eligibleRules) {
+    try {
+      // Extra safety check for T0 rules - require higher confidence
+      if (rule.riskTier === "T0" && rule.confidence < 0.95) {
+        console.log(
+          `[auto-approve] Skipping T0 rule ${rule.conceptSlug} - confidence ${rule.confidence} < 0.95`
+        )
+        results.skipped++
+        continue
+      }
+
+      await db.regulatoryRule.update({
+        where: { id: rule.id },
+        data: {
+          status: "APPROVED",
+          approvedAt: new Date(),
+          approvedBy: "AUTO_APPROVE_SYSTEM",
+          reviewerNotes: JSON.stringify({
+            auto_approved: true,
+            reason: `Grace period (${gracePeriodHours}h) elapsed with confidence ${rule.confidence}`,
+            approved_at: new Date().toISOString(),
+          }),
+        },
+      })
+
+      await logAuditEvent({
+        action: "RULE_APPROVED",
+        entityType: "RULE",
+        entityId: rule.id,
+        metadata: {
+          auto_approved: true,
+          confidence: rule.confidence,
+          grace_period_hours: gracePeriodHours,
+          risk_tier: rule.riskTier,
+        },
+      })
+
+      console.log(`[auto-approve] Approved: ${rule.conceptSlug} (confidence: ${rule.confidence})`)
+      results.approved++
+    } catch (error) {
+      results.errors.push(`${rule.id}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  console.log(
+    `[auto-approve] Complete: ${results.approved} approved, ${results.skipped} skipped, ${results.errors.length} errors`
+  )
+  return results
+}
+
+/**
  * Run the Reviewer agent to validate a Draft Rule
  */
 export async function runReviewer(ruleId: string): Promise<ReviewerResult> {
