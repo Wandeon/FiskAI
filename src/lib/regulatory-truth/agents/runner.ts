@@ -9,6 +9,7 @@ import { getAgentPrompt } from "../prompts"
 // OLLAMA CLIENT (reuse existing pattern)
 // =============================================================================
 
+const AGENT_TIMEOUT_MS = parseInt(process.env.AGENT_TIMEOUT_MS || "300000") // 5 minutes
 const OLLAMA_ENDPOINT = process.env.OLLAMA_ENDPOINT || "https://ollama.com"
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1"
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY
@@ -102,6 +103,7 @@ export async function runAgent<TInput, TOutput>(
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
+    let timeoutId: NodeJS.Timeout | undefined
     try {
       // Get prompt template
       const systemPrompt = getAgentPrompt(agentType)
@@ -110,9 +112,13 @@ export async function runAgent<TInput, TOutput>(
       const userMessage = `INPUT:\n${JSON.stringify(input, null, 2)}\n\nPlease process this input and return the result in the specified JSON format.`
 
       // Call Ollama - don't use format:"json" as qwen3-next model returns empty content with it
+      const controller = new AbortController()
+      timeoutId = setTimeout(() => controller.abort(), AGENT_TIMEOUT_MS)
+
       const response = await fetch(`${OLLAMA_ENDPOINT}/api/chat`, {
         method: "POST",
         headers: getOllamaHeaders(),
+        signal: controller.signal,
         body: JSON.stringify({
           model: OLLAMA_MODEL,
           messages: [
@@ -131,6 +137,7 @@ export async function runAgent<TInput, TOutput>(
           },
         }),
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
@@ -196,7 +203,13 @@ export async function runAgent<TInput, TOutput>(
         tokensUsed: data.eval_count || null,
       }
     } catch (error) {
+      if (timeoutId) clearTimeout(timeoutId)
       lastError = error as Error
+
+      // Check if aborted due to timeout
+      if (lastError?.name === "AbortError") {
+        lastError = new Error(`Agent timed out after ${AGENT_TIMEOUT_MS}ms`)
+      }
 
       if (attempt < maxRetries - 1) {
         // Exponential backoff with longer delays for rate limiting
