@@ -11,6 +11,7 @@ import { runAgent } from "./runner"
 import { logAuditEvent } from "../utils/audit-log"
 import { deriveAuthorityLevel } from "../utils/authority"
 import { validateAppliesWhen } from "../dsl/applies-when"
+import { detectStructuralConflicts, seedConflicts } from "../utils/conflict-detector"
 
 // =============================================================================
 // COMPOSER AGENT
@@ -262,6 +263,25 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
     })
   }
 
+  // Run deterministic conflict detection
+  const firstArticleNumber = sourcePointers.find((sp) => sp.articleNumber)?.articleNumber || null
+  const conflicts = await detectStructuralConflicts({
+    id: rule.id,
+    conceptSlug: rule.conceptSlug,
+    value: rule.value,
+    effectiveFrom: rule.effectiveFrom,
+    effectiveUntil: rule.effectiveUntil,
+    authorityLevel,
+    articleNumber: firstArticleNumber,
+  })
+
+  if (conflicts.length > 0) {
+    const created = await seedConflicts(conflicts)
+    console.log(
+      `[composer] Detected ${conflicts.length} potential conflicts, created ${created} new conflict records`
+    )
+  }
+
   // Log audit event for rule creation
   await logAuditEvent({
     action: "RULE_CREATED",
@@ -272,6 +292,7 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
       riskTier: draftRule.risk_tier,
       confidence: draftRule.confidence,
       sourcePointerCount: sourcePointerIds.length,
+      conflictsDetected: conflicts.length,
     },
   })
 
