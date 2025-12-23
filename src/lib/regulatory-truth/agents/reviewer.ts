@@ -62,12 +62,14 @@ export async function autoApproveEligibleRules(): Promise<{
     `[auto-approve] Looking for PENDING_REVIEW rules older than ${gracePeriodHours}h with confidence >= ${minConfidence}`
   )
 
-  // Find eligible rules
+  // Find eligible rules (NEVER auto-approve T0/T1)
   const eligibleRules = await db.regulatoryRule.findMany({
     where: {
       status: "PENDING_REVIEW",
       updatedAt: { lt: cutoffDate },
       confidence: { gte: minConfidence },
+      // NEVER auto-approve T0/T1 - only T2/T3
+      riskTier: { in: ["T2", "T3"] },
       // No open conflicts
       conflictsA: { none: { status: "OPEN" } },
       conflictsB: { none: { status: "OPEN" } },
@@ -81,19 +83,22 @@ export async function autoApproveEligibleRules(): Promise<{
     },
   })
 
+  // Log count of T0/T1 rules awaiting human approval
+  const skippedCritical = await db.regulatoryRule.count({
+    where: {
+      status: "PENDING_REVIEW",
+      riskTier: { in: ["T0", "T1"] },
+    },
+  })
+
+  if (skippedCritical > 0) {
+    console.log(`[auto-approve] ${skippedCritical} T0/T1 rules awaiting human approval`)
+  }
+
   const results = { approved: 0, skipped: 0, errors: [] as string[] }
 
   for (const rule of eligibleRules) {
     try {
-      // Extra safety check for T0 rules - require higher confidence
-      if (rule.riskTier === "T0" && rule.confidence < 0.95) {
-        console.log(
-          `[auto-approve] Skipping T0 rule ${rule.conceptSlug} - confidence ${rule.confidence} < 0.95`
-        )
-        results.skipped++
-        continue
-      }
-
       await db.regulatoryRule.update({
         where: { id: rule.id },
         data: {
@@ -206,14 +211,19 @@ export async function runReviewer(ruleId: string): Promise<ReviewerResult> {
 
   switch (reviewOutput.decision) {
     case "APPROVE":
-      // Auto-approve for T2/T3 rules with high confidence
-      if (
+      // NEVER auto-approve T0/T1 - always require human review
+      if (rule.riskTier === "T0" || rule.riskTier === "T1") {
+        newStatus = "PENDING_REVIEW"
+        console.log(
+          `[reviewer] ${rule.riskTier} rule ${rule.conceptSlug} requires human approval (never auto-approved)`
+        )
+      } else if (
         (rule.riskTier === "T2" || rule.riskTier === "T3") &&
         reviewOutput.computed_confidence >= 0.95
       ) {
+        // Auto-approve for T2/T3 rules with high confidence
         newStatus = "APPROVED"
       } else {
-        // Even if agent says APPROVE, T0/T1 must go to PENDING_REVIEW for human
         newStatus = "PENDING_REVIEW"
       }
       break

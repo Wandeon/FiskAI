@@ -106,6 +106,25 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
     }
   }
 
+  // HARD GATE: T0/T1 rules MUST have approvedBy set
+  const unapprovedCritical = rules.filter(
+    (r) => (r.riskTier === "T0" || r.riskTier === "T1") && !r.approvedBy
+  )
+
+  if (unapprovedCritical.length > 0) {
+    console.error(
+      `[releaser] BLOCKED: ${unapprovedCritical.length} T0/T1 rules without approval:`,
+      unapprovedCritical.map((r) => r.conceptSlug)
+    )
+    return {
+      success: false,
+      output: null,
+      releaseId: null,
+      publishedRuleIds: [],
+      error: `Cannot release ${unapprovedCritical.length} T0/T1 rules without approvedBy: ${unapprovedCritical.map((r) => r.conceptSlug).join(", ")}`,
+    }
+  }
+
   // Get the latest release version
   const latestRelease = await db.ruleRelease.findFirst({
     orderBy: { releasedAt: "desc" },
