@@ -161,6 +161,43 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
   // IMPORTANT: Use the actual input source pointer IDs, not the LLM output
   // The LLM sometimes hallucinates IDs that don't exist in the database
   const validSourcePointerIds = sourcePointerIds
+
+  // CRITICAL VALIDATION: Rules MUST have at least one source pointer
+  // Without source pointers, rules cannot be verified or traced back to evidence
+  if (validSourcePointerIds.length === 0) {
+    console.error(
+      `[composer] Cannot create rule without source pointers: ${draftRule.concept_slug}`
+    )
+    return {
+      success: false,
+      output: result.output,
+      ruleId: null,
+      error: `Cannot create rule "${draftRule.concept_slug}" without source pointers. Rules must be traceable to evidence.`,
+    }
+  }
+
+  // Verify all pointer IDs exist in database
+  const existingPointers = await db.sourcePointer.findMany({
+    where: { id: { in: validSourcePointerIds } },
+    select: { id: true },
+  })
+
+  if (existingPointers.length !== validSourcePointerIds.length) {
+    const missingIds = validSourcePointerIds.filter(
+      (id) => !existingPointers.some((p) => p.id === id)
+    )
+    console.error(
+      `[composer] Missing source pointers for ${draftRule.concept_slug}: expected ${validSourcePointerIds.length}, found ${existingPointers.length}`
+    )
+    console.error(`[composer] Missing IDs: ${missingIds.join(", ")}`)
+    return {
+      success: false,
+      output: result.output,
+      ruleId: null,
+      error: `Cannot create rule "${draftRule.concept_slug}": ${missingIds.length} source pointer(s) not found in database`,
+    }
+  }
+
   console.log(
     `[composer] Linking ${validSourcePointerIds.length} source pointers (LLM returned ${draftRule.source_pointer_ids?.length || 0})`
   )
