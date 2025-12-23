@@ -18,7 +18,8 @@ export interface HealthGateResult {
 
 /**
  * Gate 1: Extraction rejection rate
- * Alert if > 20% of extractions are rejected by deterministic validators
+ * Thresholds: >10% CRITICAL, >5% DEGRADED
+ * If validators reject >10% of extractions, prompts need refinement
  */
 async function checkExtractionRejectionRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
@@ -37,17 +38,21 @@ async function checkExtractionRejectionRate(): Promise<HealthGate> {
   let status: "healthy" | "degraded" | "critical" = "healthy"
   let recommendation: string | undefined
 
-  if (rejectionRate > 20) {
+  if (rejectionRate > 10) {
     status = "critical"
     recommendation =
       "High rejection rate indicates prompts may need refinement or deterministic validators are too strict. Review ExtractionRejected records by rejectionType to identify patterns."
+  } else if (rejectionRate > 5) {
+    status = "degraded"
+    recommendation =
+      "Rejection rate trending up. Monitor ExtractionRejected for common failure patterns."
   }
 
   return {
     name: "extraction_rejection_rate",
     status,
     value: Math.round(rejectionRate * 10) / 10,
-    threshold: 20,
+    threshold: 10,
     message: `${rejections} rejected / ${total} total extractions (${rejectionRate.toFixed(1)}%)`,
     recommendation,
   }
@@ -55,7 +60,8 @@ async function checkExtractionRejectionRate(): Promise<HealthGate> {
 
 /**
  * Gate 2: Quote validation rate
- * Alert if > 10% of quotes fail the "in evidence" check
+ * Thresholds: >10% CRITICAL, >5% DEGRADED
+ * Quote failures indicate LLM hallucination - serious audit risk
  */
 async function checkQuoteValidationRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -86,6 +92,10 @@ async function checkQuoteValidationRate(): Promise<HealthGate> {
     status = "critical"
     recommendation =
       "Quotes not found in evidence suggest LLM hallucination or quote extraction issues. Review extractor prompts and evidence preprocessing."
+  } else if (quoteFailureRate > 5) {
+    status = "degraded"
+    recommendation =
+      "Quote failure rate trending up. Review recent ExtractionRejected records for hallucination patterns."
   }
 
   return {
@@ -226,6 +236,57 @@ async function checkConflictResolutionRate(): Promise<HealthGate> {
 }
 
 /**
+ * Gate 6: Release blocked attempts
+ * Track when releases are blocked due to T0/T1 without approval
+ * This is a leading indicator - blocks mean the gate is working
+ */
+async function checkReleaseBlockedAttempts(): Promise<HealthGate> {
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+
+  // Count releaser runs that failed due to unapproved T0/T1 rules
+  const blockedReleases = await db.agentRun.count({
+    where: {
+      agentType: "releaser",
+      status: "FAILED",
+      createdAt: { gte: cutoff },
+      OR: [
+        { error: { contains: "T0/T1 rules without approvedBy" } },
+        { error: { contains: "Cannot release" } },
+      ],
+    },
+  })
+
+  const totalReleaseAttempts = await db.agentRun.count({
+    where: {
+      agentType: "releaser",
+      createdAt: { gte: cutoff },
+    },
+  })
+
+  // Blocked attempts are informational - they show the gate is working
+  // But high block rate suggests process issues (rules being created without approval path)
+  const blockRate = totalReleaseAttempts > 0 ? (blockedReleases / totalReleaseAttempts) * 100 : 0
+
+  let status: "healthy" | "degraded" | "critical" = "healthy"
+  let recommendation: string | undefined
+
+  if (blockedReleases > 0 && blockRate > 50) {
+    status = "degraded"
+    recommendation =
+      "High rate of blocked releases. Review rule creation workflow to ensure T0/T1 rules have approval path before release attempts."
+  }
+
+  return {
+    name: "release_blocked_attempts",
+    status,
+    value: blockedReleases,
+    threshold: 0, // Informational - any blocks show gate is working
+    message: `${blockedReleases} blocked / ${totalReleaseAttempts} total release attempts (${blockRate.toFixed(1)}%)`,
+    recommendation,
+  }
+}
+
+/**
  * Run all health gate checks
  */
 export async function checkHealthGates(): Promise<HealthGateResult> {
@@ -287,6 +348,18 @@ export async function checkHealthGates(): Promise<HealthGateResult> {
       status: "critical",
       value: -1,
       threshold: 50,
+      message: `Error checking: ${error instanceof Error ? error.message : String(error)}`,
+    })
+  }
+
+  try {
+    gates.push(await checkReleaseBlockedAttempts())
+  } catch (error) {
+    gates.push({
+      name: "release_blocked_attempts",
+      status: "critical",
+      value: -1,
+      threshold: 0,
       message: `Error checking: ${error instanceof Error ? error.message : String(error)}`,
     })
   }
