@@ -1,0 +1,9 @@
+          rule_id          |      conceptSlug      |        pointer_id         |      exactQuote      |                                  url                                  
+---------------------------+-----------------------+---------------------------+----------------------+-----------------------------------------------------------------------
+ cmjh7iv3u000o56waeliytg8a | exchange-rate-eur-huf | cmjh7iv39000m56waw5xx7l2b | EUR/HUF = 386,800000 | https://api.hnb.hr/tecajn-eur/v3?datum-primjene=2025-12-22&valuta=HUF
+ cmjh7iv52000t56wa099971u3 | exchange-rate-eur-jpy | cmjh7iv4g000r56wa7vjqp8ye | EUR/JPY = 184,150000 | https://api.hnb.hr/tecajn-eur/v3?datum-primjene=2025-12-22&valuta=JPY
+ cmjh7iv09000956wagvk6yfb5 | exchange-rate-eur-cad | cmjh7iuzo000756wara6t68x9 | EUR/CAD = 1,615500   | https://api.hnb.hr/tecajn-eur/v3?datum-primjene=2025-12-22&valuta=CAD
+ cmjh7iv1h000e56wajqdh3z62 | exchange-rate-eur-czk | cmjh7iv0y000c56wafbz616sh | EUR/CZK = 24,323000  | https://api.hnb.hr/tecajn-eur/v3?datum-primjene=2025-12-22&valuta=CZK
+ cmjh7iv2m000j56wa5ky4ar0r | exchange-rate-eur-dkk | cmjh7iv23000h56walh3qte5h | EUR/DKK = 7,471200   | https://api.hnb.hr/tecajn-eur/v3?datum-primjene=2025-12-22&valuta=DKK
+(5 rows)
+

@@ -1,0 +1,32 @@
+[composer] Running on source pointers: cmjhqdn7s0001x3wajbu7nz4l, cmjhqdn8b0002x3wa283r2hl9
+[composer] Found 2 source pointers:
+  - cmjhqdn7s0001x3wajbu7nz4l: obrasci (6.64)
+  - cmjhqdn8b0002x3wa283r2hl9: rokovi (2025-07-04)
+[composer] Linking 2 source pointers (LLM returned 2)
+[composer] Result: {
+  "success": true,
+  "output": {
+    "draft_rule": {
+      "concept_slug": "upravna-pristojba-zalba-rjesenje",
+      "title_hr": "Upravna pristojba na žalbu protiv rješenja",
+      "title_en": "Administrative fee for appeal against a decision",
+      "risk_tier": "T2",
+      "applies_when": "{\"op\":\"true\"}",
+      "value": "6.64",
+      "value_type": "currency_eur",
+      "explanation_hr": "Za podnošenje žalbe protiv rješenja potrebno je platiti upravnu pristojbu u iznosu od 6,64 eura.",
+      "explanation_en": "When filing an appeal against a decision, an administrative fee of 6.64 EUR must be paid.",
+      "source_pointer_ids": [
+        "cmjhqdn7s0001x3wajbu7nz4l",
+        "cmjhqdn8b0002x3wa283r2hl9"
+      ],
+      "effective_from": "2025-07-04",
+      "effective_until": null,
+      "supersedes": null,
+      "confidence": 0.9,
+      "composer_notes": "The fee amount is clearly stated. The date from the second source pointer (2025-07-04) is interpreted as the effective date for this regulatory requirement or a specific deadline associated with the procedure."
+    }
+  },
+  "ruleId": "cmjhqehsq0001awwadq0kxis2",
+  "error": null
+}

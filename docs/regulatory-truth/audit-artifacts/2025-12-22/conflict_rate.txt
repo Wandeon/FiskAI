@@ -1,0 +1,5 @@
+ conflicts_total | conflicts_per_100_evidence 
+-----------------+----------------------------
+               0 |                       0.00
+(1 row)
+

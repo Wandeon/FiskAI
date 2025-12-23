@@ -1,0 +1,16 @@
+             name              |        domain         |                         path                          | success | failed | total | success_rate 
+-------------------------------+-----------------------+-------------------------------------------------------+---------+--------+-------+--------------
+ HZZO - e-Zdravstveno novosti  | hzzo.hr               | /e-zdravstveno/novosti                                |       1 |      2 |     3 |        33.33
+ HZZO - Liste lijekova         | hzzo.hr               | /zdravstvena-zastita/objavljene-liste-lijekova        |       1 |      1 |     2 |        50.00
+ HZZO - Šifrarnici             | hzzo.hr               | /poslovni-subjekti/hzzo-za-partnere/sifrarnici-hzzo-0 |       1 |      1 |     2 |        50.00
+ FINA - Digitalni certifikati  | fina.hr               | /obavijesti/digitalni-certifikati                     |       4 |      1 |     5 |        80.00
+ Narodne novine - Main Sitemap | narodne-novine.nn.hr  | /sitemap.xml                                          |      20 |      0 |    20 |       100.00
+ HZZO - Novosti                | hzzo.hr               | /novosti                                              |      15 |      0 |    15 |       100.00
+ FINA - Novosti                | fina.hr               | /novosti                                              |       9 |      0 |     9 |       100.00
+ Porezna - Vijesti             | porezna-uprava.gov.hr | /hr/vijesti/8                                         |       2 |      0 |     2 |       100.00
+ Porezna - Mišljenja SU        | porezna-uprava.gov.hr | /hr/misljenja-su/3951                                 |       2 |      0 |     2 |       100.00
+ HZZO - Pravni akti            | hzzo.hr               | /pravni-akti                                          |       1 |      0 |     1 |       100.00
+ FINA - e-Račun obavijesti     | fina.hr               | /obavijesti/fina-e-racun                              |       1 |      0 |     1 |       100.00
+ FINA - e-Račun javna nabava   | fina.hr               | /obavijesti/e-racun-u-javnoj-nabavi                   |       1 |      0 |     1 |       100.00
+(12 rows)
+

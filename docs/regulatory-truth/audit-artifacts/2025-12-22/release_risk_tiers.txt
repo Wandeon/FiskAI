@@ -1,0 +1,6 @@
+            id             | version | releaseType | risk_tiers | rule_count 
+---------------------------+---------+-------------+------------+------------
+ cmjh8of2o002bfgwaym3i0dz6 | 1.1.0   | minor       | {T2}       |          1
+ cmjgdzifj00014awa6lb3xkg1 | 1.0.0   | major       | {T0}       |          1
+(2 rows)
+

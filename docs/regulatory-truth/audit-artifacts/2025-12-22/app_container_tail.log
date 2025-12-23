@@ -1,0 +1,15 @@
+{
+  requestId: '5638d63b-bcd9-481a-83d2-d65c6959030c',
+  method: 'GET',
+  path: '/api/health',
+  host: 'localhost:3000',
+  userAgent: undefined
+} 'Incoming request'
+{"level":30,"time":1766442450491,"env":"production","app":"fiskai","requestId":"5638d63b-bcd9-481a-83d2-d65c6959030c","path":"/api/health","method":"GET","status":200,"durationMs":22,"msg":"API request completed"}
+{
+  requestId: '2c42674a-e375-431b-95c6-da560a2c1ffb',
+  method: 'GET',
+  path: '/api/regulatory/status',
+  host: 'localhost:3002',
+  userAgent: 'curl/7.88.1'
+} 'Incoming request'

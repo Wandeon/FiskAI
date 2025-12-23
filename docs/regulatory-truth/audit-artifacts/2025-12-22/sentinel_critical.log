@@ -1,0 +1,47 @@
+[sentinel] Running discovery agent...
+[sentinel] Filtering to CRITICAL priority endpoints
+[sentinel] Found 11 active endpoints
+[sentinel] Checking: https://narodne-novine.nn.hr/sitemap.xml
+[sentinel] No changes detected for Narodne novine - Main Sitemap
+[sentinel] Checking: https://hzzo.hr/novosti
+[sentinel] No changes detected for HZZO - Novosti
+[sentinel] Checking: https://hzzo.hr/pravni-akti
+[sentinel] No changes detected for HZZO - Pravni akti
+[sentinel] Checking: https://mirovinsko.hr/hr/vijesti/114
+[sentinel] No changes detected for HZMO - Vijesti
+[sentinel] Checking: https://mirovinsko.hr/hr/priopcenja-204/204
+[sentinel] No changes detected for HZMO - Priopcenja
+[sentinel] Checking: https://mirovinsko.hr/hr/propisi/54
+[sentinel] No changes detected for HZMO - Propisi
+[sentinel] Checking: https://porezna-uprava.gov.hr/hr/vijesti/8
+[sentinel] Re-queued https://porezna-uprava.gov.hr/hr/odluka-o-obustavi-javnog-natjecaja-za-prijam-u-drzavnu-sluzbu-na-odredjeno-vrijeme-pu-karlovac/8153 for content change check
+[sentinel] Re-queued https://porezna-uprava.gov.hr/hr/obavijest-o-javnom-natjecaju-pu-krapina/8103 for content change check
+[sentinel] Discovered 2 new items from Porezna - Vijesti
+[sentinel] Checking: https://porezna-uprava.gov.hr/hr/misljenja-su/3951
+[sentinel] Re-queued https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665 for content change check
+[sentinel] Item already pending for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+[sentinel] Re-queued https://porezna-uprava.gov.hr/Misljenja/Detaljno/2613 for content change check
+[sentinel] Discovered 2 new items from Porezna - Mišljenja SU
+[sentinel] Checking: https://fina.hr/obavijesti/fina-e-racun
+[sentinel] No changes detected for FINA - e-Račun obavijesti
+[sentinel] Checking: https://fina.hr/novosti
+[sentinel] No changes detected for FINA - Novosti
+[sentinel] Checking: https://mfin.gov.hr/vijesti/8
+[sentinel] No changes detected for Ministarstvo financija - Vijesti
+[sentinel] Complete: 11 endpoints, 4 new items
+
+[sentinel] Discovery Results:
+  - Success: true
+  - Endpoints Checked: 11
+  - New Items Discovered: 4
+
+[sentinel] Fetching discovered items...
+[sentinel] Fetching: https://porezna-uprava.gov.hr/hr/odluka-o-obustavi-javnog-natjecaja-za-prijam-u-drzavnu-sluzbu-na-odredjeno-vrijeme-pu-karlovac/8153
+[sentinel] Fetching: https://porezna-uprava.gov.hr/hr/obavijest-o-javnom-natjecaju-pu-krapina/8103
+[sentinel] Fetching: https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+[sentinel] Fetching: https://porezna-uprava.gov.hr/Misljenja/Detaljno/2613
+[sentinel] Fetched: 4, Failed: 0
+  - Fetched: 4
+  - Failed: 0
+
+[sentinel] Complete!

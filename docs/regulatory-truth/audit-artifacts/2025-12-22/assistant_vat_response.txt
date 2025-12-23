@@ -1,0 +1,10 @@
+
+
+Standardna stopa PDV-a u Hrvatskoj iznosi **25%**. Međutim, postoje i smanjene stope ovisno o vrsti proizvoda ili usluge:
+
+- **13%**: Primjenjuje se na određene stavke poput hrane (osim alkohola i slatkiša), knjiga, novina, hotela, javnog prijevoza itd.
+- **5%**: Primjenjuje se na neke esencijalne proizvode poput lijekova, dječjih proizvoda, određenih medicinskih uređaja itd.
+
+Važno je napomenuti da točna stopa ovisi o specifičnoj vrsti proizvoda ili usluge, a zakoni o PDV-u se mogu mijenjati. **Preporučujem da uvijek provjerite najnovije informacije na webu Financijske uprave (FINA) ili posavjetujete se s knjigovođom** kako biste osigurali zakonitu ispravnost.
+
+U FiskAI aplikaciji, prilikom izrade računa, možete odabrati odgovarajuću PDV stopu u postavkama proizvoda/usluge. Aplikacija automatski računa PDV prema odabranom postotku. 😊

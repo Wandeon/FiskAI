@@ -45,9 +45,10 @@ async function findConflictingRules(rule: {
  * - Have been pending for at least 24 hours (grace period)
  * - Have confidence >= 0.90
  * - No open conflicts
+ * - ONLY T2/T3 rules (T0/T1 NEVER auto-approved)
  *
- * This allows T0/T1 rules to flow through without manual intervention
- * while still maintaining a review grace period.
+ * This provides a grace period for lower-risk rules while ensuring
+ * T0/T1 rules always require explicit human approval.
  */
 export async function autoApproveEligibleRules(): Promise<{
   approved: number

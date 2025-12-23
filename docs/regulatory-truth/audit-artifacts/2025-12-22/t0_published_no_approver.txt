@@ -1,0 +1,18 @@
+            id             |                   conceptSlug                   |  status   | riskTier | approvedBy | approvedAt 
+---------------------------+-------------------------------------------------+-----------+----------+------------+------------
+ cmjfyrfpw0001e9wa0h14pvgi | payment-service-provider-obligations-start-date | PUBLISHED | T0       |            | 
+ cmjh7ivbc001d56wak2bipzgf | exchange-rate-eur-gbp                           | PUBLISHED | T0       |            | 
+ cmjh7ivck001i56wa4m1dow9p | exchange-rate-eur-usd                           | PUBLISHED | T0       |            | 
+ cmjh7ivds001n56wa677fc1nh | exchange-rate-eur-bam                           | PUBLISHED | T0       |            | 
+ cmjh7ivf9001s56wa8n48a73z | exchange-rate-eur-pln                           | PUBLISHED | T0       |            | 
+ cmjh7iuy9000456waufvipj2g | exchange-rate-eur-aud                           | PUBLISHED | T0       |            | 
+ cmjh7iv09000956wagvk6yfb5 | exchange-rate-eur-cad                           | PUBLISHED | T0       |            | 
+ cmjh7iv1h000e56wajqdh3z62 | exchange-rate-eur-czk                           | PUBLISHED | T0       |            | 
+ cmjh7iv2m000j56wa5ky4ar0r | exchange-rate-eur-dkk                           | PUBLISHED | T0       |            | 
+ cmjh7iv3u000o56waeliytg8a | exchange-rate-eur-huf                           | PUBLISHED | T0       |            | 
+ cmjh7iv52000t56wa099971u3 | exchange-rate-eur-jpy                           | PUBLISHED | T0       |            | 
+ cmjh7iv6k000y56wapu263zab | exchange-rate-eur-nok                           | PUBLISHED | T0       |            | 
+ cmjh7iv7t001356waytc1gewm | exchange-rate-eur-sek                           | PUBLISHED | T0       |            | 
+ cmjh7iv9g001856wa398494gc | exchange-rate-eur-chf                           | PUBLISHED | T0       |            | 
+(14 rows)
+

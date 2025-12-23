@@ -1,0 +1,42 @@
+{
+  "sentinel": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "extract": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "compose": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "review": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "arbiter": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "release": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "scheduled": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  },
+  "deadletter": {
+    "waiting": 0,
+    "active": 0,
+    "failed": 0
+  }
+}

@@ -1,0 +1,5 @@
+            id             |         conceptSlug          |     status     
+---------------------------+------------------------------+----------------
+ cmjfyu6kj0004e9wa5ndbtxeo | fiskalizacija-datum-primjene | PENDING_REVIEW
+(1 row)
+
