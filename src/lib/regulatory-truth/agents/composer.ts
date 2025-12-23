@@ -12,6 +12,7 @@ import { logAuditEvent } from "../utils/audit-log"
 import { deriveAuthorityLevel } from "../utils/authority"
 import { validateAppliesWhen } from "../dsl/applies-when"
 import { detectStructuralConflicts, seedConflicts } from "../utils/conflict-detector"
+import { withSoftFail } from "../utils/soft-fail"
 
 // =============================================================================
 // COMPOSER AGENT
@@ -360,24 +361,26 @@ export async function runComposerBatch(): Promise<{
   for (const [domain, pointerIds] of Object.entries(grouped)) {
     console.log(`[composer] Processing domain: ${domain} (${pointerIds.length} pointers)`)
 
-    try {
-      const result = await runComposer(pointerIds)
+    // Use soft-fail wrapper to prevent single failures from blocking entire batch
+    const softFailResult = await withSoftFail(() => runComposer(pointerIds), null, {
+      operation: "composer_batch",
+      entityType: "source",
+      metadata: {
+        domain,
+        pointerCount: pointerIds.length,
+        pointerIds: pointerIds.slice(0, 5), // Log first 5 IDs only
+      },
+    })
 
-      if (result.success && result.ruleId) {
-        success++
-        totalRules++
-        console.log(`[composer] ✓ Created rule: ${result.ruleId}`)
-      } else {
-        failed++
-        const errorMsg = `${domain}: ${result.error}`
-        errors.push(errorMsg)
-        console.log(`[composer] ✗ ${errorMsg}`)
-      }
-    } catch (error) {
+    if (softFailResult.success && softFailResult.data?.success && softFailResult.data.ruleId) {
+      success++
+      totalRules++
+      console.log(`[composer] ✓ Created rule: ${softFailResult.data.ruleId}`)
+    } else {
       failed++
-      const errorMsg = `${domain}: ${error}`
-      errors.push(errorMsg)
-      console.error(`[composer] ✗ ${errorMsg}`)
+      const errorMsg = softFailResult.error || softFailResult.data?.error || "Unknown error"
+      errors.push(`${domain}: ${errorMsg}`)
+      console.log(`[composer] ✗ ${domain}: ${errorMsg}`)
     }
 
     // Rate limiting - wait 3 seconds between compositions

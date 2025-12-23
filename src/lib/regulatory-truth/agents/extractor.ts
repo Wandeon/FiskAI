@@ -10,6 +10,7 @@ import {
 import { runAgent } from "./runner"
 import { cleanContent, getCleaningStats } from "../utils/content-cleaner"
 import { validateExtraction } from "../utils/deterministic-validators"
+import { withSoftFail } from "../utils/soft-fail"
 
 // =============================================================================
 // EXTRACTOR AGENT
@@ -273,22 +274,29 @@ export async function runExtractorBatch(limit: number = 20): Promise<{
       await new Promise((resolve) => setTimeout(resolve, 5000))
     }
 
-    try {
-      console.log(`[extractor] Processing ${i + 1}/${unprocessedEvidence.length}: ${evidence.url}`)
-      const result = await runExtractor(evidence.id)
-      if (result.success) {
-        processed++
-        allPointerIds.push(...result.sourcePointerIds)
-        console.log(`[extractor] ✓ Extracted ${result.sourcePointerIds.length} pointers`)
-      } else {
-        failed++
-        errors.push(`${evidence.id}: ${result.error}`)
-        console.log(`[extractor] ✗ Failed: ${result.error?.slice(0, 100)}`)
-      }
-    } catch (error) {
+    console.log(`[extractor] Processing ${i + 1}/${unprocessedEvidence.length}: ${evidence.url}`)
+
+    // Use soft-fail wrapper to prevent single failures from blocking entire batch
+    const softFailResult = await withSoftFail(() => runExtractor(evidence.id), null, {
+      operation: "extractor_batch",
+      entityType: "evidence",
+      entityId: evidence.id,
+      metadata: {
+        url: evidence.url,
+        batchIndex: i,
+        batchSize: unprocessedEvidence.length,
+      },
+    })
+
+    if (softFailResult.success && softFailResult.data?.success) {
+      processed++
+      allPointerIds.push(...softFailResult.data.sourcePointerIds)
+      console.log(`[extractor] ✓ Extracted ${softFailResult.data.sourcePointerIds.length} pointers`)
+    } else {
       failed++
-      errors.push(`${evidence.id}: ${error}`)
-      console.log(`[extractor] ✗ Error: ${error}`)
+      const errorMsg = softFailResult.error || softFailResult.data?.error || "Unknown error"
+      errors.push(`${evidence.id}: ${errorMsg}`)
+      console.log(`[extractor] ✗ Failed: ${errorMsg.slice(0, 100)}`)
     }
   }
 

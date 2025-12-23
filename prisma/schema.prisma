@@ -1883,6 +1883,7 @@ model AgentRun {
   status          String    @default("running")  // running, completed, failed
   input           Json      // The input provided to the agent
   output          Json?     // The output from the agent (null if failed)
+  rawOutput       Json?     // Raw LLM output on failure (for debugging)
   error           String?   // Error message if failed
   tokensUsed      Int?
   durationMs      Int?
@@ -2081,4 +2082,22 @@ model ExtractionRejected {
   @@index([evidenceId])
   @@index([rejectionType])
   @@index([createdAt])
+}
+
+// =============================================================================
+// SOFT FAIL LOG - Track AI operation failures
+// =============================================================================
+
+model SoftFailLog {
+  id           String   @id @default(cuid())
+  operation    String   // e.g., "extractor", "reviewer", "composer"
+  entityType   String?  // e.g., "evidence", "rule", "source"
+  entityId     String?
+  errorMessage String   @db.Text
+  metadata     Json?    // Additional context (duration, stack trace, etc.)
+  createdAt    DateTime @default(now())
+
+  @@index([operation])
+  @@index([createdAt])
+  @@index([entityType, entityId])
 }

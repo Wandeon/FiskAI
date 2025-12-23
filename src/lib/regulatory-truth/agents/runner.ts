@@ -44,6 +44,7 @@ export interface AgentRunOptions<TInput, TOutput> {
   maxRetries?: number
   evidenceId?: string
   ruleId?: string
+  softFail?: boolean // If true, returns error instead of throwing (default: true)
 }
 
 export interface AgentRunResult<TOutput> {
@@ -56,7 +57,9 @@ export interface AgentRunResult<TOutput> {
 }
 
 /**
- * Run an agent with full validation and logging
+ * Run an agent with full validation and logging.
+ * Supports soft-fail mode (default) where failures return error results
+ * instead of throwing, allowing pipelines to continue processing other items.
  */
 export async function runAgent<TInput, TOutput>(
   options: AgentRunOptions<TInput, TOutput>
@@ -71,6 +74,7 @@ export async function runAgent<TInput, TOutput>(
     maxRetries = 3,
     evidenceId,
     ruleId,
+    softFail = true, // Default to soft-fail mode
   } = options
 
   // Validate input
@@ -188,13 +192,29 @@ export async function runAgent<TInput, TOutput>(
       let parsed: unknown
       try {
         parsed = JSON.parse(jsonContent)
-      } catch {
+      } catch (parseError) {
+        // Store raw output on parse failure
+        await db.agentRun.update({
+          where: { id: run.id },
+          data: {
+            rawOutput: { rawContent, jsonContent },
+            error: `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+          },
+        })
         throw new Error(`Failed to parse JSON response: ${jsonContent.slice(0, 200)}`)
       }
 
       // Validate output
       const outputValidation = outputSchema.safeParse(parsed)
       if (!outputValidation.success) {
+        // Store raw output on validation failure for debugging
+        await db.agentRun.update({
+          where: { id: run.id },
+          data: {
+            rawOutput: parsed,
+            error: `Schema validation failed: ${outputValidation.error.message}`,
+          },
+        })
         throw new Error(`Invalid output: ${outputValidation.error.message}`)
       }
 

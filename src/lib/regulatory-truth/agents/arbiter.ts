@@ -11,6 +11,7 @@ import {
 import { runAgent } from "./runner"
 import type { AuthorityLevel } from "@prisma/client"
 import { logAuditEvent } from "../utils/audit-log"
+import { withSoftFail } from "../utils/soft-fail"
 
 // =============================================================================
 // ARBITER AGENT
@@ -500,25 +501,28 @@ export async function runArbiterBatch(limit: number = 10): Promise<{
   }
 
   for (const conflict of toProcess) {
-    try {
-      console.log(`[arbiter] Processing conflict: ${conflict.id}`)
-      const result = await runArbiter(conflict.id)
+    console.log(`[arbiter] Processing conflict: ${conflict.id}`)
 
-      results.processed++
+    // Use soft-fail wrapper to prevent single failures from blocking entire batch
+    const softFailResult = await withSoftFail(() => runArbiter(conflict.id), null, {
+      operation: "arbiter_batch",
+      entityType: "rule",
+      metadata: {
+        conflictId: conflict.id,
+        conflictType: conflict.conflictType,
+      },
+    })
 
-      if (!result.success) {
-        results.failed++
-        results.errors.push(`${conflict.id}: ${result.error}`)
-      } else if (result.resolution === "ESCALATE_TO_HUMAN") {
-        results.escalated++
-      } else {
-        results.resolved++
-      }
-    } catch (error) {
+    results.processed++
+
+    if (!softFailResult.success || !softFailResult.data?.success) {
       results.failed++
-      results.errors.push(
-        `${conflict.id}: ${error instanceof Error ? error.message : String(error)}`
-      )
+      const errorMsg = softFailResult.error || softFailResult.data?.error || "Unknown error"
+      results.errors.push(`${conflict.id}: ${errorMsg}`)
+    } else if (softFailResult.data.resolution === "ESCALATE_TO_HUMAN") {
+      results.escalated++
+    } else {
+      results.resolved++
     }
   }
 
