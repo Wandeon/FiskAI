@@ -6,6 +6,10 @@ import { extractQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { runSentinel, fetchDiscoveredItems } from "../agents/sentinel"
 import { db } from "@/lib/db"
+import { logWorkerStartup } from "./startup-log"
+
+// Log startup info for build drift detection
+logWorkerStartup("sentinel")
 
 interface SentinelJobData {
   runId: string

@@ -5,6 +5,10 @@ import { sentinelQueue, releaseQueue, arbiterQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { db } from "@/lib/db"
 import { autoApproveEligibleRules } from "../agents/reviewer"
+import { logWorkerStartup } from "./startup-log"
+
+// Log startup info for build drift detection
+logWorkerStartup("orchestrator")
 
 interface ScheduledJobData {
   type:

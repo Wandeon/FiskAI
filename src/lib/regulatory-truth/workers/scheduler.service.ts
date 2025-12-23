@@ -2,6 +2,10 @@
 import cron from "node-cron"
 import { scheduledQueue } from "./queues"
 import { closeRedis } from "./redis"
+import { logWorkerStartup } from "./startup-log"
+
+// Log startup info for build drift detection
+logWorkerStartup("scheduler")
 
 const TIMEZONE = process.env.WATCHDOG_TIMEZONE || "Europe/Zagreb"
 

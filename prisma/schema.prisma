@@ -1833,7 +1833,9 @@ model RegulatoryRule {
   outgoingEdges     GraphEdge[] @relation("EdgeFrom")
   incomingEdges     GraphEdge[] @relation("EdgeTo")
 
-  @@unique([conceptSlug, effectiveFrom])
+  // Allow draft/pending variants to coexist; only PUBLISHED is unique per concept/date
+  // This enables conflict candidates to be stored before arbiter resolution
+  @@unique([conceptSlug, effectiveFrom, status])
   @@index([status])
   @@index([riskTier])
   @@index([conceptSlug])
