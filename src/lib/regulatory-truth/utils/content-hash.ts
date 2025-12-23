@@ -2,10 +2,13 @@
 import { createHash } from "crypto"
 
 /**
- * Normalize HTML content for consistent hashing.
+ * Normalize HTML content for change detection (NOT for immutability).
  * Removes whitespace variations and dynamic content.
+ *
+ * WARNING: Do NOT use this for JSON/API content - it destroys valid data.
+ * Use hashRawContent() for immutability hashing.
  */
-export function normalizeContent(content: string): string {
+export function normalizeHtmlContent(content: string): string {
   return (
     content
       // Remove HTML comments
@@ -25,10 +28,48 @@ export function normalizeContent(content: string): string {
 }
 
 /**
- * Generate SHA-256 hash of content.
+ * @deprecated Use hashRawContent() for immutability, normalizeHtmlContent() for HTML dedup
  */
-export function hashContent(content: string): string {
-  const normalized = normalizeContent(content)
+export function normalizeContent(content: string): string {
+  return normalizeHtmlContent(content)
+}
+
+/**
+ * Hash raw content for IMMUTABILITY verification.
+ * No normalization - preserves exact bytes for audit trail.
+ *
+ * Use this for:
+ * - Evidence contentHash (audit immutability)
+ * - JSON/API responses
+ * - Any content where exact bytes matter
+ */
+export function hashRawContent(content: string): string {
+  return createHash("sha256").update(content).digest("hex")
+}
+
+/**
+ * Hash content with optional content-type awareness.
+ * - JSON/API: raw hash (no normalization)
+ * - HTML: normalized hash (for change detection)
+ *
+ * @param content - The content to hash
+ * @param contentType - MIME type or 'json'/'html' hint
+ */
+export function hashContent(content: string, contentType?: string): string {
+  // Detect JSON content
+  const isJson =
+    contentType?.includes("json") ||
+    contentType?.includes("application/ld+json") ||
+    (content.trim().startsWith("{") && content.trim().endsWith("}")) ||
+    (content.trim().startsWith("[") && content.trim().endsWith("]"))
+
+  if (isJson) {
+    // JSON: hash raw bytes for immutability
+    return hashRawContent(content)
+  }
+
+  // HTML/text: normalize for change detection
+  const normalized = normalizeHtmlContent(content)
   return createHash("sha256").update(normalized).digest("hex")
 }
 

@@ -1,0 +1,499 @@
+=== cmjievhzg0002fvwam16i6ter ===
+[extractor] Running on evidence: cmjievhzg0002fvwam16i6ter
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjievhzg0002fvwam16i6ter",
+    "extractions": [],
+    "extraction_metadata": {
+      "total_extractions": 0,
+      "by_domain": {},
+      "low_confidence_count": 0,
+      "processing_notes": "No extractable data found"
+    }
+  },
+  "sourcePointerIds": [],
+  "error": null
+}
+=== cmjievgih0000fvwanr8axica ===
+[extractor] Running on evidence: cmjievgih0000fvwanr8axica
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjievgih0000fvwanr8axica",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-04",
+        "display_value": "04.12.2025.",
+        "exact_quote": "Datum: 04.12.2025.",
+        "context_before": "Mjesto: Zagreb",
+        "context_after": "Zaprimili smo putem maila vaš upit vezano za porezni tretman poklonjene police osiguranja pravne zaštite.",
+        "selector": "//p[contains(text(), 'Datum: 04.12.2025.')]",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Date of the tax opinion."
+      },
+      {
+        "id": "ext-2",
+        "domain": "porez_dohodak",
+        "value_type": "percentage",
+        "extracted_value": "0.5",
+        "display_value": "50%",
+        "exact_quote": "porezna osnovica povećava se za 50% troškova reprezentacije",
+        "context_before": "U skladu s člankom 11. stavkom 1. Pravilnika o porezu na dobit (Narodne novine broj 95/05, 133/07, 156/08, 146/09, 123/10, 137/11, 61/12, 146/12, 160/13, 12/14, 157/14, 137/15, 1/17, 2/18, 1/19, 1/20, 59/20, 1/21, 156/22, 156/23 i 16/25) rashodima razdoblja za koje se utvrđuje porez (porezno razdoblje), sukladno članku 5. stavku 1. Zakona, smatraju se smanjenja gospodarstvenih koristi u obliku odljeva ili iscrpljenja imovine ili stvaranja obveza koja imaju za posljedicu smanjenje kapitala a u svrhu povećanja prihoda odnosno dobiti.",
+        "context_after": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a ako se daju potrošačima, ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura.",
+        "selector": "//p[contains(text(), 'porezna osnovica povećava se za 50% troškova reprezentacije')]",
+        "article_number": "7",
+        "paragraph_number": "1",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Tax base increase rate for representation costs."
+      },
+      {
+        "id": "ext-3",
+        "domain": "porez_dohodak",
+        "value_type": "threshold",
+        "extracted_value": "22.00",
+        "display_value": "22,00 eura",
+        "exact_quote": "ako se daju potrošačima, ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura.",
+        "context_before": "Prema članku 7. stavku 1. točki 3. Zakona, porezna osnovica povećava se za 50% troškova reprezentacije (ugošćenja, darova sa ili bez utisnutog znaka tvrtke ili proizvoda, troškova odmora, športa, rekreacije, zakupa automobila, plovila, zrakoplova, kuća za odmor), u visini troškova nastalih iz poslovnog odnosa s poslovnim partnerom.",
+        "context_after": "U skladu s člankom 23. Pravilnika o porezu na dobit poslovnim partnerima iz članka 7. stavka 1. točka 3. Zakona smatraju se osobe s kojima postoji poslovni odnos ili se očekuje da će se takav odnos uspostaviti.",
+        "selector": "//p[contains(text(), 'vrijednost bez poreza na dodanu vrijednost do 22,00 eura')]",
+        "article_number": "7",
+        "paragraph_number": "6",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Threshold for consumer gifts to not be classified as representation."
+      },
+      {
+        "id": "ext-4",
+        "domain": "porez_dohodak",
+        "value_type": "text",
+        "extracted_value": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "display_value": "Zakon o porezu na dobit (NN 177/04 - 114/23)",
+        "exact_quote": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23; dalje u tekstu: Zakon)",
+        "context_before": "Vezano za postavljena pitanja u nastavku odgovaramo.",
+        "context_after": "porezna osnovica je dobit koja se utvrđuje prema računovodstvenim propisima kao razlika prihoda i rashoda prije obračuna poreza na dobit, uvećana i umanjena prema odredbama toga Zakona.",
+        "selector": "//p[contains(text(), 'Zakon o porezu na dobit (Narodne novine, br. 177/04')]",
+        "article_number": "5",
+        "paragraph_number": "1",
+        "law_reference": "Zakon o porezu na dobit",
+        "confidence": 1,
+        "extraction_notes": "Full citation of the Profit Tax Act."
+      },
+      {
+        "id": "ext-5",
+        "domain": "porez_dohodak",
+        "value_type": "text",
+        "extracted_value": "Pravilnik o porezu na dobit (Narodne novine broj 95/05, 133/07, 156/08, 146/09, 123/10, 137/11, 61/12, 146/12, 160/13, 12/14, 157/14, 137/15, 1/17, 2/18, 1/19, 1/20, 59/20, 1/21, 156/22, 156/23 i 16/25)",
+        "display_value": "Pravilnik o porezu na dobit (NN 95/05 - 16/25)",
+        "exact_quote": "Pravilnik o porezu na dobit (Narodne novine broj 95/05, 133/07, 156/08, 146/09, 123/10, 137/11, 61/12, 146/12, 160/13, 12/14, 157/14, 137/15, 1/17, 2/18, 1/19, 1/20, 59/20, 1/21, 156/22, 156/23 i 16/25)",
+        "context_before": "porezna osnovica je dobit koja se utvrđuje prema računovodstvenim propisima kao razlika prihoda i rashoda prije obračuna poreza na dobit, uvećana i umanjena prema odredbama toga Zakona.",
+        "context_after": "rashodima razdoblja za koje se utvrđuje porez (porezno razdoblje), sukladno članku 5. stavku 1. Zakona, smatraju se smanjenja gospodarstvenih koristi u obliku odljeva ili iscrpljenja imovine ili stvaranja obveza koja imaju za posljedicu smanjenje kapitala a u svrhu povećanja prihoda odnosno dobiti.",
+        "selector": "//p[contains(text(), 'Pravilnik o porezu na dobit (Narodne novine broj 95/05')]",
+        "article_number": "11",
+        "paragraph_number": "1",
+        "law_reference": "Pravilnik o porezu na dobit",
+        "confidence": 1,
+        "extraction_notes": "Full citation of the Profit Tax Ordinance."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 5,
+      "by_domain": {
+        "rokovi": 1,
+        "porez_dohodak": 4
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extractions related to Corporate Income Tax (Porez na dobit) were classified under 'porez_dohodak' as it is the most relevant domain provided in the list."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjif80hd0001hmwanc1zbzlv",
+    "cmjif80i50003hmwaw8p769ku",
+    "cmjif80iu0004hmwam24cn2m9",
+    "cmjif80j20005hmwaf5p0ukku"
+  ],
+  "error": null
+}
+=== cmjieu7jp0002rewazzxdlzqg ===
+[extractor] Running on evidence: cmjieu7jp0002rewazzxdlzqg
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "extractions": [],
+    "extraction_metadata": {
+      "total_extractions": 0,
+      "by_domain": {},
+      "low_confidence_count": 0,
+      "processing_notes": "No extractable data found"
+    }
+  },
+  "sourcePointerIds": [],
+  "error": null
+}
+=== cmjieu61w0000rewa5o0zac8o ===
+[extractor] Running on evidence: cmjieu61w0000rewa5o0zac8o
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjieu61w0000rewa5o0zac8o",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "porez_dohodak",
+        "value_type": "percentage",
+        "extracted_value": "0.5",
+        "display_value": "50%",
+        "exact_quote": "porezna osnovica povećava se za 50% troškova reprezentacije",
+        "context_before": "U skladu s člankom 11. stavkom 1. Pravilnika o porezu na dobit (Narodne novine broj 95/05, 133/07, 156/08, 146/09, 123/10, 137/11, 61/12, 146/12, 160/13, 12/14, 157/14, 137/15, 1/17, 2/18, 1/19, 1/20, 59/20, 1/21, 156/22, 156/23 i 16/25) rashodima razdoblja za koje se utvrđuje porez (porezno razdoblje), sukladno članku 5. stavku 1. Zakona, smatraju se smanjenja gospodarstvenih koristi u obliku odljeva ili iscrpljenja imovine ili stvaranja obveza koja imaju za posljedicu smanjenje kapitala a u svrhu povećanja prihoda odnosno dobiti.",
+        "context_after": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a ako se daju potrošačima, ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(11)",
+        "article_number": "7",
+        "paragraph_number": "1",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Mapped to porez_dohodak as the closest domain for tax base adjustments, although it refers to Corporate Profit Tax."
+      },
+      {
+        "id": "ext-2",
+        "domain": "porez_dohodak",
+        "value_type": "threshold",
+        "extracted_value": "22.0",
+        "display_value": "22,00 eura",
+        "exact_quote": "ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura",
+        "context_before": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a ako se daju potrošačima, ne smatraju se reprezentacijom...",
+        "context_after": "U skladu s člankom 23. Pravilnika o porezu na dobit poslovnim partnerima iz članka 7. stavka 1. točka 3. Zakona smatraju se osobe s kojima postoji poslovni odnos ili se očekuje da će se takav odnos uspostaviti.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(11)",
+        "article_number": "7",
+        "paragraph_number": "6",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Threshold for consumer gifts not considered representation."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-04",
+        "display_value": "04.12.2025.",
+        "exact_quote": "Datum: 04.12.2025.",
+        "context_before": "Mjesto: Zagreb",
+        "context_after": "Zaprimili smo putem maila vaš upit vezano za porezni tretman poklonjene police osiguranja pravne zaštite.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(6)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Date of the official opinion."
+      },
+      {
+        "id": "ext-4",
+        "domain": "obrasci",
+        "value_type": "text",
+        "extracted_value": "410-01/25-01/1258",
+        "display_value": "410-01/25-01/1258",
+        "exact_quote": "Broj klase: 410-01/25-01/1258",
+        "context_before": "Godina: 2025",
+        "context_after": "Urudžbeni broj: 513-07-21-01-25-2",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(3)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Official classification number of the document."
+      },
+      {
+        "id": "ext-5",
+        "domain": "obrasci",
+        "value_type": "text",
+        "extracted_value": "513-07-21-01-25-2",
+        "display_value": "513-07-21-01-25-2",
+        "exact_quote": "Urudžbeni broj: 513-07-21-01-25-2",
+        "context_before": "Broj klase: 410-01/25-01/1258",
+        "context_after": "Mjesto: Zagreb",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(4)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Official registry number of the document."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 5,
+      "by_domain": {
+        "porez_dohodak": 2,
+        "rokovi": 1,
+        "obrasci": 2
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted values from a Croatian Tax Administration opinion regarding Corporate Profit Tax. Mapped profit tax adjustments to 'porez_dohodak' as it is the closest available domain."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifa98p0002zfwafncze6g6",
+    "cmjifa98w0003zfwar896tl6n",
+    "cmjifa9940004zfwas0ab1vbp",
+    "cmjifa99c0005zfwav8ip1h06"
+  ],
+  "error": null
+}
+=== cmjietcjt000dnjwaxlm1vkgr ===
+[extractor] Running on evidence: cmjietcjt000dnjwaxlm1vkgr
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietcjt000dnjwaxlm1vkgr",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-11",
+        "display_value": "11. prosinca 2025.",
+        "exact_quote": "11.12.2025.",
+        "context_before": null,
+        "context_after": "</div> <div class=\"article_print\"> <a onclick=\"printContent('predlozak')\"><span class=\"print_icon_bottom\">Ispiši stranicu</span></a> </div>",
+        "selector": "//div[contains(text(), '11.12.2025.')]",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 0.9,
+        "extraction_notes": "Date found at the beginning of the content, likely the publication date of the regulatory amendment."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 1,
+      "by_domain": {
+        "rokovi": 1
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Only one date value was found in the provided HTML snippet."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifbus000017cwawtrw3rdz"
+  ],
+  "error": null
+}
+=== cmjietc8x000k8jwamcff3012 ===
+[extractor] Running on evidence: cmjietc8x000k8jwamcff3012
+[extractor] Cleaned content for https://hzzo.hr/novosti/sretan-bozic-i-nova-godina: 99304 → 55139 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietc8x000k8jwamcff3012",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "od ponedjeljka, 22. prosinca 2025. godine",
+        "context_before": "Obavještavamo osigurane osobe i ugovorne partnere u Zagrebu i Zagrebačkoj županiji kako se",
+        "context_after": "Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji, Remetinečki gaj 28 (Hostel Arena, Zagreb).",
+        "selector": "xpath=//div[@class='o-card_content' and contains(., '22. prosinca 2025.')]",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Effective date for the relocation of the HZZO Novi Zagreb branch office."
+      },
+      {
+        "id": "ext-2",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-23",
+        "display_value": "23.12.2025.",
+        "exact_quote": "23.12.2025.",
+        "context_before": "Sretan Božić i Nova godina",
+        "context_after": "hzzo cestitka",
+        "selector": ".c-ttl.-date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the main news article."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-21",
+        "display_value": "21.11.2025.",
+        "exact_quote": "21.11.2025.",
+        "context_before": "Proteklih godina dolazi do značajnog povećanja troškova u svim segmentima pa tako i u zdravstvu (porast cijena ugradbenih…",
+        "context_after": "Obavijest o preseljenju Ispostave Novi Zagreb",
+        "selector": "aside .swiper-slide:nth-child(1) .o-card_date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the proposal for changing the uniform price of supplemental health insurance."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 3,
+      "by_domain": {
+        "rokovi": 3
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted administrative effective dates and news publication dates. No specific tax rates or currency thresholds were explicitly stated in the provided text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifcgc100013twa6w9p994g",
+    "cmjifcgcd00023twa1ih6e8az",
+    "cmjifcgck00033twame75ekeg"
+  ],
+  "error": null
+}
+=== cmjietbw7000i8jwa73zgawhm ===
+[extractor] Running on evidence: cmjietbw7000i8jwa73zgawhm
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietbw7000i8jwa73zgawhm",
+    "extractions": [],
+    "extraction_metadata": {
+      "total_extractions": 0,
+      "by_domain": {},
+      "low_confidence_count": 0,
+      "processing_notes": "No extractable data found"
+    }
+  },
+  "sourcePointerIds": [],
+  "error": null
+}
+=== cmjietb0k000bnjwaist4e466 ===
+[extractor] Running on evidence: cmjietb0k000bnjwaist4e466
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[runner] Retry 1/3 in 1s...
+[runner] Retry 2/3 in 2s...
+[extractor] Result: {
+  "success": false,
+  "output": null,
+  "sourcePointerIds": [],
+  "error": "Agent failed after 3 attempts: No JSON object found in response: 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)\"\n        (I'll fix the typo in my thought process, it's 146/08, 80/10).\n\n    *   *Wait, the 22 EUR threshol"
+}
+=== cmjietaf3000g8jwa2ysbt45k ===
+[extractor] Running on evidence: cmjietaf3000g8jwa2ysbt45k
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietaf3000g8jwa2ysbt45k",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "porez_dohodak",
+        "value_type": "percentage",
+        "extracted_value": "0.5",
+        "display_value": "50%",
+        "exact_quote": "porezna osnovica povećava se za 50% troškova reprezentacije",
+        "context_before": "Sukladno članku 5. stavku 1. Zakona o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23; dalje u tekstu: Zakon) porezna osnovica je dobit koja se utvrđuje prema računovodstvenim propisima kao razlika prihoda i rashoda prije obračuna poreza na dobit, uvećana i umanjena prema odredbama toga Zakona.",
+        "context_after": "(ugošćenja, darova sa ili bez utisnutog znaka tvrtke ili proizvoda, troškova odmora, športa, rekreacije, zakupa automobila, plovila, zrakoplova, kuća za odmor), u visini troškova nastalih iz poslovnog odnosa s poslovnim partnerom.",
+        "selector": ".vijesti_paragrafi p:nth-of-type(10)",
+        "article_number": "7",
+        "paragraph_number": "1",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Extracted from the section discussing corporate tax base increases for representation costs."
+      },
+      {
+        "id": "ext-2",
+        "domain": "porez_dohodak",
+        "value_type": "currency",
+        "extracted_value": "22",
+        "display_value": "€22,00",
+        "exact_quote": "ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura.",
+        "context_before": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a",
+        "context_after": "U skladu s člankom 23. Pravilnika o porezu na dobit poslovnim partnerima iz članka 7. stavka 1. točka 3. Zakona smatraju se osobe s kojima postoji poslovni odnos ili se očekuje da će se takav odnos uspostaviti.",
+        "selector": ".vijesti_paragrafi p:nth-of-type(10)",
+        "article_number": "7",
+        "paragraph_number": "6",
+        "law_reference": "Zakon o porezu na dobit",
+        "confidence": 1,
+        "extraction_notes": "Threshold for promotional items given to consumers that are not considered representation."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-04",
+        "display_value": "04.12.2025.",
+        "exact_quote": "Datum: 04.12.2025.",
+        "context_before": "Mjesto: Zagreb",
+        "context_after": "Zaprimili smo putem maila vaš upit vezano za porezni tretman poklonjene police osiguranja pravne zaštite.",
+        "selector": ".vijesti_paragrafi p:nth-of-type(6)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Document issuance date."
+      },
+      {
+        "id": "ext-4",
+        "domain": "obrasci",
+        "value_type": "text",
+        "extracted_value": "410-01/25-01/1258",
+        "display_value": "410-01/25-01/1258",
+        "exact_quote": "Broj klase: 410-01/25-01/1258",
+        "context_before": "Godina: 2025",
+        "context_after": "Urudžbeni broj: 513-07-21-01-25-2",
+        "selector": ".vijesti_paragrafi p:nth-of-type(3)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Administrative classification number."
+      },
+      {
+        "id": "ext-5",
+        "domain": "obrasci",
+        "value_type": "text",
+        "extracted_value": "513-07-21-01-25-2",
+        "display_value": "513-07-21-01-25-2",
+        "exact_quote": "Urudžbeni broj: 513-07-21-01-25-2",
+        "context_before": "Broj klase: 410-01/25-01/1258",
+        "context_after": "Mjesto: Zagreb",
+        "selector": ".vijesti_paragrafi p:nth-of-type(4)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Administrative filing number."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 5,
+      "by_domain": {
+        "porez_dohodak": 2,
+        "rokovi": 1,
+        "obrasci": 2
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted values for corporate tax (Porez na dobit) were mapped to 'porez_dohodak' as it is the most relevant available domain for income-related tax rules. All values were explicitly stated in the text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifjjml00031qwa8pkelx73",
+    "cmjifjjmu00041qwal78lw8fu",
+    "cmjifjjn000051qwala755k51"
+  ],
+  "error": null
+}
+=== cmjieta9l000e8jwa7jawir74 ===

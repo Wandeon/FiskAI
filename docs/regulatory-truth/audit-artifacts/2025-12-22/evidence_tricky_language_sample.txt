@@ -1,0 +1,9 @@
+            id             |                                 url                                 
+---------------------------+---------------------------------------------------------------------
+ cmjg050ia0006p3wazzj0mnzt | https://hzzo.hr/e-zdravstveno/novosti
+ cmjh7mthi007l56wap6a85z1l | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+ cmjh7n2uv007z56wazh9yqj3t | https://fina.hr/novosti/andreja-kajtaz-na-htv-u-o-fiskalizaciji-2.0
+ cmjh7q7ce00043iwas5p8upwu | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+ cmjh8854z0004fgwauv6r8e4v | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+(5 rows)
+

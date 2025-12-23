@@ -1,0 +1,76 @@
+[reviewer] Running on rules needing review...
+[reviewer] Found 26 rules needing review
+
+[reviewer] Processing: upravna-pristojba-zalba-rjesenje (T2, 0 sources)
+[reviewer] Title: Upravna pristojba na žalbu protiv rješenja
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.90)
+[reviewer]   Reason: Confidence score 0.9 does not meet the ≥ 0.95 threshold required for auto-approval of T2 risk tier rules.
+
+[reviewer] Processing: nacionalna-naknada-za-starije-osobe-iznos (T1, 0 sources)
+[reviewer] Title: Iznos nacionalne naknade za starije osobe
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: Rule is categorized as Risk Tier T1, which requires expedited human review per the Authority Matrix.
+
+[reviewer] Processing: eu-directive-2019-1023-insolvency (T1, 0 sources)
+[reviewer] Title: Direktiva (EU) 2019/1023 o restrukturiranju i nesolventnosti
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: T1 rules require human review per authority matrix; confidence is 1.0, flagging for expedited review.
+
+[reviewer] Processing: e-invoicing-public-procurement-requirement (T1, 0 sources)
+[reviewer] Title: Obveza elektroničkog izdavanja računa u javnoj nabavi
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.95)
+[reviewer]   Reason: T1 rules require human approval per the authority matrix. Additionally, confidence (0.95) is below the 0.98 threshold for expedited T1 review.
+
+[reviewer] Processing: vat-invoicing-directive-reference (T2, 0 sources)
+[reviewer] Title: Referenca na Direktivu o PDV računima
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.90)
+[reviewer]   Reason: Confidence score 0.9 does not meet the 0.95 threshold for T2 auto-approval.
+
+[reviewer] Processing: eu-validator-version (T2, 0 sources)
+[reviewer] Title: Verzija EU validatora za obrasce
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.90)
+[reviewer]   Reason: Confidence level 0.9 does not meet the 0.95 threshold for T2 auto-approval.
+
+[reviewer] Processing: income-tax-year-2026 (T1, 0 sources)
+[reviewer] Title: Porezna godina za porez na dohodak (2026.)
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.60)
+[reviewer]   Reason: Confidence score 0.6 is below the 0.9 threshold and the rule is classified as Risk Tier T1.
+
+[reviewer] Processing: fiskalizacija-2-0-primjena (T0, 0 sources)
+[reviewer] Title: Datum početka primjene Fiskalizacije 2.0
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: Rule is categorized as Risk Tier T0, which mandates human approval per the Authority Matrix.
+
+[reviewer] Processing: pdv-solarne-ploce-nulta-stopa (T0, 0 sources)
+[reviewer] Title: Nulta stopa PDV-a na solarne ploče
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: Risk tier T0 rules always require human approval per the authority matrix.
+
+[reviewer] Processing: nacionalna-naknada-starije-osobe-iznos (T1, 0 sources)
+[reviewer] Title: Iznos i uvjeti nacionalne naknade za starije osobe (2025)
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.85)
+[reviewer]   Reason: Rule is classified as T1 risk tier; Confidence is below 0.9; Logic in AppliesWhen is incomplete relative to available source evidence.
+
+[reviewer] Processing: exchange-rate-eur-pln (T0, 0 sources)
+[reviewer] Title: Tečaj EUR/PLN za 2025-12-22
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: Rule is classified as Risk Tier T0, which requires mandatory human approval per the Authority Matrix.
+
+[reviewer] Processing: exchange-rate-eur-bam (T0, 0 sources)
+[reviewer] Title: Tečaj EUR/BAM za 2025-12-22
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.80)
+[reviewer]   Reason: T0 rules always require human approval. Additionally, confidence is below 0.9 due to a character-level value mismatch and incomplete source evidence for the date.
+
+[reviewer] Processing: exchange-rate-eur-usd (T0, 0 sources)
+[reviewer] Title: Tečaj EUR/USD za 2025-12-22
+[runner] Retry 1/3 in 1s...
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 0.50)
+[reviewer]   Reason: T0 rules always require human approval per the Authority Matrix. Additionally, the rule failed the strict character-for-character value match validation.
+
+[reviewer] Processing: exchange-rate-eur-gbp (T0, 0 sources)
+[reviewer] Title: Tečaj EUR/GBP za 2025-12-22
+[reviewer] ⚠ ESCALATE_HUMAN (confidence: 1.00)
+[reviewer]   Reason: Risk tier T0 rules always require human approval per the Authority Matrix.
+
+[reviewer] Processing: exchange-rate-eur-chf (T0, 0 sources)
+[reviewer] Title: Tečaj EUR/CHF za 2025-12-22

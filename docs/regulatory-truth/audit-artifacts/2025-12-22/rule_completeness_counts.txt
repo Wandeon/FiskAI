@@ -1,0 +1,5 @@
+ missing_concept_slug | missing_authority | missing_risk | missing_effective_from | missing_confidence 
+----------------------+-------------------+--------------+------------------------+--------------------
+                    0 |                 0 |            0 |                      0 |                  0
+(1 row)
+

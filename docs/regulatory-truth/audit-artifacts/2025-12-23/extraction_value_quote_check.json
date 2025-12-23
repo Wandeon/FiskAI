@@ -1,0 +1,89 @@
+{
+  "summary": {
+    "total": 10,
+    "matches": 5,
+    "mismatch": 5
+  },
+  "results": [
+    {
+      "id": "cmjig9hgz00021rwaw6margk1",
+      "valueType": "threshold",
+      "extractedValue": "50",
+      "exactQuote": "te je u prijedlogu Dodatka Liste prvenstva uvršteno 50 kandidata.",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0",
+      "match": true
+    },
+    {
+      "id": "cmjig9hgi00011rwaaknkl7xr",
+      "valueType": "date",
+      "extractedValue": "2025-11-05",
+      "exactQuote": "05.11.2025.",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0",
+      "match": false
+    },
+    {
+      "id": "cmjig0fzj0001fowa3t0wcax7",
+      "valueType": "date",
+      "extractedValue": "2025-12-11",
+      "exactQuote": "11.12.2025.",
+      "url": "https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156",
+      "match": false
+    },
+    {
+      "id": "cmjifw91x00014awaz6zcscc1",
+      "valueType": "date",
+      "extractedValue": "2025-03-01",
+      "exactQuote": "Zakon o rodiljnim i roditeljskim potporama koji je na snazi od 1. ožujka 2025. godine",
+      "url": "https://hzzo.hr/novosti/brosura-rodiljne-i-roditeljske-potpore",
+      "match": false
+    },
+    {
+      "id": "cmjifudrf0008cgwa7q7iqti9",
+      "valueType": "date",
+      "extractedValue": "2025-12-22",
+      "exactQuote": "od ponedjeljka, 22. prosinca 2025. godine",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": false
+    },
+    {
+      "id": "cmjifudr90007cgwabx6pqlhb",
+      "valueType": "date",
+      "extractedValue": "2025-11-21",
+      "exactQuote": "21.11.2025.",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": false
+    },
+    {
+      "id": "cmjifudr00006cgwa39ai098h",
+      "valueType": "text",
+      "extractedValue": "1",
+      "exactQuote": "3 doktora medicine i 1 magistar farmacije.",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": true
+    },
+    {
+      "id": "cmjifudqq0005cgwa669x4ti8",
+      "valueType": "text",
+      "extractedValue": "3",
+      "exactQuote": "4 kandidata i to 3 doktora medicine",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": true
+    },
+    {
+      "id": "cmjifudq70004cgwajjvotitd",
+      "valueType": "threshold",
+      "extractedValue": "4",
+      "exactQuote": "U prijedlogu Liste prvenstva pripravnika uvršteno 4 kandidata",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": true
+    },
+    {
+      "id": "cmjifudpe0002cgwaqngcbx95",
+      "valueType": "threshold",
+      "extractedValue": "266",
+      "exactQuote": "u prijedlogu Liste prvenstva uvršteno 266 kandidata.",
+      "url": "https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1",
+      "match": true
+    }
+  ]
+}

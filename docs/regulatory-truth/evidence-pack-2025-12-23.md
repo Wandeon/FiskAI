@@ -172,13 +172,22 @@ After: "srednji_tecaj": "1,773900" (verbatim from JSON)
 
 ## Health Gates Configuration
 
-| Gate                        | Threshold            | Status Level      |
-| --------------------------- | -------------------- | ----------------- |
-| `extraction_rejection_rate` | >20%                 | CRITICAL          |
-| `quote_validation_rate`     | >10%                 | CRITICAL          |
-| `t0_t1_approval_compliance` | >0                   | CRITICAL          |
-| `source_pointer_coverage`   | >5%                  | CRITICAL          |
-| `conflict_resolution_rate`  | >50% (>30% degraded) | CRITICAL/DEGRADED |
+| Gate                              | Threshold            | Status Level      |
+| --------------------------------- | -------------------- | ----------------- |
+| `extractor_parse_failure_rate`    | >10% (>5% degraded)  | CRITICAL/DEGRADED |
+| `validator_rejection_rate`        | >35% (>20% degraded) | CRITICAL/DEGRADED |
+| `quote_validation_rate`           | >5% (>2% degraded)   | CRITICAL/DEGRADED |
+| `t0_t1_approval_compliance`       | >0                   | CRITICAL          |
+| `source_pointer_coverage_published` | >0                 | CRITICAL          |
+| `source_pointer_coverage_draft`   | >5%                  | CRITICAL          |
+| `conflict_resolution_rate`        | >50% (>30% degraded) | CRITICAL/DEGRADED |
+| `release_blocked_attempts`        | >50%                 | DEGRADED          |
+
+### Gate Split Rationale
+
+The old `extraction_rejection_rate` was split into two gates:
+- **Parse failures** (strict): Indicate pipeline is broken - prompts need refinement
+- **Validator rejections** (lenient): Healthy strictness catching bad data
 
 ### Code Location
 
@@ -190,12 +199,21 @@ After: "srednji_tecaj": "1,773900" (verbatim from JSON)
 
 ```
 Core tests: 58/58 pass
-Regulatory truth tests: 69/75 pass (6 cancelled - need DB mocking)
+Regulatory truth unit tests: All pass
+  - release-hash.test.ts: 9 determinism tests
+  - health-gates-invariants.test.ts: 20 invariant tests
+  - citation-compliance.test.ts: 19 unit tests
+Integration tests (DB): Run in CI with ephemeral Postgres
+  - arbiter-e2e.test.ts: Synthetic conflict resolution
+  - citation-compliance-integration.test.ts: 30-question compliance (≥95% target)
 ```
 
-### Cancelled Tests (DB-dependent)
+### Integration Test Configuration
 
-- `conflict-detector.test.ts` - needs ephemeral Postgres
+CI runs integration tests with ephemeral Postgres:
+```yaml
+DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=test_${{ github.run_id }}"
+```
 
 ---
 

@@ -1,0 +1,4 @@
+ rule_id | conceptSlug | pointer_id | exactQuote | url 
+---------+-------------+------------+------------+-----
+(0 rows)
+

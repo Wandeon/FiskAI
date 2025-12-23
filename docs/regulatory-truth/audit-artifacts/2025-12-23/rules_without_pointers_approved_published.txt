@@ -1,0 +1,7 @@
+            id             |           conceptSlug            |  status   
+---------------------------+----------------------------------+-----------
+ cmjg0bkdz00019fwa4xgr92ic | payment-deadlines-2025           | PUBLISHED
+ cmjg23gga0011j1warhmderru | regulation-application-date-2026 | PUBLISHED
+ cmjh8kjyy001bfgwa9b8d75ud | eu-vat-directive-reference       | PUBLISHED
+(3 rows)
+

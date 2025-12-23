@@ -1,0 +1,52 @@
+[sentinel] Running discovery agent...
+[sentinel] Filtering to CRITICAL priority endpoints
+[sentinel] Found 11 active endpoints
+[sentinel] Checking: https://porezna-uprava.gov.hr/hr/misljenja-su/3951
+[sentinel] Re-queued https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665 for content change check
+[sentinel] Item already pending for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+[sentinel] Discovered 1 new items from Porezna - Mišljenja SU
+[sentinel] Checking: https://fina.hr/obavijesti/fina-e-racun
+[sentinel] No changes detected for FINA - e-Račun obavijesti
+[sentinel] Checking: https://fina.hr/novosti
+[sentinel] No changes detected for FINA - Novosti
+[sentinel] Checking: https://mfin.gov.hr/vijesti/8
+[sentinel] No changes detected for Ministarstvo financija - Vijesti
+[sentinel] Checking: https://narodne-novine.nn.hr/sitemap.xml
+[sentinel] No changes detected for Narodne novine - Main Sitemap
+[sentinel] Checking: https://hzzo.hr/novosti
+[sentinel] No changes detected for HZZO - Novosti
+[sentinel] Checking: https://hzzo.hr/pravni-akti
+[sentinel] No changes detected for HZZO - Pravni akti
+[sentinel] Checking: https://mirovinsko.hr/hr/vijesti/114
+[sentinel] No changes detected for HZMO - Vijesti
+[sentinel] Checking: https://mirovinsko.hr/hr/priopcenja-204/204
+[sentinel] No changes detected for HZMO - Priopcenja
+[sentinel] Checking: https://mirovinsko.hr/hr/propisi/54
+[sentinel] No changes detected for HZMO - Propisi
+[sentinel] Checking: https://porezna-uprava.gov.hr/hr/vijesti/8
+[sentinel] Item already pending for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156
+[sentinel] Discovered 0 new items from Porezna - Vijesti
+[sentinel] Complete: 11 endpoints, 1 new items
+
+[sentinel] Discovery Results:
+  - Success: true
+  - Endpoints Checked: 11
+  - New Items Discovered: 1
+
+[sentinel] Fetching discovered items...
+[sentinel] Fetching: https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0
+[sentinel] Fetching: https://hzzo.hr/novosti/brosura-rodiljne-i-roditeljske-potpore
+[sentinel] Fetching: https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1
+[sentinel] Fetching: https://hzzo.hr/novosti/hzzo/novi-lijekovi-i-nova-pomagala-na-listama-hzzo-1
+[sentinel] Fetching: https://hzzo.hr/novosti/n-t-j-e-c-j-za-sklapanje-ugovora-o-provodenju-specijalisticko-konzilijarne-zdravstvene-0
+[sentinel] Fetching: https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-zdravstvene-njege-u-kuci-za-potrebe-popune
+[sentinel] Fetching: https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-primarne-zdravstvene-zastite-iz-obveznog-5
+[sentinel] Fetching: https://hzzo.hr/novosti/upozorenje-obavijest-o-laznim-sms-porukama
+[sentinel] Fetching: https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665
+[sentinel] Fetching: https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156
+[sentinel] Fetching: https://hzzo.hr/novosti/sretan-bozic-i-nova-godina
+[sentinel] Fetched: 11, Failed: 0
+  - Fetched: 11
+  - Failed: 0
+
+[sentinel] Complete!

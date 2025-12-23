@@ -1,0 +1,4 @@
+ agentType | count 
+-----------+-------
+(0 rows)
+

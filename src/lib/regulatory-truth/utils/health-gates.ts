@@ -16,44 +16,118 @@ export interface HealthGateResult {
   timestamp: string
 }
 
+// Parse failure types - indicate pipeline/prompt issues (strict threshold)
+const PARSE_FAILURE_TYPES = [
+  "NO_QUOTE_MATCH",
+  "QUOTE_NOT_IN_EVIDENCE",
+  "PARSE_ERROR",
+  "SCHEMA_INVALID",
+]
+
+// Validator rejection types - indicate healthy strictness (lenient threshold)
+const VALIDATOR_REJECTION_TYPES = [
+  "OUT_OF_RANGE",
+  "INVALID_CURRENCY",
+  "INVALID_DATE",
+  "VALIDATION_FAILED",
+  "CONFIDENCE_TOO_LOW",
+]
+
 /**
- * Gate 1: Extraction rejection rate
+ * Gate 1a: Extractor parse failure rate
  * Thresholds: >10% CRITICAL, >5% DEGRADED
- * If validators reject >10% of extractions, prompts need refinement
+ * Parse failures indicate the extractor pipeline is broken - prompts need refinement
  */
-async function checkExtractionRejectionRate(): Promise<HealthGate> {
+async function checkExtractorParseFailureRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
 
-  const rejections = await db.extractionRejected.count({
-    where: { createdAt: { gte: cutoff } },
+  const parseFailures = await db.extractionRejected.count({
+    where: {
+      createdAt: { gte: cutoff },
+      rejectionType: { in: PARSE_FAILURE_TYPES },
+    },
   })
 
   const successfulExtractions = await db.sourcePointer.count({
     where: { createdAt: { gte: cutoff } },
   })
 
-  const total = rejections + successfulExtractions
-  const rejectionRate = total > 0 ? (rejections / total) * 100 : 0
+  const totalRejections = await db.extractionRejected.count({
+    where: { createdAt: { gte: cutoff } },
+  })
+
+  const total = successfulExtractions + totalRejections
+  const parseFailureRate = total > 0 ? (parseFailures / total) * 100 : 0
 
   let status: "healthy" | "degraded" | "critical" = "healthy"
   let recommendation: string | undefined
 
-  if (rejectionRate > 10) {
+  if (parseFailureRate > 10) {
     status = "critical"
     recommendation =
-      "High rejection rate indicates prompts may need refinement or deterministic validators are too strict. Review ExtractionRejected records by rejectionType to identify patterns."
-  } else if (rejectionRate > 5) {
+      "High parse failure rate indicates extractor prompts need refinement or evidence preprocessing issues. Review ExtractionRejected records with types: NO_QUOTE_MATCH, QUOTE_NOT_IN_EVIDENCE, PARSE_ERROR, SCHEMA_INVALID."
+  } else if (parseFailureRate > 5) {
     status = "degraded"
     recommendation =
-      "Rejection rate trending up. Monitor ExtractionRejected for common failure patterns."
+      "Parse failure rate trending up. Monitor extractor output quality and evidence preprocessing."
   }
 
   return {
-    name: "extraction_rejection_rate",
+    name: "extractor_parse_failure_rate",
     status,
-    value: Math.round(rejectionRate * 10) / 10,
+    value: Math.round(parseFailureRate * 10) / 10,
     threshold: 10,
-    message: `${rejections} rejected / ${total} total extractions (${rejectionRate.toFixed(1)}%)`,
+    message: `${parseFailures} parse failures / ${total} total extractions (${parseFailureRate.toFixed(1)}%)`,
+    recommendation,
+  }
+}
+
+/**
+ * Gate 1b: Validator rejection rate
+ * Thresholds: >35% CRITICAL, >20% DEGRADED
+ * Validator rejections are healthy - they catch bad data before it enters the system
+ * Higher threshold because some rejection is expected and desirable
+ */
+async function checkValidatorRejectionRate(): Promise<HealthGate> {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+
+  const validatorRejections = await db.extractionRejected.count({
+    where: {
+      createdAt: { gte: cutoff },
+      rejectionType: { in: VALIDATOR_REJECTION_TYPES },
+    },
+  })
+
+  const successfulExtractions = await db.sourcePointer.count({
+    where: { createdAt: { gte: cutoff } },
+  })
+
+  const totalRejections = await db.extractionRejected.count({
+    where: { createdAt: { gte: cutoff } },
+  })
+
+  const total = successfulExtractions + totalRejections
+  const validatorRejectionRate = total > 0 ? (validatorRejections / total) * 100 : 0
+
+  let status: "healthy" | "degraded" | "critical" = "healthy"
+  let recommendation: string | undefined
+
+  if (validatorRejectionRate > 35) {
+    status = "critical"
+    recommendation =
+      "Very high validator rejection rate. Check if source data quality has degraded or validators are misconfigured. Review rejection patterns by type: OUT_OF_RANGE, INVALID_CURRENCY, INVALID_DATE."
+  } else if (validatorRejectionRate > 20) {
+    status = "degraded"
+    recommendation =
+      "Elevated validator rejection rate. Monitor for patterns - some rejection is healthy, but sustained high rates may indicate source quality issues."
+  }
+
+  return {
+    name: "validator_rejection_rate",
+    status,
+    value: Math.round(validatorRejectionRate * 10) / 10,
+    threshold: 35,
+    message: `${validatorRejections} validator rejections / ${total} total extractions (${validatorRejectionRate.toFixed(1)}%)`,
     recommendation,
   }
 }
@@ -335,13 +409,25 @@ export async function checkHealthGates(): Promise<HealthGateResult> {
   const gates: HealthGate[] = []
 
   try {
-    gates.push(await checkExtractionRejectionRate())
+    gates.push(await checkExtractorParseFailureRate())
   } catch (error) {
     gates.push({
-      name: "extraction_rejection_rate",
+      name: "extractor_parse_failure_rate",
       status: "critical",
       value: -1,
-      threshold: 20,
+      threshold: 10,
+      message: `Error checking: ${error instanceof Error ? error.message : String(error)}`,
+    })
+  }
+
+  try {
+    gates.push(await checkValidatorRejectionRate())
+  } catch (error) {
+    gates.push({
+      name: "validator_rejection_rate",
+      status: "critical",
+      value: -1,
+      threshold: 35,
       message: `Error checking: ${error instanceof Error ? error.message : String(error)}`,
     })
   }

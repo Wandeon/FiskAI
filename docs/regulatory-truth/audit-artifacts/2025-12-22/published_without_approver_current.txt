@@ -1,0 +1,5 @@
+            id             |        conceptSlug         |  status   | riskTier | approvedBy 
+---------------------------+----------------------------+-----------+----------+------------
+ cmjh8kjyy001bfgwa9b8d75ud | eu-vat-directive-reference | PUBLISHED | T2       | 
+(1 row)
+

@@ -1,0 +1,709 @@
+=== cmjievhzg0002fvwam16i6ter ===
+[extractor] Running on evidence: cmjievhzg0002fvwam16i6ter
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjievhzg0002fvwam16i6ter",
+    "extractions": [],
+    "extraction_metadata": {
+      "total_extractions": 0,
+      "by_domain": {},
+      "low_confidence_count": 0,
+      "processing_notes": "No extractable data found"
+    }
+  },
+  "sourcePointerIds": [],
+  "error": null
+}
+=== cmjietbw7000i8jwa73zgawhm ===
+[extractor] Running on evidence: cmjietbw7000i8jwa73zgawhm
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietbw7000i8jwa73zgawhm",
+    "extractions": [],
+    "extraction_metadata": {
+      "total_extractions": 0,
+      "by_domain": {},
+      "low_confidence_count": 0,
+      "processing_notes": "No extractable data found"
+    }
+  },
+  "sourcePointerIds": [],
+  "error": null
+}
+=== cmjietb0k000bnjwaist4e466 ===
+[extractor] Running on evidence: cmjietb0k000bnjwaist4e466
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[runner] Retry 1/3 in 1s...
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjietb0k000bnjwaist4e466",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-04",
+        "display_value": "04.12.2025.",
+        "exact_quote": "Datum: 04.12.2025.",
+        "context_before": "Mjesto: Zagreb",
+        "context_after": "Zaprimili smo putem maila vaš upit vezano za porezni tretman poklonjene police osiguranja pravne zaštite.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(6)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Explicit document date."
+      },
+      {
+        "id": "ext-2",
+        "domain": "porez_dohodak",
+        "value_type": "percentage",
+        "extracted_value": "0.5",
+        "display_value": "50%",
+        "exact_quote": "porezna osnovica povećava se za 50% troškova reprezentacije",
+        "context_before": "Sukladno članku 5. stavku 1. Zakona o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23; dalje u tekstu: Zakon) porezna osnovica je dobit koja se utvrđuje prema računovodstvenim propisima kao razlika prihoda i rashoda prije obračuna poreza na dobit, uvećana i umanjena prema odredbama toga Zakona.",
+        "context_after": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a ako se daju potrošačima, ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(10)",
+        "article_number": "7",
+        "paragraph_number": "1",
+        "law_reference": "Zakon o porezu na dobit (Narodne novine, br. 177/04, 90/05, 57/06, 146/08, 80/10, 22/12, 148/13, 143/14, 50/16, 115/16, 106/18, 121/19, 32/20, 138/20, 114/22 i 114/23)",
+        "confidence": 1,
+        "extraction_notes": "Mapped to porez_dohodak as it is the closest available domain for direct tax rules."
+      },
+      {
+        "id": "ext-3",
+        "domain": "porez_dohodak",
+        "value_type": "threshold",
+        "extracted_value": "22.00",
+        "display_value": "22,00 eura",
+        "exact_quote": "ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura",
+        "context_before": "Nadalje prema stavku 6. navedenoga članka Zakona o porezu na dobit, iznimno, od navedenoga ne smatraju se reprezentacijom proizvodi i roba iz asortimana poreznog obveznika prilagođeni za te svrhe s oznakom »nije za prodaju«, te drugi reklamni predmeti s nazivom tvrtke, proizvoda i drugog oblika reklame (čaše, pepeljare, stolnjaci, podmetači, olovke, rokovnici, upaljači, privjesci i slično) dani za uporabu u prodajnom prostoru kupca, a ako se daju potrošačima, ne smatraju se reprezentacijom",
+        "context_after": "U skladu s člankom 23. Pravilnika o porezu na dobit poslovnim partnerima iz članka 7. stavka 1. točka 3. Zakona smatraju se osobe s kojima postoji poslovni odnos ili se očekuje da će se takav odnos uspostaviti.",
+        "selector": "div.vijesti_paragrafi > p:nth-of-type(10)",
+        "article_number": "7",
+        "paragraph_number": "6",
+        "law_reference": "Zakon o porezu na dobit",
+        "confidence": 1,
+        "extraction_notes": "Threshold for promotional items given to consumers."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 3,
+      "by_domain": {
+        "rokovi": 1,
+        "porez_dohodak": 2
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted values from a tax opinion regarding Corporate Income Tax (CIT) and Personal Income Tax (PIT). CIT values were mapped to porez_dohodak as it is the most relevant domain provided in the list for direct taxation."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifo3ud0001oawaqk4n0imt",
+    "cmjifo3uv0003oawa5380doif"
+  ],
+  "error": null
+}
+=== cmjieta9l000e8jwa7jawir74 ===
+[extractor] Running on evidence: cmjieta9l000e8jwa7jawir74
+[extractor] Cleaned content for https://hzzo.hr/novosti/upozorenje-obavijest-o-laznim-sms-porukama: 101175 → 56491 chars (44% reduction, 0 news items found)
+[runner] Retry 1/3 in 1s...
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjieta9l000e8jwa7jawir74",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-04",
+        "display_value": "04.09.2025.",
+        "exact_quote": "04.09.2025.",
+        "context_before": "Upozorenje: Obavijest o lažnim SMS porukama",
+        "context_after": "Hrvatski zavod za zdravstveno osiguranje (HZZO) upozorava građane kako se ovih dana pojavio pokušaj smishing prijevare slanjem lažnih SMS poruka.",
+        "selector": ".c-ttl.-date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the regulatory warning notice."
+      },
+      {
+        "id": "ext-2",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "22. prosinca 2025.",
+        "context_before": "Obavještavamo osigurane osobe i ugovorne partnere u Zagrebu i Zagrebačkoj županiji kako se od ponedjeljka,",
+        "context_after": "godine Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji, Remetinečki gaj 28 (Hostel Arena, Zagreb).",
+        "selector": "//div[@class='o-card_down' and .//a[contains(@href, 'obavijest-o-preseljenju')]]/div[@class='o-card_content']",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Effective date for the administrative relocation of the HZZO office."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 2,
+      "by_domain": {
+        "rokovi": 2
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted the publication date of the warning and the effective date of the administrative office relocation. No specific tax rates or legal articles were identified in the text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifru3s0001k9waad9vyhx1",
+    "cmjifru460002k9wa18ok90ji"
+  ],
+  "error": null
+}
+=== cmjiet8vn000c8jwa15nmyib7 ===
+[extractor] Running on evidence: cmjiet8vn000c8jwa15nmyib7
+[extractor] Cleaned content for https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-primarne-zdravstvene-zastite-iz-obveznog-5: 100983 → 56243 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet8vn000c8jwa15nmyib7",
+    "extractions": [
+      {
+        "id": "ext_1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-09",
+        "display_value": "09. rujna 2025.",
+        "exact_quote": "HZZO je s danom 09. rujna 2025. godine raspisao Natječaj za sklapanje ugovora o provođenju primarne zdravstvene zaštite iz obveznog zdravstvenog osiguranja za potrebe popune Mreže javne zdravstvene službe.",
+        "context_before": "09.09.2025.",
+        "context_after": "Ponude se zaprimaju od 09. rujna do 16. rujna 2025. godine.",
+        "selector": "article[data-history-node-id='422909'] div.o-card_content p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": null
+      },
+      {
+        "id": "ext_2",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-09",
+        "display_value": "09. rujna",
+        "exact_quote": "Ponude se zaprimaju od 09. rujna do 16. rujna 2025. godine.",
+        "context_before": "HZZO je s danom 09. rujna 2025. godine raspisao Natječaj za sklapanje ugovora o provođenju primarne zdravstvene zaštite iz obveznog zdravstvenog osiguranja za potrebe popune Mreže javne zdravstvene službe.",
+        "context_after": "ovdje",
+        "selector": "article[data-history-node-id='422909'] div.o-card_content p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Start date for tender submissions."
+      },
+      {
+        "id": "ext_3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-16",
+        "display_value": "16. rujna 2025.",
+        "exact_quote": "Ponude se zaprimaju od 09. rujna do 16. rujna 2025. godine.",
+        "context_before": "HZZO je s danom 09. rujna 2025. godine raspisao Natječaj za sklapanje ugovora o provođenju primarne zdravstvene zaštite iz obveznog zdravstvenog osiguranja za potrebe popune Mreže javne zdravstvene službe.",
+        "context_after": "ovdje",
+        "selector": "article[data-history-node-id='422909'] div.o-card_content p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Deadline for tender submissions."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 3,
+      "by_domain": {
+        "rokovi": 3
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted tender announcement date and submission period deadlines from the HZZO news article."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifs7is000117wa2wvt2mu4",
+    "cmjifs7jc000317waudhfur76"
+  ],
+  "error": null
+}
+=== cmjiet7b8000a8jwa22v09sux ===
+[extractor] Running on evidence: cmjiet7b8000a8jwa22v09sux
+[extractor] Cleaned content for https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-zdravstvene-njege-u-kuci-za-potrebe-popune: 100678 → 56020 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet7b8000a8jwa22v09sux",
+    "extractions": [
+      {
+        "id": "tender_announcement_date",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-09",
+        "display_value": "9. rujna 2025.",
+        "exact_quote": "HZZO je s danom 9. rujna 2025. godine raspisao Natječaj",
+        "context_before": "Natječaj za sklapanje ugovora o provođenju zdravstvene njege u kući za potrebe popune Mreže javne zdravstvene službe",
+        "context_after": "Ponude se zaprimaju od 9. rujna do 16. rujna 2025. godine.",
+        "selector": "div.o-card_content > p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": null
+      },
+      {
+        "id": "tender_submission_start",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-09",
+        "display_value": "9. rujna 2025.",
+        "exact_quote": "Ponude se zaprimaju od 9. rujna do 16. rujna 2025. godine.",
+        "context_before": "HZZO je s danom 9. rujna 2025. godine raspisao Natječaj za sklapanje ugovora o provođenju zdravstvene njege u kući za potrebe popune Mreže javne zdravstvene službe.",
+        "context_after": "ovdje",
+        "selector": "div.o-card_content > p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": null
+      },
+      {
+        "id": "tender_submission_deadline",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-16",
+        "display_value": "16. rujna 2025.",
+        "exact_quote": "Ponude se zaprimaju od 9. rujna do 16. rujna 2025. godine.",
+        "context_before": "HZZO je s danom 9. rujna 2025. godine raspisao Natječaj za sklapanje ugovora o provođenju zdravstvene njege u kući za potrebe popune Mreže javne zdravstvene službe.",
+        "context_after": "ovdje",
+        "selector": "div.o-card_content > p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": null
+      },
+      {
+        "id": "office_relocation_date",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "od ponedjeljka, 22. prosinca 2025. godine Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji",
+        "context_before": "Obavijest o preseljenju Ispostave Novi Zagreb, Službe za ugovaranje i praćenje ugovornih obveza, Odjela za ozljede na radu i profesionalne bolesti te Odjela za međunarodnu suradnju u zdravstvenom osiguranju Područnog ureda Zagreb",
+        "context_after": "Također, Služba za ugovaranje i praćenje ugovornih obveza…",
+        "selector": "li.swiper-slide:nth-child(2) div.o-card_content",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Extracted from sidebar news content."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 4,
+      "by_domain": {
+        "rokovi": 4
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted tender deadlines and administrative relocation date from main content and sidebar."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifspyl0001gtwah59mo1v9",
+    "cmjifspzg0003gtwaxw005cbd",
+    "cmjifspzq0004gtwa3o7bzy59"
+  ],
+  "error": null
+}
+=== cmjiet5pe00088jwaopedlge3 ===
+[extractor] Running on evidence: cmjiet5pe00088jwaopedlge3
+[extractor] Cleaned content for https://hzzo.hr/novosti/n-t-j-e-c-j-za-sklapanje-ugovora-o-provodenju-specijalisticko-konzilijarne-zdravstvene-0: 100848 → 56182 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet5pe00088jwaopedlge3",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-09-12",
+        "display_value": "12.09.2025.",
+        "exact_quote": "12.09.2025.",
+        "context_before": "za potrebe popune Mreže javne zdravstvene službe",
+        "context_after": "Natječaj za sklapanje ugovora o provođenju specijalističko-konzilijarne zdravstvene zaštite u djelatnosti ortodoncije za potrebe popune Mreže javne zdravstvene službe.",
+        "selector": "div.c-ttl.-date.mb-3",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the tender."
+      },
+      {
+        "id": "ext-2",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "22. prosinca 2025. godine",
+        "context_before": "Obavještavamo osigurane osobe i ugovorne partnere u Zagrebu i Zagrebačkoj županiji kako se od ponedjeljka,",
+        "context_after": "Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji, Remetinečki gaj 28 (Hostel Arena, Zagreb).",
+        "selector": "div.o-card_content",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Effective date for the relocation of the HZZO office."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-21",
+        "display_value": "21.11.2025.",
+        "exact_quote": "21.11.2025.",
+        "context_before": "Proteklih godina dolazi do značajnog povećanja troškova u svim segmentima pa tako i u zdravstvu (porast cijena ugradbenih…",
+        "context_after": "Izdvojeno",
+        "selector": "div.o-card_date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the related news regarding insurance price changes."
+      },
+      {
+        "id": "ext-4",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-10",
+        "display_value": "10.11.2025.",
+        "exact_quote": "10.11.2025.",
+        "context_before": "Također, Služba za ugovaranje i praćenje ugovornih obveza…",
+        "context_after": "Footer",
+        "selector": "aside .swiper-slide:nth-child(2) .o-card_date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the relocation notice."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 4,
+      "by_domain": {
+        "rokovi": 4
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted publication and effective dates from the main content and sidebar news items."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifta8g00015qwaie3tdi1f",
+    "cmjifta8s00025qwa7xhbtxpb",
+    "cmjifta9100035qwajed4qsy3",
+    "cmjifta9e00045qwaeb726ny8"
+  ],
+  "error": null
+}
+=== cmjiet49l00068jwao191eful ===
+[extractor] Running on evidence: cmjiet49l00068jwao191eful
+[extractor] Cleaned content for https://hzzo.hr/novosti/hzzo/novi-lijekovi-i-nova-pomagala-na-listama-hzzo-1: 101263 → 56625 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet49l00068jwao191eful",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-10-03",
+        "display_value": "03.10.2025.",
+        "exact_quote": "03.10.2025.",
+        "context_before": "Novi lijekovi i nova pomagala na listama HZZO-a",
+        "context_after": "Na 33. redovnoj sjednici Upravnog vijeća Hrvatskog zavoda za zdravstveno osiguranje (HZZO) donesena je odluka o novim lijekovima i pomaglaima na listama HZZO-a.",
+        "selector": "div.c-ttl.-date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the regulatory news."
+      },
+      {
+        "id": "ext-2",
+        "domain": "obrasci",
+        "value_type": "text",
+        "extracted_value": "33",
+        "display_value": "33. redovna sjednica",
+        "exact_quote": "Na 33. redovnoj sjednici Upravnog vijeća Hrvatskog zavoda za zdravstveno osiguranje (HZZO) donesena je odluka o novim lijekovima i pomaglaima na listama HZZO-a.",
+        "context_before": "03.10.2025.",
+        "context_after": "U redovnoj proceduri na liste lijekova HZZO-a stavljene su generičke paralele već postojećih lijekova, a od novih lijekova na listu su stavljeni lijekovi: tenekteplaza za trombolitičko liječenje kod akutnog ishemijskog moždanog udara, rekombinantni čimbenik VIII (efanesoktokog alfa) za kućno liječenje hemofilije, avapritinib za liječenje sistemske mastocitoze, niraparib za liječenje BRCA nemutiranog karcinoma jajnika, vosoritid za liječenje ahondroplazije, a enkorafenib za metastatski kolorektalni karcinom s BRAF V600E mutacijom.",
+        "selector": "div.o-card_content > p:nth-child(1)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Upravno vijeće Hrvatskog zavoda za zdravstveno osiguranje (HZZO)",
+        "confidence": 1,
+        "extraction_notes": "Identification of the specific regulatory session where decisions were made."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "od ponedjeljka, 22. prosinca 2025. godine Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji",
+        "context_before": "Obavještavamo osigurane osobe i ugovorne partnere u Zagrebu i Zagrebačkoj županiji kako se",
+        "context_after": "Također, Služba za ugovaranje i praćenje ugovornih obveza…",
+        "selector": "li.swiper-slide:nth-child(2) div.o-card_content",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Effective date for the relocation of the HZZO branch office."
+      },
+      {
+        "id": "ext-4",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-21",
+        "display_value": "21.11.2025.",
+        "exact_quote": "21.11.2025.",
+        "context_before": "Hrvatski zavod za zdravstveno osiguranje (HZZO) u okviru provedbe dopunskog zdravstvenog osiguranja s posebnom pažnjom prati trendove prihoda i rashoda dopunskog zdravstvenog osiguranja. Proteklih godina dolazi do značajnog povećanja troškova u svim segmentima pa tako i u zdravstvu (porast cijena ugradbenih…",
+        "context_after": "Obavijest o preseljenju Ispostave Novi Zagreb, Službe za ugovaranje i praćenje ugovornih obveza, Odjela za ozljede na radu i profesionalne bolesti te Odjela za međunarodnu suradnju u zdravstvenom osiguranju Područnog ureda Zagreb",
+        "selector": "li.swiper-slide:nth-child(1) div.o-card_date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Date of the proposal for changing the price of supplemental health insurance."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 4,
+      "by_domain": {
+        "rokovi": 3,
+        "obrasci": 1
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted dates and administrative session identifiers. No specific tax rates or currency thresholds were present in the text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjiftqsq0001qswadwq6snhb",
+    "cmjiftqt80002qswavgg0lvmx",
+    "cmjiftqtg0003qswasjr2api2",
+    "cmjiftqu00004qswa6orjvkaf"
+  ],
+  "error": null
+}
+=== cmjiet2qo00048jwa89jz8o63 ===
+[extractor] Running on evidence: cmjiet2qo00048jwa89jz8o63
+[extractor] Cleaned content for https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1: 101779 → 56907 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet2qo00048jwa89jz8o63",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-10-03",
+        "display_value": "03.10.2025.",
+        "exact_quote": "03.10.2025.",
+        "context_before": "HZZO nastavlja financirati rad pod nadzorom doktora medicine bez specijalizacije te pripravnički staž zdravstvenih radnika",
+        "context_after": "U cilju zapošljavanja što većeg broja doktora medicine u zdravstvenom sustavu Republike Hrvatske, HZZO će i dalje financirati rad doktora medicine bez specijalizacije.",
+        "selector": "div.c-ttl.-date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the regulatory announcement."
+      },
+      {
+        "id": "ext-2",
+        "domain": "doprinosi",
+        "value_type": "threshold",
+        "extracted_value": "266",
+        "display_value": "266 kandidata",
+        "exact_quote": "u prijedlogu Liste prvenstva uvršteno 266 kandidata.",
+        "context_before": "Stoga je donesena odluka o izboru doktora medicine bez specijalizacije za koje će se financirati rad pod nadzorom, te je",
+        "context_after": "Također se nastavlja i financiranje rada pripravnika – doktora medicine i magistara farmacije, te je donesena odluka o izboru pripravnika za koje će se financirati pripravnički staž osnovom Otvorenog javnog natječaja iz 2025. godine.",
+        "selector": "div.o-card_content > p:nth-child(1)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Odluka o izboru doktora medicine bez specijalizacije",
+        "confidence": 1,
+        "extraction_notes": "Number of candidates approved for funded supervised work."
+      },
+      {
+        "id": "ext-3",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025",
+        "display_value": "2025. godine",
+        "exact_quote": "osnovom Otvorenog javnog natječaja iz 2025. godine.",
+        "context_before": "Također se nastavlja i financiranje rada pripravnika – doktora medicine i magistara farmacije, te je donesena odluka o izboru pripravnika za koje će se financirati pripravnički staž",
+        "context_after": "U prijedlogu Liste prvenstva pripravnika uvršteno 4 kandidata i to 3 doktora medicine i 1 magistar farmacije.",
+        "selector": "div.o-card_content > p:nth-child(2)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Otvoreni javni natječaj iz 2025. godine",
+        "confidence": 1,
+        "extraction_notes": "Reference year for the public tender."
+      },
+      {
+        "id": "ext-4",
+        "domain": "doprinosi",
+        "value_type": "threshold",
+        "extracted_value": "4",
+        "display_value": "4 kandidata",
+        "exact_quote": "U prijedlogu Liste prvenstva pripravnika uvršteno 4 kandidata",
+        "context_before": "Također se nastavlja i financiranje rada pripravnika – doktora medicine i magistara farmacije, te je donesena odluka o izboru pripravnika za koje će se financirati pripravnički staž osnovom Otvorenog javnog natječaja iz 2025. godine.",
+        "context_after": "i to 3 doktora medicine i 1 magistar farmacije.",
+        "selector": "div.o-card_content > p:nth-child(2)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Odluka o izboru pripravnika",
+        "confidence": 1,
+        "extraction_notes": "Total number of interns approved for funded internship."
+      },
+      {
+        "id": "ext-5",
+        "domain": "doprinosi",
+        "value_type": "text",
+        "extracted_value": "3",
+        "display_value": "3 doktora medicine",
+        "exact_quote": "4 kandidata i to 3 doktora medicine",
+        "context_before": "U prijedlogu Liste prvenstva pripravnika uvršteno 4 kandidata",
+        "context_after": "i 1 magistar farmacije.",
+        "selector": "div.o-card_content > p:nth-child(2)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Odluka o izboru pripravnika",
+        "confidence": 1,
+        "extraction_notes": "Sub-count of medical doctors within the intern selection."
+      },
+      {
+        "id": "ext-6",
+        "domain": "doprinosi",
+        "value_type": "text",
+        "extracted_value": "1",
+        "display_value": "1 magistar farmacije",
+        "exact_quote": "3 doktora medicine i 1 magistar farmacije.",
+        "context_before": "U prijedlogu Liste prvenstva pripravnika uvršteno 4 kandidata i to 3 doktora medicine",
+        "context_after": "Nakon provedenih natječaja, ugovorne zdravstvene ustanove i drugi ugovorni subjekti HZZO-a će sklopiti ugovore o radu s odabranim kandidatima, na osnovi kojih će HZZO u najkraćem",
+        "selector": "div.o-card_content > p:nth-child(2)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Odluka o izboru pripravnika",
+        "confidence": 1,
+        "extraction_notes": "Sub-count of masters of pharmacy within the intern selection."
+      },
+      {
+        "id": "ext-7",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-21",
+        "display_value": "21.11.2025.",
+        "exact_quote": "21.11.2025.",
+        "context_before": "Proteklih godina dolazi do značajnog povećanja troškova u svim segmentima pa tako i u zdravstvu (porast cijena ugradbenih…",
+        "context_after": "Obavijest o preseljenju Ispostave Novi Zagreb, Službe za ugovaranje i praćenje ugovornih obveza, Odjela za ozljede na radu i profesionalne bolesti te Odjela za međunarodnu suradnju u zdravstvenom osiguranju Područnog ureda Zagreb",
+        "selector": "li.swiper-slide:nth-child(1) div.o-card_date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Date of related news regarding supplemental health insurance price proposal."
+      },
+      {
+        "id": "ext-8",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-12-22",
+        "display_value": "22. prosinca 2025.",
+        "exact_quote": "od ponedjeljka, 22. prosinca 2025. godine",
+        "context_before": "Obavještavamo osigurane osobe i ugovorne partnere u Zagrebu i Zagrebačkoj županiji kako se",
+        "context_after": "Ispostava Novi Zagreb Područnog ureda Zagreb nalazi na novoj lokaciji, Remetinečki gaj 28 (Hostel Arena, Zagreb).",
+        "selector": "li.swiper-slide:nth-child(2) div.o-card_content",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Effective date for the relocation of the HZZO branch."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 8,
+      "by_domain": {
+        "rokovi": 4,
+        "doprinosi": 4
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted dates and candidate counts from the main article and sidebar news. No specific law article numbers were present in the text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifudp40001cgwa3xhlm62t",
+    "cmjifudpe0002cgwaqngcbx95",
+    "cmjifudq70004cgwajjvotitd",
+    "cmjifudqq0005cgwa669x4ti8",
+    "cmjifudr00006cgwa39ai098h",
+    "cmjifudr90007cgwabx6pqlhb",
+    "cmjifudrf0008cgwa7q7iqti9"
+  ],
+  "error": null
+}
+=== cmjiet17j00028jwa3cbd3n7w ===
+[extractor] Running on evidence: cmjiet17j00028jwa3cbd3n7w
+[extractor] Cleaned content for https://hzzo.hr/novosti/brosura-rodiljne-i-roditeljske-potpore: 101295 → 56369 chars (44% reduction, 0 news items found)
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjiet17j00028jwa3cbd3n7w",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-03-01",
+        "display_value": "1. ožujka 2025.",
+        "exact_quote": "Zakon o rodiljnim i roditeljskim potporama koji je na snazi od 1. ožujka 2025. godine",
+        "context_before": "Ministarstvo demografije i useljeništva pripremilo je novu brošuru „Rodiljne i roditeljske potpore” s ažuriranim informacijama o pravima",
+        "context_after": "Brošura donosi pregled prava i postupaka njihova ostvarivanja s praktičnim uputama o podnošenju zahtjeva, potrebnoj dokumentaciji te ustanovama nadležnima za provedbu zakona i ostvarivanje prava.",
+        "selector": "div.o-card_content p:nth-of-type(1)",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "Zakon o rodiljnim i roditeljskim potporama",
+        "confidence": 1,
+        "extraction_notes": "Effective date of the law mentioned in the brochure announcement."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 1,
+      "by_domain": {
+        "rokovi": 1
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted the effective date of the Law on Maternity and Parental Supports. No other regulatory values like rates or thresholds were explicitly stated in the text."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjifw91x00014awaz6zcscc1"
+  ],
+  "error": null
+}
+=== cmjieszfr00008jwapf913uft ===
+[extractor] Running on evidence: cmjieszfr00008jwapf913uft
+[extractor] Cleaned content for https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0: 101413 → 56350 chars (44% reduction, 0 news items found)

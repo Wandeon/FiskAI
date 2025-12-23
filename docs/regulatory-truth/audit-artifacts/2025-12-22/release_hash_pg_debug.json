@@ -1,0 +1,14 @@
+{
+  "releaseId": "cmjh8of2o002bfgwaym3i0dz6",
+  "stored": "aa99f23326d5e9765c156f93f70639920f5d4a49dbd490df9eeead0847bcca78",
+  "computed": "748cc6b1fb0c9b6fc2b6d0d00ee930d90e359d32fc86e5436263704467e6e301",
+  "content": [
+    {
+      "conceptSlug": "eu-vat-directive-reference",
+      "appliesWhen": "{\"op\":\"cmp\",\"field\":\"entity.vat.status\",\"cmp\":\"eq\",\"value\":\"IN_VAT\"}",
+      "value": "32006L0112",
+      "effectiveFrom": "2006-12-31T23:00:00.000Z",
+      "effectiveUntil": null
+    }
+  ]
+}

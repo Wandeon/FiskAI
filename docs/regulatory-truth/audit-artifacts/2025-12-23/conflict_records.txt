@@ -1,0 +1,6 @@
+                       id                       |  conflictType   |  status   |                                                    description                                                    |          itemAId          |          itemBId          | requiresHumanReview 
+------------------------------------------------+-----------------+-----------+-------------------------------------------------------------------------------------------------------------------+---------------------------+---------------------------+---------------------
+ test-conflict-9c9b92b672950e08db5dcd918d1893ae | SOURCE_CONFLICT | OPEN      | Synthetic conflict for audit run 2025-12-23                                                                       | cmjhqehsq0001awwadq0kxis2 | cmjhjhz6g000jazwa6oir3gf4 | t
+ test-conflict-e2e-ebfbc45d                     | SCOPE_CONFLICT  | ESCALATED | Synthetic conflict for E2E testing: Both rules specify 2026-01-01 as effective date but may have different scopes | cmjg23gga0011j1warhmderru | cmjfyu6kj0004e9wa5ndbtxeo | t
+(2 rows)
+

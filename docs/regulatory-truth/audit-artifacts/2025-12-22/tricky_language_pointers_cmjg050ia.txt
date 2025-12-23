@@ -1,0 +1,6 @@
+            id             | extractedValue |                                                                              quote                                                                               
+---------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ cmjg0z7jo000cj1wa34oxzhcc | 2023-01-01     | Od 1. siječnja 2023. godine Potvrda o plaći umjesto iznosa u kunama će sadržavati iznose u eurima, a kao što je navedeno u smjernicama Ministarstva financija pl
+ cmjg0z7k7000dj1wal2ysmqj2 | 2022-12-31     | plaće isplaćene do 31. prosinca 2022. godine će se na Potvrdi o plaći iskazivati u kunama
+(2 rows)
+

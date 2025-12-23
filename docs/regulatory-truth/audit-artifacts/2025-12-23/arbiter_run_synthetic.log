@@ -1,0 +1,10 @@
+[arbiter] Running on open conflicts...
+[arbiter] Found 1 open conflicts
+
+[arbiter] Processing: SOURCE_CONFLICT (test-conflict-9c9b92b672950e08db5dcd918d1893ae)
+[arbiter] Description: Synthetic conflict for audit run 2025-12-23
+[arbiter] Rule A: Upravna pristojba na žalbu protiv rješenja (T2)
+[arbiter] Rule B: Iznos nacionalne naknade za starije osobe (T1)
+[arbiter] ✗ SOURCE_CONFLICT has no sourcePointerIds in metadata: test-conflict-9c9b92b672950e08db5dcd918d1893ae
+
+[arbiter] Complete: 0 resolved, 0 escalated, 1 failed

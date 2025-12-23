@@ -1,0 +1,33 @@
+                   conceptSlug                   |                           titleHr                            |     status     | riskTier | authorityLevel |    effectiveFrom    
+-------------------------------------------------+--------------------------------------------------------------+----------------+----------+----------------+---------------------
+ upravna-pristojba-zalba-rjesenje                | Upravna pristojba na žalbu protiv rješenja                   | PENDING_REVIEW | T2       | GUIDANCE       | 2025-07-04 00:00:00
+ nacionalna-naknada-za-starije-osobe-iznos       | Iznos nacionalne naknade za starije osobe                    | PENDING_REVIEW | T1       | GUIDANCE       | 2025-01-01 00:00:00
+ eu-directive-2019-1023-insolvency               | Direktiva (EU) 2019/1023 o restrukturiranju i nesolventnosti | PENDING_REVIEW | T1       | PRACTICE       | 2019-07-16 00:00:00
+ e-invoicing-public-procurement-requirement      | Obveza elektroničkog izdavanja računa u javnoj nabavi        | PENDING_REVIEW | T1       | PRACTICE       | 2019-07-01 00:00:00
+ vat-invoicing-directive-reference               | Referenca na Direktivu o PDV računima                        | PENDING_REVIEW | T2       | PRACTICE       | 2025-12-22 00:00:00
+ eu-vat-directive-reference                      | Referenca na Direktivu o PDV-u                               | PUBLISHED      | T2       | PRACTICE       | 2007-01-01 00:00:00
+ eu-validator-version                            | Verzija EU validatora za obrasce                             | PENDING_REVIEW | T2       | PROCEDURE      | 2025-12-22 00:00:00
+ income-tax-year-2026                            | Porezna godina za porez na dohodak (2026.)                   | PENDING_REVIEW | T1       | GUIDANCE       | 2026-01-01 00:00:00
+ fiskalizacija-2-0-primjena                      | Datum početka primjene Fiskalizacije 2.0                     | PENDING_REVIEW | T0       | GUIDANCE       | 2025-09-01 00:00:00
+ pdv-solarne-ploce-nulta-stopa                   | Nulta stopa PDV-a na solarne ploče                           | PENDING_REVIEW | T0       | GUIDANCE       | 2025-12-22 00:00:00
+ nacionalna-naknada-starije-osobe-iznos          | Iznos i uvjeti nacionalne naknade za starije osobe (2025)    | PENDING_REVIEW | T1       | GUIDANCE       | 2025-01-01 00:00:00
+ exchange-rate-eur-pln                           | Tečaj EUR/PLN za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-bam                           | Tečaj EUR/BAM za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-usd                           | Tečaj EUR/USD za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-gbp                           | Tečaj EUR/GBP za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-chf                           | Tečaj EUR/CHF za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-sek                           | Tečaj EUR/SEK za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-nok                           | Tečaj EUR/NOK za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-jpy                           | Tečaj EUR/JPY za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-huf                           | Tečaj EUR/HUF za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-dkk                           | Tečaj EUR/DKK za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-czk                           | Tečaj EUR/CZK za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-cad                           | Tečaj EUR/CAD za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ exchange-rate-eur-aud                           | Tečaj EUR/AUD za 2025-12-22                                  | PENDING_REVIEW | T0       | LAW            | 2025-12-22 00:00:00
+ payment-slip-currency-change                    | Promjena valute na Potvrdi o plaći                           | PENDING_REVIEW | T0       | GUIDANCE       | 2023-01-01 00:00:00
+ regulation-application-date-2026                | Primjena propisa od 1. siječnja 2026. godine                 | APPROVED       | T0       | GUIDANCE       | 2026-01-01 00:00:00
+ payment-deadlines-2025                          | Rokovi isplate beneficija za 2025. godinu                    | APPROVED       | T0       | GUIDANCE       | 2025-11-14 00:00:00
+ fiskalizacija-datum-primjene                    | Datum primjene propisa o fiskalizaciji                       | APPROVED       | T0       | GUIDANCE       | 2025-09-01 00:00:00
+ payment-service-provider-obligations-start-date | Početak obveza pružatelja platnih usluga                     | PENDING_REVIEW | T0       | GUIDANCE       | 2024-01-01 00:00:00
+(29 rows)
+

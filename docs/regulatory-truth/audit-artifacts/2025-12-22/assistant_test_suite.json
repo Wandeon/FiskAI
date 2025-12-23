@@ -1,0 +1,221 @@
+{
+  "summary": {
+    "total": 30,
+    "withUrl": 3,
+    "withTimestamp": 1,
+    "errors": 24,
+    "urlComplianceRate": 0.1
+  },
+  "results": [
+    {
+      "question": "Koja je standardna stopa PDV-a u Hrvatskoj?",
+      "response": "\n\nStandardna stopa PDV-a u Hrvatskoj je **25%**. Također postoje smanjene stope:  \n- **13%** za određene proizvode i usluge (npr. hranu, knjige, hotelijske usluge),  \n- **5%** za neke medicinske proizvode, poljoprivredne proizvode i druge specifične kategorije.  \n\nZa točnu primjenu PDV stopa u vašem poslovanju (npr. u FiskAI aplikaciji prilikom izrade računa), preporučujem da provjerite s vašim knjigovođom ili stručnjakom za fiskalne obveze, jer ovisi o vrsti proizvoda/usluga i specifičnim zakonskim odredbama.",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koja je snižena stopa PDV-a i na što se primjenjuje?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li nulta stopa PDV-a za solarne ploče?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je prag za ulazak u PDV sustav?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je paušalni limit prihoda za obrt?",
+      "response": "\n\nPaušalni obrt u Hrvatskoj ima **godisnji limit bruto prihoda od 40.000 EUR**. Ovaj iznos se računa prema tekućem tečaju HNB-a (ako je prihod u kunama). Ako vaš godišnji bruto prihod premaši ovaj prag, dužni ste preći na redovno porezno obvezništvo (PDV i standardni porezni sustav).\n\n⚠️ Napomena: Ovo je informativni odgovor prema trenutnim propisima. Preporučujem da potvrdite detalje s knjigovođom ili preko službene stranice **Fina.hr**, jer se porezni propisi mogu mijenjati.",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Moram li fiskalizirati račune plaćene karticom?",
+      "response": "\n\nDa, morate fiskalizirati račune plaćene karticom. U Hrvatskoj je **fiskalizacija obvezna za sve plaćanja gotovinom ili karticom**, prema Zakonu o fiskalizaciji. Za plaćanja preko bankovnog prijelaza fiskalizacija **nije potrebna**.\n\n### Kako to napraviti u FiskAI aplikaciji:\n1. Idite na **Računi** → **Novi račun**.\n2. Popunite sve podatke o računu (kupac, proizvodi/usluge, iznos).\n3. U polju **Način plaćanja** odaberite **\"Kartica\"**.\n4. Kada spremite račun, aplikacija **automatski generira fiskalizirani račun** s ZKI (Zahtjev za Kriptografski Imenik) i JIR (Jedinstveni Identifikacijski Redni Broj) te šalje ga u sustav FINA-a.\n5. Provjerite status fiskalizacije u odjeljku **\"Fiskalizacija\"** nakon spremanja.\n\n### Važno:\n- Ako koristite **paušalni obrt** ili ste **obveznik PDV-a**, pravilo isto vrijedi – sve plaćanja karticom moraju biti fiskalizirana.\n- Ako zaboravite fiskalizirati, možete dobiti kaznu (do 10.000 kn po neispravnom računu).\n- Ukoliko imate sumnji oko specifičnog slučaja, uvijek provjerite s **knjigovođom ili pravnikom**.\n\nAko vam treba pomoć s postavkama fiskalizacije u aplikaciji, slobodno pitajte! 😊",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kad počinje primjena Fiskalizacije 2.0?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji su rokovi za predaju JOPPD-a?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koliki su doprinosi za paušalni obrt?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za plaćanje doprinosa?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Mogu li izdati račun bez OIB-a kupca?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li PDV prag za strane klijente?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je tečaj EUR/USD za 22.12.2025?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je tečaj EUR/PLN za 22.12.2025?",
+      "response": "\n\nZa datum **22.12.2025.** trenutno **nije moguće odrediti tečaj EUR/PLN**, jer su valutni tečajevi dinamični i ovisni o tržišnim uvjetima koji će se razvijati do tog datuma. Tečajevi se mijenjaju svakodnevno (čak i svakog trenutka) zbog ekonomskih, političkih i drugih faktora.\n\n### Savjet:\n- Za **trenutni tečaj** možete provjeriti na službenoj stranici **Hrvatske narodne banke (HNB)** ([www.hnb.hr](https://www.hnb.hr)).\n- Za **buduće transakcije**, koristite tečaj s **dana transakcije** (prema HNB-u) za knjigovodstvene svrhe. FiskAI automatski koristi tečaj s dana izdavanja računa, pa ne trebate ručno unositi tečajeve za buduće datume.\n- Ako planirate financijsko planiranje, preporučujem konsultaciju s financijskim savjetnikom ili analizu trendova, ali bez garancije točnosti.\n\nNapomena: **Ne postoje pouzdani podaci o tečajevima za buduće datume** – to su samo procjene ili predviđanja tržišta, a ne stvarni iznos. 😊",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": true
+    },
+    {
+      "question": "Moram li prijaviti PDV ako prodajem usluge u EU?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li oslobođenje od PDV-a za edukacije?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kad je stupila na snagu izmjena pravilnika o PDV-u 2025?",
+      "response": "\n\nNije moguće navesti točan datum kada bi **izmjena pravilnika o PDV-u za 2025. godinu stupila na snagu**, jer **2025. godina još nije prošla**, a zakonodavni procesi za takve izmjene obično se odrađuju u godini prije njihova uvođenja (npr. u 2024. godini). \n\n### Važno:\n- Sve promjene u PDV pravilima moraju biti **formalno objavljene u Narodnim novinama** i potvrdene Hrvatskim saborom.\n- Trenutno (kao u 2023. godini) **nema službenih informacija o specifičnim izmjenama PDV-a za 2025. godinu**, jer takvi zakoni još nisu predloženi ili usvojeni.\n- Ako postoje planirane promjene (npr. uslijed EU direktiva), to će biti objavljeno na stranicama **Ministarstva financija** ili **FINA-e** (Fiskalna uprava).\n\n### Preporuka:\n- Pratite službene izvješća na [FINA-e](https://www.fina.hr) ili [Ministarstvu financija](https://www.mfin.hr).\n- Za sigurnost, savjetujte se s **knjigovođom ili poreznim savjetnikom** prije primjene bilo kakvih promjena.\n\n> ℹ️ *Odgovor je informativan. Zakonska obveza za provjeru detalja je na korisniku, a ne na AI asistentu.*",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li obveza e-računa za javnu nabavu?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za predaju PDV obrasca?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Mogu li koristiti gotovinsko poslovanje bez fiskalizacije?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje su iznimke za fiskalizaciju?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Što znači obveza pružatelja platnih usluga od 1.1.2024?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kada se primjenjuju propisi od 01.01.2026?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje je razdoblje važenja HNB srednjeg tečaja?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Je li nacionalna naknada za starije osobe 154,50 EUR i od kada?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koliki je iznos upravne pristojbe na žalbu protiv rješenja?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Postoji li iznimka za PDV na solarne ploče?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li PDV na medicinske usluge?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje su stope doprinosa za 2025?",
+      "response": "\n\nZa sada **nema službeno objavljenih stopa doprinosa za 2025. godinu**. U Hrvatskoj se stopa doprinosa za osiguranje (zdravstveno, mirovinsko, nezaposlenost) obično određuje u sklopu **Godišnjeg proračuna Republike Hrvatske**, koji se donosi do kraja godine prethodne (tj. do prosinca 2024. za 2025. godinu). \n\n### Važno:\n- **Trenutne stope za 2024.** (koje su važeće sada) su:  \n  - **Zdravstveno osiguranje**: 15,5% (6,5% plaća zaposlenik, 9% poslodavac)  \n  - **Mirovinsko osiguranje**: 15% (10% zaposlenik, 5% poslodavac)  \n  - **Nezaposlenost**: 1,5% (0,75% zaposlenik, 0,75% poslodavac)  \n  *(Ovo se odnosi na zaposlene; za paušalne obrte i obrtnike postoji posebna pravila.)*\n\n- **Za 2025.** stopa će biti objavljena tek **krajem 2024.** u službenim izvorima (npr. na webu **Ministarstva financija**, **HZZO** ili **Hrvatske agencije za malo i srednje poduzetništvo**).\n\n### Preporuka:\n- Pratite službene izvore za ažurirane informacije (npr. [www.mfin.hr](https://www.mfin.hr), [www.hzzo.hr](https://www.hzzo.hr)).  \n- Ako ste samostalno zaposleni (paušalni obrt, obrtnik), savjetujte se s **knjigovođom** ili **poreznim savjetnikom** za specifične slučajeve.  \n\n*Obavijest: Ovo je informativni odgovor. Za službene podatke uvijek provjerite aktualne zakone i odluke državnih tijela.* 😊",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za isplatu mirovina za studeni 2025?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    }
+  ]
+}

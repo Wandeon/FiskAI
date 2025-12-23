@@ -1,0 +1,82 @@
+[
+  {
+    "id": "cmjh7ju39003n56wa37smtu6a",
+    "url": "https://eur-lex.europa.eu/eli/celex/32014L0055/oj",
+    "fetchedAt": "2025-12-22T12:44:42.261Z",
+    "stored": "90cb0490cfcfda13e40b9a1779e0d4fd3fdcf65ef7d629e9e905f1619c8ce1f4",
+    "computed": "54006b15a5e2944d8b6c10134fcb2546995028b9641ce41f7a6ec3f8317eed68",
+    "match": false
+  },
+  {
+    "id": "cmjh7jsix003k56wa08s47gto",
+    "url": "https://eur-lex.europa.eu/eli/celex/32019L1023/oj",
+    "fetchedAt": "2025-12-22T12:44:40.233Z",
+    "stored": "cccd087375dc31dda2f0b50f88cbb776244b075c00afb911131badef19451b0b",
+    "computed": "105300d43ef26c787229d08cd5ee3bbe1b0f8990aac57a32a9e4d2f07b6a87e0",
+    "match": false
+  },
+  {
+    "id": "cmjh7jqyk003h56war19ylgqb",
+    "url": "https://eur-lex.europa.eu/eli/celex/32014R0910/oj",
+    "fetchedAt": "2025-12-22T12:44:38.204Z",
+    "stored": "9a387e395ceea1c041a9ab681797f3ad4a82d94165afe378db81e4c05c0ffacb",
+    "computed": "ed2dfc8f6bd7b62df573c90ca06e7c5ed3920bb2ddc1e7746b306b205afcfa7c",
+    "match": false
+  },
+  {
+    "id": "cmjievhzg0002fvwam16i6ter",
+    "url": "https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156",
+    "fetchedAt": "2025-12-23T08:57:29.932Z",
+    "stored": "191b257601e94d99a1eadd5f9b6d40eecaf0ef761693cb2d236f8ff7aab555c2",
+    "computed": "191b257601e94d99a1eadd5f9b6d40eecaf0ef761693cb2d236f8ff7aab555c2",
+    "match": true
+  },
+  {
+    "id": "cmjievgih0000fvwanr8axica",
+    "url": "https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665",
+    "fetchedAt": "2025-12-23T08:57:28.025Z",
+    "stored": "8f4de103eb405bbe9348f48224d440d5ee1ec9504f2afb837a52d3da06ab6ecb",
+    "computed": "8f4de103eb405bbe9348f48224d440d5ee1ec9504f2afb837a52d3da06ab6ecb",
+    "match": true
+  },
+  {
+    "id": "cmjieu7jp0002rewazzxdlzqg",
+    "url": "https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156",
+    "fetchedAt": "2025-12-23T08:56:29.749Z",
+    "stored": "5b077a1d73219467f7067c9cfb88168ade830cd9693f5288f0a3b2a62a4f483d",
+    "computed": "5b077a1d73219467f7067c9cfb88168ade830cd9693f5288f0a3b2a62a4f483d",
+    "match": true
+  },
+  {
+    "id": "cmjieu61w0000rewa5o0zac8o",
+    "url": "https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665",
+    "fetchedAt": "2025-12-23T08:56:27.812Z",
+    "stored": "72a04d6a98e7cd09a57c26d62f3d9d3fc42b92072a937057f2d63e79f7898a91",
+    "computed": "72a04d6a98e7cd09a57c26d62f3d9d3fc42b92072a937057f2d63e79f7898a91",
+    "match": true
+  },
+  {
+    "id": "cmjietcjt000dnjwaxlm1vkgr",
+    "url": "https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156",
+    "fetchedAt": "2025-12-23T08:55:49.577Z",
+    "stored": "ba68d3c0127a0a8c3f93e7b45889deae6206020a0f3a30c707046ae5502341fa",
+    "computed": "ba68d3c0127a0a8c3f93e7b45889deae6206020a0f3a30c707046ae5502341fa",
+    "match": true
+  },
+  {
+    "id": "cmjietc8x000k8jwamcff3012",
+    "url": "https://hzzo.hr/novosti/sretan-bozic-i-nova-godina",
+    "fetchedAt": "2025-12-23T08:55:49.185Z",
+    "stored": "7d04fec8c692a2c027f673f57922f1b2b77bbf31fa2666bc0c923cdab7391d93",
+    "computed": "7d04fec8c692a2c027f673f57922f1b2b77bbf31fa2666bc0c923cdab7391d93",
+    "match": true
+  },
+  {
+    "id": "cmjietbw7000i8jwa73zgawhm",
+    "url": "https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156",
+    "fetchedAt": "2025-12-23T08:55:48.726Z",
+    "stored": "c8c5d599e5a44175ceb672d0cfb1068a454c6979e01d23d4b33bfd15710c21b3",
+    "computed": "c8c5d599e5a44175ceb672d0cfb1068a454c6979e01d23d4b33bfd15710c21b3",
+    "match": true
+  }
+]

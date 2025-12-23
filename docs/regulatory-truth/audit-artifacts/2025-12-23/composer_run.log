@@ -1,0 +1,874 @@
+[composer] Running batch mode on ungrouped source pointers...
+[composer] Found 69 ungrouped source pointers
+
+[composer] Source pointers by domain:
+  doprinosi: 5 pointers
+  legal-metadata: 17 pointers
+  obrasci: 7 pointers
+  pdv: 1 pointers
+  porez_dohodak: 7 pointers
+  rokovi: 32 pointers
+
+[composer] Processing domain: legal-metadata (17 pointers)
+[composer] Linking 17 source pointers (LLM returned 17)
+[composer] ✗ legal-metadata: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "legal-act-type-classification",
+          titleHr: "Klasifikacija vrsta pravnih akata",
+          titleEn: "Classification of Legal Act Types",
+          riskTier: "T2",
+          authorityLevel: "LAW",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "ODLUKA, UREDBA, NAREDBA, PRAVILNIK, RJEŠENJE, PRESUDA",
+          valueType: "text",
+          explanationHr: "Definira skup priznatih vrsta pravnih akata u pravnom sustavu Republike Hrvatske koji se koriste za regulaciju, donošenje odluka i sudsku praksu.",
+          explanationEn: "Defines the set of recognized types of legal acts in the legal system of the Republic of Croatia used for regulation, decision-making, and jurisprudence.",
+          effectiveFrom: new Date("2025-12-23T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The rule aggregates all unique legal act types identified in the source metadata pointers. No specific effective date was provided in the source pointers.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjh7iys4001w56wacb8nw3xt"
+              },
+              {
+                id: "cmjh7j08g001z56wax0dng6w8"
+              },
+              {
+                id: "cmjh7j1rd002256wa19tvp7po"
+              },
+              {
+                id: "cmjh7j3am002556wak1aax68y"
+              },
+              {
+                id: "cmjh7j4uj002856wapnxpa1yv"
+              },
+              {
+                id: "cmjh7j6em002b56waoougj4ra"
+              },
+              {
+                id: "cmjh7j7yp002e56wa81q6i85i"
+              },
+              {
+                id: "cmjh7j9i1002h56wahh8jqssv"
+              },
+              {
+                id: "cmjh7jb1a002k56wa6smam6f3"
+              },
+              {
+                id: "cmjh7jcl4002n56waqqff8dko"
+              },
+              {
+                id: "cmjh7je4x002q56wac5k3avqv"
+              },
+              {
+                id: "cmjh7jfod002t56wasnf1scuk"
+              },
+              {
+                id: "cmjh7jh8j002w56wamihcl0vx"
+              },
+              {
+                id: "cmjh7jj6k002z56wa71xa5edz"
+              },
+              {
+                id: "cmjh7jkag003256wamrd1p0l4"
+              },
+              {
+                id: "cmjh7jluj003556wak6cm2zrz"
+              },
+              {
+                id: "cmjh7jndy003856wamzav6jq1"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+[composer] Processing domain: pdv (1 pointers)
+[composer] Linking 1 source pointers (LLM returned 1)
+[composer] ✗ pdv: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "pdv-rok-2025-12-11",
+          titleHr: "PDV Rok - 11.12.2025.",
+          titleEn: "VAT Deadline - 2025-12-11",
+          riskTier: "T0",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "2025-12-11",
+          valueType: "date",
+          explanationHr: "Propisani rok povezan s obvezama u sustavu PDV-a koji dospijeva 11. prosinca 2025. godine.",
+          explanationEn: "Prescribed deadline for VAT-related obligations due on December 11, 2025.",
+          effectiveFrom: new Date("2025-01-01T00:00:00.000Z"),
+          effectiveUntil: new Date("2025-12-11T00:00:00.000Z"),
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.7,
+          composerNotes: "The source pointer specifies a date within the VAT domain. While the 11th is not a standard monthly deadline in Croatia (usually the 20th), the value is recorded exactly as provided in the source. Confidence is 0.7 due to the lack of a specific obligation subtype (e.g., PDV, PDV-S, or ZP report).\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjievobw0001azwa1uvhdrcj"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+[composer] Processing domain: porez_dohodak (7 pointers)
+[composer] Linking 7 source pointers (LLM returned 7)
+[composer] ✗ porez_dohodak: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "consumer-gift-representation-threshold",
+          titleHr: "Prag za darove potrošačima koji se ne smatraju reprezentacijom",
+          titleEn: "Threshold for consumer gifts not considered representation",
+          riskTier: "T1",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "22.00",
+          valueType: "currency_eur",
+          explanationHr: "Darovi koji se daju potrošačima ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura. Takvi se izdaci tretiraju kao porezno priznati troškovi promidžbe.",
+          explanationEn: "Gifts given to consumers are not considered representation expenses if their individual value excluding VAT is up to 22.00 EUR. Such expenses are treated as tax-deductible advertising costs.",
+          effectiveFrom: new Date("2024-01-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The threshold of 22.00 EUR is consistently cited across multiple sources (Zakon o porezu na dobit and Pravilnik o porezu na dobit) as the limit for consumer gifts to be excluded from representation expenses.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif188n0003dqwa0ssbrrtf"
+              },
+              {
+                id: "cmjif80i50003hmwaw8p769ku"
+              },
+              {
+                id: "cmjif80iu0004hmwam24cn2m9"
+              },
+              {
+                id: "cmjif80j20005hmwaf5p0ukku"
+              },
+              {
+                id: "cmjif94so0002kgwavmh2n6fl"
+              },
+              {
+                id: "cmjifa98p0002zfwafncze6g6"
+              },
+              {
+                id: "cmjifo3uv0003oawa5380doif"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+[composer] Processing domain: rokovi (32 pointers)
+[composer] Linking 32 source pointers (LLM returned 1)
+[composer] ✗ rokovi: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "maternity-parental-support-act-effective-date-2025",
+          titleHr: "Datum stupanja na snagu Zakona o rodiljnim i roditeljskim potporama (2025.)",
+          titleEn: "Effective Date of the Maternity and Parental Support Act (2025)",
+          riskTier: "T1",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "2025-03-01",
+          valueType: "date",
+          explanationHr: "Novi Zakon o rodiljnim i roditeljskim potporama stupa na snagu 1. ožujka 2025. godine, regulirajući prava na potpore za roditelje.",
+          explanationEn: "The new Maternity and Parental Support Act enters into force on March 1, 2025, regulating the rights to support for parents.",
+          effectiveFrom: new Date("2025-03-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The source explicitly states the effective date of the legislation. Other dates in the input (e.g., 2025-12-04) lacked sufficient context in the quotes to form distinct regulatory rules.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif18950004dqwamikwns3b"
+              },
+              {
+                id: "cmjif189w0007dqwatfj8abiy"
+              },
+              {
+                id: "cmjif36810009dqwamgoms33i"
+              },
+              {
+                id: "cmjif80hd0001hmwanc1zbzlv"
+              },
+              {
+                id: "cmjif94t20003kgwa4gitokuy"
+              },
+              {
+                id: "cmjifa98w0003zfwar896tl6n"
+              },
+              {
+                id: "cmjifbus000017cwawtrw3rdz"
+              },
+              {
+                id: "cmjifcgc100013twa6w9p994g"
+              },
+              {
+                id: "cmjifcgcd00023twa1ih6e8az"
+              },
+              {
+                id: "cmjifcgck00033twame75ekeg"
+              },
+              {
+                id: "cmjifjjml00031qwa8pkelx73"
+              },
+              {
+                id: "cmjifo3ud0001oawaqk4n0imt"
+              },
+              {
+                id: "cmjifru3s0001k9waad9vyhx1"
+              },
+              {
+                id: "cmjifru460002k9wa18ok90ji"
+              },
+              {
+                id: "cmjifs7is000117wa2wvt2mu4"
+              },
+              {
+                id: "cmjifs7jc000317waudhfur76"
+              },
+              {
+                id: "cmjifspyl0001gtwah59mo1v9"
+              },
+              {
+                id: "cmjifspzg0003gtwaxw005cbd"
+              },
+              {
+                id: "cmjifspzq0004gtwa3o7bzy59"
+              },
+              {
+                id: "cmjifta8g00015qwaie3tdi1f"
+              },
+              {
+                id: "cmjifta8s00025qwa7xhbtxpb"
+              },
+              {
+                id: "cmjifta9100035qwajed4qsy3"
+              },
+              {
+                id: "cmjifta9e00045qwaeb726ny8"
+              },
+              {
+                id: "cmjiftqsq0001qswadwq6snhb"
+              },
+              {
+                id: "cmjiftqtg0003qswasjr2api2"
+              },
+              {
+                id: "cmjiftqu00004qswa6orjvkaf"
+              },
+              {
+                id: "cmjifudp40001cgwa3xhlm62t"
+              },
+              {
+                id: "cmjifudr90007cgwabx6pqlhb"
+              },
+              {
+                id: "cmjifudrf0008cgwa7q7iqti9"
+              },
+              {
+                id: "cmjifw91x00014awaz6zcscc1"
+              },
+              {
+                id: "cmjig0fzj0001fowa3t0wcax7"
+              },
+              {
+                id: "cmjig9hgi00011rwaaknkl7xr"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+[composer] Processing domain: obrasci (7 pointers)
+[composer] Linking 7 source pointers (LLM returned 7)
+[composer] ✗ obrasci: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "mfin-pu-klasa-410-01-25-01-1258",
+          titleHr: "Klasa i urudžbeni broj upute Porezne uprave (2025)",
+          titleEn: "Tax Administration Instruction Class and Registry Number (2025)",
+          riskTier: "T2",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "410-01/25-01/1258",
+          valueType: "text",
+          explanationHr: "Službena klasa (410-01/25-01/1258) i urudžbeni broj (513-07-21-01-25-2) dokumenta Porezne uprave koji služi kao referenca za regulatorne upute u 2025. godini. Dokument je povezan s odlukama o listama lijekova donesenim na 33. sjednici Upravnog vijeća HZZO-a.",
+          explanationEn: "Official class (410-01/25-01/1258) and registry number (513-07-21-01-25-2) of the Tax Administration document serving as a reference for regulatory instructions in 2025. The document is linked to decisions on medicine lists made at the 33rd session of the HZZO Governing Board.",
+          effectiveFrom: new Date("2025-01-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.95,
+          composerNotes: "The rule captures administrative identifiers for a 2025 regulatory document. The HZZO session reference (33) is included as contextual metadata as it appears in the same regulatory context.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif189f0005dqwanxuttbmd"
+              },
+              {
+                id: "cmjif189p0006dqwabkbmsa5t"
+              },
+              {
+                id: "cmjifa9940004zfwas0ab1vbp"
+              },
+              {
+                id: "cmjifa99c0005zfwav8ip1h06"
+              },
+              {
+                id: "cmjifjjmu00041qwal78lw8fu"
+              },
+              {
+                id: "cmjifjjn000051qwala755k51"
+              },
+              {
+                id: "cmjiftqt80002qswavgg0lvmx"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+[composer] Processing domain: doprinosi (5 pointers)
+[runner] Retry 1/3 in 1s...
+[composer] Linking 5 source pointers (LLM returned 1)
+[composer] ✗ doprinosi: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "pripravnistvo-lista-prvenstva-broj-kandidata",
+          titleHr: "Broj kandidata na listi prvenstva za pripravništvo",
+          titleEn: "Number of candidates on the priority list for internship",
+          riskTier: "T3",
+          authorityLevel: "PROCEDURE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "266",
+          valueType: "count",
+          explanationHr: "Broj kandidata uvrštenih u prijedlog Liste prvenstva za financiranje pripravničkog staža.",
+          explanationEn: "Number of candidates included in the proposed Priority List for internship funding.",
+          effectiveFrom: new Date("2025-12-23T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.9,
+          composerNotes: "The value 266 refers to the main priority list. Other source pointers mention a supplement of 50 candidates (cmjig9hgz00021rwaw6margk1) and a specific intern list of 4 candidates (cmjifudq70004cgwajjvotitd) consisting of 3 doctors and 1 pharmacist.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjifudpe0002cgwaqngcbx95"
+              },
+              {
+                id: "cmjifudq70004cgwajjvotitd"
+              },
+              {
+                id: "cmjifudqq0005cgwa669x4ti8"
+              },
+              {
+                id: "cmjifudr00006cgwa39ai098h"
+              },
+              {
+                id: "cmjig9hgz00021rwaw6margk1"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+
+[composer] Complete: 0 success, 6 failed, 0 total rules created
+
+[composer] Errors:
+  - legal-metadata: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "legal-act-type-classification",
+          titleHr: "Klasifikacija vrsta pravnih akata",
+          titleEn: "Classification of Legal Act Types",
+          riskTier: "T2",
+          authorityLevel: "LAW",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "ODLUKA, UREDBA, NAREDBA, PRAVILNIK, RJEŠENJE, PRESUDA",
+          valueType: "text",
+          explanationHr: "Definira skup priznatih vrsta pravnih akata u pravnom sustavu Republike Hrvatske koji se koriste za regulaciju, donošenje odluka i sudsku praksu.",
+          explanationEn: "Defines the set of recognized types of legal acts in the legal system of the Republic of Croatia used for regulation, decision-making, and jurisprudence.",
+          effectiveFrom: new Date("2025-12-23T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The rule aggregates all unique legal act types identified in the source metadata pointers. No specific effective date was provided in the source pointers.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjh7iys4001w56wacb8nw3xt"
+              },
+              {
+                id: "cmjh7j08g001z56wax0dng6w8"
+              },
+              {
+                id: "cmjh7j1rd002256wa19tvp7po"
+              },
+              {
+                id: "cmjh7j3am002556wak1aax68y"
+              },
+              {
+                id: "cmjh7j4uj002856wapnxpa1yv"
+              },
+              {
+                id: "cmjh7j6em002b56waoougj4ra"
+              },
+              {
+                id: "cmjh7j7yp002e56wa81q6i85i"
+              },
+              {
+                id: "cmjh7j9i1002h56wahh8jqssv"
+              },
+              {
+                id: "cmjh7jb1a002k56wa6smam6f3"
+              },
+              {
+                id: "cmjh7jcl4002n56waqqff8dko"
+              },
+              {
+                id: "cmjh7je4x002q56wac5k3avqv"
+              },
+              {
+                id: "cmjh7jfod002t56wasnf1scuk"
+              },
+              {
+                id: "cmjh7jh8j002w56wamihcl0vx"
+              },
+              {
+                id: "cmjh7jj6k002z56wa71xa5edz"
+              },
+              {
+                id: "cmjh7jkag003256wamrd1p0l4"
+              },
+              {
+                id: "cmjh7jluj003556wak6cm2zrz"
+              },
+              {
+                id: "cmjh7jndy003856wamzav6jq1"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+  - pdv: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "pdv-rok-2025-12-11",
+          titleHr: "PDV Rok - 11.12.2025.",
+          titleEn: "VAT Deadline - 2025-12-11",
+          riskTier: "T0",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "2025-12-11",
+          valueType: "date",
+          explanationHr: "Propisani rok povezan s obvezama u sustavu PDV-a koji dospijeva 11. prosinca 2025. godine.",
+          explanationEn: "Prescribed deadline for VAT-related obligations due on December 11, 2025.",
+          effectiveFrom: new Date("2025-01-01T00:00:00.000Z"),
+          effectiveUntil: new Date("2025-12-11T00:00:00.000Z"),
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.7,
+          composerNotes: "The source pointer specifies a date within the VAT domain. While the 11th is not a standard monthly deadline in Croatia (usually the 20th), the value is recorded exactly as provided in the source. Confidence is 0.7 due to the lack of a specific obligation subtype (e.g., PDV, PDV-S, or ZP report).\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjievobw0001azwa1uvhdrcj"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+  - porez_dohodak: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "consumer-gift-representation-threshold",
+          titleHr: "Prag za darove potrošačima koji se ne smatraju reprezentacijom",
+          titleEn: "Threshold for consumer gifts not considered representation",
+          riskTier: "T1",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "22.00",
+          valueType: "currency_eur",
+          explanationHr: "Darovi koji se daju potrošačima ne smatraju se reprezentacijom ako je njihova pojedinačna vrijednost bez poreza na dodanu vrijednost do 22,00 eura. Takvi se izdaci tretiraju kao porezno priznati troškovi promidžbe.",
+          explanationEn: "Gifts given to consumers are not considered representation expenses if their individual value excluding VAT is up to 22.00 EUR. Such expenses are treated as tax-deductible advertising costs.",
+          effectiveFrom: new Date("2024-01-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The threshold of 22.00 EUR is consistently cited across multiple sources (Zakon o porezu na dobit and Pravilnik o porezu na dobit) as the limit for consumer gifts to be excluded from representation expenses.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif188n0003dqwa0ssbrrtf"
+              },
+              {
+                id: "cmjif80i50003hmwaw8p769ku"
+              },
+              {
+                id: "cmjif80iu0004hmwam24cn2m9"
+              },
+              {
+                id: "cmjif80j20005hmwaf5p0ukku"
+              },
+              {
+                id: "cmjif94so0002kgwavmh2n6fl"
+              },
+              {
+                id: "cmjifa98p0002zfwafncze6g6"
+              },
+              {
+                id: "cmjifo3uv0003oawa5380doif"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+  - rokovi: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "maternity-parental-support-act-effective-date-2025",
+          titleHr: "Datum stupanja na snagu Zakona o rodiljnim i roditeljskim potporama (2025.)",
+          titleEn: "Effective Date of the Maternity and Parental Support Act (2025)",
+          riskTier: "T1",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "2025-03-01",
+          valueType: "date",
+          explanationHr: "Novi Zakon o rodiljnim i roditeljskim potporama stupa na snagu 1. ožujka 2025. godine, regulirajući prava na potpore za roditelje.",
+          explanationEn: "The new Maternity and Parental Support Act enters into force on March 1, 2025, regulating the rights to support for parents.",
+          effectiveFrom: new Date("2025-03-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 1,
+          composerNotes: "The source explicitly states the effective date of the legislation. Other dates in the input (e.g., 2025-12-04) lacked sufficient context in the quotes to form distinct regulatory rules.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif18950004dqwamikwns3b"
+              },
+              {
+                id: "cmjif189w0007dqwatfj8abiy"
+              },
+              {
+                id: "cmjif36810009dqwamgoms33i"
+              },
+              {
+                id: "cmjif80hd0001hmwanc1zbzlv"
+              },
+              {
+                id: "cmjif94t20003kgwa4gitokuy"
+              },
+              {
+                id: "cmjifa98w0003zfwar896tl6n"
+              },
+              {
+                id: "cmjifbus000017cwawtrw3rdz"
+              },
+              {
+                id: "cmjifcgc100013twa6w9p994g"
+              },
+              {
+                id: "cmjifcgcd00023twa1ih6e8az"
+              },
+              {
+                id: "cmjifcgck00033twame75ekeg"
+              },
+              {
+                id: "cmjifjjml00031qwa8pkelx73"
+              },
+              {
+                id: "cmjifo3ud0001oawaqk4n0imt"
+              },
+              {
+                id: "cmjifru3s0001k9waad9vyhx1"
+              },
+              {
+                id: "cmjifru460002k9wa18ok90ji"
+              },
+              {
+                id: "cmjifs7is000117wa2wvt2mu4"
+              },
+              {
+                id: "cmjifs7jc000317waudhfur76"
+              },
+              {
+                id: "cmjifspyl0001gtwah59mo1v9"
+              },
+              {
+                id: "cmjifspzg0003gtwaxw005cbd"
+              },
+              {
+                id: "cmjifspzq0004gtwa3o7bzy59"
+              },
+              {
+                id: "cmjifta8g00015qwaie3tdi1f"
+              },
+              {
+                id: "cmjifta8s00025qwa7xhbtxpb"
+              },
+              {
+                id: "cmjifta9100035qwajed4qsy3"
+              },
+              {
+                id: "cmjifta9e00045qwaeb726ny8"
+              },
+              {
+                id: "cmjiftqsq0001qswadwq6snhb"
+              },
+              {
+                id: "cmjiftqtg0003qswasjr2api2"
+              },
+              {
+                id: "cmjiftqu00004qswa6orjvkaf"
+              },
+              {
+                id: "cmjifudp40001cgwa3xhlm62t"
+              },
+              {
+                id: "cmjifudr90007cgwabx6pqlhb"
+              },
+              {
+                id: "cmjifudrf0008cgwa7q7iqti9"
+              },
+              {
+                id: "cmjifw91x00014awaz6zcscc1"
+              },
+              {
+                id: "cmjig0fzj0001fowa3t0wcax7"
+              },
+              {
+                id: "cmjig9hgi00011rwaaknkl7xr"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+  - obrasci: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "mfin-pu-klasa-410-01-25-01-1258",
+          titleHr: "Klasa i urudžbeni broj upute Porezne uprave (2025)",
+          titleEn: "Tax Administration Instruction Class and Registry Number (2025)",
+          riskTier: "T2",
+          authorityLevel: "GUIDANCE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "410-01/25-01/1258",
+          valueType: "text",
+          explanationHr: "Službena klasa (410-01/25-01/1258) i urudžbeni broj (513-07-21-01-25-2) dokumenta Porezne uprave koji služi kao referenca za regulatorne upute u 2025. godini. Dokument je povezan s odlukama o listama lijekova donesenim na 33. sjednici Upravnog vijeća HZZO-a.",
+          explanationEn: "Official class (410-01/25-01/1258) and registry number (513-07-21-01-25-2) of the Tax Administration document serving as a reference for regulatory instructions in 2025. The document is linked to decisions on medicine lists made at the 33rd session of the HZZO Governing Board.",
+          effectiveFrom: new Date("2025-01-01T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.95,
+          composerNotes: "The rule captures administrative identifiers for a 2025 regulatory document. The HZZO session reference (33) is included as contextual metadata as it appears in the same regulatory context.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjif189f0005dqwanxuttbmd"
+              },
+              {
+                id: "cmjif189p0006dqwabkbmsa5t"
+              },
+              {
+                id: "cmjifa9940004zfwas0ab1vbp"
+              },
+              {
+                id: "cmjifa99c0005zfwav8ip1h06"
+              },
+              {
+                id: "cmjifjjmu00041qwal78lw8fu"
+              },
+              {
+                id: "cmjifjjn000051qwala755k51"
+              },
+              {
+                id: "cmjiftqt80002qswavgg0lvmx"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.
+  - doprinosi: 
+Invalid `db.regulatoryRule.create()` invocation in
+/home/admin/FiskAI/src/lib/regulatory-truth/agents/composer.ts:208:40
+
+  205 )
+  206 
+  207 // Store the draft rule in database
+→ 208 const rule = await db.regulatoryRule.create({
+        data: {
+          conceptSlug: "pripravnistvo-lista-prvenstva-broj-kandidata",
+          titleHr: "Broj kandidata na listi prvenstva za pripravništvo",
+          titleEn: "Number of candidates on the priority list for internship",
+          riskTier: "T3",
+          authorityLevel: "PROCEDURE",
+          appliesWhen: {
+            op: "true"
+          },
+          ~~~~~~~~~~~~
+          value: "266",
+          valueType: "count",
+          explanationHr: "Broj kandidata uvrštenih u prijedlog Liste prvenstva za financiranje pripravničkog staža.",
+          explanationEn: "Number of candidates included in the proposed Priority List for internship funding.",
+          effectiveFrom: new Date("2025-12-23T00:00:00.000Z"),
+          effectiveUntil: null,
+          supersedesId: null,
+          status: "DRAFT",
+          confidence: 0.9,
+          composerNotes: "The value 266 refers to the main priority list. Other source pointers mention a supplement of 50 candidates (cmjig9hgz00021rwaw6margk1) and a specific intern list of 4 candidates (cmjifudq70004cgwajjvotitd) consisting of 3 doctors and 1 pharmacist.\n[AUTO-FIX] Original appliesWhen was invalid: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received string\"\n  }\n]",
+          sourcePointers: {
+            connect: [
+              {
+                id: "cmjifudpe0002cgwaqngcbx95"
+              },
+              {
+                id: "cmjifudq70004cgwajjvotitd"
+              },
+              {
+                id: "cmjifudqq0005cgwa669x4ti8"
+              },
+              {
+                id: "cmjifudr00006cgwa39ai098h"
+              },
+              {
+                id: "cmjig9hgz00021rwaw6margk1"
+              }
+            ]
+          }
+        }
+      })
+
+Argument `appliesWhen`: Invalid value provided. Expected String, provided Object.

@@ -1,0 +1,37 @@
+                    name                     |        domain         |                                            path                                            | success | failed | total | success_rate 
+---------------------------------------------+-----------------------+--------------------------------------------------------------------------------------------+---------+--------+-------+--------------
+ FINA - e-Račun info                         | fina.hr               | /digitalizacija-poslovanja/e-racun                                                         |       0 |      0 |     1 |         0.00
+ FINA - Novosti                              | fina.hr               | /novosti                                                                                   |       9 |      0 |     9 |       100.00
+ FINA - Digitalni certifikati                | fina.hr               | /obavijesti/digitalni-certifikati                                                          |       4 |      1 |     5 |        80.00
+ FINA - e-Račun javna nabava                 | fina.hr               | /obavijesti/e-racun-u-javnoj-nabavi                                                        |       1 |      0 |     1 |       100.00
+ FINA - e-Račun obavijesti                   | fina.hr               | /obavijesti/fina-e-racun                                                                   |       1 |      0 |     1 |       100.00
+ FINA - BON informacije                      | fina.hr               | /poslovne-informacije/bon                                                                  |       0 |      0 |     1 |         0.00
+ HZZO - e-Zdravstveno novosti                | hzzo.hr               | /e-zdravstveno/novosti                                                                     |       1 |      2 |     3 |        33.33
+ HZZO - Uputnice i potvrde                   | hzzo.hr               | /lijecnicki-pregledi/uputnice-i-potvrde                                                    |       0 |      0 |     1 |         0.00
+ HZZO - Natječaji                            | hzzo.hr               | /natjecaji                                                                                 |       0 |      0 |     1 |         0.00
+ HZZO - Novosti                              | hzzo.hr               | /novosti                                                                                   |      16 |      0 |    16 |       100.00
+ HZZO - Odluke upravnog vijeća               | hzzo.hr               | /o-nama/upravno-vijece/odluke-uv                                                           |       0 |      0 |     1 |         0.00
+ HZZO - Šifrarnici                           | hzzo.hr               | /poslovni-subjekti/hzzo-za-partnere/sifrarnici-hzzo-0                                      |       1 |      1 |     2 |        50.00
+ HZZO - Pravni akti                          | hzzo.hr               | /pravni-akti                                                                               |       1 |      0 |     1 |       100.00
+ HZZO - Savjetovanja s javnošću              | hzzo.hr               | /pravo-na-pristup-informacijama/savjetovanje-s-javnoscu-o-nacrtima-zakona-i-drugih-propisa |       0 |      0 |     1 |         0.00
+ HZZO - Liste lijekova                       | hzzo.hr               | /zdravstvena-zastita/objavljene-liste-lijekova                                             |       1 |      1 |     2 |        50.00
+ Ministarstvo financija - Javne konzultacije | mfin.gov.hr           | /istaknute-teme/javne-konzultacije/524                                                     |       0 |      0 |     1 |         0.00
+ Ministarstvo financija - Zakoni i propisi   | mfin.gov.hr           | /istaknute-teme/zakoni-i-propisi/523                                                       |       0 |      0 |     1 |         0.00
+ Ministarstvo financija - Vijesti            | mfin.gov.hr           | /vijesti/8                                                                                 |       0 |      0 |     1 |         0.00
+ HZMO - Doplatak za djecu                    | mirovinsko.hr         | /hr/doplatak-za-djecu/12                                                                   |       0 |      0 |     1 |         0.00
+ HZMO - Mišljenja ministarstva               | mirovinsko.hr         | /hr/misljenja-ministarstva/56                                                              |       0 |      0 |     1 |         0.00
+ HZMO - Prijave i odjave                     | mirovinsko.hr         | /hr/prijave-i-odjave-na-osiguranje/234                                                     |       0 |      0 |     1 |         0.00
+ HZMO - Priopcenja                           | mirovinsko.hr         | /hr/priopcenja-204/204                                                                     |       0 |      0 |     1 |         0.00
+ HZMO - Propisi                              | mirovinsko.hr         | /hr/propisi/54                                                                             |       0 |      0 |     1 |         0.00
+ HZMO - Statistika                           | mirovinsko.hr         | /hr/statistika/860                                                                         |       0 |      0 |     1 |         0.00
+ HZMO - Tiskanice                            | mirovinsko.hr         | /hr/tiskanice-1098/1098                                                                    |       0 |      0 |     1 |         0.00
+ HZMO - Vijesti                              | mirovinsko.hr         | /hr/vijesti/114                                                                            |       0 |      0 |     1 |         0.00
+ Narodne novine - Main Sitemap               | narodne-novine.nn.hr  | /sitemap.xml                                                                               |      20 |      0 |    20 |       100.00
+ Porezna - Mišljenja SU                      | porezna-uprava.gov.hr | /hr/misljenja-su/3951                                                                      |       2 |      0 |     2 |       100.00
+ Porezna - Fiskalizacija FAQ                 | porezna-uprava.gov.hr | /hr/pitanja-i-odgovori-vezani-uz-zakon-o-fiskalizaciji-8031/8031                           |       0 |      0 |     1 |         0.00
+ Porezna - Porezni sustav                    | porezna-uprava.gov.hr | /hr/porezni-sustav/3954                                                                    |       0 |      0 |     1 |         0.00
+ Porezna - Propisani obrasci                 | porezna-uprava.gov.hr | /hr/propisani-obrasci/3955                                                                 |       0 |      0 |     1 |         0.00
+ Porezna - Propisi                           | porezna-uprava.gov.hr | /hr/propisi-3950/3950                                                                      |       0 |      0 |     1 |         0.00
+ Porezna - Vijesti                           | porezna-uprava.gov.hr | /hr/vijesti/8                                                                              |       3 |      0 |     3 |       100.00
+(33 rows)
+

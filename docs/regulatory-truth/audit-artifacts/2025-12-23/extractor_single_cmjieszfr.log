@@ -1,0 +1,58 @@
+[extractor] Running on evidence: cmjieszfr00008jwapf913uft
+[extractor] Cleaned content for https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0: 101413 → 56350 chars (44% reduction, 0 news items found)
+[runner] Retry 1/3 in 1s...
+[runner] Retry 2/3 in 2s...
+[extractor] Result: {
+  "success": true,
+  "output": {
+    "evidence_id": "cmjieszfr00008jwapf913uft",
+    "extractions": [
+      {
+        "id": "ext-1",
+        "domain": "rokovi",
+        "value_type": "date",
+        "extracted_value": "2025-11-05",
+        "display_value": "05.11.2025.",
+        "exact_quote": "05.11.2025.",
+        "context_before": "HZZO nastavlja financirati rad pod nadzorom doktora medicine bez specijalizacije",
+        "context_after": "U cilju zapošljavanja što većeg broja doktora medicine u zdravstvenom sustavu Republike Hrvatske HZZO će i nadalje financirati rad doktora medicine bez specijalizacije.",
+        "selector": "div.c-ttl.-date",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": null,
+        "confidence": 1,
+        "extraction_notes": "Publication date of the regulatory announcement."
+      },
+      {
+        "id": "ext-2",
+        "domain": "doprinosi",
+        "value_type": "threshold",
+        "extracted_value": "50",
+        "display_value": "50 kandidata",
+        "exact_quote": "te je u prijedlogu Dodatka Liste prvenstva uvršteno 50 kandidata.",
+        "context_before": "Stoga je donesena odluka o dopunama odluke o izboru doktora medicine bez specijalizacije za koje će se financirati rad pod nadzorom, za one doktore medicine koji nisu bili uvršteni u Listu prvenstva, odnosno koji nisu već započeli rad pod nadzorom, te je u prijedlogu Dodatka Liste prvenstva uvršteno 50 kandidata.",
+        "context_after": null,
+        "selector": "article[data-history-node-id='422933'] div.o-card_content p",
+        "article_number": null,
+        "paragraph_number": null,
+        "law_reference": "odluka o dopunama odluke o izboru doktora medicine bez specijalizacije za koje će se financirati rad pod nadzorom",
+        "confidence": 1,
+        "extraction_notes": "Quota of candidates included in the Supplement to the Priority List for supervised work financing."
+      }
+    ],
+    "extraction_metadata": {
+      "total_extractions": 2,
+      "by_domain": {
+        "rokovi": 1,
+        "doprinosi": 1
+      },
+      "low_confidence_count": 0,
+      "processing_notes": "Extracted publication date and candidate quota from the main article content. Sidebar news items were excluded to maintain focus on the primary regulatory announcement."
+    }
+  },
+  "sourcePointerIds": [
+    "cmjig9hgi00011rwaaknkl7xr",
+    "cmjig9hgz00021rwaw6margk1"
+  ],
+  "error": null
+}

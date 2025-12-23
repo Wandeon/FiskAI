@@ -28,6 +28,43 @@ UPUTE ZA ODGOVARANJE:
 Korisnik te sada pita:
 `
 
+// Regulatory topics that require citations (Croatian terms)
+const REGULATORY_TOPICS = [
+  "pdv",
+  "porez",
+  "dohodak",
+  "dobit",
+  "doprin",
+  "hzzo",
+  "mirovin",
+  "pausaln",
+  "obrt",
+  "fisk",
+  "stopa",
+  "limit",
+  "prag",
+  "obvez",
+  "rok",
+  "plaća",
+  "tečaj",
+  "knjigovod",
+]
+
+// Refusal message when no regulatory context is found
+const NO_CITATION_REFUSAL = `Nažalost, ne mogu pronaći pouzdane regulatorne izvore za odgovor na vaše pitanje.
+
+Da bih vam mogao pomoći s pouzdanim informacijama, molim vas da:
+1. Precizirate o kojoj vrsti poslovanja se radi (paušalni obrt, d.o.o., obrt s PDV-om)
+2. Navedete specifični propis ili područje koje vas zanima (PDV, doprinosi, fiskalizacija)
+3. Ili pitajte o korištenju FiskAI aplikacije - tu vam mogu pomoći bez regulatornih izvora
+
+Za konkretne porezne savjete, preporučam konzultaciju s vašim knjigovođom.`
+
+function containsRegulatoryQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase()
+  return REGULATORY_TOPICS.some((topic) => lowerQuery.includes(topic))
+}
+
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json()
@@ -38,7 +75,21 @@ export async function POST(req: Request) {
 
     // Fetch relevant rules for context
     const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()
-    const rules = await findRelevantRules(lastUserMessage?.content || "")
+    const userQuery = lastUserMessage?.content || ""
+    const rules = await findRelevantRules(userQuery)
+
+    // INVARIANT: If user asks regulatory question but we have no sources, REFUSE
+    // Don't answer regulatory questions without citations
+    if (containsRegulatoryQuery(userQuery) && rules.length === 0) {
+      console.log(`[Assistant] REFUSING: Regulatory query without citations: "${userQuery.substring(0, 50)}..."`)
+
+      return new NextResponse(NO_CITATION_REFUSAL, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      })
+    }
+
     const ruleContext = formatRulesForPrompt(rules)
 
     // Inject rules into system prompt

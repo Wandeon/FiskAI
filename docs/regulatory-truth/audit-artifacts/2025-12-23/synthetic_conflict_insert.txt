@@ -1,0 +1,5 @@
+                       id                       |  conflictType   | status |          itemAId          |          itemBId          
+------------------------------------------------+-----------------+--------+---------------------------+---------------------------
+ test-conflict-9c9b92b672950e08db5dcd918d1893ae | SOURCE_CONFLICT | OPEN   | cmjhqehsq0001awwadq0kxis2 | cmjhjhz6g000jazwa6oir3gf4
+(1 row)
+

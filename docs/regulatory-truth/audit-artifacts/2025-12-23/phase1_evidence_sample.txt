@@ -1,0 +1,5 @@
+            id             |                                                 url                                                  |        fetchedAt        | contentType |                           contentHash                            
+---------------------------+------------------------------------------------------------------------------------------------------+-------------------------+-------------+------------------------------------------------------------------
+ cmjievhzg0002fvwam16i6ter | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156 | 2025-12-23 09:57:29.932 | html        | 191b257601e94d99a1eadd5f9b6d40eecaf0ef761693cb2d236f8ff7aab555c2
+(1 row)
+

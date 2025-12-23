@@ -1,0 +1,13 @@
+ agentType |  status   | count 
+-----------+-----------+-------
+ EXTRACTOR | completed |    45
+ EXTRACTOR | failed    |    66
+ EXTRACTOR | running   |     1
+ COMPOSER  | completed |    12
+ COMPOSER  | failed    |     9
+ COMPOSER  | running   |     1
+ REVIEWER  | completed |    12
+ RELEASER  | completed |     1
+ RELEASER  | failed    |     3
+(9 rows)
+

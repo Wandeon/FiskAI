@@ -1,0 +1,18 @@
+[extractor] Running on unprocessed evidence...
+[extractor] Found 50 unprocessed evidence records
+
+[extractor] Processing: porezna-doprinosi-stope (cmjievhzg0002fvwam16i6ter)
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] ✓ Extracted 0 data points
+
+[extractor] Processing: porezna-doprinosi-stope (cmjievgih0000fvwanr8axica)
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[extractor] ✓ Extracted 5 data points
+
+[extractor] Processing: porezna-doprinosi-stope (cmjieu7jp0002rewazzxdlzqg)
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156: 198958 → 1738 chars (99% reduction, 1 news items found)
+[extractor] ✓ Extracted 1 data points
+
+[extractor] Processing: porezna-doprinosi-stope (cmjieu61w0000rewa5o0zac8o)
+[extractor] Cleaned content for https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665: 204138 → 84645 chars (59% reduction, 0 news items found)
+[runner] Retry 1/3 in 1s...

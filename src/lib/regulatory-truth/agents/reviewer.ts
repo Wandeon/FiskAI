@@ -100,6 +100,19 @@ export async function autoApproveEligibleRules(): Promise<{
 
   for (const rule of eligibleRules) {
     try {
+      // INVARIANT: NEVER approve rules without source pointers
+      const pointerCount = await db.sourcePointer.count({
+        where: { rules: { some: { id: rule.id } } },
+      })
+
+      if (pointerCount === 0) {
+        console.log(
+          `[auto-approve] BLOCKED: ${rule.conceptSlug} has 0 source pointers - cannot approve without evidence`
+        )
+        results.skipped++
+        continue
+      }
+
       await db.regulatoryRule.update({
         where: { id: rule.id },
         data: {
@@ -212,6 +225,19 @@ export async function runReviewer(ruleId: string): Promise<ReviewerResult> {
 
   switch (reviewOutput.decision) {
     case "APPROVE":
+      // INVARIANT: NEVER approve rules without source pointers
+      const pointerCount = await db.sourcePointer.count({
+        where: { rules: { some: { id: rule.id } } },
+      })
+
+      if (pointerCount === 0) {
+        newStatus = "PENDING_REVIEW"
+        console.log(
+          `[reviewer] BLOCKED: Rule ${rule.conceptSlug} has 0 source pointers - cannot approve without evidence`
+        )
+        break
+      }
+
       // NEVER auto-approve T0/T1 - always require human review
       if (rule.riskTier === "T0" || rule.riskTier === "T1") {
         newStatus = "PENDING_REVIEW"

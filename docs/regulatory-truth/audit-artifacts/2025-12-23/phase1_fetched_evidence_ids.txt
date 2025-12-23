@@ -1,0 +1,37 @@
+            id             |                                                        url                                                         |        fetchedAt        
+---------------------------+--------------------------------------------------------------------------------------------------------------------+-------------------------
+ cmjievhzg0002fvwam16i6ter | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156               | 2025-12-23 09:57:29.932
+ cmjievgih0000fvwanr8axica | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-23 09:57:28.025
+ cmjieu7jp0002rewazzxdlzqg | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156               | 2025-12-23 09:56:29.749
+ cmjieu61w0000rewa5o0zac8o | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-23 09:56:27.812
+ cmjietcjt000dnjwaxlm1vkgr | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156               | 2025-12-23 09:55:49.577
+ cmjietc8x000k8jwamcff3012 | https://hzzo.hr/novosti/sretan-bozic-i-nova-godina                                                                 | 2025-12-23 09:55:49.185
+ cmjietbw7000i8jwa73zgawhm | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156               | 2025-12-23 09:55:48.726
+ cmjietb0k000bnjwaist4e466 | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-23 09:55:47.588
+ cmjietaf3000g8jwa2ysbt45k | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-23 09:55:46.815
+ cmjieta9l000e8jwa7jawir74 | https://hzzo.hr/novosti/upozorenje-obavijest-o-laznim-sms-porukama                                                 | 2025-12-23 09:55:46.617
+ cmjiet8vn000c8jwa15nmyib7 | https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-primarne-zdravstvene-zastite-iz-obveznog-5      | 2025-12-23 09:55:44.819
+ cmjiet7b8000a8jwa22v09sux | https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-zdravstvene-njege-u-kuci-za-potrebe-popune      | 2025-12-23 09:55:42.787
+ cmjiet5pe00088jwaopedlge3 | https://hzzo.hr/novosti/n-t-j-e-c-j-za-sklapanje-ugovora-o-provodenju-specijalisticko-konzilijarne-zdravstvene-0   | 2025-12-23 09:55:40.706
+ cmjiet49l00068jwao191eful | https://hzzo.hr/novosti/hzzo/novi-lijekovi-i-nova-pomagala-na-listama-hzzo-1                                       | 2025-12-23 09:55:38.841
+ cmjiet2qo00048jwa89jz8o63 | https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1 | 2025-12-23 09:55:36.864
+ cmjiet17j00028jwa3cbd3n7w | https://hzzo.hr/novosti/brosura-rodiljne-i-roditeljske-potpore                                                     | 2025-12-23 09:55:34.879
+ cmjieszfr00008jwapf913uft | https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0    | 2025-12-23 09:55:32.583
+ cmjiawqsv00037uwa0xwpuyyv | https://porezna-uprava.gov.hr/hr/izmjena-i-dopuna-pravilnika-o-porezu-na-dodanu-vrijednost-8156/8156               | 2025-12-23 08:06:29.551
+ cmjiawp9p00017uwa11sj0sxf | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-23 08:06:27.564
+ cmjhqgrel0004fewasivss7uw | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 22:34:11.517
+ cmjho9db50004xewa2qe1mzec | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 21:32:27.425
+ cmjhjdyr90004azwax5uferm0 | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 19:16:03.765
+ cmjh8854z0004fgwauv6r8e4v | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 14:03:36.323
+ cmjh7q7ce00043iwas5p8upwu | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 13:49:39.374
+ cmjh7mthi007l56wap6a85z1l | https://porezna-uprava.gov.hr/Misljenja/Detaljno/2665                                                              | 2025-12-22 13:47:01.446
+ cmjh7mnsw007b56wawpfllv96 | https://hzzo.hr/novosti/upozorenje-obavijest-o-laznim-sms-porukama                                                 | 2025-12-22 13:46:54.08
+ cmjh7mm73007956warnhb496q | https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-primarne-zdravstvene-zastite-iz-obveznog-5      | 2025-12-22 13:46:51.999
+ cmjh7mko9007756wax4cbgc35 | https://hzzo.hr/novosti/natjecaj-za-sklapanje-ugovora-o-provodenju-zdravstvene-njege-u-kuci-za-potrebe-popune      | 2025-12-22 13:46:50.025
+ cmjh7mj6i007556wauwzni4xr | https://hzzo.hr/novosti/n-t-j-e-c-j-za-sklapanje-ugovora-o-provodenju-specijalisticko-konzilijarne-zdravstvene-0   | 2025-12-22 13:46:48.09
+ cmjh7mho3007356wae692u7ob | https://hzzo.hr/novosti/hzzo/novi-lijekovi-i-nova-pomagala-na-listama-hzzo-1                                       | 2025-12-22 13:46:46.131
+ cmjh7mg65007156wav5kata3e | https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-te-1 | 2025-12-22 13:46:44.189
+ cmjh7meeu006z56waku67jz8t | https://hzzo.hr/novosti/brosura-rodiljne-i-roditeljske-potpore                                                     | 2025-12-22 13:46:41.91
+ cmjh7mcwj006x56wavue90cvj | https://hzzo.hr/novosti/hzzo/hzzo-nastavlja-financirati-rad-pod-nadzorom-doktora-medicine-bez-specijalizacije-0    | 2025-12-22 13:46:39.955
+(33 rows)
+

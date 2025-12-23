@@ -101,7 +101,8 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
 
     for (const rate of rates) {
       const conceptSlug = `exchange-rate-eur-${rate.valuta.toLowerCase()}`
-      const contentHash = hashContent(JSON.stringify(rate))
+      const rawContent = JSON.stringify(rate)
+      const contentHash = hashContent(rawContent, "application/json")
 
       // Check if we already have this exact data
       const existingEvidence = await db.evidence.findFirst({

@@ -1,0 +1,221 @@
+{
+  "summary": {
+    "total": 30,
+    "withUrl": 3,
+    "withTimestamp": 2,
+    "errors": 23,
+    "urlComplianceRate": 0.1
+  },
+  "results": [
+    {
+      "question": "Koja je standardna stopa PDV-a u Hrvatskoj?",
+      "response": "\n\nStandardna stopa PDV-a u Hrvatskoj iznosi **25%**. Ova stopa primjenjuje se na većinu proizvoda i usluga. Postoje i smanjene stope:  \n- **13%** za određene stavke (npr. hrana, knjige, lijekovi),  \n- **5%** za specifične stavke (npr. neki lijekovi, dječje knjige, određene turističke usluge).  \n\nZa točnu primjenu PDV stopa u vašem poslovanju, provjerite detalje s knjigovođom ili prema službenim smjernicama Porezne uprave Hrvatske. 📌",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koja je snižena stopa PDV-a i na što se primjenjuje?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li nulta stopa PDV-a za solarne ploče?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je prag za ulazak u PDV sustav?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je paušalni limit prihoda za obrt?",
+      "response": "\n\nPaušalni obrt u Hrvatskoj ima **godišnji limit prihoda od 40.000 EUR** (bruto prihod). Ako se ovaj limit premaši, obvezni ste preći na redovni porezni sustav (PDV i standardni porez na dobit). \n\n⚠️ Napomena:  \n- Limit se izražava u EUR, ali se u praksi računa prema tekućem tečaju Hrvatske narodne banke (HNB).  \n- Ovaj informacije je opći pregled. Za točne detalje vezane uz vaš slučaj, savjetujte se s knjigovođom ili poreznim savjetnikom.  \n\nAko imate dodatnih pitanja o fiskalizaciji, računima ili aplikaciji FiskAI, slobodno pitajte! 😊",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Moram li fiskalizirati račune plaćene karticom?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kad počinje primjena Fiskalizacije 2.0?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji su rokovi za predaju JOPPD-a?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koliki su doprinosi za paušalni obrt?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za plaćanje doprinosa?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Mogu li izdati račun bez OIB-a kupca?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li PDV prag za strane klijente?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je tečaj EUR/USD za 22.12.2025?",
+      "response": "\n\nZa datum 22.12.2025. nije moguće utvrditi točan tečaj EUR/USD, jer se devizni tečajevi mijenjaju svakodnevno u skladu s tržišnim uvjetima, politikama centralnih banki i geopolitičkim događajima. Budući da je taj datum još u budućnosti, nema načina da se predvidi točan tečaj unaprijed.\n\nAko vam je potreban tečaj za računovodstvene ili fiskalne svrhe (npr. za konverziju valuta u računima), preporučujem da koristite tečaj objavljen od strane **Hrvatske narodne banke (HNB)** na dan transakcije. HNB objavljuje službene tečaje za prošle dane, a za buduće dane nije moguće imati pouzdane podatke.\n\nZa trenutni tečaj EUR/USD možete provjeriti na:\n- Službenoj stranici HNB-a ([www.hnb.hr](https://www.hnb.hr))\n- Financijskim platformama poput Investing.com, XE.com ili Bloomberg.\n\nAko imate dodatnih pitanja vezana uz FiskAI ili računovodstvene obveze, s radošću ću vam pomoći! 😊",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": true
+    },
+    {
+      "question": "Koji je tečaj EUR/PLN za 22.12.2025?",
+      "response": "\n\nTrenutno nije moguće utvrditi tečaj EUR/PLN za **22.12.2025.**, jer su tečajevi valuta uvijek **promjenjivi i ovisni o tržišnim uvjetima** u trenutku transakcije. Budući da je 22.12.2025. još u budućnosti, tečaj za taj dan nije poznat i ne može se predvidjeti unaprijed.\n\n### Što možete učiniti:\n1. **Provjerite tečaj blizu datuma transakcije**: Koristite pouzdane izvore poput:\n   - Hrvatske narodne banke (HNB) ([www.hnb.hr](https://www.hnb.hr))\n   - Bankarskih servisa (npr. Erste Bank, Hypo Alpe-Adria)\n   - Online platformi poput XE.com, OANDA ili Investing.com.\n\n2. **U FiskAI aplikaciji**: Kada izdajete račun u stranoj valuti (npr. PLN), aplikacija **automatski koristi tečaj važeći u danu izdavanja računa**. Ako želite unijeti specifičan tečaj (npr. prema dogovoru s kupcem), to možete napraviti ručno u polju \"Tečaj\" prilikom kreiranja računa.\n\n> 💡 **Napomena**: Za financijsko planiranje preporučujem konsultaciju s financijskim savjetnikom ili knjigovođom, posebno ako radite s velikim iznosima u stranim valutama. FiskAI vam pomaže u evidenciji, ali ne može predviđati buduće tečajeve.",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": true
+    },
+    {
+      "question": "Moram li prijaviti PDV ako prodajem usluge u EU?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li oslobođenje od PDV-a za edukacije?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kad je stupila na snagu izmjena pravilnika o PDV-u 2025?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li obveza e-računa za javnu nabavu?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za predaju PDV obrasca?",
+      "response": "\n\nRok za predaju PDV obrasca u Hrvatskoj ovisi o frekvenciji podnošenja:\n\n- **Mjesečni poreznici**: Rok je **15. broj sljedećeg mjeseca** (npr. za siječanj – rok je 15. veljače).  \n- **Kvartalni poreznici**: Rok je **15. broj mjeseca nakon završetka kvartala** (npr. za I. kvartal – rok je 15. travnja).\n\nAko 15. pada na subotu, nedjelju ili državni praznik, rok se produžuje do sljedećeg radnog dana.\n\n**Napomena**: Većina poduzetnika podnosi PDV obrasce mjesečno (osim ako su ispunili uvjete za kvartalno podnošenje, npr. godišnji promet ispod 2 mil. HRK). Preporučujem provjeru s knjigovođom ili Poreznom upravom kako bi se osigurala točnost, jer se pravila mogu mijenjati. U aplikaciji FiskAI možete pratiti rokove u odjeljku **PDV** ili **Postavke**, ali konačna odgovornost za ispravnu predaju leži na vama. 😊",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Mogu li koristiti gotovinsko poslovanje bez fiskalizacije?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje su iznimke za fiskalizaciju?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Što znači obveza pružatelja platnih usluga od 1.1.2024?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Kada se primjenjuju propisi od 01.01.2026?",
+      "response": "\n\nKao FiskAI Asistent, moram naglasiti da **nema potvrđenih propisa koji bi se primjenjivali od 1. siječnja 2026. godine**, jer su takvi zakoni i regulative još uvijek u fazi pripreme ili diskusije. Hrvatska vlada obično objavljuje konkretne promjene u poreznom sustavu, računovodstvu ili fiskalizaciji **najkasnije 6–12 mjeseci prije njihova početka** (npr. u Obavijestima u Narodnim novinama).\n\n**Što trebate znati:**\n- Sve promjene koje se odnose na 2026. godinu **nisu još objavljene** (stanje na 2023. godinu).\n- Ako budu postojale promjene, one će biti objavljene na službenim mjestima (npr. [Ministarstvo financija](https://www.mfin.gov.hr/), [Fina.hr](https://www.fina.hr/)) ili u Narodnim novinama.\n- **Preporuka:** Pratite službene izvore ili posavjetujte se s knjigovođom/stručnjakom za poreze kako biste bili ažurni o budućim obvezama.\n\nAko imate konkretno pitanje o trenutnim propisima (npr. za 2024. ili 2025.), s radošću ću vam pomoći! 😊",
+      "error": null,
+      "hasUrl": true,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje je razdoblje važenja HNB srednjeg tečaja?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Je li nacionalna naknada za starije osobe 154,50 EUR i od kada?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koliki je iznos upravne pristojbe na žalbu protiv rješenja?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Postoji li iznimka za PDV na solarne ploče?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Vrijedi li PDV na medicinske usluge?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koje su stope doprinosa za 2025?",
+      "response": "\n\nZa sada **nema službeno objavljenih stopa doprinosa za 2025. godinu**. U Hrvatskoj se stopa doprinosa za sljedeću godinu obično objavljuju krajem trenutne godine (npr. u listopadu ili studenom 2024. za 2025.), kroz **Narodne novine** ili na službenim stranicama **Porezne uprave Republike Hrvatske**.\n\n### Trenutne stopa doprinosa za 2024. (za referencu):\n- **Penzijsko osiguranje**:  \n  - Zaposlenik: 15%  \n  - Poslodavac: 15%  \n- **Zdravstveno osiguranje**:  \n  - Zaposlenik: 10%  \n  - Poslodavac: 10%  \n- **Osiguranje od nezaposlenosti**:  \n  - Zaposlenik: 1,5%  \n  - Poslodavac: 2,5%  \n\n> ⚠️ **Napomena**: Stopa za **paušalne obrtnike** može biti drugačija (npr. fiksni iznos prema odabranoj razini prihoda), ali to ovisi o zakonu koji će se primijeniti za 2025. godinu.\n\n### Preporuka:\n- Pratite službene izvještaje Porezne uprave ili **Narodne novine** (www.nn.hr) krajem 2024. godine.  \n- Ako imate konkretne obveze (npr. za svoju tvrtku ili obrt), savjetujte se s **knjigovođom ili poreznim savjetnikom** za najpreciznije informacije.  \n\nNisam u mogućnosti dati točne stope za 2025. jer one nisu još određene – ovo je isključivo informativna poruka, a ne pravni savjet. 😊",
+      "error": null,
+      "hasUrl": false,
+      "hasTimestamp": false
+    },
+    {
+      "question": "Koji je rok za isplatu mirovina za studeni 2025?",
+      "response": "",
+      "error": "AbortError: This operation was aborted",
+      "hasUrl": false,
+      "hasTimestamp": false
+    }
+  ]
+}
