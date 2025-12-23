@@ -24,7 +24,12 @@ export interface ReleaserResult {
 }
 
 /**
- * Calculate semver version based on previous version and rule risk tiers
+ * Calculate semver version based on previous version and rule risk tiers.
+ *
+ * Release type is determined by the HIGHEST risk tier in the batch:
+ * - T0 (critical) → major release (e.g., 1.0.0 → 2.0.0)
+ * - T1 (high)     → minor release (e.g., 1.0.0 → 1.1.0)
+ * - T2/T3 (low)   → patch release (e.g., 1.0.0 → 1.0.1)
  */
 function calculateNextVersion(
   previousVersion: string | null,
@@ -32,7 +37,7 @@ function calculateNextVersion(
 ): { version: string; releaseType: "major" | "minor" | "patch" } {
   const [major, minor, patch] = previousVersion ? previousVersion.split(".").map(Number) : [0, 0, 0]
 
-  // Check if any T0 (critical) rules exist
+  // T0 rules (critical) → major version bump
   if (riskTiers.includes("T0")) {
     return {
       version: `${major + 1}.0.0`,
@@ -40,7 +45,7 @@ function calculateNextVersion(
     }
   }
 
-  // Check if any T1 (high) rules exist
+  // T1 rules (high) → minor version bump
   if (riskTiers.includes("T1")) {
     return {
       version: `${major}.${minor + 1}.0`,
@@ -48,7 +53,7 @@ function calculateNextVersion(
     }
   }
 
-  // Otherwise it's a patch (T2/T3 changes)
+  // T2/T3 rules (low) → patch version bump
   return {
     version: `${major}.${minor}.${patch + 1}`,
     releaseType: "patch",
@@ -167,11 +172,21 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
     riskTiers
   )
 
+  // ALWAYS use calculated release type based on highest risk tier
+  // This ensures consistency regardless of LLM output
+  const finalReleaseType = expectedReleaseType
+
+  // Validate LLM output matches expected release type
+  if (releaseOutput.release_type && releaseOutput.release_type !== expectedReleaseType) {
+    console.warn(
+      `[releaser] LLM release type "${releaseOutput.release_type}" does not match expected "${expectedReleaseType}" for risk tiers: ${riskTiers.join(", ")}`
+    )
+  }
+
   // Use the agent's version if valid, otherwise use calculated
   const finalVersion = releaseOutput.version.match(/^\d+\.\d+\.\d+$/)
     ? releaseOutput.version
     : expectedVersion
-  const finalReleaseType = releaseOutput.release_type || expectedReleaseType
 
   // Compute content hash with full rule content
   const ruleSnapshots: RuleSnapshot[] = rules.map((r) => ({
