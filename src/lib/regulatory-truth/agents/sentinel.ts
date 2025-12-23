@@ -348,9 +348,15 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
           // Check if this is a content change (item had previous hash)
           const isContentChange = !!(item.contentHash && item.contentHash !== contentHash)
 
-          // Create new evidence record
-          const evidence = await db.evidence.create({
-            data: {
+          // Upsert evidence record (prevents duplicates with unique constraint on url+contentHash)
+          const evidence = await db.evidence.upsert({
+            where: {
+              url_contentHash: {
+                url: item.url,
+                contentHash,
+              },
+            },
+            create: {
               sourceId: source.id,
               url: item.url,
               rawContent: content,
@@ -360,6 +366,10 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
               changeSummary: isContentChange
                 ? `Content updated from previous version (hash: ${item.contentHash?.slice(0, 8)}...)`
                 : null,
+            },
+            update: {
+              // If we re-encounter same content, just update fetchedAt timestamp
+              fetchedAt: new Date(),
             },
           })
 

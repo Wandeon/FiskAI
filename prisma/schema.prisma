@@ -1737,6 +1737,7 @@ model Evidence {
   sourcePointers  SourcePointer[]
   agentRuns       AgentRun[]
 
+  @@unique([url, contentHash])
   @@index([sourceId])
   @@index([fetchedAt])
   @@index([contentHash])
