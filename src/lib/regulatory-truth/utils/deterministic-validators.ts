@@ -164,6 +164,15 @@ function dateToPatterns(isoDate: string): string[] {
 }
 
 /**
+ * Check if the quote is a JSON fragment (key-value pair)
+ */
+function isJsonQuote(quote: string): boolean {
+  const trimmed = quote.trim()
+  // Match patterns like: "key": "value" or "key": 123
+  return /^"[^"]+"\s*:\s*.+$/.test(trimmed)
+}
+
+/**
  * Validate that the extracted value actually appears in the exact quote.
  * This prevents AI "inference" where values are derived but not explicitly stated.
  */
@@ -173,6 +182,35 @@ export function validateValueInQuote(
 ): ValidationResult {
   const value = String(extractedValue)
   const quote = exactQuote.toLowerCase()
+
+  // Special handling for JSON quotes (e.g., from HNB API)
+  if (isJsonQuote(exactQuote)) {
+    try {
+      // Extract the value part after the colon
+      const match = exactQuote.match(/:\s*(.+)$/)
+      if (match) {
+        const jsonValue = match[1].trim()
+        // Try to parse as JSON to get the actual value
+        let parsedValue: any
+        try {
+          parsedValue = JSON.parse(jsonValue)
+        } catch {
+          // If it's not valid JSON, use as-is (might be unquoted)
+          parsedValue = jsonValue
+        }
+
+        const parsedStr = String(parsedValue)
+        const normalizedValue = value.replace(/[.,\s]/g, "")
+        const normalizedParsed = parsedStr.replace(/[.,\s]/g, "")
+
+        if (normalizedValue === normalizedParsed || value === parsedStr) {
+          return { valid: true }
+        }
+      }
+    } catch (error) {
+      // Fall through to standard validation
+    }
+  }
 
   let patterns: string[] = []
 

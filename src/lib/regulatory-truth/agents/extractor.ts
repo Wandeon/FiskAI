@@ -23,6 +23,78 @@ export interface ExtractorResult {
 }
 
 /**
+ * Check if content is JSON (starts with { or [)
+ */
+function isJsonContent(content: string): boolean {
+  const trimmed = content.trim()
+  return trimmed.startsWith("{") || trimmed.startsWith("[")
+}
+
+/**
+ * Helper to find a value in a JSON object and return the key-value pair
+ */
+function findInJsonObject(obj: any, value: string, path: string = ""): string | null {
+  if (typeof obj !== "object" || obj === null) return null
+
+  for (const [key, val] of Object.entries(obj)) {
+    const currentPath = path ? `${path}.${key}` : key
+    const valStr = String(val)
+
+    // Normalize value for comparison (remove thousand separators)
+    const normalizedValue = value.replace(/[.,\s]/g, "")
+    const normalizedVal = valStr.replace(/[.,\s]/g, "")
+
+    // Check if this field contains the exact value
+    if (normalizedVal === normalizedValue || valStr === value) {
+      // Return as JSON key-value pair
+      return `"${key}": ${JSON.stringify(val)}`
+    }
+
+    // Recurse into nested objects
+    if (typeof val === "object" && val !== null) {
+      const found = findInJsonObject(val, value, currentPath)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+/**
+ * Extract a verbatim quote from JSON content that contains the value.
+ * For HNB exchange rate API and other JSON sources.
+ */
+function extractQuoteFromJson(content: string, value: string): string | null {
+  try {
+    const json = JSON.parse(content)
+
+    // Strategy 1: Find a single key-value pair containing the value
+    if (Array.isArray(json)) {
+      for (const item of json) {
+        const found = findInJsonObject(item, value)
+        if (found) return found
+      }
+    } else {
+      const found = findInJsonObject(json, value)
+      if (found) return found
+    }
+
+    // Strategy 2: Fallback - return the whole JSON prettified (limited)
+    const jsonStr = JSON.stringify(json, null, 2)
+    const lines = jsonStr.split("\n")
+    for (const line of lines) {
+      if (line.includes(value)) {
+        return line.trim()
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.warn(`[extractor] Failed to parse JSON for quote extraction: ${error}`)
+    return null
+  }
+}
+
+/**
  * Run the Extractor agent to extract data points from evidence
  */
 export async function runExtractor(evidenceId: string): Promise<ExtractorResult> {
@@ -80,6 +152,19 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
   const rejectedExtractions: Array<{ extraction: any; errors: string[] }> = []
 
   for (const extraction of result.output.extractions) {
+    // For JSON content, fix the quote to be a verbatim JSON fragment
+    if (evidence.contentType === "json" || isJsonContent(evidence.rawContent)) {
+      const jsonQuote = extractQuoteFromJson(
+        evidence.rawContent,
+        String(extraction.extracted_value)
+      )
+      if (jsonQuote) {
+        extraction.exact_quote = jsonQuote
+        extraction.extraction_notes =
+          `${extraction.extraction_notes || ""} [AUTO-CORRECTED: Quote extracted from JSON response]`.trim()
+      }
+    }
+
     // Validate extraction before storing
     const validation = validateExtraction(extraction)
 
