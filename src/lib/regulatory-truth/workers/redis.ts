@@ -17,10 +17,15 @@ export function createWorkerConnection(): Redis {
   })
 }
 
-// Health check
-export async function checkRedisHealth(): Promise<boolean> {
+// Health check with timeout protection
+export async function checkRedisHealth(timeoutMs: number = 2000): Promise<boolean> {
   try {
-    const pong = await redis.ping()
+    const pong = await Promise.race([
+      redis.ping(),
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error("Redis ping timeout")), timeoutMs)
+      ),
+    ])
     return pong === "PONG"
   } catch {
     return false
