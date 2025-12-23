@@ -82,20 +82,31 @@ export async function collectCoverageMetrics(): Promise<CoverageMetrics> {
   })
 
   // Evidence metrics
-  const evidenceTotal = await db.evidence.count()
+  const evidenceTotal = await db.evidence.count({ where: { deletedAt: null } })
   const evidenceByType = await db.evidence.groupBy({
     by: ["contentType"],
     _count: true,
+    where: { deletedAt: null },
   })
-  const unextractedEvidence = await db.evidence.count({ where: { sourcePointers: { none: {} } } })
+  const unextractedEvidence = await db.evidence.count({
+    where: { deletedAt: null, sourcePointers: { none: {} } },
+  })
 
   // Pointer metrics
-  const pointerTotal = await db.sourcePointer.count()
+  const pointerTotal = await db.sourcePointer.count({ where: { deletedAt: null } })
   const pointersByDomain = await db.sourcePointer.groupBy({
     by: ["domain"],
     _count: true,
+    where: { deletedAt: null },
   })
-  const unlinkedPointers = await db.sourcePointer.count({ where: { rules: { none: {} } } })
+  const unlinkedPointers = await db.sourcePointer.count({
+    where: {
+      deletedAt: null,
+      rules: {
+        none: {},
+      },
+    },
+  })
 
   // Rule metrics
   const ruleTotal = await db.regulatoryRule.count()
