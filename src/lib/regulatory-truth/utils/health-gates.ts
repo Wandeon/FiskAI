@@ -88,11 +88,11 @@ async function checkQuoteValidationRate(): Promise<HealthGate> {
   let status: "healthy" | "degraded" | "critical" = "healthy"
   let recommendation: string | undefined
 
-  if (quoteFailureRate > 10) {
+  if (quoteFailureRate > 5) {
     status = "critical"
     recommendation =
-      "Quotes not found in evidence suggest LLM hallucination or quote extraction issues. Review extractor prompts and evidence preprocessing."
-  } else if (quoteFailureRate > 5) {
+      "Quotes not found in evidence suggest LLM hallucination or quote extraction issues. Review extractor prompts and evidence preprocessing. This is an audit risk."
+  } else if (quoteFailureRate > 2) {
     status = "degraded"
     recommendation =
       "Quote failure rate trending up. Review recent ExtractionRejected records for hallucination patterns."
@@ -102,7 +102,7 @@ async function checkQuoteValidationRate(): Promise<HealthGate> {
     name: "quote_validation_rate",
     status,
     value: Math.round(quoteFailureRate * 10) / 10,
-    threshold: 10,
+    threshold: 5,
     message: `${quoteFailures} quote failures / ${total} total extractions (${quoteFailureRate.toFixed(1)}%)`,
     recommendation,
   }
@@ -148,27 +148,69 @@ async function checkT0T1ApprovalCompliance(): Promise<HealthGate> {
 }
 
 /**
- * Gate 4: Source pointer coverage
- * Alert if > 5% of rules have no source pointers
+ * Gate 4a: Source pointer coverage - PUBLISHED rules
+ * Zero tolerance: ANY published rule without source pointer is critical
  */
-async function checkSourcePointerCoverage(): Promise<HealthGate> {
-  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
-
-  // Count rules without source pointers
-  const rulesWithoutPointers = await db.regulatoryRule.count({
+async function checkSourcePointerCoveragePublished(): Promise<HealthGate> {
+  // Count PUBLISHED rules without source pointers - this should NEVER happen
+  const publishedWithoutPointers = await db.regulatoryRule.count({
     where: {
-      createdAt: { gte: cutoff },
+      status: "PUBLISHED",
       sourcePointers: {
         none: {},
       },
     },
   })
 
-  const totalRules = await db.regulatoryRule.count({
-    where: { createdAt: { gte: cutoff } },
+  const totalPublished = await db.regulatoryRule.count({
+    where: { status: "PUBLISHED" },
   })
 
-  const missingPointerRate = totalRules > 0 ? (rulesWithoutPointers / totalRules) * 100 : 0
+  let status: "healthy" | "degraded" | "critical" = "healthy"
+  let recommendation: string | undefined
+
+  if (publishedWithoutPointers > 0) {
+    status = "critical"
+    recommendation =
+      "CRITICAL: Published rules without source pointers cannot be audited. This breaks the chain of evidence. Fix immediately."
+  }
+
+  return {
+    name: "source_pointer_coverage_published",
+    status,
+    value: publishedWithoutPointers,
+    threshold: 0,
+    message: `${publishedWithoutPointers} published rules without pointers / ${totalPublished} total published`,
+    recommendation,
+  }
+}
+
+/**
+ * Gate 4b: Source pointer coverage - DRAFT/PENDING rules
+ * More lenient: drafts may not have pointers yet, but watch the rate
+ */
+async function checkSourcePointerCoverageDraft(): Promise<HealthGate> {
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+
+  // Count non-published rules without source pointers
+  const draftsWithoutPointers = await db.regulatoryRule.count({
+    where: {
+      createdAt: { gte: cutoff },
+      status: { notIn: ["PUBLISHED", "REJECTED"] },
+      sourcePointers: {
+        none: {},
+      },
+    },
+  })
+
+  const totalDrafts = await db.regulatoryRule.count({
+    where: {
+      createdAt: { gte: cutoff },
+      status: { notIn: ["PUBLISHED", "REJECTED"] },
+    },
+  })
+
+  const missingPointerRate = totalDrafts > 0 ? (draftsWithoutPointers / totalDrafts) * 100 : 0
 
   let status: "healthy" | "degraded" | "critical" = "healthy"
   let recommendation: string | undefined
@@ -176,15 +218,15 @@ async function checkSourcePointerCoverage(): Promise<HealthGate> {
   if (missingPointerRate > 5) {
     status = "critical"
     recommendation =
-      "Rules without source pointers lack traceability. Check composer validation logic to ensure source pointers are required."
+      "High rate of draft rules without source pointers. Check extractor and composer validation."
   }
 
   return {
-    name: "source_pointer_coverage",
+    name: "source_pointer_coverage_draft",
     status,
     value: Math.round(missingPointerRate * 10) / 10,
     threshold: 5,
-    message: `${rulesWithoutPointers} rules without pointers / ${totalRules} total rules (${missingPointerRate.toFixed(1)}%)`,
+    message: `${draftsWithoutPointers} draft rules without pointers / ${totalDrafts} total drafts (${missingPointerRate.toFixed(1)}%)`,
     recommendation,
   }
 }
@@ -329,10 +371,22 @@ export async function checkHealthGates(): Promise<HealthGateResult> {
   }
 
   try {
-    gates.push(await checkSourcePointerCoverage())
+    gates.push(await checkSourcePointerCoveragePublished())
   } catch (error) {
     gates.push({
-      name: "source_pointer_coverage",
+      name: "source_pointer_coverage_published",
+      status: "critical",
+      value: -1,
+      threshold: 0,
+      message: `Error checking: ${error instanceof Error ? error.message : String(error)}`,
+    })
+  }
+
+  try {
+    gates.push(await checkSourcePointerCoverageDraft())
+  } catch (error) {
+    gates.push({
+      name: "source_pointer_coverage_draft",
       status: "critical",
       value: -1,
       threshold: 5,
