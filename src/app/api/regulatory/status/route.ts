@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server"
 import { allQueues, checkRedisHealth } from "@/lib/regulatory-truth/workers"
 import { getCircuitBreakerStatus } from "@/lib/regulatory-truth/workers/circuit-breaker"
+import { checkHealthGates } from "@/lib/regulatory-truth/utils/health-gates"
 
 async function getQueueStatusWithTimeout(
   timeoutMs: number = 3000
@@ -59,11 +60,23 @@ export async function GET() {
     // Get queue stats with timeout protection
     const queueStatus = await getQueueStatusWithTimeout(3000)
 
+    // Run health gates to check system improvements
+    const healthGateResult = await checkHealthGates()
+
+    // Determine overall status from both queue health and health gates
+    const overallStatus =
+      healthGateResult.overallHealth === "critical"
+        ? "critical"
+        : healthGateResult.overallHealth === "degraded"
+          ? "degraded"
+          : "healthy"
+
     return NextResponse.json({
-      status: "healthy",
+      status: overallStatus,
       redis: "connected",
       queues: queueStatus,
       circuitBreakers: getCircuitBreakerStatus(),
+      healthGates: healthGateResult,
       responseTime: Date.now() - startTime,
       timestamp: new Date().toISOString(),
     })
