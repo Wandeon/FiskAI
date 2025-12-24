@@ -1,21 +1,22 @@
-"use client"
+import { Metadata } from "next"
+import { AssistantContainer } from "@/components/assistant-v2"
 
-import { useEffect } from "react"
-import { useAssistant } from "@/components/assistant/AssistantContext"
-import { Loader2 } from "lucide-react"
+export const metadata: Metadata = {
+  title: "Asistent | FiskAI",
+  description: "AI asistent za regulatorne upite s podacima vaše tvrtke.",
+}
 
-export default function AssistantPage() {
-  const { openAssistant } = useAssistant()
-
-  useEffect(() => {
-    // Automatically open the popup when visiting this page
-    openAssistant()
-  }, [openAssistant])
-
+export default function AppAssistantPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      <p className="text-[var(--muted)]">Otvaranje asistenta...</p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold">Regulatorni asistent</h1>
+        <p className="text-muted-foreground">
+          Postavite pitanje. Odgovor će koristiti podatke vaše tvrtke.
+        </p>
+      </header>
+
+      <AssistantContainer surface="APP" />
     </div>
   )
 }
