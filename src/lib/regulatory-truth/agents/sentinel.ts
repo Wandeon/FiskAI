@@ -6,6 +6,7 @@ import { detectContentChange, hashContent } from "../utils/content-hash"
 import { parseSitemap, filterNNSitemaps, getLatestNNIssueSitemaps } from "../parsers/sitemap-parser"
 import { parseHtmlList, findPaginationLinks } from "../parsers/html-list-parser"
 import { logAuditEvent } from "../utils/audit-log"
+import { isBinaryUrl, detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
 
 interface SentinelConfig {
   maxItemsPerRun: number
@@ -304,7 +305,30 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
         throw new Error(`HTTP ${response.status}`)
       }
 
-      const content = await response.text()
+      // Handle binary files (PDF, DOCX, etc.)
+      let content: string
+      let contentType: string = "html"
+
+      if (isBinaryUrl(item.url)) {
+        const contentTypeHeader = response.headers.get("content-type") || ""
+        const binaryType = detectBinaryType(item.url, contentTypeHeader)
+        console.log(`[sentinel] Binary file detected: ${binaryType}`)
+
+        const arrayBuffer = await response.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        const parsed = await parseBinaryContent(buffer, binaryType)
+
+        if (!parsed.text || parsed.text.trim().length === 0) {
+          throw new Error(`No text extracted from ${binaryType} file`)
+        }
+
+        content = parsed.text
+        contentType = binaryType
+        console.log(`[sentinel] Extracted ${content.length} chars from ${binaryType}`)
+      } else {
+        content = await response.text()
+      }
+
       const contentHash = hashContent(content)
 
       // Check if content unchanged from previous fetch
@@ -361,7 +385,7 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
               url: item.url,
               rawContent: content,
               contentHash,
-              contentType: "html",
+              contentType: contentType,
               hasChanged: isContentChange,
               changeSummary: isContentChange
                 ? `Content updated from previous version (hash: ${item.contentHash?.slice(0, 8)}...)`
