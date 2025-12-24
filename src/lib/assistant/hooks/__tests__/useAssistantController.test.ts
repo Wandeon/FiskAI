@@ -157,4 +157,46 @@ describe("useAssistantController", () => {
       expect(result.current.state.activeQuery).toBe("First query")
     })
   })
+
+  describe("PARTIAL_COMPLETE state", () => {
+    it("transitions to PARTIAL_COMPLETE when answer done but clientContext incomplete", () => {
+      const { result } = renderHook(() => useAssistantController({ surface: "APP" }))
+
+      const partialResponse: AssistantResponse = {
+        ...mockResponse,
+        surface: "APP",
+        clientContext: {
+          used: [],
+          completeness: { status: "PARTIAL", score: 0.5 },
+        },
+      }
+
+      act(() => {
+        result.current.dispatch({ type: "SUBMIT", query: "My threshold", requestId: "req_1" })
+        result.current.dispatch({ type: "COMPLETE", response: partialResponse })
+      })
+
+      expect(result.current.state.status).toBe("PARTIAL_COMPLETE")
+    })
+
+    it("stays COMPLETE when clientContext is complete", () => {
+      const { result } = renderHook(() => useAssistantController({ surface: "APP" }))
+
+      const completeResponse: AssistantResponse = {
+        ...mockResponse,
+        surface: "APP",
+        clientContext: {
+          used: [{ label: "Revenue", value: "€31,760", source: "Invoices" }],
+          completeness: { status: "COMPLETE", score: 1.0 },
+        },
+      }
+
+      act(() => {
+        result.current.dispatch({ type: "SUBMIT", query: "My threshold", requestId: "req_1" })
+        result.current.dispatch({ type: "COMPLETE", response: completeResponse })
+      })
+
+      expect(result.current.state.status).toBe("COMPLETE")
+    })
+  })
 })

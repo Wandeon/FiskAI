@@ -87,9 +87,17 @@ function reducer(state: AssistantControllerState, action: Action): AssistantCont
         timestamp: new Date().toISOString(),
       }
 
+      // Check if APP surface with incomplete client context.
+      // Only transition to PARTIAL_COMPLETE if clientContext was explicitly provided
+      // but is not yet complete. Responses without clientContext always go to COMPLETE.
+      const isPartialComplete =
+        action.response.surface === "APP" &&
+        !!action.response.clientContext &&
+        action.response.clientContext.completeness.status !== "COMPLETE"
+
       return {
         ...state,
-        status: "COMPLETE",
+        status: isPartialComplete ? "PARTIAL_COMPLETE" : "COMPLETE",
         activeAnswer: action.response,
         history: [...state.history, historyItem],
         retryCount: 0,
