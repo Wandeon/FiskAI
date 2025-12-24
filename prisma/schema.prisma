@@ -1733,15 +1733,38 @@ model Evidence {
   changeSummary   String?
   deletedAt       DateTime?
 
+  // NEW: OCR support fields
+  contentClass            String   @default("HTML")  // HTML, PDF_TEXT, PDF_SCANNED, DOC, XLSX, JSON
+  ocrMetadata             Json?    // OCR processing metadata
+  primaryTextArtifactId   String?  // Points to canonical text artifact for Extractor
+
   source          RegulatorySource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   sourcePointers  SourcePointer[]
   agentRuns       AgentRun[]
   extractionRejected ExtractionRejected[]
+  artifacts       EvidenceArtifact[]
 
   @@unique([url, contentHash])
   @@index([sourceId])
   @@index([fetchedAt])
   @@index([contentHash])
+  @@index([contentClass])
+}
+
+model EvidenceArtifact {
+  id          String   @id @default(cuid())
+  evidenceId  String
+  kind        String   // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, TABLE_JSON
+  content     String   @db.Text
+  contentHash String
+  pageMap     Json?    // Per-page metadata: [{page, confidence, method}]
+  createdAt   DateTime @default(now())
+
+  evidence    Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@index([evidenceId])
+  @@index([kind])
+  @@index([createdAt])
 }
 
 model SourcePointer {
