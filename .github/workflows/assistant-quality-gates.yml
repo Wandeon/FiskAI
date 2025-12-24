@@ -1,0 +1,102 @@
+# .github/workflows/assistant-quality-gates.yml
+name: Assistant Quality Gates
+
+on:
+  push:
+    paths:
+      - 'src/lib/assistant/**'
+      - 'src/components/assistant-v2/**'
+      - 'e2e/assistant/**'
+  pull_request:
+    paths:
+      - 'src/lib/assistant/**'
+      - 'src/components/assistant-v2/**'
+      - 'e2e/assistant/**'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run assistant unit tests
+        run: npx vitest run src/lib/assistant/ src/components/assistant-v2/ --reporter=verbose
+
+      - name: Run quality gate tests
+        run: npx vitest run src/lib/assistant/__tests__/quality-gates.test.ts --reporter=verbose
+
+  accessibility-tests:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run axe-core tests
+        run: npx vitest run src/components/assistant-v2/__tests__/accessibility --reporter=verbose
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run E2E tests
+        run: npx playwright test e2e/assistant/ --project=chromium
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  quality-summary:
+    name: Quality Summary
+    needs: [unit-tests, accessibility-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.accessibility-tests.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "Quality gates failed"
+            exit 1
+          fi
+          echo "All quality gates passed"
