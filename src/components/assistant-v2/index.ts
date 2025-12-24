@@ -11,3 +11,4 @@ export { Announcer } from "./Announcer"
 // Phase 5: Answer Components
 export { ConfidenceBadge } from "./ConfidenceBadge"
 export { AnswerCard } from "./AnswerCard"
+export { ActionButtons } from "./ActionButtons"
