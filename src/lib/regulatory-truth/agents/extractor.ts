@@ -11,6 +11,7 @@ import { runAgent } from "./runner"
 import { cleanContent, getCleaningStats } from "../utils/content-cleaner"
 import { validateExtraction } from "../utils/deterministic-validators"
 import { withSoftFail } from "../utils/soft-fail"
+import { getExtractableContent } from "../utils/content-provider"
 
 // =============================================================================
 // EXTRACTOR AGENT
@@ -114,9 +115,15 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
     }
   }
 
+  // Get content from artifact or rawContent via content provider
+  const { text: content, source, artifactKind } = await getExtractableContent(evidenceId)
+  console.log(
+    `[extractor] Using ${source}${artifactKind ? `:${artifactKind}` : ""} for ${evidenceId}`
+  )
+
   // Clean content to remove navigation noise before passing to LLM
-  const cleanedContent = cleanContent(evidence.rawContent, evidence.url)
-  const stats = getCleaningStats(evidence.rawContent, cleanedContent)
+  const cleanedContent = cleanContent(content, evidence.url)
+  const stats = getCleaningStats(content, cleanedContent)
   console.log(
     `[extractor] Cleaned content for ${evidence.url}: ${stats.originalLength} → ${stats.cleanedLength} chars (${stats.reductionPercent}% reduction, ${stats.newsItemsFound} news items found)`
   )
@@ -154,11 +161,8 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
 
   for (const extraction of result.output.extractions) {
     // For JSON content, fix the quote to be a verbatim JSON fragment
-    if (evidence.contentType === "json" || isJsonContent(evidence.rawContent)) {
-      const jsonQuote = extractQuoteFromJson(
-        evidence.rawContent,
-        String(extraction.extracted_value)
-      )
+    if (evidence.contentType === "json" || isJsonContent(content)) {
+      const jsonQuote = extractQuoteFromJson(content, String(extraction.extracted_value))
       if (jsonQuote) {
         extraction.exact_quote = jsonQuote
         extraction.extraction_notes =

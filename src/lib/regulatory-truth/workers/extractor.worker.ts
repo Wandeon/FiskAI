@@ -1,11 +1,12 @@
 // src/lib/regulatory-truth/workers/extractor.worker.ts
 import { Job } from "bullmq"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
-import { composeQueue } from "./queues"
+import { composeQueue, extractQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter, getDomainDelay } from "./rate-limiter"
 import { runExtractor } from "../agents/extractor"
 import { db } from "@/lib/db"
+import { isReadyForExtraction } from "../utils/content-provider"
 
 interface ExtractJobData {
   evidenceId: string
@@ -18,6 +19,19 @@ async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
   const { evidenceId, runId } = job.data
 
   try {
+    // Check if evidence is ready for extraction (has required artifacts)
+    const ready = await isReadyForExtraction(evidenceId)
+    if (!ready) {
+      // Re-queue with delay - OCR might still be processing
+      console.log(`[extractor] Evidence ${evidenceId} not ready, requeueing...`)
+      await extractQueue.add("extract", { evidenceId, runId }, { delay: 30000 })
+      return {
+        success: true,
+        duration: 0,
+        data: { requeued: true, reason: "awaiting_artifact" },
+      }
+    }
+
     // Get evidence with source info for rate limiting
     const evidence = await db.evidence.findUnique({
       where: { id: evidenceId },
