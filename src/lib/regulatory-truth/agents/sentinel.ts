@@ -6,7 +6,9 @@ import { detectContentChange, hashContent } from "../utils/content-hash"
 import { parseSitemap, filterNNSitemaps, getLatestNNIssueSitemaps } from "../parsers/sitemap-parser"
 import { parseHtmlList, findPaginationLinks } from "../parsers/html-list-parser"
 import { logAuditEvent } from "../utils/audit-log"
-import { isBinaryUrl, detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
+import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
+import { ocrQueue, extractQueue } from "../workers/queues"
+import { isScannedPdf } from "../utils/ocr-processor"
 
 interface SentinelConfig {
   maxItemsPerRun: number
@@ -309,9 +311,148 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
       let content: string
       let contentType: string = "html"
 
-      if (isBinaryUrl(item.url)) {
-        const contentTypeHeader = response.headers.get("content-type") || ""
-        const binaryType = detectBinaryType(item.url, contentTypeHeader)
+      // Check both URL extension AND content-type header for binary detection
+      const contentTypeHeader = response.headers.get("content-type") || ""
+      const binaryType = detectBinaryType(item.url, contentTypeHeader)
+
+      if (binaryType === "pdf") {
+        console.log(`[sentinel] PDF detected, checking if scanned or text-based...`)
+
+        const arrayBuffer = await response.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        const parsed = await parseBinaryContent(buffer, binaryType)
+
+        const pageCount = (parsed.metadata?.pages as number) || 1
+        const isScanned = isScannedPdf(parsed.text, pageCount)
+
+        // Find or create source
+        const source = await db.regulatorySource.findFirst({
+          where: {
+            url: { contains: item.endpoint.domain },
+          },
+        })
+
+        if (!source) {
+          console.log(`[sentinel] No source found for ${item.endpoint.domain}`)
+          await db.discoveredItem.update({
+            where: { id: item.id },
+            data: { status: "SKIPPED" },
+          })
+          continue
+        }
+
+        if (isScanned) {
+          // Scanned PDF - store as base64, queue for OCR
+          console.log(
+            `[sentinel] Scanned PDF detected (${pageCount} pages, ${parsed.text.length} chars)`
+          )
+
+          const contentHash = hashContent(buffer.toString("base64"))
+          const evidence = await db.evidence.create({
+            data: {
+              sourceId: source.id,
+              url: item.url,
+              rawContent: buffer.toString("base64"),
+              contentHash: contentHash,
+              contentType: "pdf",
+              contentClass: "PDF_SCANNED",
+            },
+          })
+
+          await db.discoveredItem.update({
+            where: { id: item.id },
+            data: {
+              status: "FETCHED",
+              processedAt: new Date(),
+              evidenceId: evidence.id,
+              contentHash: evidence.contentHash,
+            },
+          })
+
+          // Queue for OCR, NOT extract
+          const runId = `sentinel-${Date.now()}`
+          await ocrQueue.add("ocr", { evidenceId: evidence.id, runId })
+          console.log(`[sentinel] Queued ${evidence.id} for OCR`)
+
+          await logAuditEvent({
+            action: "EVIDENCE_FETCHED",
+            entityType: "EVIDENCE",
+            entityId: evidence.id,
+            metadata: {
+              sourceId: source.id,
+              url: item.url,
+              contentHash: contentHash,
+              contentClass: "PDF_SCANNED",
+            },
+          })
+
+          fetched++
+        } else {
+          // PDF with text layer - create artifact and queue for extract
+          console.log(
+            `[sentinel] Text PDF detected (${pageCount} pages, ${parsed.text.length} chars)`
+          )
+
+          const contentHash = hashContent(buffer.toString("base64"))
+          const evidence = await db.evidence.create({
+            data: {
+              sourceId: source.id,
+              url: item.url,
+              rawContent: buffer.toString("base64"),
+              contentHash: contentHash,
+              contentType: "pdf",
+              contentClass: "PDF_TEXT",
+            },
+          })
+
+          // Create PDF_TEXT artifact
+          const artifact = await db.evidenceArtifact.create({
+            data: {
+              evidenceId: evidence.id,
+              kind: "PDF_TEXT",
+              content: parsed.text,
+              contentHash: hashContent(parsed.text),
+            },
+          })
+
+          // Set primary text artifact
+          await db.evidence.update({
+            where: { id: evidence.id },
+            data: { primaryTextArtifactId: artifact.id },
+          })
+
+          await db.discoveredItem.update({
+            where: { id: item.id },
+            data: {
+              status: "FETCHED",
+              processedAt: new Date(),
+              evidenceId: evidence.id,
+              contentHash: evidence.contentHash,
+            },
+          })
+
+          // Queue for extraction
+          const runId = `sentinel-${Date.now()}`
+          await extractQueue.add("extract", { evidenceId: evidence.id, runId })
+          console.log(`[sentinel] Queued ${evidence.id} for extraction`)
+
+          await logAuditEvent({
+            action: "EVIDENCE_FETCHED",
+            entityType: "EVIDENCE",
+            entityId: evidence.id,
+            metadata: {
+              sourceId: source.id,
+              url: item.url,
+              contentHash: contentHash,
+              contentClass: "PDF_TEXT",
+            },
+          })
+
+          fetched++
+        }
+
+        continue
+      } else if (binaryType !== "unknown") {
         console.log(`[sentinel] Binary file detected: ${binaryType}`)
 
         const arrayBuffer = await response.arrayBuffer()
