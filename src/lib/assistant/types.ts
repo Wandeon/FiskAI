@@ -1,0 +1,202 @@
+// === SCHEMA METADATA ===
+export const SCHEMA_VERSION = "1.0.0" as const
+
+// === LENGTH BUDGETS (Server-Enforced) ===
+export const LIMITS = {
+  // Per-field caps
+  headline: 120,
+  directAnswer: 240,
+  keyDetailItem: 120,
+  keyDetailCount: 3,
+  nextStep: 100,
+
+  // Why drawer
+  whyBulletItem: 140,
+  whyBulletCount: 5,
+  whyTotalChars: 700,
+
+  // Citations
+  citationsMax: 4,
+  quoteExcerpt: 240,
+  citationsTotalChars: 1200,
+
+  // Client context
+  computedResultExplanation: 200,
+
+  // Related
+  relatedQuestionsMax: 4,
+  relatedQuestionLength: 80,
+
+  // Total payload
+  totalResponseChars: 3500,
+} as const
+
+// === AUTHORITY ORDER (FROZEN - Do not modify) ===
+export const AUTHORITY_ORDER = ["LAW", "REGULATION", "GUIDANCE", "PRACTICE"] as const
+export type AuthorityLevel = (typeof AUTHORITY_ORDER)[number]
+
+export const AUTHORITY_RANK: Record<AuthorityLevel, number> = {
+  LAW: 1,
+  REGULATION: 2,
+  GUIDANCE: 3,
+  PRACTICE: 4,
+}
+
+// === REFUSAL REASONS ===
+export type RefusalReason =
+  | "NO_CITABLE_RULES"
+  | "OUT_OF_SCOPE"
+  | "MISSING_CLIENT_DATA"
+  | "UNRESOLVED_CONFLICT"
+
+// === SURFACE & TOPIC ===
+export type Surface = "MARKETING" | "APP"
+export type Topic = "REGULATORY" | "PRODUCT" | "SUPPORT" | "OFFTOPIC"
+export type ResponseKind = "ANSWER" | "REFUSAL" | "ERROR"
+
+// === SOURCE CARD ===
+export interface SourceCard {
+  id: string
+  title: string
+  authority: AuthorityLevel
+  reference?: string
+  quote?: string
+  pageNumber?: number
+  url: string
+  effectiveFrom: string
+  confidence: number
+  status?: "ACTIVE" | "SUPERSEDED"
+}
+
+// === CITATION BLOCK ===
+export interface CitationBlock {
+  primary: SourceCard
+  supporting: SourceCard[]
+}
+
+// === CLIENT CONTEXT ===
+export interface DataPoint {
+  label: string
+  value: string
+  source: string
+  asOfDate?: string
+}
+
+export interface MissingData {
+  label: string
+  impact: string
+  connectAction?: string
+}
+
+export type CompletenessStatus = "COMPLETE" | "PARTIAL" | "NONE"
+
+export interface ClientContextBlock {
+  used: DataPoint[]
+  completeness: {
+    status: CompletenessStatus
+    score: number
+    notes?: string
+  }
+  assumptions?: string[]
+  missing?: MissingData[]
+  computedResult?: {
+    label: string
+    value: string
+    explanation?: string
+  }
+}
+
+// === CONFLICT BLOCK ===
+export type ConflictStatus = "RESOLVED" | "UNRESOLVED" | "CONTEXT_DEPENDENT"
+
+export interface ConflictBlock {
+  status: ConflictStatus
+  resolvedAt?: string
+  description: string
+  sources: SourceCard[]
+  winningSourceId?: string
+}
+
+// === REFUSAL BLOCK ===
+export interface RedirectOption {
+  label: string
+  href: string
+  type: "SUPPORT" | "DOCS" | "CONTACT"
+}
+
+export interface RefusalBlock {
+  message: string
+  relatedTopics?: string[]
+  redirectOptions?: RedirectOption[]
+  missingData?: MissingData[]
+  conflictingSources?: SourceCard[]
+}
+
+// === DEBUG BLOCK (non-production only) ===
+export interface DebugBlock {
+  latencyMs: number
+  rulesConsidered: number
+  rulesUsed: number
+  conflictsOpen: number
+  pipelineStages?: string[]
+}
+
+// === CONFIDENCE ===
+export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW"
+
+export interface Confidence {
+  level: ConfidenceLevel
+  score?: number
+  rationale?: string
+}
+
+// === CORE RESPONSE ===
+export interface AssistantResponse {
+  // Schema & tracing
+  schemaVersion: typeof SCHEMA_VERSION
+  requestId: string
+  traceId: string
+
+  // Classification
+  kind: ResponseKind
+  topic: Topic
+  surface: Surface
+  createdAt: string
+
+  // Answer content
+  headline: string
+  directAnswer: string
+  keyDetails?: string[]
+  nextStep?: string
+  asOfDate?: string
+  confidence?: Confidence
+
+  // Drawers
+  why?: { bullets: string[] }
+  howToApply?: { steps: string[] }
+
+  // Citations
+  citations?: CitationBlock
+
+  // Client context (APP only)
+  clientContext?: ClientContextBlock
+
+  // Conflict
+  conflict?: ConflictBlock
+
+  // Refusal
+  refusalReason?: RefusalReason
+  refusal?: RefusalBlock
+
+  // Error
+  error?: {
+    message: string
+    retryable: boolean
+  }
+
+  // Follow-up
+  relatedQuestions?: string[]
+
+  // Debug (non-production)
+  _debug?: DebugBlock
+}
