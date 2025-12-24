@@ -11,6 +11,7 @@ import type {
 
 interface UseAssistantControllerProps {
   surface: Surface
+  companyId?: string
 }
 
 type Action =
@@ -143,7 +144,7 @@ function reducer(state: AssistantControllerState, action: Action): AssistantCont
   }
 }
 
-export function useAssistantController({ surface }: UseAssistantControllerProps) {
+export function useAssistantController({ surface, companyId }: UseAssistantControllerProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -160,10 +161,19 @@ export function useAssistantController({ surface }: UseAssistantControllerProps)
       dispatch({ type: "SUBMIT", query, requestId })
 
       try {
+        // Build request body - only include companyId for APP surface
+        const body: { query: string; surface: Surface; companyId?: string } = {
+          query,
+          surface,
+        }
+        if (surface === "APP" && companyId) {
+          body.companyId = companyId
+        }
+
         const response = await fetch("/api/assistant/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, surface }),
+          body: JSON.stringify(body),
           signal: abortControllerRef.current.signal,
         })
 
@@ -195,7 +205,7 @@ export function useAssistantController({ surface }: UseAssistantControllerProps)
         dispatch({ type: "ERROR", error: assistantError })
       }
     },
-    [surface]
+    [surface, companyId]
   )
 
   return {

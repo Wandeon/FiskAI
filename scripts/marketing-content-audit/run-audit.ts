@@ -61,7 +61,7 @@ async function main() {
     }
   }
 
-  const reportEnv: NodeJS.ProcessEnv = {}
+  const reportEnv: Record<string, string> = {}
   if (process.env.RUN_PLAYWRIGHT === "true") {
     reportEnv.MARKETING_AUDIT_PLAYWRIGHT_RESULTS = playwrightResultsPath
   }

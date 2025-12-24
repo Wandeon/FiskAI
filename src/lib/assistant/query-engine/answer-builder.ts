@@ -156,14 +156,65 @@ export async function buildAnswer(
     }
   }
 
-  // 3. Match concepts
+  // 3. Early personalization detection (before concept matching)
+  // Check if the raw query contains personalization keywords
+  const earlyPersonalization = detectPersonalizationNeed(query, [])
+
+  // 3.5. Handle personalization BEFORE concept matching
+  // If personalization is needed, return MISSING_CLIENT_DATA immediately
+  if (earlyPersonalization.needed) {
+    if (surface === "MARKETING") {
+      // MARKETING surface: Prompt signup for personalized answers
+      return {
+        ...baseResponse,
+        kind: "REFUSAL",
+        topic,
+        headline: "Potrebni su podaci o poslovanju",
+        directAnswer: "",
+        refusalReason: "MISSING_CLIENT_DATA" as RefusalReason,
+        refusal: {
+          message:
+            "Za personalizirani odgovor na ovo pitanje potrebni su podaci o vašem poslovanju. Prijavite se za pristup personaliziranim izračunima.",
+          relatedTopics: ["porez na dohodak", "PDV pragovi", "paušalni obrt", "doprinosi"],
+        },
+      }
+    } else if (surface === "APP" && !companyId) {
+      // APP surface without company: Prompt to connect data
+      return {
+        ...baseResponse,
+        kind: "REFUSAL",
+        topic,
+        headline: "Potrebni su podaci o poslovanju",
+        directAnswer: "",
+        refusalReason: "MISSING_CLIENT_DATA" as RefusalReason,
+        refusal: {
+          message:
+            "Za personalizirani odgovor na ovo pitanje potrebni su podaci o vašem poslovanju. Molimo povežite vaš poslovni profil.",
+        },
+        clientContext: {
+          used: [],
+          completeness: {
+            status: "NONE",
+            score: 0,
+          },
+          missing: earlyPersonalization.requiredFields.map((f) => ({
+            label: f,
+            impact: "Required for personalized answer",
+          })),
+        },
+      }
+    }
+    // APP surface with companyId: Continue to try to answer with client context
+  }
+
+  // 4. Match concepts
   const conceptMatches = await matchConcepts(keywords)
 
   if (conceptMatches.length === 0) {
     return buildNoCitableRulesRefusal(baseResponse, topic)
   }
 
-  // 3.5. Early personalization detection (for proper error handling)
+  // 4.5. Refine personalization detection with concept slugs
   const conceptSlugs = conceptMatches.map((c) => c.slug)
   const personalization = detectPersonalizationNeed(query, conceptSlugs)
 
@@ -190,40 +241,11 @@ export async function buildAnswer(
     }
   }
 
-  // 4. Select rules for matched concepts
+  // 5. Select rules for matched concepts
   const rules = await selectRules(conceptSlugs)
 
   if (rules.length === 0) {
     return buildNoCitableRulesRefusal(baseResponse, topic)
-  }
-
-  // 4.5. Check personalization needs (APP surface only)
-  // personalization already computed at step 3.5 using raw query (keywords have stopwords removed)
-  if (surface === "APP" && personalization.needed && !companyId) {
-    // APP surface requires client data for personalized answers
-    return {
-      ...baseResponse,
-      kind: "REFUSAL",
-      topic,
-      headline: "Potrebni su podaci o poslovanju",
-      directAnswer: "",
-      refusalReason: "MISSING_CLIENT_DATA" as RefusalReason,
-      refusal: {
-        message:
-          "Za personalizirani odgovor na ovo pitanje potrebni su podaci o vašem poslovanju. Molimo povežite vaš poslovni profil.",
-      },
-      clientContext: {
-        used: [],
-        completeness: {
-          status: "NONE",
-          score: 0,
-        },
-        missing: personalization.requiredFields.map((f) => ({
-          label: f,
-          impact: "Required for personalized answer",
-        })),
-      },
-    }
   }
 
   // 5. Check for conflicts

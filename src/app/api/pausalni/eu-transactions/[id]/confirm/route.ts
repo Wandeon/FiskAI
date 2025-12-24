@@ -9,8 +9,9 @@ import { confirmEuTransaction } from "@/lib/pausalni/eu-detection"
  * POST /api/pausalni/eu-transactions/[id]/confirm
  * Confirm/reject a transaction as EU (learns vendor)
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const transaction = await drizzleDb
       .select()
       .from(euTransaction)
-      .where(and(eq(euTransaction.id, params.id), eq(euTransaction.companyId, company.id)))
+      .where(and(eq(euTransaction.id, id), eq(euTransaction.companyId, company.id)))
       .limit(1)
 
     if (transaction.length === 0) {
@@ -53,13 +54,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Confirm the transaction (this will also learn the vendor if provided)
-    await confirmEuTransaction(params.id, isEu, country, vendorName)
+    await confirmEuTransaction(id, isEu, country, vendorName)
 
     // Fetch the updated transaction
     const updated = await drizzleDb
       .select()
       .from(euTransaction)
-      .where(eq(euTransaction.id, params.id))
+      .where(eq(euTransaction.id, id))
       .limit(1)
 
     return NextResponse.json({

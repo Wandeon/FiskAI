@@ -29,7 +29,10 @@ const actionSchema = z.discriminatedUnion("action", [
   }),
 ])
 
-export async function POST(request: NextRequest, { params }: { params: { companyId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ companyId: string }> }
+) {
   const user = await getCurrentUser()
 
   // Check ADMIN role
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: { company
     return NextResponse.json({ error: "Forbidden: ADMIN role required" }, { status: 403 })
   }
 
-  const companyId = params.companyId
+  const { companyId } = await params
 
   try {
     const body = await request.json()

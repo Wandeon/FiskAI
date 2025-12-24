@@ -1,4 +1,6 @@
 import { Metadata } from "next"
+import { auth } from "@/lib/auth"
+import { getCurrentCompany } from "@/lib/auth-utils"
 import { AssistantContainer } from "@/components/assistant-v2"
 
 export const metadata: Metadata = {
@@ -6,7 +8,20 @@ export const metadata: Metadata = {
   description: "AI asistent za regulatorne upite s podacima vaše tvrtke.",
 }
 
-export default function AppAssistantPage() {
+export default async function AppAssistantPage() {
+  const session = await auth()
+
+  // Get current company for the user (may be null if not set up)
+  let companyId: string | undefined
+  if (session?.user?.id) {
+    try {
+      const company = await getCurrentCompany(session.user.id)
+      companyId = company?.id
+    } catch {
+      // User may not have a company yet
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header>
@@ -16,7 +31,7 @@ export default function AppAssistantPage() {
         </p>
       </header>
 
-      <AssistantContainer surface="APP" />
+      <AssistantContainer surface="APP" companyId={companyId} />
     </div>
   )
 }

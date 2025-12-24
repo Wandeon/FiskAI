@@ -405,9 +405,9 @@ async function main() {
     const name = step.name.slice(0, 37).padEnd(37)
     const success = step.success ? "  ✅   " : "  ❌   "
     const duration = `${step.duration}ms`.padStart(7)
-    const rating = "⭐".repeat(step.rating).padEnd(5)
+    const rating = "⭐".repeat(step.myRating).padEnd(5)
     console.log(`│  ${step.step}   │ ${name} │ ${success} │ ${duration} │ ${rating} │`)
-    totalRating += step.rating
+    totalRating += step.myRating
   }
 
   console.log("└──────┴───────────────────────────────────────┴─────────┴──────────┴────────┘")

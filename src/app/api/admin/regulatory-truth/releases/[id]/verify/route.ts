@@ -3,7 +3,7 @@ import { verifyReleaseHash } from "@/lib/regulatory-truth/utils/release-hash"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check authentication
     const session = await auth()
@@ -17,7 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
     }
 
-    const result = await verifyReleaseHash(params.id, db)
+    const { id } = await params
+    const result = await verifyReleaseHash(id, db)
     return NextResponse.json(result)
   } catch (error) {
     return NextResponse.json(

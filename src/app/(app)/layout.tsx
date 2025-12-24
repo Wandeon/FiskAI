@@ -7,7 +7,8 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { BottomNav } from "@/components/layout/bottom-nav"
 import { DashboardBackground } from "@/components/layout/DashboardBackground"
-import { AssistantPopup } from "@/components/assistant/AssistantPopup"
+// REMOVED: Legacy AssistantPopup - replaced by assistant-v2 at /asistent route
+// import { AssistantPopup } from "@/components/assistant/AssistantPopup"
 import { VisibilityProvider } from "@/lib/visibility"
 import { getVisibilityProviderProps } from "@/lib/visibility/server"
 import { DashboardSkipLinks } from "@/components/a11y/skip-link"
@@ -73,8 +74,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </main>
       </div>
 
-      {/* Global Assistant Popup */}
-      <AssistantPopup />
+      {/* REMOVED: Legacy AssistantPopup - users now use /asistent route for v2 assistant */}
 
       {/* Mobile bottom navigation */}
       <BottomNav />
