@@ -5,9 +5,11 @@ import {
   AUTHORITY_ORDER,
   AUTHORITY_RANK,
   ERROR_TYPES,
+  CONTROLLER_STATES,
   type AssistantResponse,
   type RefusalReason,
   type ErrorType,
+  type ControllerStatus,
 } from "../types"
 
 describe("Assistant Types", () => {
@@ -41,5 +43,17 @@ describe("Error Types", () => {
     expect(ERROR_TYPES).toContain("CLIENT_ERROR")
     expect(ERROR_TYPES).toContain("SCHEMA_VALIDATION")
     expect(ERROR_TYPES).toContain("RATE_LIMITED")
+  })
+})
+
+describe("Controller State Types", () => {
+  it("exports all controller states", () => {
+    expect(CONTROLLER_STATES).toContain("IDLE")
+    expect(CONTROLLER_STATES).toContain("LOADING")
+    expect(CONTROLLER_STATES).toContain("STREAMING")
+    expect(CONTROLLER_STATES).toContain("COMPLETE")
+    expect(CONTROLLER_STATES).toContain("PARTIAL_COMPLETE")
+    expect(CONTROLLER_STATES).toContain("ERROR")
+    expect(CONTROLLER_STATES).toHaveLength(6)
   })
 })

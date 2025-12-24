@@ -218,3 +218,43 @@ export interface AssistantResponse {
   // Debug (non-production)
   _debug?: DebugBlock
 }
+
+// === CONTROLLER STATES ===
+export const CONTROLLER_STATES = [
+  "IDLE",
+  "LOADING",
+  "STREAMING",
+  "COMPLETE",
+  "PARTIAL_COMPLETE",
+  "ERROR",
+] as const
+
+export type ControllerStatus = (typeof CONTROLLER_STATES)[number]
+
+// === HISTORY ITEM ===
+export interface HistoryItem {
+  id: string
+  query: string
+  answer: AssistantResponse
+  timestamp: string
+}
+
+// === STREAM PROGRESS ===
+export interface StreamProgress {
+  headline: boolean
+  directAnswer: boolean
+  citations: boolean
+  clientContext: boolean
+}
+
+// === CONTROLLER STATE ===
+export interface AssistantControllerState {
+  status: ControllerStatus
+  activeRequestId: string | null
+  activeQuery: string | null
+  activeAnswer: AssistantResponse | null
+  history: HistoryItem[]
+  error: AssistantError | null
+  retryCount: number
+  streamProgress: StreamProgress
+}
