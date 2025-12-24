@@ -10,6 +10,9 @@ export * from "./validation"
 // Citations
 export * from "./citations"
 
+// Query Engine
+export * from "./query-engine"
+
 // Fixtures
 export * from "./fixtures"
 
