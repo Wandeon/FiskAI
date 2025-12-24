@@ -1,6 +1,24 @@
 // === SCHEMA METADATA ===
 export const SCHEMA_VERSION = "1.0.0" as const
 
+// === ERROR TYPES ===
+export const ERROR_TYPES = [
+  "NETWORK_TIMEOUT",
+  "NETWORK_FAILURE",
+  "SERVER_ERROR",
+  "CLIENT_ERROR",
+  "SCHEMA_VALIDATION",
+  "RATE_LIMITED",
+] as const
+
+export type ErrorType = (typeof ERROR_TYPES)[number]
+
+export interface AssistantError {
+  type: ErrorType
+  message: string
+  httpStatus?: number
+}
+
 // === LENGTH BUDGETS (Server-Enforced) ===
 export const LIMITS = {
   // Per-field caps

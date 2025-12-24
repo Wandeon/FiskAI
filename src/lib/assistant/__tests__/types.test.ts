@@ -4,8 +4,10 @@ import {
   LIMITS,
   AUTHORITY_ORDER,
   AUTHORITY_RANK,
+  ERROR_TYPES,
   type AssistantResponse,
   type RefusalReason,
+  type ErrorType,
 } from "../types"
 
 describe("Assistant Types", () => {
@@ -28,5 +30,16 @@ describe("Assistant Types", () => {
     expect(AUTHORITY_RANK.REGULATION).toBe(2)
     expect(AUTHORITY_RANK.GUIDANCE).toBe(3)
     expect(AUTHORITY_RANK.PRACTICE).toBe(4)
+  })
+})
+
+describe("Error Types", () => {
+  it("exports all error types", () => {
+    expect(ERROR_TYPES).toContain("NETWORK_TIMEOUT")
+    expect(ERROR_TYPES).toContain("NETWORK_FAILURE")
+    expect(ERROR_TYPES).toContain("SERVER_ERROR")
+    expect(ERROR_TYPES).toContain("CLIENT_ERROR")
+    expect(ERROR_TYPES).toContain("SCHEMA_VALIDATION")
+    expect(ERROR_TYPES).toContain("RATE_LIMITED")
   })
 })
