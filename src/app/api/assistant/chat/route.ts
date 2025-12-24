@@ -1,213 +1,46 @@
-import { NextResponse } from "next/server"
-import { findRelevantRules, formatRulesForPrompt } from "@/lib/regulatory-truth/utils/rule-context"
+import { NextRequest, NextResponse } from "next/server"
+import { nanoid } from "nanoid"
+import { SCHEMA_VERSION, type Surface, type AssistantResponse } from "@/lib/assistant/types"
 
-const SYSTEM_PROMPT = `
-Ti si FiskAI Asistent, stručni pomoćnik za hrvatsko računovodstvo, fiskalizaciju i korištenje FiskAI aplikacije.
-Tvoj cilj je pomoći korisnicima (poduzetnicima, obrtnicima) da razumiju svoje obveze i koriste aplikaciju.
-
-KONTEKST O APLIKACIJI FISKAI:
-- FiskAI je web aplikacija za fakturiranje i vođenje poslovanja.
-- Ključne funkcije: Izrada ponuda i računa (uključujući e-račune), fiskalizacija računa (za gotovinu/kartice), vođenje troškova, praćenje klijenata (adresara).
-- Podržava: Paušalne obrte, obveznike PDV-a i tvrtke (d.o.o.).
-- Navigacija: Dashboard (početna), Računi (izrada i pregled), E-računi (slanje FINA-i), Troškovi, Kontakti, Postavke.
-
-ČESTA PITANJA I PRAVILA (Hrvatska):
-- Paušalni obrt limit: 40.000 EUR godišnje.
-- PDV prag: 40.000 EUR godišnje (ulazak u sustav PDV-a).
-- Rok za plaćanje doprinosa: do 15. u mjesecu za prethodni mjesec.
-- Fiskalizacija: Obavezna za sve račune naplaćene gotovinom ili karticama. Transakcijski račun ne podliježe fiskalizaciji (samo se izdaje račun).
-- Elementi računa: Broj računa, datum i vrijeme, OIB izdavatelja i kupca (ako je pravna osoba), način plaćanja, operater (oznaka), ZKI i JIR (za fiskalizirane).
-
-UPUTE ZA ODGOVARANJE:
-- Budi koristan, pristojan i profesionalan.
-- Odgovaraj na hrvatskom jeziku.
-- Ako korisnik pita kako nešto napraviti u aplikaciji, vodi ga kroz izbornik (npr. "Idi na Računi > Novi račun").
-- Ako nisi siguran oko zakonskog pitanja, naglasi da je to informativan savjet i da provjere s knjigovođom.
-- Ne izmišljaj zakone.
-
-Korisnik te sada pita:
-`
-
-// Regulatory topics that require citations (Croatian terms)
-const REGULATORY_TOPICS = [
-  "pdv",
-  "porez",
-  "dohodak",
-  "dobit",
-  "doprin",
-  "hzzo",
-  "mirovin",
-  "pausaln",
-  "obrt",
-  "fisk",
-  "stopa",
-  "limit",
-  "prag",
-  "obvez",
-  "rok",
-  "plaća",
-  "tečaj",
-  "knjigovod",
-]
-
-// Refusal message when no regulatory context is found
-const NO_CITATION_REFUSAL = `Nažalost, ne mogu pronaći pouzdane regulatorne izvore za odgovor na vaše pitanje.
-
-Da bih vam mogao pomoći s pouzdanim informacijama, molim vas da:
-1. Precizirate o kojoj vrsti poslovanja se radi (paušalni obrt, d.o.o., obrt s PDV-om)
-2. Navedete specifični propis ili područje koje vas zanima (PDV, doprinosi, fiskalizacija)
-3. Ili pitajte o korištenju FiskAI aplikacije - tu vam mogu pomoći bez regulatornih izvora
-
-Za konkretne porezne savjete, preporučam konzultaciju s vašim knjigovođom.`
-
-function containsRegulatoryQuery(query: string): boolean {
-  const lowerQuery = query.toLowerCase()
-  return REGULATORY_TOPICS.some((topic) => lowerQuery.includes(topic))
+interface ChatRequest {
+  query: string
+  surface: Surface
+  tenantId?: string
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const body = (await request.json()) as ChatRequest
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Invalid messages format" }, { status: 400 })
+    // Validate request
+    if (!body.query || typeof body.query !== "string") {
+      return NextResponse.json({ error: "Query is required" }, { status: 400 })
     }
 
-    // Fetch relevant rules for context
-    const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()
-    const userQuery = lastUserMessage?.content || ""
-    const rules = await findRelevantRules(userQuery)
-
-    // INVARIANT: If user asks regulatory question but we have no sources, REFUSE
-    // Don't answer regulatory questions without citations
-    if (containsRegulatoryQuery(userQuery) && rules.length === 0) {
-      console.log(`[Assistant] REFUSING: Regulatory query without citations: "${userQuery.substring(0, 50)}..."`)
-
-      return new NextResponse(NO_CITATION_REFUSAL, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-        },
-      })
+    if (!body.surface || !["MARKETING", "APP"].includes(body.surface)) {
+      return NextResponse.json({ error: "Invalid surface" }, { status: 400 })
     }
 
-    const ruleContext = formatRulesForPrompt(rules)
+    const requestId = `req_${nanoid()}`
+    const traceId = `trace_${nanoid()}`
 
-    // Inject rules into system prompt
-    const systemPrompt = ruleContext ? `${SYSTEM_PROMPT}\n\n${ruleContext}` : SYSTEM_PROMPT
-
-    // Construct the endpoint
-    // Default to standard Ollama API endpoint
-    let endpoint = process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
-    // Remove trailing slash if present
-    if (endpoint.endsWith("/")) endpoint = endpoint.slice(0, -1)
-
-    // Ensure it ends with /chat (standard Ollama API)
-    // If the user provided a full path ending in /v1/chat/completions (OpenAI style),
-    // we might need to adjust, but let's assume standard Ollama for now as requested.
-    if (!endpoint.endsWith("/chat")) {
-      if (endpoint.endsWith("/api")) {
-        endpoint = `${endpoint}/chat`
-      } else {
-        endpoint = `${endpoint}/api/chat`
-      }
+    // TODO: Implement actual query processing
+    // For now, return a mock response
+    const response: AssistantResponse = {
+      schemaVersion: SCHEMA_VERSION,
+      requestId,
+      traceId,
+      kind: "ANSWER",
+      topic: "REGULATORY",
+      surface: body.surface,
+      createdAt: new Date().toISOString(),
+      headline: "This is a placeholder response.",
+      directAnswer: "The actual implementation will query the regulatory rules database.",
     }
 
-    const apiKey = process.env.OLLAMA_API_KEY
-    const model = process.env.OLLAMA_MODEL || "llama3"
-
-    // Prepare messages
-    const apiMessages = [{ role: "system", content: systemPrompt }, ...messages]
-
-    console.log(`[Assistant] Sending request to ${endpoint} with model ${model}`)
-    if (rules.length > 0) {
-      console.log(`[Assistant] Injected ${rules.length} regulatory rules into context`)
-    }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: apiMessages,
-        stream: true,
-      }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[Assistant] Upstream Error:", response.status, errorText)
-      throw new Error(`Ollama API Error (${response.status}): ${errorText}`)
-    }
-
-    // Transform Ollama's NDJSON stream to a simple text stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        if (!response.body) {
-          controller.close()
-          return
-        }
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ""
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split("\n")
-
-            // Keep the last incomplete line in the buffer
-            buffer = lines.pop() || ""
-
-            for (const line of lines) {
-              if (!line.trim()) continue
-              try {
-                const json = JSON.parse(line)
-                if (json.message?.content) {
-                  controller.enqueue(new TextEncoder().encode(json.message.content))
-                }
-                if (json.done) {
-                  // End of stream - append citation metadata
-                  if (rules.length > 0) {
-                    const citationMetadata = {
-                      citations: rules.map((r) => ({
-                        ruleId: r.ruleId,
-                        conceptSlug: r.conceptSlug,
-                        sourceUrl: r.sourceUrl,
-                        exactQuote: r.exactQuote,
-                        fetchedAt: r.fetchedAt.toISOString(),
-                      })),
-                    }
-                    controller.enqueue(
-                      new TextEncoder().encode(
-                        `\n\n__CITATIONS__${JSON.stringify(citationMetadata)}__END_CITATIONS__`
-                      )
-                    )
-                  }
-                }
-              } catch (e) {
-                console.warn("[Assistant] JSON Parse Error:", e)
-              }
-            }
-          }
-        } finally {
-          controller.close()
-        }
-      },
-    })
-
-    return new NextResponse(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    })
-  } catch (error: any) {
-    console.error("[Assistant] Server Error:", error)
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 })
+    return NextResponse.json(response)
+  } catch (error) {
+    console.error("Assistant chat error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
