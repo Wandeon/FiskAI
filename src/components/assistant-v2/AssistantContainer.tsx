@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useCallback, useState, useEffect } from "react"
+import React, { useCallback, useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAssistantController, useCTAEligibility, type Surface } from "@/lib/assistant/client"
 import { cn } from "@/lib/utils"
 
 // v2 components
-import { AssistantInput } from "./AssistantInput"
+import { AssistantInput, type AssistantInputHandle } from "./AssistantInput"
 import { AnswerSection } from "./AnswerSection"
 import { EvidencePanel } from "./EvidencePanel"
 import { ClientDataPanel } from "./ClientDataPanel"
@@ -55,6 +55,7 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
   const router = useRouter()
   const { state, submit } = useAssistantController({ surface, companyId })
   const [ctaDismissed, setCtaDismissed] = useState(false)
+  const inputRef = useRef<AssistantInputHandle>(null)
 
   // CTA eligibility for MARKETING surface
   const { isEligible: ctaEligible, ctaType, recordAnswer } = useCTAEligibility({ surface })
@@ -80,6 +81,11 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
     },
     [submit]
   )
+
+  // Handle fill-only from clarification chips (does NOT submit)
+  const handleFillInput = useCallback((text: string) => {
+    inputRef.current?.fill(text)
+  }, [])
 
   // Handle CTA action (navigate to signup)
   const handleCTAAction = useCallback(() => {
@@ -113,7 +119,12 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
       className={cn("flex flex-col gap-6", className)}
     >
       {/* Input Section */}
-      <AssistantInput surface={surface} onSubmit={handleSubmit} disabled={isLoading} />
+      <AssistantInput
+        ref={inputRef}
+        surface={surface}
+        onSubmit={handleSubmit}
+        disabled={isLoading}
+      />
 
       {/* Suggestion Chips (only when idle) */}
       {isIdle && <SuggestionChips suggestions={SUGGESTIONS[surface]} onSelect={handleSubmit} />}
@@ -122,7 +133,8 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
       <div className={cn("grid gap-6", isApp ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
         {/* Answer Column */}
         <div data-testid="answer-column" className="lg:col-span-1">
-          <AnswerSection state={state} surface={surface} onSuggestionClick={handleSubmit} />
+          {/* Clarification chips fill the input only - no auto-submit */}
+          <AnswerSection state={state} surface={surface} onSuggestionClick={handleFillInput} />
         </div>
 
         {/* Evidence Column */}

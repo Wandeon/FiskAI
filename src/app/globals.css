@@ -152,6 +152,24 @@ body {
     width: 1.25rem;
     height: 1.25rem;
   }
+
+  /* Enhanced input styles for better contrast in both themes */
+  .input-enhanced {
+    @apply bg-background text-foreground border-2 border-border;
+    @apply placeholder:text-muted-foreground/80;
+    @apply focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+
+  .light .input-enhanced {
+    @apply bg-white border-slate-300;
+    @apply placeholder:text-slate-500;
+    @apply shadow-sm;
+  }
+
+  .dark .input-enhanced {
+    @apply bg-slate-900 border-slate-600;
+    @apply placeholder:text-slate-400;
+  }
 }
 
 /* Accessibility: Enhanced focus styles for keyboard navigation */
@@ -352,6 +370,28 @@ body {
 
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-all {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Header offset utilities - use these instead of hardcoded pt-20 */
+@layer utilities {
+  .pt-header {
+    padding-top: calc(var(--header-height) + 1rem);
+  }
+
+  .pt-header-lg {
+    padding-top: calc(var(--header-height) + 2rem);
+  }
+
+  .mt-header {
+    margin-top: var(--header-height);
   }
 }
 

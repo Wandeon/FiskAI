@@ -78,15 +78,75 @@ Returned when:
 
 Returned when ANY of these fail:
 
-- `NO_CITABLE_RULES` - No rules found or citations incomplete
-- `OUT_OF_SCOPE` - Non-regulatory query (product, support, etc.)
-- `UNRESOLVED_CONFLICT` - Conflicting rules that cannot be resolved
-- `MISSING_CLIENT_DATA` - APP surface needs data user hasn't connected
+| Reason                     | Trigger                                           |
+| -------------------------- | ------------------------------------------------- |
+| `NO_CITABLE_RULES`         | Specific query but no matching rules or citations |
+| `OUT_OF_SCOPE`             | Non-regulatory query or gibberish input           |
+| `NEEDS_CLARIFICATION`      | Vague query (confidence < 0.6)                    |
+| `UNSUPPORTED_JURISDICTION` | Query about foreign country (not HR/EU)           |
+| `UNRESOLVED_CONFLICT`      | Conflicting rules that cannot be resolved         |
+| `MISSING_CLIENT_DATA`      | APP surface needs data user hasn't connected      |
 
 ## Query Engine Pipeline
 
-1. **extractKeywords(query)** - Croatian-aware tokenization, diacritics normalization
-2. **classifyTopic(keywords)** - Returns REGULATORY, PRODUCT, SUPPORT, or OFFTOPIC
+### Three-Stage Fail-Closed Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           STAGE 1: INTERPRETATION                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  interpretQuery() → Interpretation                                            │
+│                                                                               │
+│  GATE 0A: Nonsense Detection                                                  │
+│  • If >60% tokens are gibberish → OUT_OF_SCOPE ("Please rephrase")           │
+│                                                                               │
+│  GATE 0B: Confidence Threshold                                                │
+│  • < 0.6 → NEEDS_CLARIFICATION (always)                                      │
+│  • 0.6–0.75 → Stricter retrieval (need 2+ entities)                          │
+│  • ≥ 0.75 → Normal retrieval                                                 │
+│                                                                               │
+│  GATE 1C: Foreign Jurisdiction                                                │
+│  • Foreign country mentioned → UNSUPPORTED_JURISDICTION                       │
+│                                                                               │
+│  GATE 1D: Jurisdiction Validity                                               │
+│  • Non-HR/EU regulatory → UNSUPPORTED_JURISDICTION                           │
+│                                                                               │
+│  GATE 1E: Personalization Check                                               │
+│  • Needs client data but not available → MISSING_CLIENT_DATA                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           STAGE 2: RETRIEVAL                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  matchConcepts() → selectRules()                                              │
+│                                                                               │
+│  • No concept matches + confidence < 0.75 → NEEDS_CLARIFICATION              │
+│  • No concept matches + confidence ≥ 0.75 → NO_CITABLE_RULES                 │
+│  • No rule matches follows same logic                                         │
+│                                                                               │
+│  INVARIANT: Vague queries always get clarification, never "no sources"       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           STAGE 3: ELIGIBILITY                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  GATE 3A: Conflict Detection                                                  │
+│  • Unresolvable conflicts → UNRESOLVED_CONFLICT                              │
+│                                                                               │
+│  GATE 3B: Citation Building                                                   │
+│  • Cannot build citations → NO_CITABLE_RULES                                  │
+│                                                                               │
+│  GATE 3C: Citation Validation                                                 │
+│  • Missing quote/url on primary → NO_CITABLE_RULES                           │
+│                                                                               │
+│  ✓ All gates pass → ANSWER with citations                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Pipeline Functions
+
+1. **interpretQuery(query)** - Classifies topic, intent, jurisdiction, confidence
+2. **extractKeywords(query)** - Croatian-aware tokenization, diacritics normalization
 3. **matchConcepts(keywords)** - Matches against Concept slugs and aliases
 4. **selectRules(conceptSlugs)** - Finds PUBLISHED rules, filters by date
 5. **detectConflicts(rules)** - Checks for overlapping rules with different values
@@ -244,6 +304,17 @@ npx vitest run src/lib/assistant/ --coverage
 ```
 
 ## Changelog
+
+### 2024-12-25
+
+- **Confidence Thresholds**: Raised from 0.4 to 0.6/0.75 tiered gates
+- **Nonsense Detection**: Added gibberish detector (>60% random tokens → OUT_OF_SCOPE)
+- **Jurisdiction Detection**: Added explicit foreign country detection (20 countries)
+- **Vague Query Handling**: Retrieval failures on vague queries now return NEEDS_CLARIFICATION
+- **Clarification Chips**: Made fill-only (no auto-submit)
+- **Visual Polish**: Added CSS variable for header offset, enhanced input contrast
+- **Telemetry**: Added structured logging for interpretation events
+- **Tests**: Added 33 tests for query-interpreter behaviors
 
 ### 2024-12-24
 

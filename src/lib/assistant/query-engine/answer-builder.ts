@@ -7,6 +7,7 @@ import {
   type RefusalReason,
   type ClientContextBlock,
 } from "@/lib/assistant/types"
+import { assistantLogger } from "@/lib/logger"
 import { extractKeywords } from "./text-utils"
 import { matchConcepts } from "./concept-matcher"
 import { selectRules } from "./rule-selector"
@@ -16,7 +17,9 @@ import {
   interpretQuery,
   shouldProceedToRetrieval,
   isJurisdictionValid,
-  INTERPRETATION_CONFIDENCE_THRESHOLD,
+  getRetrievalMode,
+  CONFIDENCE_THRESHOLD_CLARIFY,
+  CONFIDENCE_THRESHOLD_STRICT,
   type Interpretation,
 } from "./query-interpreter"
 
@@ -25,14 +28,19 @@ import {
  *
  * Stage 1: Query Interpretation (interpretQuery)
  *   - Classifies topic, intent, jurisdiction
- *   - Detects personalization needs
+ *   - Detects personalization needs, nonsense, foreign jurisdictions
  *   - Computes confidence score
- *   - If confidence < threshold → NEEDS_CLARIFICATION
+ *   - CONFIDENCE TIERS:
+ *     - < 0.6 → NEEDS_CLARIFICATION (always)
+ *     - 0.6-0.75 → Stricter retrieval (need 2+ entities)
+ *     - >= 0.75 → Normal retrieval
+ *   - Nonsense → OUT_OF_SCOPE ("Please rephrase")
+ *   - Foreign country → UNSUPPORTED_JURISDICTION
  *
  * Stage 2: Retrieval Gate (matchConcepts + selectRules)
  *   - Only runs if interpretation passes threshold
  *   - Strict token matching with minimum score
- *   - If no matches → NO_CITABLE_RULES
+ *   - If no matches → NEEDS_CLARIFICATION (not NO_CITABLE_RULES for vague queries)
  *
  * Stage 3: Answer Eligibility Gate
  *   - Validates citations exist
@@ -41,6 +49,7 @@ import {
  *   - Only then builds the answer
  *
  * INVARIANT: The system REFUSES more often than it answers.
+ * INVARIANT: Vague queries always get clarification, never "no sources found".
  */
 
 // Fields that would be used for personalization
@@ -84,11 +93,59 @@ export async function buildAnswer(
       entities: interpretation.entities,
       personalizationNeeded: interpretation.personalizationNeeded,
       matchedPatterns: interpretation.matchedPatterns,
+      isNonsense: interpretation.isNonsense,
+      nonsenseRatio: interpretation.nonsenseRatio,
+      foreignCountryDetected: interpretation.foreignCountryDetected,
     },
   }
 
-  // GATE 1A: Confidence threshold
-  if (interpretation.confidence < INTERPRETATION_CONFIDENCE_THRESHOLD) {
+  // Helper for telemetry
+  const emitTelemetry = (event: string, extra: Record<string, unknown> = {}) => {
+    assistantLogger.info(
+      {
+        event,
+        queryLength: query.length,
+        tokenCount: interpretation.rawTokenCount,
+        meaningfulTokenCount: interpretation.meaningfulTokenCount,
+        detectedTopic: interpretation.topic,
+        confidence: interpretation.confidence,
+        surface,
+        traceId,
+        ...extra,
+      },
+      `assistant.interpretation.${event}`
+    )
+  }
+
+  // ============================================
+  // GATE 0A: NONSENSE DETECTION (before everything)
+  // ============================================
+  // If >60% of tokens are gibberish, return OUT_OF_SCOPE with "Please rephrase"
+  if (interpretation.isNonsense) {
+    emitTelemetry("nonsense_detected", { nonsenseRatio: interpretation.nonsenseRatio })
+    return {
+      ...baseResponse,
+      kind: "REFUSAL",
+      topic: "UNKNOWN" as Topic,
+      headline: "Molimo preformulirajte upit",
+      directAnswer: "",
+      refusalReason: "OUT_OF_SCOPE" as RefusalReason,
+      refusal: {
+        message:
+          "Nismo uspjeli razumjeti vaš upit. Molimo preformulirajte pitanje koristeći jasnije pojmove.",
+        relatedTopics: [
+          "Koja je stopa PDV-a u Hrvatskoj?",
+          "Koji je prag za paušalni obrt?",
+          "Kako fiskalizirati račun?",
+          "Kada moram u sustav PDV-a?",
+        ],
+      },
+    }
+  }
+
+  // GATE 0B: Confidence threshold (tiered: <0.6 always clarify)
+  if (interpretation.confidence < CONFIDENCE_THRESHOLD_CLARIFY) {
+    emitTelemetry("low_confidence", { threshold: CONFIDENCE_THRESHOLD_CLARIFY })
     return buildClarificationRefusal(baseResponse, interpretation)
   }
 
@@ -130,7 +187,30 @@ export async function buildAnswer(
     }
   }
 
-  // GATE 1C: Jurisdiction check for regulatory
+  // GATE 1C: Foreign jurisdiction check
+  // If user explicitly mentions a foreign country, refuse immediately
+  if (interpretation.foreignCountryDetected) {
+    const country = interpretation.foreignCountryDetected
+    emitTelemetry("unsupported_jurisdiction", { foreignCountry: country })
+    return {
+      ...baseResponse,
+      kind: "REFUSAL",
+      topic: interpretation.topic,
+      headline: "Nepodržana jurisdikcija",
+      directAnswer: "",
+      refusalReason: "UNSUPPORTED_JURISDICTION" as RefusalReason,
+      refusal: {
+        message: `Pitanje se odnosi na ${country}. Ovaj asistent odgovara samo na pitanja o hrvatskim i EU propisima koji se primjenjuju u Hrvatskoj. Za propise ${country === "Germany" ? "Njemačke" : country === "Austria" ? "Austrije" : country === "Slovenia" ? "Slovenije" : country === "Serbia" ? "Srbije" : country === "Bosnia" ? "BiH" : country === "Italy" ? "Italije" : country === "USA" ? "SAD-a" : country === "UK" ? "UK" : country}, konzultirajte lokalne stručnjake.`,
+        relatedTopics: [
+          "Porez na dohodak u Hrvatskoj",
+          "PDV u Hrvatskoj",
+          "Paušalni obrt u Hrvatskoj",
+        ],
+      },
+    }
+  }
+
+  // GATE 1D: General jurisdiction validity check (for regulatory topics)
   if (interpretation.topic === "REGULATORY" && !isJurisdictionValid(interpretation)) {
     return {
       ...baseResponse,
@@ -147,7 +227,7 @@ export async function buildAnswer(
     }
   }
 
-  // GATE 1D: Personalization check (before retrieval)
+  // GATE 1E: Personalization check (before retrieval)
   if (interpretation.personalizationNeeded) {
     if (surface === "MARKETING") {
       return {
@@ -203,6 +283,17 @@ export async function buildAnswer(
   const conceptMatches = await matchConcepts(keywords)
 
   if (conceptMatches.length === 0) {
+    // INVARIANT: Vague queries get clarification, not "no sources found"
+    // If confidence < 0.75, query is likely vague → ask for clarification
+    if (interpretation.confidence < CONFIDENCE_THRESHOLD_STRICT) {
+      emitTelemetry("needs_clarification", {
+        reason: "no_concept_matches",
+        threshold: CONFIDENCE_THRESHOLD_STRICT,
+      })
+      return buildClarificationRefusal(baseResponse, interpretation)
+    }
+    // Only return NO_CITABLE_RULES for specific queries with no matches
+    emitTelemetry("no_citable_rules", { reason: "no_concept_matches" })
     return buildNoCitableRulesRefusal(baseResponse, interpretation.topic, interpretation)
   }
 
@@ -211,6 +302,15 @@ export async function buildAnswer(
   const rules = await selectRules(conceptSlugs)
 
   if (rules.length === 0) {
+    // Same logic: vague queries get clarification
+    if (interpretation.confidence < CONFIDENCE_THRESHOLD_STRICT) {
+      emitTelemetry("needs_clarification", {
+        reason: "no_rule_matches",
+        threshold: CONFIDENCE_THRESHOLD_STRICT,
+      })
+      return buildClarificationRefusal(baseResponse, interpretation)
+    }
+    emitTelemetry("no_citable_rules", { reason: "no_rule_matches" })
     return buildNoCitableRulesRefusal(baseResponse, interpretation.topic, interpretation)
   }
 

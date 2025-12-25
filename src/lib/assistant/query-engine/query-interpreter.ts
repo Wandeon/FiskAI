@@ -10,12 +10,19 @@
  * 2. Detects personalization needs
  * 3. Extracts entities
  * 4. Computes confidence score
+ * 5. Detects nonsense/gibberish input
+ * 6. Detects unsupported jurisdictions (foreign countries)
+ *
+ * CONFIDENCE TIERS:
+ * - confidence < 0.6 → NEEDS_CLARIFICATION (always)
+ * - 0.6 ≤ confidence < 0.75 → Retrieval with stricter matching (need 2+ entities)
+ * - confidence ≥ 0.75 → Normal retrieval path
  *
  * If confidence < threshold, pipeline must NOT proceed to retrieval.
  */
 
 import type { Surface, Topic } from "../types"
-import { normalizeDiacritics, extractKeywords } from "./text-utils"
+import { normalizeDiacritics } from "./text-utils"
 
 // === INTERPRETATION TYPES ===
 
@@ -41,15 +48,34 @@ export interface Interpretation {
   // For clarification flow
   clarificationNeeded: boolean
   suggestedClarifications?: string[]
+  // Nonsense detection
+  isNonsense: boolean
+  nonsenseRatio: number
+  // Foreign jurisdiction
+  foreignCountryDetected?: string
   // Debug info
   matchedPatterns: string[]
   rawTokenCount: number
   meaningfulTokenCount: number
 }
 
-// === CONFIDENCE THRESHOLD ===
-// Below this, we MUST NOT proceed to retrieval
-export const INTERPRETATION_CONFIDENCE_THRESHOLD = 0.4
+// === CONFIDENCE THRESHOLDS ===
+// Tiered thresholds for different quality gates
+
+/** Below this → always NEEDS_CLARIFICATION */
+export const CONFIDENCE_THRESHOLD_CLARIFY = 0.6
+
+/** Between CLARIFY and STRICT → require 2+ entities for retrieval */
+export const CONFIDENCE_THRESHOLD_STRICT = 0.75
+
+/** Legacy export for backwards compatibility */
+export const INTERPRETATION_CONFIDENCE_THRESHOLD = CONFIDENCE_THRESHOLD_CLARIFY
+
+/** Minimum entities required for medium-confidence retrieval */
+export const MIN_ENTITIES_FOR_MEDIUM_CONFIDENCE = 2
+
+/** Nonsense ratio threshold - above this, input is considered gibberish */
+export const NONSENSE_RATIO_THRESHOLD = 0.6
 
 // === PATTERN DICTIONARIES ===
 
@@ -169,6 +195,88 @@ const EU_JURISDICTION_PATTERNS = [
   "oss",
 ]
 
+// Foreign country patterns - explicitly unsupported jurisdictions
+const FOREIGN_COUNTRY_PATTERNS: { pattern: RegExp; country: string }[] = [
+  { pattern: /\b(njem|german|deutsch|berlin|münchen|munchen)\w*/i, country: "Germany" },
+  { pattern: /\b(austri|österreich|wien|vienna|beč)\w*/i, country: "Austria" },
+  { pattern: /\b(sloven|ljubljana)\w*/i, country: "Slovenia" },
+  { pattern: /\b(srbi|serbia|beograd|belgrade)\w*/i, country: "Serbia" },
+  { pattern: /\b(mađar|hungar|budapest|magyar)\w*/i, country: "Hungary" },
+  { pattern: /\b(ital|roma|milano|rim)\w*/i, country: "Italy" },
+  { pattern: /\b(franc|paris|pariz)\w*/i, country: "France" },
+  { pattern: /\b(brit|england|london|uk)\w*/i, country: "United Kingdom" },
+  { pattern: /\b(švi?c|swiss|switzerland|zürich|zurich)\w*/i, country: "Switzerland" },
+  { pattern: /\b(polj|poland|warszaw|varsava)\w*/i, country: "Poland" },
+  { pattern: /\b(češ|czech|praha|prague)\w*/i, country: "Czech Republic" },
+  { pattern: /\b(slovač|slovak|bratislava)\w*/i, country: "Slovakia" },
+  { pattern: /\b(rumunj|roman|bukurešt|bucharest)\w*/i, country: "Romania" },
+  { pattern: /\b(bugar|bulgar|sofij|sofia)\w*/i, country: "Bulgaria" },
+  { pattern: /\b(grec|greek|athen|atena)\w*/i, country: "Greece" },
+  { pattern: /\b(španj|spain|madrid|barcelona)\w*/i, country: "Spain" },
+  { pattern: /\b(portug|lisbon|lisabon)\w*/i, country: "Portugal" },
+  { pattern: /\b(nizozem|dutch|amsterdam|holland|netherlands)\w*/i, country: "Netherlands" },
+  { pattern: /\b(belgi|bruxelles|brussel|brussels)\w*/i, country: "Belgium" },
+  { pattern: /\b(amerik|usa|united states|washington)\w*/i, country: "United States" },
+]
+
+// Valid Croatian/English word patterns for nonsense detection
+// Words should be 3-20 chars, letters only (including Croatian diacritics)
+const VALID_WORD_PATTERN = /^[a-zA-ZčćžšđČĆŽŠĐ]{3,20}$/
+
+// Common Croatian stopwords and short valid words (not nonsense)
+const VALID_SHORT_WORDS = new Set([
+  "ja",
+  "ti",
+  "on",
+  "mi",
+  "vi",
+  "to",
+  "je",
+  "se",
+  "su",
+  "od",
+  "do",
+  "za",
+  "na",
+  "po",
+  "iz",
+  "sa",
+  "te",
+  "ili",
+  "ako",
+  "što",
+  "sto",
+  "šta",
+  "sta",
+  "tko",
+  "ko",
+  "kad",
+  "kako",
+  "dok",
+  "sve",
+  "što",
+  "da",
+  "ne",
+  "li",
+  "bi",
+  "me",
+  "mu",
+  "im",
+  "ih",
+  "nam",
+  "vam",
+  "njim",
+  "njoj",
+  "moj",
+  "moja",
+  "pdv",
+  "vat",
+  "eu",
+  "rh",
+  "hr",
+  "oib",
+])
+
 // Personalization indicators (Croatian)
 const PERSONALIZATION_PATTERNS = [
   // Possessives (all cases)
@@ -252,6 +360,18 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length >= 2)
 }
 
+/**
+ * Tokenize preserving original characters (for nonsense detection)
+ */
+function tokenizeRaw(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-zA-ZčćžšđČĆŽŠĐ0-9\s-]/g, " ")
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .filter((t) => t.length >= 2)
+}
+
 function countPatternMatches(tokens: string[], patterns: string[]): number {
   let count = 0
   for (const token of tokens) {
@@ -265,9 +385,99 @@ function countPatternMatches(tokens: string[], patterns: string[]): number {
   return count
 }
 
-function matchesAnyPattern(text: string, patterns: string[]): boolean {
-  const normalized = normalizeDiacritics(text).toLowerCase()
-  return patterns.some((p) => normalized.includes(p))
+/**
+ * Detect if a token is likely nonsense (random characters)
+ * Returns true if the token doesn't look like a real word
+ */
+function isNonsenseToken(token: string): boolean {
+  // Short valid words are not nonsense
+  if (VALID_SHORT_WORDS.has(token.toLowerCase())) {
+    return false
+  }
+
+  // Check if it matches valid word pattern (letters only, 3-20 chars)
+  if (!VALID_WORD_PATTERN.test(token)) {
+    // Contains numbers or is too short/long
+    // Numbers in regulatory context (like "2025") are not nonsense
+    if (/^\d+$/.test(token)) {
+      return false
+    }
+    return true
+  }
+
+  // Check for keyboard-mash patterns (repeated chars, qwerty sequences)
+  const lower = token.toLowerCase()
+
+  // Check for 3+ consecutive same character
+  if (/(.)\1{2,}/.test(lower)) {
+    return true
+  }
+
+  // Check for common keyboard mash patterns
+  const keyboardPatterns = [
+    /asdf/i,
+    /qwer/i,
+    /zxcv/i,
+    /hjkl/i,
+    /yuio/i,
+    /bnm/i,
+    /^[qweasdzxc]+$/i,
+    /^[yuiophjklbnm]+$/i,
+  ]
+  for (const pattern of keyboardPatterns) {
+    if (pattern.test(lower)) {
+      return true
+    }
+  }
+
+  // Check consonant-only or vowel-only strings (unlikely in real words)
+  const vowels = lower.replace(/[^aeiou]/g, "")
+  const consonants = lower.replace(/[aeiou]/g, "")
+
+  if (lower.length >= 4) {
+    // All consonants or all vowels is suspicious
+    if (vowels.length === 0 || consonants.length === 0) {
+      return true
+    }
+    // Very low vowel ratio is suspicious (less than 15% vowels)
+    if (vowels.length / lower.length < 0.15) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Calculate the ratio of nonsense tokens in the query
+ */
+function calculateNonsenseRatio(query: string): number {
+  const tokens = tokenizeRaw(query)
+  if (tokens.length === 0) return 1.0
+
+  let nonsenseCount = 0
+  for (const token of tokens) {
+    if (isNonsenseToken(token)) {
+      nonsenseCount++
+    }
+  }
+
+  return nonsenseCount / tokens.length
+}
+
+/**
+ * Detect if query mentions a foreign country explicitly
+ */
+function detectForeignCountry(query: string): string | undefined {
+  const normalized = normalizeDiacritics(query).toLowerCase()
+
+  for (const { pattern, country } of FOREIGN_COUNTRY_PATTERNS) {
+    if (pattern.test(normalized)) {
+      return country
+    }
+  }
+
+  return undefined
 }
 
 // === MAIN INTERPRETATION FUNCTION ===
@@ -280,6 +490,13 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
   // Track raw vs meaningful tokens
   const rawTokenCount = query.split(/\s+/).filter(Boolean).length
   const meaningfulTokenCount = tokens.length
+
+  // === 0. NONSENSE DETECTION (before any classification) ===
+  const nonsenseRatio = calculateNonsenseRatio(query)
+  const isNonsense = nonsenseRatio >= NONSENSE_RATIO_THRESHOLD
+  if (isNonsense) {
+    matchedPatterns.push(`nonsense:${nonsenseRatio.toFixed(2)}`)
+  }
 
   // === 1. TOPIC CLASSIFICATION ===
   const regulatoryScore = countPatternMatches(tokens, REGULATORY_PATTERNS)
@@ -319,12 +536,17 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
   const hrScore = countPatternMatches(tokens, HR_JURISDICTION_PATTERNS)
   const euScore = countPatternMatches(tokens, EU_JURISDICTION_PATTERNS)
 
-  if (hrScore > 0 || topic === "REGULATORY") {
+  // Check for foreign country FIRST
+  const foreignCountryDetected = detectForeignCountry(query)
+  if (foreignCountryDetected) {
+    jurisdiction = "OTHER"
+    matchedPatterns.push(`jurisdiction:OTHER:${foreignCountryDetected}`)
+  } else if (hrScore > 0 || topic === "REGULATORY") {
     // Default to HR for regulatory questions (this is a Croatian assistant)
     jurisdiction = "HR"
     if (hrScore > 0) matchedPatterns.push("jurisdiction:HR")
   }
-  if (euScore > hrScore) {
+  if (euScore > hrScore && !foreignCountryDetected) {
     jurisdiction = "EU"
     matchedPatterns.push("jurisdiction:EU")
   }
@@ -362,46 +584,66 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
     }
   }
 
-  // === 7. CONFIDENCE SCORING ===
+  // === 7. CONFIDENCE SCORING (revised for 0.6/0.75 thresholds) ===
   let confidence = 0
 
-  // Base confidence from meaningful tokens
-  if (meaningfulTokenCount === 0) {
-    confidence = 0 // Gibberish or empty
-  } else if (meaningfulTokenCount === 1) {
-    confidence = 0.2 // Single word - ambiguous
-  } else if (meaningfulTokenCount === 2) {
-    confidence = 0.35 // Two words - still fairly ambiguous
+  // If nonsense detected, confidence is 0
+  if (isNonsense) {
+    confidence = 0
   } else {
-    confidence = 0.45 // Multiple words - base confidence
+    // Base confidence from meaningful tokens (scaled higher for new thresholds)
+    if (meaningfulTokenCount === 0) {
+      confidence = 0 // Empty
+    } else if (meaningfulTokenCount === 1) {
+      confidence = 0.25 // Single word - too vague for answer
+    } else if (meaningfulTokenCount === 2) {
+      confidence = 0.45 // Two words - still vague, likely needs clarification
+    } else if (meaningfulTokenCount === 3) {
+      confidence = 0.55 // Three words - getting better but might need clarification
+    } else {
+      confidence = 0.65 // Multiple words - reasonable base confidence
+    }
+
+    // Boost for topic match (regulatory questions with topic get more credit)
+    if (regulatoryScore > 0) {
+      confidence += 0.1
+    } else if (productScore > 0 || supportScore > 0) {
+      confidence += 0.05 // Non-regulatory topics get less boost
+    }
+
+    // Boost for intent match
+    if (intent !== "UNKNOWN") {
+      confidence += 0.1
+    }
+
+    // Boost for entity matches (each distinct entity adds confidence)
+    confidence += Math.min(entities.length * 0.08, 0.24)
+
+    // Bonus for multiple entities (indicates a specific question)
+    if (entities.length >= 2) {
+      confidence += 0.05
+    }
+
+    // Penalty for no jurisdiction on regulatory
+    if (topic === "REGULATORY" && jurisdiction === "UNKNOWN") {
+      confidence -= 0.1
+    }
+
+    // Penalty for foreign jurisdiction
+    if (foreignCountryDetected) {
+      confidence -= 0.2 // Will likely be rejected anyway
+    }
+
+    // Cap at 0.95 (never 100% confident)
+    confidence = Math.max(0, Math.min(0.95, confidence))
   }
-
-  // Boost for topic match
-  if (regulatoryScore > 0 || productScore > 0 || supportScore > 0) {
-    confidence += 0.15
-  }
-
-  // Boost for intent match
-  if (intent !== "UNKNOWN") {
-    confidence += 0.1
-  }
-
-  // Boost for entity matches
-  confidence += Math.min(entities.length * 0.1, 0.2)
-
-  // Penalty for no jurisdiction on regulatory
-  if (topic === "REGULATORY" && jurisdiction === "UNKNOWN") {
-    confidence -= 0.1
-  }
-
-  // Cap at 0.95 (never 100% confident)
-  confidence = Math.max(0, Math.min(0.95, confidence))
 
   // === 8. CLARIFICATION FLOW ===
-  const clarificationNeeded = confidence < INTERPRETATION_CONFIDENCE_THRESHOLD
+  // Use the new threshold: < 0.6 always needs clarification
+  const clarificationNeeded = confidence < CONFIDENCE_THRESHOLD_CLARIFY
   let suggestedClarifications: string[] | undefined
 
-  if (clarificationNeeded) {
+  if (clarificationNeeded && !isNonsense) {
     suggestedClarifications = generateClarifications(topic, intent, entities)
   }
 
@@ -415,6 +657,9 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
     confidence,
     clarificationNeeded,
     suggestedClarifications,
+    isNonsense,
+    nonsenseRatio,
+    foreignCountryDetected,
     matchedPatterns,
     rawTokenCount,
     meaningfulTokenCount,
@@ -423,55 +668,116 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
 
 // === CLARIFICATION GENERATION ===
 
+/**
+ * Generate 3-5 clarification chips written as users would naturally ask.
+ * These should be complete, natural questions that fill the input field.
+ */
 function generateClarifications(topic: Topic, intent: Intent, entities: string[]): string[] {
   const clarifications: string[] = []
 
   if (topic === "REGULATORY") {
-    if (entities.length === 0) {
+    // Entity-specific clarifications (prioritize these)
+    if (entities.includes("PDV")) {
       clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
-      clarifications.push("Koji je prag za paušalni obrt u 2025?")
+      clarifications.push("Kada moram ući u sustav PDV-a?")
+      clarifications.push("Koji je prag za obvezni ulazak u PDV?")
+    }
+    if (entities.includes("PAUSALNI_OBRT")) {
+      clarifications.push("Koji je godišnji prag za paušalni obrt?")
+      clarifications.push("Koje su prednosti paušalnog oporezivanja?")
+    }
+    if (entities.includes("DOPRINOSI")) {
+      clarifications.push("Koliki su mjesečni doprinosi za obrtnike?")
+      clarifications.push("Kako se obračunavaju doprinosi za paušalce?")
+    }
+    if (entities.includes("FISKALIZACIJA")) {
+      clarifications.push("Kako fiskalizirati račun u Hrvatskoj?")
+      clarifications.push("Što mi treba za fiskalizaciju?")
+    }
+    if (entities.includes("VAT_THRESHOLD")) {
+      clarifications.push("Koji je prag za ulazak u sustav PDV-a?")
+      clarifications.push("Što se događa kad prođem PDV prag?")
+    }
+
+    // If no specific entities matched, provide general regulatory clarifications
+    if (clarifications.length === 0) {
+      clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
+      clarifications.push("Koji je godišnji prag za paušalni obrt?")
       clarifications.push("Kako fiskalizirati račun?")
-      clarifications.push("Kada moram u sustav PDV-a?")
-    } else if (intent === "UNKNOWN") {
-      // Have entities but unclear intent
-      if (entities.includes("PDV")) {
-        clarifications.push("Koje su stope PDV-a?")
-        clarifications.push("Kada moram u sustav PDV-a?")
-      }
-      if (entities.includes("PAUSALNI_OBRT")) {
-        clarifications.push("Koji je prag za paušalni obrt?")
-        clarifications.push("Kako postati paušalac?")
-      }
-      if (entities.includes("DOPRINOSI")) {
-        clarifications.push("Koliki su doprinosi za obrtnike?")
-        clarifications.push("Kada se plaćaju doprinosi?")
-      }
+      clarifications.push("Kada moram ući u sustav PDV-a?")
+      clarifications.push("Koliki su doprinosi za obrtnike?")
+    }
+
+    // Intent-specific additions
+    if (intent === "CALCULATE" && clarifications.length < 5) {
+      clarifications.push("Koliko iznosi porez za paušalni obrt?")
+    }
+    if (intent === "DEADLINE" && clarifications.length < 5) {
+      clarifications.push("Do kada moram predati poreznu prijavu?")
+    }
+  } else if (topic === "PRODUCT") {
+    clarifications.push("Koje su cijene FiskAI pretplate?")
+    clarifications.push("Kako se registrirati za FiskAI?")
+    clarifications.push("Koje funkcije nudi FiskAI?")
+  } else if (topic === "SUPPORT") {
+    clarifications.push("Kako prijaviti tehnički problem?")
+    clarifications.push("Gdje mogu dobiti pomoć?")
+  }
+
+  // Ensure we have 3-5 suggestions (minimum 3, maximum 5)
+  while (clarifications.length < 3) {
+    if (!clarifications.includes("Koja je opća stopa PDV-a u Hrvatskoj?")) {
+      clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
+    } else if (!clarifications.includes("Koji je godišnji prag za paušalni obrt?")) {
+      clarifications.push("Koji je godišnji prag za paušalni obrt?")
+    } else {
+      clarifications.push("Kako fiskalizirati račun?")
     }
   }
 
-  // Ensure we have at least 2 and at most 4 suggestions
-  if (clarifications.length < 2) {
-    clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
-    clarifications.push("Koji je prag za paušalni obrt?")
-  }
-
-  return clarifications.slice(0, 4)
+  // Remove duplicates and limit to 5
+  const unique = [...new Set(clarifications)]
+  return unique.slice(0, 5)
 }
 
 // === VALIDATION HELPERS ===
 
 export function isJurisdictionValid(interpretation: Interpretation): boolean {
-  // For regulatory questions, we only support HR jurisdiction
+  // For regulatory questions, we only support HR and EU jurisdictions
   if (interpretation.topic === "REGULATORY") {
+    // Foreign country explicitly detected = invalid
+    if (interpretation.foreignCountryDetected) {
+      return false
+    }
     return interpretation.jurisdiction === "HR" || interpretation.jurisdiction === "EU"
   }
   return true
 }
 
+/**
+ * Determine if we should proceed to retrieval based on interpretation.
+ * Uses tiered confidence thresholds:
+ * - < 0.6: Never proceed (needs clarification)
+ * - 0.6-0.75: Proceed only with 2+ entities (stricter matching)
+ * - >= 0.75: Normal retrieval
+ */
 export function shouldProceedToRetrieval(interpretation: Interpretation): boolean {
-  // Must meet confidence threshold
-  if (interpretation.confidence < INTERPRETATION_CONFIDENCE_THRESHOLD) {
+  // Nonsense never proceeds
+  if (interpretation.isNonsense) {
     return false
+  }
+
+  // Below clarification threshold = always needs clarification
+  if (interpretation.confidence < CONFIDENCE_THRESHOLD_CLARIFY) {
+    return false
+  }
+
+  // Medium confidence (0.6-0.75) requires stricter matching
+  if (interpretation.confidence < CONFIDENCE_THRESHOLD_STRICT) {
+    // Must have at least 2 distinct entities for medium-confidence retrieval
+    if (interpretation.entities.length < MIN_ENTITIES_FOR_MEDIUM_CONFIDENCE) {
+      return false
+    }
   }
 
   // Must be a topic we can handle
@@ -485,4 +791,20 @@ export function shouldProceedToRetrieval(interpretation: Interpretation): boolea
 
   // Product and support questions don't need retrieval from regulatory DB
   return false
+}
+
+/**
+ * Get the retrieval mode based on confidence level.
+ * Returns 'strict' for medium confidence, 'normal' for high confidence.
+ */
+export function getRetrievalMode(interpretation: Interpretation): "strict" | "normal" | "none" {
+  if (!shouldProceedToRetrieval(interpretation)) {
+    return "none"
+  }
+
+  if (interpretation.confidence < CONFIDENCE_THRESHOLD_STRICT) {
+    return "strict"
+  }
+
+  return "normal"
 }
