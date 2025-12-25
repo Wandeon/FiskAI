@@ -11,6 +11,7 @@ import { Fiskalizacija2Wizard } from "@/components/marketing/Fiskalizacija2Wizar
 import { CountdownTimer } from "@/components/marketing/CountdownTimer"
 import { QuickAccessToolbar } from "@/components/marketing/QuickAccessToolbar"
 import { SwitchProviderCTA } from "@/components/marketing/SwitchProviderCTA"
+import { MiniAssistant } from "@/components/marketing/MiniAssistant"
 import { LatestNewsSection } from "@/components/news/LatestNewsSection"
 import {
   ArrowRight,
@@ -238,6 +239,9 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
         {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
+
+      {/* MINI ASSISTANT - Bridge between hero and features */}
+      <MiniAssistant />
 
       {/* FEATURE CARDS */}
       <Reveal asChild>
