@@ -1,42 +1,69 @@
 "use client"
 
 import React from "react"
+import { motion } from "framer-motion"
 import { ExternalLink } from "lucide-react"
 import type { SourceCard as SourceCardType } from "@/lib/assistant/client"
 import { AuthorityBadge } from "./AuthorityBadge"
 import { cn } from "@/lib/utils"
+import type { AssistantVariant } from "./AssistantContainer"
 
 interface SourceCardProps {
   source: SourceCardType
   variant: "expanded" | "compact"
   className?: string
+  theme?: AssistantVariant
 }
 
-export function SourceCard({ source, variant, className }: SourceCardProps) {
+export function SourceCard({ source, variant, className, theme = "light" }: SourceCardProps) {
   const { title, authority, reference, quote, pageNumber, url, effectiveFrom, confidence, status } =
     source
 
   const isExpanded = variant === "expanded"
   const isSuperseded = status === "SUPERSEDED"
+  const isDark = theme === "dark"
 
   return (
-    <article
+    <motion.article
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
         "rounded-lg border",
         isSuperseded && "opacity-60",
         isExpanded ? "p-4" : "p-3",
+        isDark ? "bg-slate-800/30 border-slate-700/50" : "bg-background border-border",
         className
       )}
     >
       {/* Header: Authority badge + Title */}
       <div className="flex items-start gap-2">
-        <AuthorityBadge authority={authority} />
+        <AuthorityBadge authority={authority} theme={theme} />
         <div className="flex-1 min-w-0">
-          <h4 className={cn("font-medium", isExpanded ? "text-base" : "text-sm")}>{title}</h4>
-          {reference && <p className="text-sm text-muted-foreground">{reference}</p>}
+          <h4
+            className={cn(
+              "font-medium",
+              isExpanded ? "text-base" : "text-sm",
+              isDark ? "text-white" : "text-foreground"
+            )}
+          >
+            {title}
+          </h4>
+          {reference && (
+            <p className={cn("text-sm", isDark ? "text-slate-400" : "text-muted-foreground")}>
+              {reference}
+            </p>
+          )}
         </div>
         {isSuperseded && (
-          <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded">
+          <span
+            className={cn(
+              "text-xs px-2 py-0.5 rounded",
+              isDark
+                ? "bg-amber-900/30 text-amber-400 border border-amber-500/30"
+                : "bg-yellow-100 text-yellow-800"
+            )}
+          >
             Superseded
           </span>
         )}
@@ -44,14 +71,24 @@ export function SourceCard({ source, variant, className }: SourceCardProps) {
 
       {/* Quote excerpt (expanded only) */}
       {isExpanded && quote && (
-        <blockquote className="mt-3 pl-3 border-l-2 border-muted text-sm text-muted-foreground italic">
+        <blockquote
+          className={cn(
+            "mt-3 pl-3 border-l-2 text-sm italic",
+            isDark ? "border-cyan-500/30 text-slate-400" : "border-muted text-muted-foreground"
+          )}
+        >
           &ldquo;{quote}&rdquo;
         </blockquote>
       )}
 
       {/* Footer: Date, Confidence, Link */}
       {isExpanded && (
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div
+          className={cn(
+            "mt-3 flex items-center justify-between text-xs",
+            isDark ? "text-slate-400" : "text-muted-foreground"
+          )}
+        >
           <div className="flex items-center gap-3">
             <span>Effective: {new Date(effectiveFrom).toLocaleDateString()}</span>
             <span>Confidence: {Math.round(confidence * 100)}%</span>
@@ -61,11 +98,18 @@ export function SourceCard({ source, variant, className }: SourceCardProps) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-primary hover:underline"
+            className={cn(
+              "inline-flex items-center gap-1 hover:underline",
+              isDark ? "text-cyan-400" : "text-primary"
+            )}
           >
             View source
             <ExternalLink className="w-3 h-3" />
-            {pageNumber && <span className="text-muted-foreground">(page {pageNumber})</span>}
+            {pageNumber && (
+              <span className={isDark ? "text-slate-500" : "text-muted-foreground"}>
+                (page {pageNumber})
+              </span>
+            )}
           </a>
         </div>
       )}
@@ -77,13 +121,16 @@ export function SourceCard({ source, variant, className }: SourceCardProps) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+            className={cn(
+              "text-xs hover:underline inline-flex items-center gap-1",
+              isDark ? "text-cyan-400" : "text-primary"
+            )}
           >
             View source
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       )}
-    </article>
+    </motion.article>
   )
 }

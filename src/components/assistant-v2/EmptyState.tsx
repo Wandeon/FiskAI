@@ -3,6 +3,7 @@
 import React from "react"
 import type { Surface } from "@/lib/assistant/client"
 import { cn } from "@/lib/utils"
+import type { AssistantVariant } from "./AssistantContainer"
 
 type EmptyStateType = "answer" | "evidence" | "clientData"
 
@@ -10,6 +11,7 @@ interface EmptyStateProps {
   type: EmptyStateType
   surface: Surface
   className?: string
+  variant?: AssistantVariant
 }
 
 const COPY: Record<EmptyStateType, Record<Surface, { title: string; subtitle: string }>> = {
@@ -45,13 +47,24 @@ const COPY: Record<EmptyStateType, Record<Surface, { title: string; subtitle: st
   },
 }
 
-export function EmptyState({ type, surface, className }: EmptyStateProps) {
+export function EmptyState({ type, surface, className, variant = "light" }: EmptyStateProps) {
   const copy = COPY[type][surface]
+  const isDark = variant === "dark"
 
   return (
-    <div className={cn("p-6 border rounded-lg border-dashed", className)}>
-      <h3 className="font-medium text-muted-foreground">{copy.title}</h3>
-      <p className="text-sm text-muted-foreground/70 mt-1">{copy.subtitle}</p>
+    <div
+      className={cn(
+        "p-6 border rounded-lg border-dashed",
+        isDark ? "bg-slate-800/20 border-slate-700/50 backdrop-blur-sm" : "bg-background",
+        className
+      )}
+    >
+      <h3 className={cn("font-medium", isDark ? "text-slate-400" : "text-muted-foreground")}>
+        {copy.title}
+      </h3>
+      <p className={cn("text-sm mt-1", isDark ? "text-slate-500" : "text-muted-foreground/70")}>
+        {copy.subtitle}
+      </p>
     </div>
   )
 }

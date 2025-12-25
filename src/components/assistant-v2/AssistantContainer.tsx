@@ -30,10 +30,13 @@ const SUGGESTIONS: Record<Surface, string[]> = {
   ],
 }
 
+export type AssistantVariant = "light" | "dark"
+
 interface AssistantContainerProps {
   surface: Surface
   companyId?: string
   className?: string
+  variant?: AssistantVariant
 }
 
 /**
@@ -50,8 +53,17 @@ interface AssistantContainerProps {
  * - Shows ClientDataPanel with real data
  * - No signup CTAs
  * - Personalized answers when companyId provided
+ *
+ * Variant:
+ * - "light" (default): Standard light theme
+ * - "dark": Command center theme with glass-morphism
  */
-export function AssistantContainer({ surface, companyId, className }: AssistantContainerProps) {
+export function AssistantContainer({
+  surface,
+  companyId,
+  className,
+  variant = "light",
+}: AssistantContainerProps) {
   const router = useRouter()
   const { state, submit } = useAssistantController({ surface, companyId })
   const [ctaDismissed, setCtaDismissed] = useState(false)
@@ -72,7 +84,7 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
   const isLoading = state.status === "LOADING" || state.status === "STREAMING"
   const isIdle = state.status === "IDLE"
   const hasAnswer = state.status === "COMPLETE" || state.status === "PARTIAL_COMPLETE"
-  const hasError = state.status === "ERROR"
+  const isDark = variant === "dark"
 
   // Handle submit from input
   const handleSubmit = useCallback(
@@ -124,25 +136,42 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
         surface={surface}
         onSubmit={handleSubmit}
         disabled={isLoading}
+        loading={isLoading}
+        variant={variant}
       />
 
       {/* Suggestion Chips (only when idle) */}
-      {isIdle && <SuggestionChips suggestions={SUGGESTIONS[surface]} onSelect={handleSubmit} />}
+      {isIdle && (
+        <SuggestionChips
+          suggestions={SUGGESTIONS[surface]}
+          onSelect={handleSubmit}
+          variant={variant}
+        />
+      )}
 
       {/* Main Content Grid */}
       <div className={cn("grid gap-6", isApp ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
         {/* Answer Column */}
         <div data-testid="answer-column" className="lg:col-span-1">
           {/* Clarification chips fill the input only - no auto-submit */}
-          <AnswerSection state={state} surface={surface} onSuggestionClick={handleFillInput} />
+          <AnswerSection
+            state={state}
+            surface={surface}
+            onSuggestionClick={handleFillInput}
+            variant={variant}
+          />
         </div>
 
         {/* Evidence Column */}
         <div data-testid="evidence-column" className="lg:col-span-1">
           {isIdle ? (
-            <EmptyState type="evidence" surface={surface} />
+            <EmptyState type="evidence" surface={surface} variant={variant} />
           ) : (
-            <EvidencePanel citations={state.activeAnswer?.citations} status={state.status} />
+            <EvidencePanel
+              citations={state.activeAnswer?.citations}
+              status={state.status}
+              variant={variant}
+            />
           )}
         </div>
 
@@ -150,12 +179,13 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
         {isApp && (
           <div data-testid="client-data-column" className="lg:col-span-1">
             {isIdle ? (
-              <EmptyState type="clientData" surface={surface} />
+              <EmptyState type="clientData" surface={surface} variant={variant} />
             ) : (
               <ClientDataPanel
                 clientContext={state.activeAnswer?.clientContext}
                 status={state.status}
                 onConnectData={handleConnectData}
+                variant={variant}
               />
             )}
           </div>
@@ -165,11 +195,18 @@ export function AssistantContainer({ surface, companyId, className }: AssistantC
         {isMarketing && hasAnswer && state.activeAnswer?.kind === "ANSWER" && (
           <div
             data-testid="personalization-preview"
-            className="lg:col-span-2 p-4 border border-dashed rounded-lg bg-primary/5"
+            className={cn(
+              "lg:col-span-2 p-4 border border-dashed rounded-lg",
+              isDark
+                ? "bg-cyan-500/5 border-cyan-500/20 text-white/70"
+                : "bg-primary/5 border-slate-300"
+            )}
           >
-            <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Your calculation preview:</strong> Connect your
-              business data to see personalized thresholds and amounts.
+            <p className={cn("text-sm", isDark ? "text-slate-300" : "text-muted-foreground")}>
+              <strong className={isDark ? "text-white" : "text-foreground"}>
+                Personalizirani izračun:
+              </strong>{" "}
+              Povežite svoje poslovne podatke za prilagođene pragove i iznose.
             </p>
           </div>
         )}

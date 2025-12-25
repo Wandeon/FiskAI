@@ -1,17 +1,26 @@
 import React from "react"
 import type { AuthorityLevel } from "@/lib/assistant/client"
 import { cn } from "@/lib/utils"
+import type { AssistantVariant } from "./AssistantContainer"
 
 interface AuthorityBadgeProps {
   authority: AuthorityLevel
   className?: string
+  theme?: AssistantVariant
 }
 
-const STYLES: Record<AuthorityLevel, string> = {
+const LIGHT_STYLES: Record<AuthorityLevel, string> = {
   LAW: "bg-purple-100 text-purple-800",
   REGULATION: "bg-blue-100 text-blue-800",
   GUIDANCE: "bg-green-100 text-green-800",
   PRACTICE: "bg-gray-100 text-gray-800",
+}
+
+const DARK_STYLES: Record<AuthorityLevel, string> = {
+  LAW: "bg-purple-900/30 text-purple-300 border border-purple-500/30",
+  REGULATION: "bg-blue-900/30 text-blue-300 border border-blue-500/30",
+  GUIDANCE: "bg-green-900/30 text-green-300 border border-green-500/30",
+  PRACTICE: "bg-slate-700/30 text-slate-300 border border-slate-600/30",
 }
 
 const LABELS: Record<AuthorityLevel, string> = {
@@ -21,14 +30,17 @@ const LABELS: Record<AuthorityLevel, string> = {
   PRACTICE: "Practice",
 }
 
-export function AuthorityBadge({ authority, className }: AuthorityBadgeProps) {
+export function AuthorityBadge({ authority, className, theme = "light" }: AuthorityBadgeProps) {
+  const isDark = theme === "dark"
+  const styles = isDark ? DARK_STYLES : LIGHT_STYLES
+
   return (
     <span
       role="status"
       aria-label={`Authority level: ${LABELS[authority]}`}
       className={cn(
         "inline-flex items-center px-2 py-0.5 text-xs font-medium rounded shrink-0",
-        STYLES[authority],
+        styles[authority],
         className
       )}
     >

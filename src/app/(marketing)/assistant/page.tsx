@@ -1,25 +1,110 @@
-import { Metadata } from "next"
-import { AssistantContainer } from "@/components/assistant-v2"
+"use client"
 
-export const metadata: Metadata = {
-  title: "AI Asistent | FiskAI",
-  description:
-    "Postavi pitanje o porezima, PDV-u, doprinosima ili fiskalizaciji. Odgovor potkrije službenim izvorima.",
-}
+import { motion } from "framer-motion"
+import { PlexusBackground } from "@/components/marketing/PlexusBackground"
+import { AssistantContainer } from "@/components/assistant-v2"
 
 export default function MarketingAssistantPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-20 pb-12 md:px-6 md:pt-24">
-      <header className="mb-10 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Regulatorni asistent
-        </h1>
-        <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-          Svaki odgovor potkrije službenim izvorima. Bez nagađanja.
-        </p>
-      </header>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+      {/* Animated background effects */}
+      <PlexusBackground className="opacity-30" />
 
-      <AssistantContainer surface="MARKETING" />
+      {/* Animated glow orbs */}
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div
+          className="absolute left-[15%] top-[20%] h-[400px] w-[400px] rounded-full bg-blue-500/20 blur-[120px]"
+          animate={{
+            scale: [1, 1.15, 1],
+            opacity: [0.15, 0.25, 0.15],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute right-[10%] top-[30%] h-[350px] w-[350px] rounded-full bg-cyan-500/15 blur-[100px]"
+          animate={{
+            scale: [1.1, 1, 1.1],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-[20%] left-[40%] h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-[80px]"
+          animate={{
+            x: [0, 30, 0],
+            opacity: [0.1, 0.15, 0.1],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      {/* Grid overlay for tech feel */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "50px 50px",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-24">
+        {/* Header */}
+        <header className="mb-12 text-center">
+          <motion.h1
+            className="text-4xl font-bold leading-tight text-white md:text-5xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="block">Regulatorni</span>
+            <motion.span
+              className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              style={{ backgroundSize: "200% 200%" }}
+            >
+              Asistent
+            </motion.span>
+          </motion.h1>
+          <motion.p
+            className="mt-4 text-lg text-white/60"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            Svaki odgovor potkrije službenim izvorima. Bez nagađanja.
+          </motion.p>
+        </header>
+
+        {/* Assistant Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <AssistantContainer surface="MARKETING" variant="dark" />
+        </motion.div>
+      </div>
     </div>
   )
 }
