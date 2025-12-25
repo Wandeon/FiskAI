@@ -37,6 +37,10 @@ interface AssistantContainerProps {
   companyId?: string
   className?: string
   variant?: AssistantVariant
+  /** Pre-fill and auto-submit this query on mount (e.g., from landing page) */
+  initialQuery?: string
+  /** Source tracking (e.g., "landing-mini") */
+  source?: string
 }
 
 /**
@@ -63,14 +67,29 @@ export function AssistantContainer({
   companyId,
   className,
   variant = "light",
+  initialQuery,
+  source,
 }: AssistantContainerProps) {
   const router = useRouter()
   const { state, submit } = useAssistantController({ surface, companyId })
   const [ctaDismissed, setCtaDismissed] = useState(false)
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false)
   const inputRef = useRef<AssistantInputHandle>(null)
 
   // CTA eligibility for MARKETING surface
   const { isEligible: ctaEligible, ctaType, recordAnswer } = useCTAEligibility({ surface })
+
+  // Auto-submit initial query from URL params (e.g., from landing mini assistant)
+  useEffect(() => {
+    if (initialQuery && !hasAutoSubmitted && state.status === "IDLE") {
+      setHasAutoSubmitted(true)
+      // Log source for analytics
+      if (source) {
+        console.log(`[Assistant] Query from source: ${source}`)
+      }
+      submit(initialQuery)
+    }
+  }, [initialQuery, hasAutoSubmitted, state.status, submit, source])
 
   // Record answers for CTA tracking
   useEffect(() => {

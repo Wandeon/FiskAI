@@ -1,10 +1,16 @@
 "use client"
 
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { motion } from "framer-motion"
 import { PlexusBackground } from "@/components/marketing/PlexusBackground"
 import { AssistantContainer } from "@/components/assistant-v2"
 
-export default function MarketingAssistantPage() {
+function AssistantPageContent() {
+  const searchParams = useSearchParams()
+  const initialQuery = searchParams.get("q") || undefined
+  const source = searchParams.get("src") || undefined
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Animated background effects */}
@@ -102,9 +108,26 @@ export default function MarketingAssistantPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <AssistantContainer surface="MARKETING" variant="dark" />
+          <AssistantContainer
+            surface="MARKETING"
+            variant="dark"
+            initialQuery={initialQuery}
+            source={source}
+          />
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function MarketingAssistantPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
+      }
+    >
+      <AssistantPageContent />
+    </Suspense>
   )
 }
