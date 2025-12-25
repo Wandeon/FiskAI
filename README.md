@@ -6,46 +6,91 @@ Croatian AI-first accounting and invoicing SaaS platform.
 
 FiskAI is a cloud-based, modular accounting solution designed for Croatian companies, from paušalni obrt to d.o.o. Built with AI at its core for intelligent automation of accounting tasks.
 
-## Tech Stack
+### Key Capabilities
 
-- **Frontend:** Next.js + React + TypeScript
-- **Database:** PostgreSQL
-- **Auth:** NextAuth.js
-- **Deployment:** Coolify on VPS (ARM64) + Cloudflare CDN
-- **Architecture:** Modular, multi-tenant (single DB with company_id)
+- **E-Invoicing & Fiscalization** - Fiskalizacija 2.0, e-Račun, UBL/EN 16931 compliance
+- **Regulatory Truth Layer** - Automated regulatory content processing with evidence-backed claims
+- **Multi-Tenant Architecture** - Single database with company-level isolation
+- **AI-Powered Automation** - OCR, categorization, anomaly detection
 
-## Modules (Roadmap)
+### Trust Guarantees
 
-1. **E-Invoicing** - Fiskalizacija 2.0 / e-Račun (MVP)
-2. **Invoicing** - Create, send, track invoices
-3. **Expenses** - Cost tracking, receipt scanning
-4. **Banking** - Bank statement import, reconciliation
-5. **Bookkeeping** - Double-entry, kontni plan, temeljnice
-6. **VAT/PDV** - VAT calculations, reporting, PDV obrazac
-7. **Payroll** - Plaće, JOPPD
-8. **Reporting** - Financial reports, analytics, AI insights
-9. **Assets** - Fixed asset tracking, depreciation
+1. **Evidence-Backed** - Every regulatory claim links to source evidence
+2. **No Hallucination** - LLM outputs verified against sources
+3. **Fail-Closed** - Ambiguous content requires human review
+4. **Immutable History** - Source evidence never modified after capture
 
-## AI Capabilities (Phased)
+## Quick Links
 
-- **Phase 1:** OCR & smart data entry (receipt/invoice scanning)
-- **Phase 2:** Intelligent automation (auto-categorization, anomaly detection)
-- **Phase 3:** Conversational assistant (natural language queries)
+| Resource                                         | Purpose                        |
+| ------------------------------------------------ | ------------------------------ |
+| [CLAUDE.md](./CLAUDE.md)                         | AI context and quick reference |
+| [docs/](./docs/)                                 | Full documentation             |
+| [docs/PRODUCT_BIBLE.md](./docs/PRODUCT_BIBLE.md) | Product specifications         |
 
 ## Documentation
 
-- [Research: Fiskalizacija 2.0](docs/research/fiskalizacija-2.md)
-- [Research: E-Invoice Providers](docs/research/e-invoice-providers.md)
-- [Research: Open Source Solutions](docs/research/open-source-solutions.md)
-- [Architecture Design](docs/design/architecture.md)
-- [Infrastructure Notes](docs/infrastructure/vps-01-arm.md)
-- [Coolify Deployment Guide](docs/infrastructure/coolify-setup.md)
+### Architecture
 
-## Maintenance Log
+- [System Overview](docs/01_ARCHITECTURE/overview.md) - High-level architecture
+- [Two-Layer Model](docs/01_ARCHITECTURE/two-layer-model.md) - Discovery + processing layers
+- [Trust Guarantees](docs/01_ARCHITECTURE/trust-guarantees.md) - Evidence and verification
 
-- **2025-02-15** – Notification Center bell now consumes real e-invoice/audit data via `src/lib/notifications.ts`, refreshes every 60s through `/api/notifications`, and tracks unread state per company user (`notificationSeenAt` migration + `/api/notifications/read`). See `audit/work-log-2025-02-14.md`.
-- **2025-12-10** – Introduced global command palette (`⌘K`), header search affordance, mobile bottom navigation, enhanced multi-step e-invoice composer, and a redesigned dashboard hero/trend visualization (see `audit/ui-ux-refresh-2025-12-10-v2.md`).
-- **2025-02-14** – Added GitHub Actions CI workflow, baseline accessibility fixes (Croatian document locale, ARIA-aware inputs, labeled buyer select, invoice table caption/scope), tenant-safety updates (Prisma unique constraints + migration, buyer-company validation), and secret management improvements (`.env.example`, docker-compose variable substitution, removed `AUTH_TRUST_HOST`). See `audit/work-log-2025-02-14.md` for details.
+### Features
+
+- [Feature Registry](docs/02_FEATURES/FEATURE_REGISTRY.md) - All product features
+- [Module Matrix](docs/COMPLETE_MODULE_MATRIX.md) - Module capabilities
+
+### Regulatory Truth
+
+- [Overview](docs/05_REGULATORY/OVERVIEW.md) - Regulatory processing system
+- [Pipeline](docs/05_REGULATORY/PIPELINE.md) - Processing stages
+
+### Operations
+
+- [Operations Runbook](docs/04_OPERATIONS/OPERATIONS_RUNBOOK.md) - Operational procedures
+- [Deployment](docs/DEPLOYMENT.md) - Deployment guide
+
+### Research
+
+- [Fiskalizacija 2.0](docs/research/fiskalizacija-2.md) - Croatian fiscalization
+- [E-Invoice Providers](docs/research/e-invoice-providers.md) - Provider analysis
+
+## Tech Stack
+
+| Layer    | Technology                    |
+| -------- | ----------------------------- |
+| Frontend | Next.js 15, React, TypeScript |
+| Database | PostgreSQL 16, Prisma 7       |
+| Auth     | NextAuth v5 (Auth.js)         |
+| Queue    | BullMQ + Redis                |
+| AI/LLM   | Ollama, OpenRouter            |
+| Deploy   | Coolify on Hetzner ARM64      |
+
+## Portals
+
+| Portal       | URL             | Audience       |
+| ------------ | --------------- | -------------- |
+| Marketing    | fiskai.hr       | Public         |
+| Client App   | app.fiskai.hr   | Clients        |
+| Staff Portal | staff.fiskai.hr | Accountants    |
+| Admin Portal | admin.fiskai.hr | Platform owner |
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Run tests
+npm test
+
+# Build for production
+npm run build
+```
 
 ## License
 

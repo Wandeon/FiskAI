@@ -1,5 +1,9 @@
 # FiskAI Project Notes
 
+> Canonical document - reviewed 2024-12-24
+>
+> This file provides AI assistants with project context. For full documentation, see [docs/](./docs/).
+
 ## Domains & Architecture
 
 **Domain:** `fiskai.hr` (Cloudflare-managed, primary)
@@ -107,3 +111,54 @@ Key variables configured:
 - `NEXT_PUBLIC_APP_URL` - https://fiskai.hr
 - `RESEND_API_KEY` - Email service
 - `RESEND_FROM_EMAIL` - FiskAI <noreply@fiskai.hr>
+
+## Regulatory Truth Layer
+
+Two-layer execution model for processing Croatian regulatory content:
+
+**Layer A: Daily Discovery** (Scheduled)
+
+- Sentinel scans regulatory endpoints (Narodne novine, Porezna uprava, FINA, etc.)
+- Creates Evidence records with immutable source content
+- Classifies PDFs: PDF_TEXT (has text layer) or PDF_SCANNED (needs OCR)
+
+**Layer B: 24/7 Processing** (Continuous)
+
+- OCR Worker: Tesseract + Vision fallback for scanned PDFs
+- Extractor: LLM-based fact extraction with confidence scoring
+- Composer: Aggregates facts into regulatory rules
+- Reviewer: Automated quality checks
+- Arbiter: Conflict resolution
+- Releaser: Publication to production
+
+**Key Invariants:**
+
+- Every rule has evidence-backed source pointers
+- No hallucinations - LLM outputs verified against sources
+- Fail-closed - ambiguous content goes to human review
+- Evidence.rawContent is immutable
+
+**Workers:** `docker-compose.workers.yml`
+
+```bash
+# Check queue status
+npx tsx scripts/queue-status.ts
+
+# View worker logs
+docker logs fiskai-worker-ocr --tail 50
+```
+
+## Documentation Structure
+
+```
+docs/
+├── 01_ARCHITECTURE/     # System architecture
+├── 02_FEATURES/         # Feature specifications
+├── 04_OPERATIONS/       # Operations runbooks
+├── 05_REGULATORY/       # Regulatory Truth Layer
+├── 07_AUDITS/           # Audit reports
+├── _meta/               # Meta-documentation
+└── plans/               # Implementation plans
+```
+
+See [docs/DOC-MAP.md](./docs/DOC-MAP.md) for complete documentation structure.

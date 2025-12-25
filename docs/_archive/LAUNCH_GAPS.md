@@ -123,9 +123,9 @@ If you want to land the first 5–20 paying customers quickly, the app must reli
 
 Use this table format for new items you discover:
 
-| Area | Gap | Why it matters | Priority | Proposed fix | Definition of done |
-|------|-----|----------------|----------|--------------|--------------------|
-| Acquisition | No landing page | No one converts | P0 | Add marketing site | Live pages + analytics |
+| Area        | Gap             | Why it matters  | Priority | Proposed fix       | Definition of done     |
+| ----------- | --------------- | --------------- | -------- | ------------------ | ---------------------- |
+| Acquisition | No landing page | No one converts | P0       | Add marketing site | Live pages + analytics |
 
 ---
 
@@ -435,4 +435,3 @@ To credibly be “AI-first”, the AI must be safe, predictable, and measurable.
 - Convert this doc into tracked issues (GitHub/Jira/Linear) starting from the P0 list.
 - Define “first success moment” for paušalni obrt and instrument it (analytics).
 - Run 10 structured interviews (5 paušalni obrt, 3 accountants, 2 VAT d.o.o.) and update the “paušalni outputs” section with exact needs.
-
