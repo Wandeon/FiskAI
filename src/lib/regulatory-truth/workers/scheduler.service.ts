@@ -1,94 +1,54 @@
 // src/lib/regulatory-truth/workers/scheduler.service.ts
+// Layer A: Morning discovery refresh - runs once daily to discover new content
+// Processing is handled by the continuous-drainer (Layer B)
+
 import cron from "node-cron"
-import { scheduledQueue } from "./queues"
+import { sentinelQueue, scheduledQueue } from "./queues"
 import { closeRedis } from "./redis"
 import { logWorkerStartup } from "./startup-log"
 
-// Log startup info for build drift detection
 logWorkerStartup("scheduler")
 
 const TIMEZONE = process.env.WATCHDOG_TIMEZONE || "Europe/Zagreb"
 
 async function startScheduler(): Promise<void> {
-  console.log("[scheduler] Starting scheduler service...")
+  console.log("[scheduler] Starting scheduler service (Layer A: Discovery only)")
   console.log(`[scheduler] Timezone: ${TIMEZONE}`)
+  console.log("[scheduler] NOTE: Processing is handled by continuous-drainer (Layer B)")
 
-  // Daily pipeline at 06:00
+  // =========================================
+  // Layer A: Morning Discovery Refresh
+  // =========================================
+
+  // 06:00 - Discovery refresh (sitemaps, endpoint scans)
+  // This only creates DiscoveredItem rows, no heavy processing
   cron.schedule(
     "0 6 * * *",
     async () => {
-      console.log("[scheduler] Triggering daily pipeline run")
-      await scheduledQueue.add("scheduled", {
-        type: "pipeline-run",
-        runId: `scheduled-${Date.now()}`,
-        triggeredBy: "cron",
-      })
-    },
-    { timezone: TIMEZONE }
-  )
-  console.log("[scheduler] Scheduled: Daily pipeline at 06:00")
+      console.log("[scheduler] Running morning discovery refresh...")
+      const runId = `discovery-${Date.now()}`
 
-  // Auto-approve check at 07:00
-  cron.schedule(
-    "0 7 * * *",
-    async () => {
-      await scheduledQueue.add("scheduled", {
-        type: "auto-approve",
-        runId: `auto-approve-${Date.now()}`,
-      })
-    },
-    { timezone: TIMEZONE }
-  )
-  console.log("[scheduler] Scheduled: Auto-approve at 07:00")
+      // Queue sentinel jobs for all priorities
+      await sentinelQueue.add("sentinel-critical", { runId, priority: "CRITICAL" })
+      await sentinelQueue.add("sentinel-high", { runId, priority: "HIGH" }, { delay: 60000 })
+      await sentinelQueue.add("sentinel-normal", { runId, priority: "NORMAL" }, { delay: 120000 })
+      await sentinelQueue.add("sentinel-low", { runId, priority: "LOW" }, { delay: 180000 })
 
-  // Release batch at 07:30
-  cron.schedule(
-    "30 7 * * *",
-    async () => {
-      await scheduledQueue.add("scheduled", {
-        type: "release-batch",
-        runId: `release-${Date.now()}`,
-      })
+      console.log("[scheduler] Discovery jobs queued for all priorities")
     },
     { timezone: TIMEZONE }
   )
-  console.log("[scheduler] Scheduled: Release batch at 07:30")
+  console.log("[scheduler] Scheduled: Morning discovery at 06:00")
 
-  // Arbiter sweep at 12:00
-  cron.schedule(
-    "0 12 * * *",
-    async () => {
-      await scheduledQueue.add("scheduled", {
-        type: "arbiter-sweep",
-        runId: `arbiter-sweep-${Date.now()}`,
-      })
-    },
-    { timezone: TIMEZONE }
-  )
-  console.log("[scheduler] Scheduled: Arbiter sweep at 12:00")
-
-  // Random audit between 10:00-14:00
-  const auditHour = 10 + Math.floor(Math.random() * 4)
-  const auditMinute = Math.floor(Math.random() * 60)
-  cron.schedule(
-    `${auditMinute} ${auditHour} * * *`,
-    async () => {
-      await scheduledQueue.add("scheduled", {
-        type: "audit",
-        runId: `audit-${Date.now()}`,
-      })
-    },
-    { timezone: TIMEZONE }
-  )
-  console.log(
-    `[scheduler] Scheduled: Random audit at ${auditHour}:${auditMinute.toString().padStart(2, "0")}`
-  )
+  // =========================================
+  // Maintenance Jobs (not processing)
+  // =========================================
 
   // Weekly confidence decay on Sundays at 03:00
   cron.schedule(
     "0 3 * * 0",
     async () => {
-      console.log("[scheduler] Triggering weekly confidence decay")
+      console.log("[scheduler] Running weekly confidence decay...")
       await scheduledQueue.add("scheduled", {
         type: "confidence-decay",
         runId: `decay-${Date.now()}`,
@@ -99,11 +59,11 @@ async function startScheduler(): Promise<void> {
   )
   console.log("[scheduler] Scheduled: Confidence decay on Sundays at 03:00")
 
-  // Daily E2E validation at 06:00 (runs after pipeline)
+  // Daily E2E validation at 05:00 (before discovery)
   cron.schedule(
-    "0 6 * * *",
+    "0 5 * * *",
     async () => {
-      console.log("[scheduler] Triggering daily E2E validation")
+      console.log("[scheduler] Running daily E2E validation...")
       await scheduledQueue.add("scheduled", {
         type: "e2e-validation",
         runId: `e2e-${Date.now()}`,
@@ -112,9 +72,31 @@ async function startScheduler(): Promise<void> {
     },
     { timezone: TIMEZONE }
   )
-  console.log("[scheduler] Scheduled: E2E validation at 06:00")
+  console.log("[scheduler] Scheduled: E2E validation at 05:00")
+
+  // Daily health check at 00:00 (midnight)
+  cron.schedule(
+    "0 0 * * *",
+    async () => {
+      console.log("[scheduler] Running daily health snapshot...")
+      await scheduledQueue.add("scheduled", {
+        type: "health-snapshot",
+        runId: `health-${Date.now()}`,
+        triggeredBy: "cron",
+      })
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: Health snapshot at 00:00")
 
   console.log("[scheduler] Scheduler service started")
+  console.log("[scheduler] ==================================")
+  console.log("[scheduler] REMOVED: Daily pipeline processing (now continuous)")
+  console.log("[scheduler] REMOVED: Auto-approve scheduling (now continuous)")
+  console.log("[scheduler] REMOVED: Release batch scheduling (now event-driven)")
+  console.log("[scheduler] REMOVED: Arbiter sweep scheduling (now continuous)")
+  console.log("[scheduler] REMOVED: Random audit (replaced with deterministic health)")
+  console.log("[scheduler] ==================================")
 }
 
 // Graceful shutdown

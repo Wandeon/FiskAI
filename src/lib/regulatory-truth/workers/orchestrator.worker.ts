@@ -20,6 +20,7 @@ interface ScheduledJobData {
     | "release-batch"
     | "confidence-decay"
     | "e2e-validation"
+    | "health-snapshot"
   runId: string
   triggeredBy?: string
 }
@@ -114,6 +115,38 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
             invariantsFail: result.invariants.summary.fail,
             artifactsPath: result.artifactsPath,
           },
+        }
+      }
+
+      case "health-snapshot": {
+        // Collect system health metrics
+        const [discoveredItems, rules, evidence, pointers] = await Promise.all([
+          db.discoveredItem.groupBy({
+            by: ["status"],
+            _count: true,
+          }),
+          db.regulatoryRule.groupBy({
+            by: ["status"],
+            _count: true,
+          }),
+          db.evidence.count(),
+          db.sourcePointer.count(),
+        ])
+
+        const snapshot = {
+          timestamp: new Date().toISOString(),
+          discoveredItems: Object.fromEntries(discoveredItems.map((d) => [d.status, d._count])),
+          rules: Object.fromEntries(rules.map((r) => [r.status, r._count])),
+          evidence,
+          pointers,
+        }
+
+        console.log("[orchestrator] Health snapshot:", JSON.stringify(snapshot, null, 2))
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: snapshot,
         }
       }
 

@@ -158,6 +158,35 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
       expect(["NO_CITABLE_RULES", "OUT_OF_SCOPE"]).toContain(response.refusalReason)
     })
 
+    // CRITICAL: Gibberish queries must return REFUSAL (fail-closed)
+    it("returns REFUSAL for pure gibberish 'xyz123 asdfghjkl qwerty'", async () => {
+      const response = await buildAnswer("xyz123 asdfghjkl qwerty zxcvbn", "MARKETING")
+
+      expect(response.kind).toBe("REFUSAL")
+      expect(response.refusalReason).toBe("NO_CITABLE_RULES")
+    })
+
+    it("returns REFUSAL for keyboard smash", async () => {
+      const response = await buildAnswer("aslkdjfaslkdf askdjhfasd asdfkjh", "MARKETING")
+
+      expect(response.kind).toBe("REFUSAL")
+      expect(response.refusalReason).toBe("NO_CITABLE_RULES")
+    })
+
+    it("returns REFUSAL for English stopwords only", async () => {
+      const response = await buildAnswer("the and or is are was were", "MARKETING")
+
+      expect(response.kind).toBe("REFUSAL")
+      expect(response.refusalReason).toBe("NO_CITABLE_RULES")
+    })
+
+    it("returns REFUSAL for short tokens only", async () => {
+      const response = await buildAnswer("ab cd xy zz aa bb", "MARKETING")
+
+      expect(response.kind).toBe("REFUSAL")
+      expect(response.refusalReason).toBe("NO_CITABLE_RULES")
+    })
+
     it("validation rejects REGULATORY ANSWER without citations", async () => {
       // Construct invalid response manually
       const invalidResponse = {

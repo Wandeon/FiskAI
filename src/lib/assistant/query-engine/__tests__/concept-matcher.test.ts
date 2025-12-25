@@ -14,18 +14,29 @@ vi.mock("@/lib/prisma", () => ({
 import { prisma } from "@/lib/prisma"
 
 const mockConcepts = [
-  { id: "c1", slug: "pausalni-obrt", nameHr: "Paušalni obrt", aliases: ["pausalni", "pausalno"] },
+  {
+    id: "c1",
+    slug: "pausalni-obrt",
+    nameHr: "Paušalni obrt",
+    aliases: ["pausalni", "pausalno", "pausalno oporezivanje"],
+  },
   {
     id: "c2",
     slug: "pdv-stopa",
     nameHr: "Stopa PDV-a",
-    aliases: ["pdv", "porez-dodanu-vrijednost"],
+    aliases: ["pdv", "porez dodanu vrijednost", "vat"],
   },
   {
     id: "c3",
     slug: "pausalni-prag",
     nameHr: "Prag za paušalno",
     aliases: ["prag", "limit", "threshold"],
+  },
+  {
+    id: "c4",
+    slug: "fiskalizacija-obveza",
+    nameHr: "Obveza fiskalizacije",
+    aliases: ["fiskalizacija", "fiskal", "blagajna"],
   },
 ]
 
@@ -34,40 +45,133 @@ describe("matchConcepts", () => {
     vi.mocked(prisma.concept.findMany).mockResolvedValue(mockConcepts as any)
   })
 
-  it("matches concepts by slug keywords", async () => {
-    const matches = await matchConcepts(["pausalni", "obrt"])
+  describe("valid queries", () => {
+    it("matches concepts by exact slug keywords", async () => {
+      const matches = await matchConcepts(["pausalni", "obrt"])
 
-    expect(matches).toContainEqual(
-      expect.objectContaining({ conceptId: "c1", score: expect.any(Number) })
-    )
+      expect(matches).toContainEqual(
+        expect.objectContaining({ conceptId: "c1", score: expect.any(Number) })
+      )
+    })
+
+    it("matches concepts by aliases", async () => {
+      const matches = await matchConcepts(["pdv"])
+
+      expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c2" }))
+    })
+
+    it("matches 'pdv prag' to pdv-stopa concept", async () => {
+      const matches = await matchConcepts(["pdv", "prag"])
+
+      // Should match pdv-stopa (has 'pdv' alias)
+      expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c2" }))
+      // Should also match pausalni-prag (has 'prag' alias)
+      expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c3" }))
+    })
+
+    it("matches 'fiskalizacija' query", async () => {
+      const matches = await matchConcepts(["fiskalizacija"])
+
+      expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c4" }))
+    })
+
+    it("normalizes diacritics before matching", async () => {
+      const matches = await matchConcepts(["paušalni"]) // with diacritic
+
+      expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c1" }))
+    })
   })
 
-  it("matches concepts by aliases", async () => {
-    const matches = await matchConcepts(["pdv"])
+  describe("FAIL-CLOSED: gibberish queries must return NO matches", () => {
+    it("returns empty array for 'xyz123 asdfghjkl'", async () => {
+      const matches = await matchConcepts(["xyz123", "asdfghjkl"])
 
-    expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c2" }))
+      expect(matches).toEqual([])
+    })
+
+    it("returns empty array for 'random text about nothing'", async () => {
+      const matches = await matchConcepts(["random", "text", "about", "nothing"])
+
+      expect(matches).toEqual([])
+    })
+
+    it("returns empty array for short tokens only", async () => {
+      const matches = await matchConcepts(["ab", "cd", "xy"])
+
+      expect(matches).toEqual([])
+    })
+
+    it("returns empty array for stopwords only", async () => {
+      const matches = await matchConcepts(["the", "and", "or", "is"])
+
+      expect(matches).toEqual([])
+    })
+
+    it("returns empty array for numbers only", async () => {
+      const matches = await matchConcepts(["123", "456", "789"])
+
+      expect(matches).toEqual([])
+    })
+
+    it("returns empty array for mixed gibberish", async () => {
+      const matches = await matchConcepts(["qwerty", "asdfgh", "zxcvbn"])
+
+      expect(matches).toEqual([])
+    })
   })
 
-  it("returns higher score for more keyword matches", async () => {
-    const matches = await matchConcepts(["pausalni", "prag"])
+  describe("scoring and threshold", () => {
+    it("returns higher score for more keyword matches", async () => {
+      const matches = await matchConcepts(["pausalni", "prag"])
 
-    const pragMatch = matches.find((m) => m.conceptId === "c3")
-    const obrtMatch = matches.find((m) => m.conceptId === "c1")
+      const pragMatch = matches.find((m) => m.conceptId === "c3")
+      const obrtMatch = matches.find((m) => m.conceptId === "c1")
 
-    // Both should match, but with equal scores since each has 1 keyword match
-    expect(pragMatch).toBeDefined()
-    expect(obrtMatch).toBeDefined()
+      // c3 has both 'pausalni' and 'prag', c1 only has 'pausalni'
+      expect(pragMatch).toBeDefined()
+      expect(obrtMatch).toBeDefined()
+    })
+
+    it("filters out low-score matches", async () => {
+      // Query with many tokens, only one matches
+      const matches = await matchConcepts([
+        "pdv",
+        "nepostoji",
+        "random",
+        "gibberish",
+        "more",
+        "tokens",
+      ])
+
+      // Score would be 1/6 = 0.16, below threshold of 0.25
+      expect(matches).toEqual([])
+    })
+
+    it("includes matches above threshold", async () => {
+      // Query with 2 tokens, one matches - score = 0.5 > 0.25
+      const matches = await matchConcepts(["pdv", "stopa"])
+
+      expect(matches.length).toBeGreaterThan(0)
+    })
   })
 
-  it("returns empty array when no matches", async () => {
-    const matches = await matchConcepts(["nepostojeci", "pojam"])
+  describe("edge cases", () => {
+    it("returns empty array for empty keywords", async () => {
+      const matches = await matchConcepts([])
 
-    expect(matches).toEqual([])
-  })
+      expect(matches).toEqual([])
+    })
 
-  it("normalizes keywords before matching", async () => {
-    const matches = await matchConcepts(["paušalni"]) // with diacritic
+    it("handles concepts with no aliases", async () => {
+      // Use concept that won't match "test" query
+      vi.mocked(prisma.concept.findMany).mockResolvedValue([
+        { id: "c5", slug: "unrelated-concept", nameHr: "Nepoznat koncept", aliases: null },
+      ] as any)
 
-    expect(matches).toContainEqual(expect.objectContaining({ conceptId: "c1" }))
+      const matches = await matchConcepts(["test"])
+
+      // "test" doesn't match "unrelated", "concept", or "nepoznat" - should be empty
+      expect(matches).toEqual([])
+    })
   })
 })

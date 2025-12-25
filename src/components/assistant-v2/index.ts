@@ -1,6 +1,6 @@
 // Phase 4: Core UI
 export { AssistantContainer } from "./AssistantContainer"
-export { AssistantInput } from "./AssistantInput"
+export { AssistantInput, type AssistantInputHandle } from "./AssistantInput"
 export { SuggestionChips } from "./SuggestionChips"
 export { HistoryBar } from "./HistoryBar"
 export { AnswerSection } from "./AnswerSection"

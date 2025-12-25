@@ -4,6 +4,10 @@
 import pdf from "pdf-parse"
 import mammoth from "mammoth"
 import * as XLSX from "xlsx"
+import WordExtractor from "word-extractor"
+
+// word-extractor instance for old DOC files
+const wordExtractor = new WordExtractor()
 
 export type BinaryContentType = "pdf" | "docx" | "doc" | "xlsx" | "xls" | "unknown"
 
@@ -56,14 +60,27 @@ export async function parseBinaryContent(
     case "docx":
       return parseDocx(buffer)
     case "doc":
-      // Old DOC format - mammoth can sometimes handle it
-      return parseDocx(buffer)
+      // Old DOC format - use word-extractor
+      return parseDoc(buffer)
     case "xlsx":
     case "xls":
       return parseExcel(buffer)
     default:
       return { text: "", metadata: { skipped: true, reason: "Unknown binary type" } }
   }
+}
+
+/**
+ * Sanitize text for PostgreSQL - remove null bytes and invalid UTF-8 sequences
+ */
+function sanitizeText(text: string): string {
+  if (!text) return ""
+  // Remove null bytes (0x00) which PostgreSQL TEXT columns reject
+  // Also remove other control characters except newline, tab, carriage return
+  return text
+    .replace(/\x00/g, "") // Remove null bytes
+    .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // Remove control chars except \t\n\r
+    .trim()
 }
 
 /**
@@ -74,11 +91,14 @@ async function parsePdf(
 ): Promise<{ text: string; metadata?: Record<string, unknown> }> {
   try {
     const data = await pdf(buffer)
+    const sanitized = sanitizeText(data.text)
     return {
-      text: data.text,
+      text: sanitized,
       metadata: {
         pages: data.numpages,
         info: data.info,
+        originalLength: data.text?.length || 0,
+        sanitizedLength: sanitized.length,
       },
     }
   } catch (error) {
@@ -88,21 +108,85 @@ async function parsePdf(
 }
 
 /**
- * Parse DOCX/DOC and extract text
+ * Parse DOCX and extract text (Office Open XML format)
  */
 async function parseDocx(
   buffer: Buffer
 ): Promise<{ text: string; metadata?: Record<string, unknown> }> {
   try {
     const result = await mammoth.extractRawText({ buffer })
+    const sanitized = sanitizeText(result.value)
     return {
-      text: result.value,
+      text: sanitized,
       metadata: {
+        format: "docx",
         messages: result.messages,
+        originalLength: result.value?.length || 0,
+        sanitizedLength: sanitized.length,
       },
     }
   } catch (error) {
     console.error("[binary-parser] DOCX parse error:", error)
+    return { text: "", metadata: { error: String(error) } }
+  }
+}
+
+/**
+ * Parse old DOC format (Microsoft Word 97-2003)
+ */
+async function parseDoc(
+  buffer: Buffer
+): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+  try {
+    const doc = await wordExtractor.extract(buffer)
+
+    // Get all text parts
+    const body = doc.getBody() || ""
+    const headers = doc.getHeaders({ includeFooters: false }) || ""
+    const footers = doc.getFooters() || ""
+    const footnotes = doc.getFootnotes() || ""
+    const endnotes = doc.getEndnotes() || ""
+
+    // Combine all text parts
+    const allText = [body, headers, footers, footnotes, endnotes].filter(Boolean).join("\n\n")
+
+    const sanitized = sanitizeText(allText)
+
+    return {
+      text: sanitized,
+      metadata: {
+        format: "doc",
+        bodyLength: body.length,
+        hasHeaders: headers.length > 0,
+        hasFooters: footers.length > 0,
+        hasFootnotes: footnotes.length > 0,
+        hasEndnotes: endnotes.length > 0,
+        originalLength: allText.length,
+        sanitizedLength: sanitized.length,
+      },
+    }
+  } catch (error) {
+    console.error("[binary-parser] DOC parse error:", error)
+
+    // Fallback: try mammoth in case it's actually a DOCX with wrong extension
+    try {
+      console.log("[binary-parser] Trying mammoth fallback for DOC file...")
+      const result = await mammoth.extractRawText({ buffer })
+      if (result.value && result.value.trim().length > 0) {
+        const sanitized = sanitizeText(result.value)
+        return {
+          text: sanitized,
+          metadata: {
+            format: "doc-via-mammoth-fallback",
+            originalLength: result.value.length,
+            sanitizedLength: sanitized.length,
+          },
+        }
+      }
+    } catch {
+      // Mammoth fallback also failed
+    }
+
     return { text: "", metadata: { error: String(error) } }
   }
 }
@@ -135,11 +219,16 @@ async function parseExcel(
       sheets.push(lines.join("\n"))
     }
 
+    const rawText = sheets.join("\n\n")
+    const sanitized = sanitizeText(rawText)
+
     return {
-      text: sheets.join("\n\n"),
+      text: sanitized,
       metadata: {
         sheetNames: workbook.SheetNames,
         sheetCount: workbook.SheetNames.length,
+        originalLength: rawText.length,
+        sanitizedLength: sanitized.length,
       },
     }
   } catch (error) {
