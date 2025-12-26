@@ -103,7 +103,7 @@ export async function getActiveAlerts(): Promise<Alert[]> {
 
   const expiringCerts = await db.fiscalCertificate.findMany({
     where: {
-      validUntil: { lte: thirtyDaysFromNow, gte: new Date() },
+      certNotAfter: { lte: thirtyDaysFromNow, gte: new Date() },
     },
     include: { company: { select: { id: true, name: true } } },
   })
@@ -111,7 +111,7 @@ export async function getActiveAlerts(): Promise<Alert[]> {
   for (const cert of expiringCerts) {
     if (!cert.company) continue
     const daysRemaining = Math.ceil(
-      (cert.validUntil!.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (cert.certNotAfter.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
 
     alerts.push({

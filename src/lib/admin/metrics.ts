@@ -86,11 +86,11 @@ export async function getComplianceHealth(): Promise<ComplianceHealth> {
 
   const [activeCount, expiringCount, missingCount, todayInvoices] = await Promise.all([
     db.fiscalCertificate.count({
-      where: { validUntil: { gt: thirtyDaysFromNow } },
+      where: { certNotAfter: { gt: thirtyDaysFromNow } },
     }),
     db.fiscalCertificate.count({
       where: {
-        validUntil: { lte: thirtyDaysFromNow, gte: new Date() },
+        certNotAfter: { lte: thirtyDaysFromNow, gte: new Date() },
       },
     }),
     db.company.count({
