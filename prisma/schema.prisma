@@ -1821,6 +1821,7 @@ model Evidence {
   processes       RegulatoryProcess[]
   referenceTables ReferenceTable[]
   assets          RegulatoryAsset[]
+  transitionalProvisions TransitionalProvision[]
 
   @@unique([url, contentHash])
   @@index([sourceId])
@@ -2185,6 +2186,43 @@ model RegulatoryAsset {
   @@index([formCode])
   @@index([assetType])
   @@index([processId])
+  @@index([evidenceId])
+}
+
+// ============================================================================
+// SHAPE 7: TEMPORAL (Transitional Provisions)
+// ============================================================================
+
+model TransitionalProvision {
+  id              String            @id @default(cuid())
+
+  // What's transitioning
+  fromRule        String            // concept slug of old rule
+  toRule          String            // concept slug of new rule
+
+  // Transition logic
+  cutoffDate      DateTime
+  logicExpr       String            // "IF invoice_date < cutoff AND delivery_date >= cutoff"
+  appliesRule     String            // Which rule applies
+
+  // Explanation
+  explanationHr   String            @db.Text
+  explanationEn   String?           @db.Text
+
+  // Pattern
+  pattern         TransitionPattern
+
+  // Provenance
+  sourceArticle   String
+  evidenceId      String
+  evidence        Evidence          @relation(fields: [evidenceId], references: [id])
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([cutoffDate])
+  @@index([fromRule])
+  @@index([toRule])
   @@index([evidenceId])
 }
 
