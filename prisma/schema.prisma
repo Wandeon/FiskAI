@@ -1819,6 +1819,7 @@ model Evidence {
   artifacts       EvidenceArtifact[]
   atomicClaims    AtomicClaim[]
   processes       RegulatoryProcess[]
+  referenceTables ReferenceTable[]
 
   @@unique([url, contentHash])
   @@index([sourceId])
@@ -2094,6 +2095,53 @@ model ProcessStep {
 
   @@unique([processId, orderNum])
   @@index([processId])
+}
+
+// ============================================================================
+// SHAPE 5: REFERENCE (Lookup Tables)
+// ============================================================================
+
+model ReferenceTable {
+  id              String            @id @default(cuid())
+  category        ReferenceCategory
+  name            String
+  jurisdiction    String            @default("HR")
+
+  // Table metadata
+  keyColumn       String            // "city", "code"
+  valueColumn     String            // "iban", "description"
+
+  // Data
+  entries         ReferenceEntry[]
+
+  // Provenance
+  sourceUrl       String?
+  lastUpdated     DateTime          @default(now())
+  evidenceId      String?
+  evidence        Evidence?         @relation(fields: [evidenceId], references: [id])
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([category, name, jurisdiction])
+  @@index([category])
+  @@index([jurisdiction])
+}
+
+model ReferenceEntry {
+  id              String   @id @default(cuid())
+  tableId         String
+
+  key             String   // "Split", "6201.11"
+  value           String   // "HR1234...", "Računalne usluge"
+  metadata        Json?    // { "model": "21" }
+
+  table           ReferenceTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+
+  @@index([tableId, key])
+  @@index([tableId])
 }
 
 // Truth health snapshot for monitoring system integrity
