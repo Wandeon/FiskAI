@@ -3,6 +3,9 @@ import { buildAnswer } from "@/lib/assistant/query-engine/answer-builder"
 import { validateResponse } from "@/lib/assistant/validation"
 import { SCHEMA_VERSION, type Surface, type AssistantResponse } from "@/lib/assistant/types"
 import { nanoid } from "nanoid"
+import { getReasoningMode } from "@/lib/assistant/reasoning/feature-flags"
+import { runShadowMode } from "@/lib/assistant/reasoning/shadow-runner"
+import { buildAnswerCompat } from "@/lib/assistant/reasoning/compat"
 
 interface ChatRequest {
   query: string
@@ -12,6 +15,11 @@ interface ChatRequest {
 
 /**
  * FAIL-CLOSED API ROUTE
+ *
+ * Supports three modes based on REASONING_MODE env var:
+ * - off: Legacy pipeline only
+ * - shadow: Both pipelines, legacy serves
+ * - live: New reasoning pipeline
  *
  * If validation fails, we MUST return a proper REFUSAL response,
  * not a 500 error. This ensures the client always receives a valid
@@ -33,8 +41,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid surface" }, { status: 400 })
     }
 
-    // Build answer from rules
-    const response = await buildAnswer(body.query.trim(), body.surface, body.companyId)
+    // Determine which pipeline to use
+    const mode = getReasoningMode()
+    let response: AssistantResponse
+
+    switch (mode) {
+      case "shadow":
+        // Run both pipelines, return legacy
+        response = await runShadowMode(body.query.trim(), body.surface, body.companyId)
+        break
+
+      case "live":
+        // Use new reasoning pipeline with compat wrapper
+        response = await buildAnswerCompat(body.query.trim(), body.surface, body.companyId)
+        break
+
+      case "off":
+      default:
+        // Use legacy pipeline only
+        response = await buildAnswer(body.query.trim(), body.surface, body.companyId)
+        break
+    }
 
     // FAIL-CLOSED: Validate response before sending
     const validation = validateResponse(response)
@@ -46,6 +73,7 @@ export async function POST(request: NextRequest) {
         errors: validation.errors,
         query: body.query.substring(0, 100),
         surface: body.surface,
+        mode,
       })
 
       // Return a valid REFUSAL response, not a 500 error
