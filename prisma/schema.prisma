@@ -1817,6 +1817,7 @@ model Evidence {
   agentRuns       AgentRun[]
   extractionRejected ExtractionRejected[]
   artifacts       EvidenceArtifact[]
+  atomicClaims    AtomicClaim[]
 
   @@unique([url, contentHash])
   @@index([sourceId])
@@ -1931,6 +1932,7 @@ model RegulatoryRule {
   agentRuns         AgentRun[]
   outgoingEdges     GraphEdge[] @relation("EdgeFrom")
   incomingEdges     GraphEdge[] @relation("EdgeTo")
+  atomicClaims      AtomicClaim[]
 
   // Allow draft/pending variants to coexist; only PUBLISHED is unique per concept/date
   // This enables conflict candidates to be stored before arbiter resolution
@@ -1940,6 +1942,66 @@ model RegulatoryRule {
   @@index([conceptSlug])
   @@index([effectiveFrom])
   @@index([meaningSignature])
+}
+
+// ============================================================================
+// SHAPE 1: ATOMIC CLAIMS (Logic Frames)
+// ============================================================================
+
+model AtomicClaim {
+  id                String        @id @default(cuid())
+
+  // WHO - Subject
+  subjectType       SubjectType
+  subjectQualifiers String[]      // ["pausalni-obrt", "exceeds-threshold"]
+
+  // WHEN - Condition
+  triggerExpr       String?       // "sales > 10000 EUR"
+  temporalExpr      String?       // "from 2025-01-01"
+  jurisdiction      String        @default("HR")
+
+  // WHAT - Assertion
+  assertionType     AssertionType
+  logicExpr         String        // "tax_place = destination"
+  value             String?
+  valueType         String?
+
+  // Extensibility
+  parameters        Json?         // Coefficients, formula constants
+
+  // Provenance
+  exactQuote        String        @db.Text
+  articleNumber     String?
+  lawReference      String?
+  confidence        Float         @default(0.8)
+
+  // Relations
+  evidenceId        String
+  evidence          Evidence      @relation(fields: [evidenceId], references: [id])
+  ruleId            String?
+  rule              RegulatoryRule? @relation(fields: [ruleId], references: [id])
+  exceptions        ClaimException[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([subjectType])
+  @@index([assertionType])
+  @@index([jurisdiction])
+  @@index([evidenceId])
+  @@index([ruleId])
+}
+
+model ClaimException {
+  id              String   @id @default(cuid())
+  claimId         String
+  condition       String   // "IF alcohol_content > 0"
+  overridesTo     String   // concept slug of overriding rule
+  sourceArticle   String   // "Art 38(4)"
+
+  claim           AtomicClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
 }
 
 // Truth health snapshot for monitoring system integrity
