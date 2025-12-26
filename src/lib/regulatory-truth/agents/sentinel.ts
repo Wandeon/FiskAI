@@ -10,7 +10,11 @@ import {
   filterNNSitemaps,
   SitemapEntry,
 } from "../parsers/sitemap-parser"
-import { parseHtmlList, findPaginationLinks, extractDocumentLinks } from "../parsers/html-list-parser"
+import {
+  parseHtmlList,
+  findPaginationLinks,
+  extractDocumentLinks,
+} from "../parsers/html-list-parser"
 import { logAuditEvent } from "../utils/audit-log"
 import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
 import { ocrQueue, extractQueue } from "../workers/queues"
@@ -50,13 +54,6 @@ const DEFAULT_CONFIG: SentinelConfig = {
 function randomDelay(minMs: number, maxMs: number): Promise<void> {
   const delay = minMs + Math.random() * (maxMs - minMs)
   return new Promise((resolve) => setTimeout(resolve, delay))
-}
-
-/**
- * Helper to add fixed delay between requests (legacy)
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -113,7 +110,9 @@ async function scanSitemapRecursively(
           const type = parseInt(match[1], 10)
           return options.allowedNNTypes!.includes(type)
         })
-        console.log(`[sentinel] Filtered to ${urlsToScan.length} NN sitemaps (types ${options.allowedNNTypes.join(", ")})`)
+        console.log(
+          `[sentinel] Filtered to ${urlsToScan.length} NN sitemaps (types ${options.allowedNNTypes.join(", ")})`
+        )
       }
 
       // Recursively scan each child sitemap

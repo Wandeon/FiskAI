@@ -55,13 +55,6 @@ function randomDelay(minMs: number, maxMs: number): Promise<void> {
 }
 
 /**
- * Sleep helper for rate limiting (legacy)
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/**
  * Normalize a URL to a canonical form for deduplication
  */
 function normalizeUrl(url: string): string {
@@ -109,10 +102,7 @@ function isDocumentUrl(url: string): boolean {
 /**
  * Check if a URL should be crawled based on patterns
  */
-function shouldCrawlUrl(
-  url: string,
-  options: CrawlOptions
-): boolean {
+function shouldCrawlUrl(url: string, options: CrawlOptions): boolean {
   // Check include patterns (if specified, URL must match at least one)
   if (options.includePatterns && options.includePatterns.length > 0) {
     const matches = options.includePatterns.some((pattern) => pattern.test(url))
