@@ -3,7 +3,13 @@ import { DiscoveryPriority, ScrapeFrequency } from "@prisma/client"
 import { db } from "@/lib/db"
 import { fetchWithRateLimit } from "../utils/rate-limiter"
 import { detectContentChange, hashContent } from "../utils/content-hash"
-import { parseSitemap, filterNNSitemaps, getLatestNNIssueSitemaps } from "../parsers/sitemap-parser"
+import {
+  parseSitemap,
+  parseSitemapIndex,
+  isSitemapIndex,
+  filterNNSitemaps,
+  SitemapEntry,
+} from "../parsers/sitemap-parser"
 import { parseHtmlList, findPaginationLinks } from "../parsers/html-list-parser"
 import { logAuditEvent } from "../utils/audit-log"
 import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
@@ -14,11 +20,112 @@ import { isBlockedDomain } from "../utils/concept-resolver"
 interface SentinelConfig {
   maxItemsPerRun: number
   maxPagesPerEndpoint: number
+  maxSitemapDepth: number
+  sitemapDelayMs: number
 }
 
 const DEFAULT_CONFIG: SentinelConfig = {
   maxItemsPerRun: 500,
   maxPagesPerEndpoint: 5,
+  maxSitemapDepth: 3,
+  sitemapDelayMs: 500,
+}
+
+/**
+ * Helper to add delay between requests
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Recursively scan a sitemap URL and collect all entries.
+ * Handles both sitemap indexes (which contain other sitemaps) and regular sitemaps.
+ */
+async function scanSitemapRecursively(
+  sitemapUrl: string,
+  domain: string,
+  options: {
+    maxDepth: number
+    currentDepth?: number
+    delayMs: number
+    allowedNNTypes?: number[]
+  }
+): Promise<{ entries: SitemapEntry[]; sitemapsScanned: number; errors: string[] }> {
+  const currentDepth = options.currentDepth ?? 0
+  const result = {
+    entries: [] as SitemapEntry[],
+    sitemapsScanned: 0,
+    errors: [] as string[],
+  }
+
+  // Check max depth
+  if (currentDepth >= options.maxDepth) {
+    console.log(`[sentinel] Max sitemap depth ${options.maxDepth} reached for ${sitemapUrl}`)
+    return result
+  }
+
+  console.log(`[sentinel] Scanning sitemap: ${sitemapUrl} (depth ${currentDepth})`)
+
+  try {
+    const response = await fetchWithRateLimit(sitemapUrl)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const content = await response.text()
+    result.sitemapsScanned++
+
+    // Check if this is a sitemap index
+    if (isSitemapIndex(content)) {
+      const childSitemapUrls = parseSitemapIndex(content)
+      console.log(`[sentinel] Found sitemap index with ${childSitemapUrls.length} child sitemaps`)
+
+      // For NN, filter sitemaps by type before recursing
+      let urlsToScan = childSitemapUrls
+      if (domain === "narodne-novine.nn.hr" && options.allowedNNTypes) {
+        urlsToScan = childSitemapUrls.filter((url) => {
+          const filename = url.split("/").pop() || ""
+          const match = filename.match(/sitemap_(\d)_/)
+          if (!match) return true // Keep non-matching URLs
+          const type = parseInt(match[1], 10)
+          return options.allowedNNTypes!.includes(type)
+        })
+        console.log(`[sentinel] Filtered to ${urlsToScan.length} NN sitemaps (types ${options.allowedNNTypes.join(", ")})`)
+      }
+
+      // Recursively scan each child sitemap
+      for (const childUrl of urlsToScan) {
+        await sleep(options.delayMs)
+
+        const childResult = await scanSitemapRecursively(childUrl, domain, {
+          ...options,
+          currentDepth: currentDepth + 1,
+        })
+
+        result.entries.push(...childResult.entries)
+        result.sitemapsScanned += childResult.sitemapsScanned
+        result.errors.push(...childResult.errors)
+      }
+    } else {
+      // Regular sitemap - parse entries
+      let entries = parseSitemap(content)
+
+      // For NN content sitemaps, filter by type if applicable
+      if (domain === "narodne-novine.nn.hr" && options.allowedNNTypes) {
+        entries = filterNNSitemaps(entries, options.allowedNNTypes)
+      }
+
+      console.log(`[sentinel] Found ${entries.length} URLs in ${sitemapUrl}`)
+      result.entries.push(...entries)
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    result.errors.push(`Failed to scan ${sitemapUrl}: ${errorMsg}`)
+    console.error(`[sentinel] Sitemap scan error: ${errorMsg}`)
+  }
+
+  return result
 }
 
 export interface SentinelResult {
@@ -105,16 +212,50 @@ async function processEndpoint(
     let discoveredUrls: { url: string; title: string | null; date: string | null }[] = []
 
     if (endpoint.listingStrategy === "SITEMAP_XML") {
-      const entries = parseSitemap(content)
+      // Get allowed NN types from metadata (if this is an NN endpoint)
+      const allowedNNTypes =
+        endpoint.domain === "narodne-novine.nn.hr"
+          ? (endpoint.metadata as { types?: number[] })?.types || [1, 2]
+          : undefined
 
-      // For NN, filter to relevant types and get latest issues
-      if (endpoint.domain === "narodne-novine.nn.hr") {
-        const allowedTypes = (endpoint.metadata as { types?: number[] })?.types || [1, 2]
-        const filtered = filterNNSitemaps(entries, allowedTypes)
-        const latest = getLatestNNIssueSitemaps(filtered, 20)
-        discoveredUrls = latest.map((e) => ({ url: e.url, title: null, date: e.lastmod || null }))
+      // Check if this is a sitemap index that needs recursive scanning
+      if (isSitemapIndex(content)) {
+        console.log(`[sentinel] Detected sitemap index, starting recursive scan...`)
+
+        const scanResult = await scanSitemapRecursively(baseUrl, endpoint.domain, {
+          maxDepth: config.maxSitemapDepth,
+          delayMs: config.sitemapDelayMs,
+          allowedNNTypes,
+        })
+
+        console.log(
+          `[sentinel] Recursive scan complete: ${scanResult.sitemapsScanned} sitemaps, ${scanResult.entries.length} URLs`
+        )
+
+        if (scanResult.errors.length > 0) {
+          console.warn(`[sentinel] Sitemap scan had ${scanResult.errors.length} errors`)
+        }
+
+        discoveredUrls = scanResult.entries.map((e) => ({
+          url: e.url,
+          title: null,
+          date: e.lastmod || null,
+        }))
       } else {
-        discoveredUrls = entries.map((e) => ({ url: e.url, title: null, date: e.lastmod || null }))
+        // Regular sitemap - just parse directly
+        let entries = parseSitemap(content)
+
+        // Apply NN filtering if applicable
+        if (allowedNNTypes) {
+          entries = filterNNSitemaps(entries, allowedNNTypes)
+        }
+
+        console.log(`[sentinel] Parsed ${entries.length} URLs from sitemap`)
+        discoveredUrls = entries.map((e) => ({
+          url: e.url,
+          title: null,
+          date: e.lastmod || null,
+        }))
       }
     } else {
       // HTML-based parsing
