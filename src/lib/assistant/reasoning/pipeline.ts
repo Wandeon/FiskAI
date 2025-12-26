@@ -41,10 +41,11 @@ export async function* buildAnswerWithReasoning(
   try {
     // Stage 1-2: Context Resolution
     const contextGenerator = contextResolutionStage(factory, query, context)
-    for await (const event of contextGenerator) {
-      yield event
+    let contextResult = await contextGenerator.next()
+    while (!contextResult.done) {
+      yield contextResult.value
+      contextResult = await contextGenerator.next()
     }
-    const contextResult = await contextGenerator.next()
     const resolution = contextResult.value as ContextResolution
 
     // Handle clarification if needed
@@ -66,10 +67,11 @@ export async function* buildAnswerWithReasoning(
     // Stage 3: Source Discovery
     const keywords = extractKeywords(query)
     const sourcesGenerator = sourceDiscoveryStage(factory, keywords)
-    for await (const event of sourcesGenerator) {
-      yield event
+    let sourcesGeneratorResult = await sourcesGenerator.next()
+    while (!sourcesGeneratorResult.done) {
+      yield sourcesGeneratorResult.value
+      sourcesGeneratorResult = await sourcesGenerator.next()
     }
-    const sourcesGeneratorResult = await sourcesGenerator.next()
     const sourcesResult = sourcesGeneratorResult.value as SourceDiscoveryResult
 
     // If no sources, return REFUSAL
