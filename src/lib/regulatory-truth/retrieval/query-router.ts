@@ -9,24 +9,10 @@ import { z } from "zod"
 
 // Engines
 import { runLogicEngine } from "./logic-engine"
-// import { runProcessEngine } from "./process-engine"
-// import { runReferenceEngine } from "./reference-engine"
+import { runProcessEngine } from "./process-engine"
+import { runReferenceEngine } from "./reference-engine"
 // import { runAssetEngine } from "./asset-engine"
 // import { runTemporalEngine } from "./temporal-engine"
-
-async function runProcessEngine(
-  query: string,
-  entities: { subjects: string[]; formCodes: string[] }
-): Promise<unknown> {
-  return { stub: true, engine: "process", query, entities }
-}
-
-async function runReferenceEngine(
-  query: string,
-  entities: { locations: string[] }
-): Promise<unknown> {
-  return { stub: true, engine: "reference", query, entities }
-}
 
 async function runAssetEngine(query: string, entities: { formCodes: string[] }): Promise<unknown> {
   return { stub: true, engine: "asset", query, entities }
