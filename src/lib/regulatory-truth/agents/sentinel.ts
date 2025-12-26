@@ -10,7 +10,7 @@ import {
   filterNNSitemaps,
   SitemapEntry,
 } from "../parsers/sitemap-parser"
-import { parseHtmlList, findPaginationLinks } from "../parsers/html-list-parser"
+import { parseHtmlList, findPaginationLinks, extractDocumentLinks } from "../parsers/html-list-parser"
 import { logAuditEvent } from "../utils/audit-log"
 import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
 import { ocrQueue, extractQueue } from "../workers/queues"
@@ -307,6 +307,13 @@ async function processEndpoint(
       })
       discoveredUrls = items
 
+      // Also extract document links (PDFs, DOCs, etc.) from anywhere on the page
+      const documentLinks = extractDocumentLinks(content, baseUrl)
+      if (documentLinks.length > 0) {
+        console.log(`[sentinel] Found ${documentLinks.length} document links on ${baseUrl}`)
+        discoveredUrls.push(...documentLinks)
+      }
+
       // Handle pagination
       if (endpoint.listingStrategy === "PAGINATION") {
         const paginationLinks = findPaginationLinks(content, baseUrl, config.maxPagesPerEndpoint)
@@ -321,6 +328,10 @@ async function processEndpoint(
                 itemSelector: "article, .news-item, .views-row",
               })
               discoveredUrls.push(...pageItems)
+
+              // Also extract documents from paginated pages
+              const pageDocuments = extractDocumentLinks(pageContent, pageUrl)
+              discoveredUrls.push(...pageDocuments)
             }
           } catch (_error) {
             console.log(`[sentinel] Failed to fetch page: ${pageUrl}`)

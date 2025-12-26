@@ -58,6 +58,7 @@ export {
 export {
   parseHtmlList,
   findPaginationLinks,
+  extractDocumentLinks,
   type ListItem,
   type ListParserConfig,
 } from "./parsers/html-list-parser"
