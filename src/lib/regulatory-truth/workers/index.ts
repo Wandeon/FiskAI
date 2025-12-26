@@ -1,7 +1,17 @@
 // src/lib/regulatory-truth/workers/index.ts
 
 // Core
-export { redis, createWorkerConnection, checkRedisHealth, closeRedis } from "./redis"
+export {
+  redis,
+  createWorkerConnection,
+  checkRedisHealth,
+  closeRedis,
+  // PR #90 fix: Drainer heartbeat for stall detection
+  updateDrainerHeartbeat,
+  getDrainerHeartbeat,
+  getDrainerIdleMinutes,
+  type DrainerHeartbeat,
+} from "./redis"
 export {
   sentinelQueue,
   extractQueue,

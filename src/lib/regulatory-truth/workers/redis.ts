@@ -36,3 +36,58 @@ export async function checkRedisHealth(timeoutMs: number = 2000): Promise<boolea
 export async function closeRedis(): Promise<void> {
   await redis.quit()
 }
+
+// ============================================================================
+// DRAINER HEARTBEAT (PR #90 fix: stall detection)
+// ============================================================================
+
+const DRAINER_HEARTBEAT_KEY = "regulatory-truth:drainer:heartbeat"
+const DRAINER_STATS_KEY = "regulatory-truth:drainer:stats"
+
+export interface DrainerHeartbeat {
+  lastActivity: string // ISO timestamp
+  queueName: string // Which queue was last processed
+  itemsProcessed: number // Total items processed this session
+  cycleCount: number // Number of drain cycles
+}
+
+/**
+ * Update drainer heartbeat in Redis (called after each successful operation)
+ */
+export async function updateDrainerHeartbeat(data: DrainerHeartbeat): Promise<void> {
+  await redis.set(DRAINER_HEARTBEAT_KEY, JSON.stringify(data))
+  // Also update individual stage timestamps
+  await redis.hset(DRAINER_STATS_KEY, {
+    lastActivity: data.lastActivity,
+    lastQueue: data.queueName,
+    itemsProcessed: String(data.itemsProcessed),
+    cycleCount: String(data.cycleCount),
+  })
+}
+
+/**
+ * Get drainer heartbeat from Redis
+ */
+export async function getDrainerHeartbeat(): Promise<DrainerHeartbeat | null> {
+  const data = await redis.get(DRAINER_HEARTBEAT_KEY)
+  if (!data) return null
+  try {
+    return JSON.parse(data) as DrainerHeartbeat
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get time since last drainer activity in minutes
+ */
+export async function getDrainerIdleMinutes(): Promise<number> {
+  const heartbeat = await getDrainerHeartbeat()
+  if (!heartbeat) {
+    // No heartbeat means drainer hasn't started or crashed before first heartbeat
+    return Infinity
+  }
+  const lastActivity = new Date(heartbeat.lastActivity)
+  const now = new Date()
+  return (now.getTime() - lastActivity.getTime()) / (1000 * 60)
+}

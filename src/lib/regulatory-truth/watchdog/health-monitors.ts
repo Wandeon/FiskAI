@@ -5,7 +5,13 @@ import type { WatchdogHealthStatus, WatchdogCheckType } from "@prisma/client"
 import type { HealthCheckResult } from "./types"
 import { getThreshold } from "./types"
 import { raiseAlert } from "./alerting"
-import { allQueues, checkRedisHealth, deadletterQueue } from "../workers"
+import {
+  allQueues,
+  checkRedisHealth,
+  deadletterQueue,
+  getDrainerIdleMinutes,
+  getDrainerHeartbeat,
+} from "../workers"
 
 /**
  * Update health status in database
@@ -279,6 +285,10 @@ export async function runAllHealthChecks(): Promise<HealthCheckResult[]> {
   const rejectionResult = await checkRejectionRate()
   results.push(rejectionResult)
 
+  // PR #90 fix: Add drainer stall check
+  const drainerResult = await checkDrainerStall()
+  results.push(drainerResult)
+
   const healthy = results.filter((r) => r.status === "HEALTHY").length
   const warning = results.filter((r) => r.status === "WARNING").length
   const critical = results.filter((r) => r.status === "CRITICAL").length
@@ -344,4 +354,60 @@ export async function checkQueueBacklogHealth(): Promise<HealthCheckResult> {
     message: `Max queue backlog: ${maxBacklog}`,
     metadata: backlogs,
   }
+}
+
+/**
+ * PR #90 fix: Check drainer stall status
+ * Detects when the continuous drainer hasn't made progress for too long
+ */
+export async function checkDrainerStall(): Promise<HealthCheckResult> {
+  const warningMinutes = getThreshold("DRAINER_STALL_WARNING_MINUTES")
+  const criticalMinutes = getThreshold("DRAINER_STALL_CRITICAL_MINUTES")
+
+  const idleMinutes = await getDrainerIdleMinutes()
+  const heartbeat = await getDrainerHeartbeat()
+
+  let status: WatchdogHealthStatus = "HEALTHY"
+
+  if (idleMinutes === Infinity) {
+    // No heartbeat found - drainer may not have started
+    status = "WARNING"
+    await raiseAlert({
+      severity: "WARNING",
+      type: "DRAINER_STALL",
+      message: "Drainer has no heartbeat - may not be running",
+      details: { idleMinutes, heartbeat: null },
+    })
+  } else if (idleMinutes >= criticalMinutes) {
+    status = "CRITICAL"
+    await raiseAlert({
+      severity: "CRITICAL",
+      type: "DRAINER_STALL",
+      message: `Drainer stalled for ${Math.floor(idleMinutes)} minutes`,
+      details: { idleMinutes, heartbeat },
+    })
+  } else if (idleMinutes >= warningMinutes) {
+    status = "WARNING"
+    await raiseAlert({
+      severity: "WARNING",
+      type: "DRAINER_STALL",
+      message: `Drainer idle for ${Math.floor(idleMinutes)} minutes`,
+      details: { idleMinutes, heartbeat },
+    })
+  }
+
+  const result: HealthCheckResult = {
+    checkType: "DRAINER_PROGRESS",
+    entityId: "continuous-drainer",
+    status,
+    metric: idleMinutes === Infinity ? -1 : idleMinutes,
+    threshold: status === "CRITICAL" ? criticalMinutes : warningMinutes,
+    message:
+      idleMinutes === Infinity
+        ? "No heartbeat found"
+        : `${Math.floor(idleMinutes)} minutes since last activity (cycle ${heartbeat?.cycleCount ?? 0}, ${heartbeat?.itemsProcessed ?? 0} items)`,
+  }
+
+  await updateHealth(result)
+  return result
 }

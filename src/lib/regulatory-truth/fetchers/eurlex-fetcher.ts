@@ -107,7 +107,10 @@ export async function fetchEURLexMetadata(celex: string): Promise<EURLexMetadata
  * Create Evidence record from EUR-Lex metadata
  */
 export async function createEURLexEvidence(metadata: EURLexMetadata): Promise<string | null> {
-  const contentHash = hashContent(JSON.stringify(metadata))
+  // CRITICAL: Hash and store the SAME bytes (compact JSON)
+  // See: docs/07_AUDITS/runs/evidence-immutability-INV-001.md finding F-1
+  const rawContent = JSON.stringify(metadata)
+  const contentHash = hashContent(rawContent)
 
   // Check if we already have this
   const existing = await db.evidence.findFirst({
@@ -141,7 +144,7 @@ export async function createEURLexEvidence(metadata: EURLexMetadata): Promise<st
     data: {
       sourceId: source.id,
       url: metadata.url,
-      rawContent: JSON.stringify(metadata, null, 2),
+      rawContent, // Store exact bytes that were hashed
       contentHash,
       contentType: "json",
       hasChanged: false,

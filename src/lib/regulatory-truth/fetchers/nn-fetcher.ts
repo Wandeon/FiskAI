@@ -196,7 +196,10 @@ function mapTypeToAuthority(type: string): "LAW" | "GUIDANCE" | "PROCEDURE" | "P
  * Create Evidence record from NN metadata
  */
 export async function createNNEvidence(metadata: NNArticleMetadata): Promise<string | null> {
-  const contentHash = hashContent(JSON.stringify(metadata))
+  // CRITICAL: Hash and store the SAME bytes (compact JSON)
+  // See: docs/07_AUDITS/runs/evidence-immutability-INV-001.md finding F-1
+  const rawContent = JSON.stringify(metadata)
+  const contentHash = hashContent(rawContent)
 
   // Check if we already have this exact data
   const existing = await db.evidence.findFirst({
@@ -230,7 +233,7 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
     data: {
       sourceId: source.id,
       url: metadata.eli,
-      rawContent: JSON.stringify(metadata, null, 2),
+      rawContent, // Store exact bytes that were hashed
       contentHash,
       contentType: "json-ld",
       hasChanged: false,

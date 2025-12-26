@@ -12,7 +12,7 @@ import {
 import { db } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { fetchDiscoveredItems } from "../agents/sentinel"
-import { closeRedis } from "./redis"
+import { closeRedis, updateDrainerHeartbeat } from "./redis"
 import { logWorkerStartup } from "./startup-log"
 
 logWorkerStartup("continuous-drainer")
@@ -362,6 +362,27 @@ async function runDrainCycle(): Promise<boolean> {
   if (workDone) {
     state.lastActivity = new Date()
   }
+
+  // PR #90 fix: Update heartbeat in Redis for stall detection
+  // This allows the watchdog to detect if the drainer has stopped making progress
+  const totalItemsProcessed =
+    state.stats.itemsFetched +
+    state.stats.ocrJobsQueued +
+    state.stats.extractJobsQueued +
+    state.stats.composeJobsQueued +
+    state.stats.reviewJobsQueued +
+    state.stats.arbiterJobsQueued +
+    state.stats.releaseJobsQueued
+
+  await updateDrainerHeartbeat({
+    lastActivity: state.lastActivity.toISOString(),
+    queueName: workDone ? "active" : "idle",
+    itemsProcessed: totalItemsProcessed,
+    cycleCount: state.stats.cycleCount,
+  }).catch((err) => {
+    // Don't fail the cycle if heartbeat update fails
+    console.error("[drainer] Failed to update heartbeat:", err instanceof Error ? err.message : err)
+  })
 
   return workDone
 }

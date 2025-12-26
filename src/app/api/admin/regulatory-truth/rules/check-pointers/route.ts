@@ -2,15 +2,24 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getCurrentUser } from "@/lib/auth-utils"
+import { logAuditEvent } from "@/lib/regulatory-truth/utils/audit-log"
 
 /**
  * GET /api/admin/regulatory-truth/rules/check-pointers
  *
  * Identify rules without source pointers (violates RTL-009).
  * These rules cannot be verified and should not exist.
+ *
+ * SECURITY: Requires ADMIN authentication (fixed in PR #87)
  */
 export async function GET(req: NextRequest) {
   try {
+    // Authentication required - this was previously unauthenticated (security fix)
+    const user = await getCurrentUser()
+    if (!user || user.systemRole !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
     // Find all rules
     const allRules = await db.regulatoryRule.findMany({
       select: {
@@ -78,9 +87,17 @@ export async function GET(req: NextRequest) {
  * Flag rules without source pointers by updating their status.
  *
  * Body: { action: "flag" | "delete", dryRun: boolean }
+ *
+ * SECURITY: Requires ADMIN authentication (fixed in PR #87)
  */
 export async function POST(req: NextRequest) {
   try {
+    // Authentication required - this was previously unauthenticated (security fix)
+    const user = await getCurrentUser()
+    if (!user || user.systemRole !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { action = "flag", dryRun = true } = await req.json()
 
     if (!["flag", "delete"].includes(action)) {
@@ -133,6 +150,19 @@ export async function POST(req: NextRequest) {
             },
           })
 
+          // Audit log for destructive operation
+          await logAuditEvent({
+            action: "RULE_REJECTED",
+            entityType: "RULE",
+            entityId: rule.id,
+            performedBy: user.id,
+            metadata: {
+              reason: "NO_SOURCE_POINTERS",
+              previousStatus: rule.status,
+              automated: false,
+            },
+          })
+
           affected.push({
             id: rule.id,
             conceptSlug: rule.conceptSlug,
@@ -144,6 +174,19 @@ export async function POST(req: NextRequest) {
           // Delete the rule entirely
           await db.regulatoryRule.delete({
             where: { id: rule.id },
+          })
+
+          // Audit log for destructive operation
+          await logAuditEvent({
+            action: "RULE_DELETED",
+            entityType: "RULE",
+            entityId: rule.id,
+            performedBy: user.id,
+            metadata: {
+              reason: "NO_SOURCE_POINTERS",
+              previousStatus: rule.status,
+              conceptSlug: rule.conceptSlug,
+            },
           })
 
           affected.push({

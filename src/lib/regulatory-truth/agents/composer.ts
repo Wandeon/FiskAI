@@ -172,18 +172,24 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
   }
 
   // Validate AppliesWhen DSL before storing
+  // FAIL-CLOSED: Invalid DSL must REJECT the rule, not silently broaden applicability
+  // See PR #89 CRIT fix - replacing with { op: "true" } violates fail-closed principle
   const dslValidation = validateAppliesWhen(appliesWhenObj)
   if (!dslValidation.valid) {
-    console.warn(
-      `[composer] Invalid AppliesWhen DSL for ${draftRule.concept_slug}: ${dslValidation.error}`
+    console.error(
+      `[composer] REJECTING rule with invalid AppliesWhen DSL: ${draftRule.concept_slug}`
     )
-    console.warn(`[composer] Replacing with { op: "true" } as fallback`)
+    console.error(`[composer] DSL validation error: ${dslValidation.error}`)
+    console.error(`[composer] Original DSL: ${JSON.stringify(appliesWhenObj)}`)
 
-    // Replace invalid DSL with safe default
-    appliesWhenObj = { op: "true" }
-
-    // Add note about the fix
-    draftRule.composer_notes = `${draftRule.composer_notes || ""}\n[AUTO-FIX] Original appliesWhen was invalid: ${dslValidation.error}`
+    // FAIL-CLOSED: Reject the rule instead of silently broadening its applicability
+    // Previously this was replaced with { op: "true" } which made the rule apply universally
+    return {
+      success: false,
+      output: result.output,
+      ruleId: null,
+      error: `Cannot create rule "${draftRule.concept_slug}" with invalid AppliesWhen DSL: ${dslValidation.error}. Rules with invalid applicability conditions must be rejected to prevent incorrect application.`,
+    }
   }
 
   // Serialize appliesWhen to JSON string for database storage

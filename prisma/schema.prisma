@@ -2063,6 +2063,9 @@ enum WatchdogCheckType {
   QUALITY_DEGRADATION
   PIPELINE_HEALTH
   REJECTION_RATE
+  DRAINER_PROGRESS    // PR #90 fix: detect drainer stalls
+  QUEUE_BACKLOG       // PR #90 fix: detect queue buildup
+  DLQ_HEALTH          // PR #90 fix: dead letter queue monitoring
 }
 
 enum WatchdogAlertType {
@@ -2075,6 +2078,9 @@ enum WatchdogAlertType {
   AUDIT_FAIL
   AUDIT_PARTIAL
   SOURCE_SUSPENDED
+  DRAINER_STALL       // PR #90 fix: no progress for N minutes
+  QUEUE_BACKLOG       // PR #90 fix: queue depth exceeds threshold
+  DLQ_SPIKE           // PR #90 fix: dead letter queue growing
 }
 
 enum AuditResult {

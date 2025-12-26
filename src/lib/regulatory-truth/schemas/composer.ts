@@ -25,22 +25,25 @@ export type ComposerInput = z.infer<typeof ComposerInputSchema>
 // =============================================================================
 
 // Preprocess applies_when: LLM may return object (DSL) or string (serialized DSL)
-// Must handle all edge cases robustly since LLM output varies
+// FAIL-CLOSED: Invalid DSL must NOT silently become "always true" (PR #89 CRIT fix)
+// If DSL is invalid, the rule creation will be rejected in composer.ts
 const appliesWhenSchema = z.preprocess((val) => {
-  // Already a string - pass through
+  // Already a string - pass through (will be validated later)
   if (typeof val === "string") return val
-  // Null/undefined - default to empty object DSL
-  if (val === null || val === undefined) return '{"always": true}'
+  // Null/undefined - mark as invalid (will be caught by composer validation)
+  // Previously returned '{"always": true}' which silently broadened applicability
+  if (val === null || val === undefined) return '{"op": "INVALID_NULL_DSL"}'
   // Object - stringify it
   if (typeof val === "object") {
     try {
       return JSON.stringify(val)
     } catch {
-      // If stringify fails (circular refs, etc), use fallback
-      return '{"always": true}'
+      // If stringify fails (circular refs, etc), mark as invalid
+      // Previously returned '{"always": true}' which silently broadened applicability
+      return '{"op": "INVALID_STRINGIFY_FAILED"}'
     }
   }
-  // Anything else - convert to string
+  // Anything else - convert to string (will be validated later)
   return String(val)
 }, z.string().min(1))
 

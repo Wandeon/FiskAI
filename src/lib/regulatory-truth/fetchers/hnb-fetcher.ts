@@ -101,6 +101,8 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
 
     for (const rate of rates) {
       const conceptSlug = `exchange-rate-eur-${rate.valuta.toLowerCase()}`
+      // CRITICAL: Hash and store the SAME bytes (compact JSON)
+      // See: docs/07_AUDITS/runs/evidence-immutability-INV-001.md finding F-1
       const rawContent = JSON.stringify(rate)
       const contentHash = hashContent(rawContent, "application/json")
 
@@ -119,7 +121,7 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
         data: {
           sourceId: source.id,
           url: `${HNB_API_BASE}?datum-primjene=${dateStr}&valuta=${rate.valuta}`,
-          rawContent: JSON.stringify(rate, null, 2),
+          rawContent, // Store exact bytes that were hashed
           contentHash,
           contentType: "json",
           hasChanged: false,
