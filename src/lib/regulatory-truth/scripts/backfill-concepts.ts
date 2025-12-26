@@ -1,4 +1,5 @@
 // src/lib/regulatory-truth/scripts/backfill-concepts.ts
+// Backfill concepts for existing rules - AUDIT LOGGED
 
 import { config } from "dotenv"
 import { resolve } from "path"
@@ -8,6 +9,7 @@ const envPath = resolve(process.cwd(), ".env.local")
 config({ path: envPath })
 
 import { db } from "@/lib/db"
+import { logAuditEvent } from "../utils/audit-log"
 
 async function backfillConcepts() {
   console.log("[backfill] Starting Knowledge Graph backfill...")
@@ -63,6 +65,19 @@ async function backfillConcepts() {
         where: { id: rule.id },
         data: { conceptId: concept.id },
       })
+
+      // AUDIT LOG: Track concept linking
+      await logAuditEvent({
+        action: "RULE_CONCEPT_LINKED",
+        entityType: "RULE",
+        entityId: rule.id,
+        metadata: {
+          conceptId: concept.id,
+          conceptSlug: concept.slug,
+          backfillScript: "backfill-concepts.ts",
+        },
+      })
+
       linked++
 
       console.log(`[backfill] ✓ Linked rule ${rule.id} to concept ${concept.slug}`)

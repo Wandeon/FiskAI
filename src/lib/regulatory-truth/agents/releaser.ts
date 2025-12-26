@@ -131,6 +131,49 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
     }
   }
 
+  // HARD GATE: No unresolved conflicts allowed
+  const rulesWithConflicts = await db.regulatoryRule.findMany({
+    where: {
+      id: { in: approvedRuleIds },
+      OR: [
+        { conflictsA: { some: { status: "OPEN" } } },
+        { conflictsB: { some: { status: "OPEN" } } },
+      ],
+    },
+    select: { id: true, conceptSlug: true },
+  })
+
+  if (rulesWithConflicts.length > 0) {
+    console.error(
+      `[releaser] BLOCKED: ${rulesWithConflicts.length} rules have unresolved conflicts:`,
+      rulesWithConflicts.map((r) => r.conceptSlug)
+    )
+    return {
+      success: false,
+      output: null,
+      releaseId: null,
+      publishedRuleIds: [],
+      error: `Cannot release ${rulesWithConflicts.length} rules with unresolved conflicts: ${rulesWithConflicts.map((r) => r.conceptSlug).join(", ")}`,
+    }
+  }
+
+  // HARD GATE: All rules must have source pointers
+  const rulesWithoutPointers = rules.filter((r) => r.sourcePointers.length === 0)
+
+  if (rulesWithoutPointers.length > 0) {
+    console.error(
+      `[releaser] BLOCKED: ${rulesWithoutPointers.length} rules have no source pointers:`,
+      rulesWithoutPointers.map((r) => r.conceptSlug)
+    )
+    return {
+      success: false,
+      output: null,
+      releaseId: null,
+      publishedRuleIds: [],
+      error: `Cannot release ${rulesWithoutPointers.length} rules without source pointers: ${rulesWithoutPointers.map((r) => r.conceptSlug).join(", ")}`,
+    }
+  }
+
   // HARD GATE: Evidence strength policy
   // SINGLE_SOURCE rules require LAW authority to publish
   // MULTI_SOURCE rules can publish regardless of authority

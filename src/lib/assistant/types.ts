@@ -183,6 +183,28 @@ export interface Confidence {
   rationale?: string
 }
 
+// === OBLIGATION TYPE ===
+export type ObligationType = "OBLIGATION" | "NO_OBLIGATION" | "CONDITIONAL" | "INFORMATIONAL"
+
+export type ObligationBadgeLevel = "high" | "medium" | "low" | "none"
+
+export interface ObligationBadge {
+  text: string
+  level: ObligationBadgeLevel
+}
+
+export interface ObligationContext {
+  type: ObligationType
+  badge: ObligationBadge
+  clarification?: string
+}
+
+// === MISSING CONTEXT BLOCK ===
+export interface MissingContextBlock {
+  ruleCount: number
+  message: string
+}
+
 // === CORE RESPONSE ===
 export interface AssistantResponse {
   // Schema & tracing
@@ -213,6 +235,12 @@ export interface AssistantResponse {
 
   // Client context (APP only)
   clientContext?: ClientContextBlock
+
+  // Obligation context (for semantic differentiation)
+  obligationContext?: ObligationContext
+
+  // Missing context (rules excluded due to missing data)
+  missingContext?: MissingContextBlock
 
   // Conflict
   conflict?: ConflictBlock

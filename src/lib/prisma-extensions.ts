@@ -93,6 +93,39 @@ const AUDITED_MODELS = [
 ] as const
 type AuditedModel = (typeof AUDITED_MODELS)[number]
 
+// ============================================
+// EVIDENCE IMMUTABILITY PROTECTION
+// ============================================
+// Evidence.rawContent is the source of truth for the regulatory chain.
+// Once created, it MUST NOT be modified to preserve audit integrity.
+
+const EVIDENCE_IMMUTABLE_FIELDS = ["rawContent", "contentHash", "fetchedAt"] as const
+type ImmutableField = (typeof EVIDENCE_IMMUTABLE_FIELDS)[number]
+
+/**
+ * Error thrown when attempting to modify immutable evidence fields.
+ */
+export class EvidenceImmutabilityError extends Error {
+  constructor(field: string) {
+    super(
+      `Cannot modify Evidence.${field}: Evidence content is immutable once created. ` +
+        "Create a new Evidence record if the source has changed."
+    )
+    this.name = "EvidenceImmutabilityError"
+  }
+}
+
+/**
+ * Check if an update operation attempts to modify immutable Evidence fields.
+ */
+function checkEvidenceImmutability(data: Record<string, unknown>): void {
+  for (const field of EVIDENCE_IMMUTABLE_FIELDS) {
+    if (field in data) {
+      throw new EvidenceImmutabilityError(field)
+    }
+  }
+}
+
 // Audit queue to avoid blocking main operations
 interface AuditQueueItem {
   companyId: string
@@ -231,6 +264,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return result
         },
         async update({ model, args, query }) {
+          // EVIDENCE IMMUTABILITY: Block updates to immutable fields
+          if (model === "Evidence" && args.data && typeof args.data === "object") {
+            checkEvidenceImmutability(args.data as Record<string, unknown>)
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -292,6 +330,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return query(args)
         },
         async updateMany({ model, args, query }) {
+          // EVIDENCE IMMUTABILITY: Block updates to immutable fields
+          if (model === "Evidence" && args.data && typeof args.data === "object") {
+            checkEvidenceImmutability(args.data as Record<string, unknown>)
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -312,6 +355,11 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return query(args)
         },
         async upsert({ model, args, query }) {
+          // EVIDENCE IMMUTABILITY: Block updates to immutable fields in upsert
+          if (model === "Evidence" && args.update && typeof args.update === "object") {
+            checkEvidenceImmutability(args.update as Record<string, unknown>)
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             // Add tenant filter to where clause

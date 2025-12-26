@@ -19,6 +19,7 @@ import {
   mergePointersToExistingRule,
 } from "../utils/concept-resolver"
 import { computeMeaningSignature } from "../utils/meaning-signature"
+import { validateExplanation, createQuoteOnlyExplanation } from "../utils/explanation-validator"
 
 // =============================================================================
 // COMPOSER AGENT
@@ -304,6 +305,35 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
     effectiveUntil: effectiveUntilDate,
   })
 
+  // PHASE 4: Validate explanation against source evidence
+  // This prevents hallucination by ensuring modal verbs and values come from sources
+  const sourceQuotes = existingPointers.map((p) => p.exactQuote).filter(Boolean)
+  const explanationValidation = validateExplanation(
+    draftRule.explanation_hr,
+    draftRule.explanation_en,
+    sourceQuotes,
+    String(draftRule.value)
+  )
+
+  // Determine final explanation - use quote-only fallback if validation fails
+  let finalExplanationHr = draftRule.explanation_hr
+  let finalExplanationEn = draftRule.explanation_en
+
+  if (!explanationValidation.valid) {
+    console.warn(
+      `[composer] Explanation validation failed for ${finalConceptSlug}:`,
+      explanationValidation.errors
+    )
+    // FAIL-CLOSED: Use quote-only explanation when validation fails
+    finalExplanationHr = createQuoteOnlyExplanation(sourceQuotes, String(draftRule.value))
+    finalExplanationEn = null // Don't translate quote-only explanations
+  } else if (explanationValidation.warnings.length > 0) {
+    console.log(
+      `[composer] Explanation warnings for ${finalConceptSlug}:`,
+      explanationValidation.warnings
+    )
+  }
+
   // Store the draft rule in database
   const rule = await db.regulatoryRule.create({
     data: {
@@ -315,8 +345,8 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
       appliesWhen: appliesWhenString,
       value: String(draftRule.value),
       valueType: draftRule.value_type,
-      explanationHr: draftRule.explanation_hr,
-      explanationEn: draftRule.explanation_en,
+      explanationHr: finalExplanationHr,
+      explanationEn: finalExplanationEn,
       effectiveFrom: effectiveFromDate,
       effectiveUntil: effectiveUntilDate,
       supersedesId: draftRule.supersedes,

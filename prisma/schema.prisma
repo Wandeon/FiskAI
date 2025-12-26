@@ -1650,6 +1650,13 @@ enum RuleStability {
   VOLATILE      // Changes frequently
 }
 
+enum ObligationType {
+  OBLIGATION      // Must comply (e.g., "must pay 25%")
+  NO_OBLIGATION   // Explicitly exempt/not applicable
+  CONDITIONAL     // Depends on other factors (use appliesWhen)
+  INFORMATIONAL   // Reference value, not a requirement
+}
+
 model RegulatorySource {
   id                String    @id @default(cuid())
   slug              String    @unique  // e.g., "porezna-pausalni"
@@ -1830,6 +1837,7 @@ model RegulatoryRule {
   appliesWhen       String           @db.Text            // AppliesWhen DSL expression
   value             String           // The regulatory value (stored as string)
   valueType         String           // percentage, currency_hrk, currency_eur, count, date, text
+  obligationType    ObligationType   @default(OBLIGATION)  // OBLIGATION, NO_OBLIGATION, CONDITIONAL, INFORMATIONAL
   outcome           Json?            // Structured outcome (VALUE, OBLIGATION, PROCEDURE)
   explanationHr     String?          @db.Text
   explanationEn     String?          @db.Text

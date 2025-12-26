@@ -1,5 +1,11 @@
 // src/lib/assistant/query-engine/rule-selector.ts
 import { prisma } from "@/lib/prisma"
+import {
+  checkRuleEligibility,
+  buildEvaluationContext,
+  type EvaluationContext,
+  type EligibilityResult,
+} from "./rule-eligibility"
 
 const AUTHORITY_RANK: Record<string, number> = {
   LAW: 1,
@@ -7,6 +13,8 @@ const AUTHORITY_RANK: Record<string, number> = {
   GUIDANCE: 3,
   PRACTICE: 4,
 }
+
+export type ObligationType = "OBLIGATION" | "NO_OBLIGATION" | "CONDITIONAL" | "INFORMATIONAL"
 
 export interface RuleCandidate {
   id: string
@@ -19,7 +27,9 @@ export interface RuleCandidate {
   confidence: number
   value: string
   valueType: string
+  obligationType: ObligationType
   explanationHr: string | null
+  appliesWhen: string | null
   sourcePointers: {
     id: string
     evidenceId: string
@@ -40,17 +50,74 @@ export interface RuleCandidate {
   }[]
 }
 
-export async function selectRules(conceptSlugs: string[]): Promise<RuleCandidate[]> {
-  if (conceptSlugs.length === 0) return []
+export interface RuleSelectionContext {
+  asOfDate?: Date
+  companyData?: {
+    legalForm?: string
+    vatStatus?: string
+    activityNkd?: string
+    county?: string
+    revenueYtd?: number
+  }
+  transactionData?: {
+    kind?: string
+    paymentMethod?: string
+    amount?: number
+    b2b?: boolean
+  }
+}
 
-  const now = new Date()
+export interface RuleSelectionResult {
+  rules: RuleCandidate[]
+  ineligible: {
+    ruleId: string
+    conceptSlug: string
+    reason: "EXPIRED" | "FUTURE" | "CONDITION_FALSE" | "MISSING_CONTEXT"
+  }[]
+  hasMissingContext: boolean
+  missingContextRuleIds: string[]
+  asOfDate: string
+}
 
-  const rules = await prisma.regulatoryRule.findMany({
+/**
+ * Select eligible rules for the given concept slugs.
+ *
+ * HARD GATE: Rules are excluded if:
+ * 1. effectiveFrom > asOfDate (FUTURE)
+ * 2. effectiveUntil < asOfDate (EXPIRED)
+ * 3. appliesWhen evaluates to FALSE (CONDITION_FALSE)
+ * 4. appliesWhen requires context we don't have (MISSING_CONTEXT)
+ */
+export async function selectRules(
+  conceptSlugs: string[],
+  selectionContext?: RuleSelectionContext
+): Promise<RuleSelectionResult> {
+  if (conceptSlugs.length === 0) {
+    return {
+      rules: [],
+      ineligible: [],
+      hasMissingContext: false,
+      missingContextRuleIds: [],
+      asOfDate: new Date().toISOString(),
+    }
+  }
+
+  const asOfDate = selectionContext?.asOfDate ?? new Date()
+
+  // Build evaluation context for appliesWhen
+  const evalContext = buildEvaluationContext({
+    asOfDate,
+    companyData: selectionContext?.companyData,
+    transactionData: selectionContext?.transactionData,
+  })
+
+  // Fetch all PUBLISHED rules for these concepts
+  // Note: We fetch all and filter in-memory to properly handle appliesWhen
+  // and to track ineligible rules for debugging
+  const allRules = await prisma.regulatoryRule.findMany({
     where: {
       conceptSlug: { in: conceptSlugs },
       status: "PUBLISHED",
-      effectiveFrom: { lte: now },
-      OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: now } }],
     },
     include: {
       sourcePointers: {
@@ -63,18 +130,62 @@ export async function selectRules(conceptSlugs: string[]): Promise<RuleCandidate
         },
       },
     },
-    orderBy: [
-      { authorityLevel: "asc" }, // Will re-sort with rank
-      { confidence: "desc" },
-      { effectiveFrom: "desc" },
-    ],
+    orderBy: [{ authorityLevel: "asc" }, { confidence: "desc" }, { effectiveFrom: "desc" }],
   })
 
-  // Re-sort by authority rank (Prisma can't sort by custom rank)
-  return rules.sort((a, b) => {
+  const eligibleRules: RuleCandidate[] = []
+  const ineligible: RuleSelectionResult["ineligible"] = []
+  const missingContextRuleIds: string[] = []
+
+  // Apply eligibility gate to each rule
+  for (const rule of allRules) {
+    const result = checkRuleEligibility(
+      {
+        id: rule.id,
+        effectiveFrom: rule.effectiveFrom,
+        effectiveUntil: rule.effectiveUntil,
+        appliesWhen: rule.appliesWhen,
+      },
+      evalContext
+    )
+
+    if (result.eligible) {
+      eligibleRules.push(rule as RuleCandidate)
+    } else {
+      ineligible.push({
+        ruleId: rule.id,
+        conceptSlug: rule.conceptSlug,
+        reason: result.reason,
+      })
+
+      if (result.reason === "MISSING_CONTEXT") {
+        missingContextRuleIds.push(rule.id)
+      }
+    }
+  }
+
+  // Re-sort by authority rank
+  eligibleRules.sort((a, b) => {
     const rankA = AUTHORITY_RANK[a.authorityLevel] ?? 99
     const rankB = AUTHORITY_RANK[b.authorityLevel] ?? 99
     if (rankA !== rankB) return rankA - rankB
     return b.confidence - a.confidence
-  }) as RuleCandidate[]
+  })
+
+  return {
+    rules: eligibleRules,
+    ineligible,
+    hasMissingContext: missingContextRuleIds.length > 0,
+    missingContextRuleIds,
+    asOfDate: asOfDate.toISOString(),
+  }
+}
+
+/**
+ * Legacy function signature for backward compatibility.
+ * Uses current date and no context filtering.
+ */
+export async function selectRulesSimple(conceptSlugs: string[]): Promise<RuleCandidate[]> {
+  const result = await selectRules(conceptSlugs)
+  return result.rules
 }

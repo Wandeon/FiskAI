@@ -1,9 +1,12 @@
 // src/lib/regulatory-truth/e2e/data-repair.ts
 // Autonomous data repair for known integrity issues
+//
+// IMPORTANT: All repairs MUST be logged for audit trail
 
 import { db } from "@/lib/db"
 import { hashContent } from "../utils/content-hash"
 import { computeReleaseHash } from "../utils/release-hash"
+import { logAuditEvent } from "../utils/audit-log"
 
 export interface RepairResult {
   evidenceFixed: number
@@ -28,10 +31,25 @@ async function repairEvidenceHashes(): Promise<{ fixed: number; errors: string[]
 
     if (correctHash !== e.contentHash) {
       try {
+        const oldHash = e.contentHash
         await db.evidence.update({
           where: { id: e.id },
           data: { contentHash: correctHash },
         })
+
+        // AUDIT LOG: Track hash corrections
+        await logAuditEvent({
+          action: "EVIDENCE_HASH_REPAIRED",
+          entityType: "EVIDENCE",
+          entityId: e.id,
+          metadata: {
+            oldHash,
+            newHash: correctHash,
+            contentType: e.contentType,
+            repairReason: "Hash algorithm mismatch correction",
+          },
+        })
+
         fixed++
       } catch (error) {
         errors.push(
@@ -79,10 +97,26 @@ async function repairReleaseHashes(): Promise<{ fixed: number; errors: string[] 
 
     if (correctHash !== release.contentHash) {
       try {
+        const oldHash = release.contentHash
         await db.ruleRelease.update({
           where: { id: release.id },
           data: { contentHash: correctHash },
         })
+
+        // AUDIT LOG: Track release hash corrections
+        await logAuditEvent({
+          action: "RELEASE_HASH_REPAIRED",
+          entityType: "RELEASE",
+          entityId: release.id,
+          metadata: {
+            oldHash,
+            newHash: correctHash,
+            version: release.version,
+            ruleCount: release.rules.length,
+            repairReason: "Hash algorithm mismatch correction",
+          },
+        })
+
         fixed++
       } catch (error) {
         errors.push(

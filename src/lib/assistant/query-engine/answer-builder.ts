@@ -299,7 +299,8 @@ export async function buildAnswer(
 
   // Select rules for matched concepts
   const conceptSlugs = conceptMatches.map((c) => c.slug)
-  const rules = await selectRules(conceptSlugs)
+  const selectionResult = await selectRules(conceptSlugs)
+  const rules = selectionResult.rules
 
   if (rules.length === 0) {
     // Same logic: vague queries get clarification
@@ -387,19 +388,50 @@ export async function buildAnswer(
     }
   }
 
+  // Determine obligation type (default to OBLIGATION for backward compatibility)
+  const obligationType = (primaryRule.obligationType || "OBLIGATION") as ObligationType
+
+  // Build direct answer with obligation context
+  const directAnswer =
+    primaryRule.explanationHr ||
+    formatValueWithObligation(primaryRule.value, primaryRule.valueType, obligationType)
+
+  // Get obligation badge for UI
+  const obligationBadge = getObligationBadge(obligationType)
+
   return {
     ...baseResponse,
     kind: "ANSWER",
     topic: interpretation.topic,
     headline: primaryRule.titleHr,
-    directAnswer:
-      primaryRule.explanationHr || formatValue(primaryRule.value, primaryRule.valueType),
+    directAnswer,
     citations,
     confidence: {
       level:
         primaryRule.confidence >= 0.9 ? "HIGH" : primaryRule.confidence >= 0.7 ? "MEDIUM" : "LOW",
       score: primaryRule.confidence,
     },
+    // Include obligation metadata for UI
+    obligationContext: {
+      type: obligationType,
+      badge: obligationBadge,
+      // For NO_OBLIGATION, include explicit messaging
+      ...(obligationType === "NO_OBLIGATION" && {
+        clarification: "Ova odredba označava izuzeće ili neprimjenjivost obveze.",
+      }),
+      // For CONDITIONAL, note that conditions apply
+      ...(obligationType === "CONDITIONAL" && {
+        clarification: "Ova vrijednost ovisi o dodatnim uvjetima navedenim u propisu.",
+      }),
+    },
+    // Include ineligible rules info for transparency
+    ...(selectionResult.hasMissingContext && {
+      missingContext: {
+        ruleCount: selectionResult.missingContextRuleIds.length,
+        message:
+          "Neki propisi nisu prikazani jer nedostaju podaci o vašem poslovanju potrebni za evaluaciju.",
+      },
+    }),
     relatedQuestions: generateRelatedQuestions(conceptSlugs),
     ...(clientContext && { clientContext }),
   }
@@ -477,6 +509,8 @@ function getRequiredFieldsFromEntities(entities: string[]): string[] {
   return [...new Set(requiredFields)]
 }
 
+type ObligationType = "OBLIGATION" | "NO_OBLIGATION" | "CONDITIONAL" | "INFORMATIONAL"
+
 function formatValue(value: string, valueType: string): string {
   switch (valueType) {
     case "currency_eur":
@@ -487,6 +521,54 @@ function formatValue(value: string, valueType: string): string {
       return `${value}%`
     default:
       return value
+  }
+}
+
+/**
+ * Format the value with obligation context.
+ * This ensures users understand whether a value is a requirement, exemption, or informational.
+ */
+function formatValueWithObligation(
+  value: string,
+  valueType: string,
+  obligationType: ObligationType
+): string {
+  const formattedValue = formatValue(value, valueType)
+
+  switch (obligationType) {
+    case "NO_OBLIGATION":
+      // Explicitly indicate no obligation applies
+      return `Nema obveze: ${formattedValue}`
+    case "CONDITIONAL":
+      // Indicate the value depends on conditions
+      return `Uvjetno: ${formattedValue}`
+    case "INFORMATIONAL":
+      // Reference value, not a requirement
+      return `Referentna vrijednost: ${formattedValue}`
+    case "OBLIGATION":
+    default:
+      return formattedValue
+  }
+}
+
+/**
+ * Get obligation badge for UI display.
+ */
+function getObligationBadge(obligationType: ObligationType): {
+  text: string
+  level: "high" | "medium" | "low" | "none"
+} {
+  switch (obligationType) {
+    case "OBLIGATION":
+      return { text: "Obveza", level: "high" }
+    case "NO_OBLIGATION":
+      return { text: "Nema obveze", level: "none" }
+    case "CONDITIONAL":
+      return { text: "Uvjetno", level: "medium" }
+    case "INFORMATIONAL":
+      return { text: "Informativno", level: "low" }
+    default:
+      return { text: "Obveza", level: "high" }
   }
 }
 

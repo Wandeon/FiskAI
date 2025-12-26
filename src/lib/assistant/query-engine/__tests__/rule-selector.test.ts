@@ -1,6 +1,6 @@
 // src/lib/assistant/query-engine/__tests__/rule-selector.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { selectRules, type RuleCandidate } from "../rule-selector"
+import { selectRules, type RuleCandidate, type RuleSelectionResult } from "../rule-selector"
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -29,7 +29,24 @@ const mockRules = [
     confidence: 0.95,
     value: "39816.84",
     valueType: "currency_eur",
-    sourcePointers: [{ id: "sp1", evidenceId: "e1", exactQuote: "Quote 1" }],
+    appliesWhen: JSON.stringify({ op: "true" }),
+    sourcePointers: [
+      {
+        id: "sp1",
+        evidenceId: "e1",
+        exactQuote: "Quote 1",
+        contextBefore: null,
+        contextAfter: null,
+        articleNumber: null,
+        lawReference: null,
+        evidence: {
+          id: "e1",
+          url: "https://example.com",
+          fetchedAt: new Date(),
+          source: { name: "Test Source", url: "https://example.com" },
+        },
+      },
+    ],
   },
   {
     id: "r2",
@@ -42,6 +59,7 @@ const mockRules = [
     confidence: 0.9,
     value: "35000",
     valueType: "currency_eur",
+    appliesWhen: null,
     sourcePointers: [],
   },
   {
@@ -55,75 +73,109 @@ const mockRules = [
     confidence: 0.85,
     value: "40000",
     valueType: "currency_eur",
+    appliesWhen: null,
+    sourcePointers: [],
+  },
+  {
+    id: "r4",
+    conceptSlug: "pausalni-prag",
+    titleHr: "Future rule",
+    authorityLevel: "LAW",
+    status: "PUBLISHED",
+    effectiveFrom: tomorrow, // Not yet effective
+    effectiveUntil: null,
+    confidence: 0.95,
+    value: "45000",
+    valueType: "currency_eur",
+    appliesWhen: null,
     sourcePointers: [],
   },
 ]
 
 describe("selectRules", () => {
   beforeEach(() => {
-    // Mock implementation that filters based on the query
-    vi.mocked(prisma.regulatoryRule.findMany).mockImplementation(async (args: any) => {
-      const now = new Date()
-      return mockRules.filter((rule: any) => {
+    // Mock implementation that only filters by status (PUBLISHED)
+    // The eligibility gate handles temporal filtering in-memory
+    vi.mocked(prisma.regulatoryRule.findMany).mockImplementation(async (args) => {
+      return mockRules.filter((rule) => {
         // Filter by conceptSlug
-        if (args.where?.conceptSlug?.in && !args.where.conceptSlug.in.includes(rule.conceptSlug)) {
-          return false
-        }
-
-        // Filter by status
-        if (args.where?.status && rule.status !== args.where.status) {
-          return false
-        }
-
-        // Filter by effectiveFrom
-        if (args.where?.effectiveFrom?.lte && rule.effectiveFrom > args.where.effectiveFrom.lte) {
-          return false
-        }
-
-        // Filter by effectiveUntil (OR clause)
-        if (args.where?.OR) {
-          const hasNullUntil = rule.effectiveUntil === null
-          const hasValidUntil = rule.effectiveUntil !== null && rule.effectiveUntil > now
-          if (!hasNullUntil && !hasValidUntil) {
+        const whereAny = args?.where as Record<string, unknown> | undefined
+        if (whereAny?.conceptSlug) {
+          const slugFilter = whereAny.conceptSlug as { in?: string[] }
+          if (slugFilter.in && !slugFilter.in.includes(rule.conceptSlug)) {
             return false
           }
         }
 
+        // Filter by status
+        if (whereAny?.status && rule.status !== whereAny.status) {
+          return false
+        }
+
         return true
-      }) as any
+      }) as unknown as ReturnType<typeof prisma.regulatoryRule.findMany>
     })
   })
 
   it("returns only PUBLISHED rules", async () => {
-    const rules = await selectRules(["pausalni-prag"])
+    const result = await selectRules(["pausalni-prag"])
 
-    expect(rules.every((r) => r.status === "PUBLISHED")).toBe(true)
-    expect(rules.map((r) => r.id)).not.toContain("r3")
+    expect(result.rules.every((r) => r.status === "PUBLISHED")).toBe(true)
+    expect(result.rules.map((r) => r.id)).not.toContain("r3")
   })
 
-  it("filters out expired rules", async () => {
-    const rules = await selectRules(["pausalni-prag"])
+  it("filters out expired rules via eligibility gate", async () => {
+    const result = await selectRules(["pausalni-prag"])
 
-    expect(rules.map((r) => r.id)).not.toContain("r2")
+    // r2 is expired, should be in ineligible list
+    expect(result.rules.map((r) => r.id)).not.toContain("r2")
+    expect(result.ineligible.find((i) => i.ruleId === "r2")?.reason).toBe("EXPIRED")
+  })
+
+  it("filters out future rules via eligibility gate", async () => {
+    const result = await selectRules(["pausalni-prag"])
+
+    // r4 is future, should be in ineligible list
+    expect(result.rules.map((r) => r.id)).not.toContain("r4")
+    expect(result.ineligible.find((i) => i.ruleId === "r4")?.reason).toBe("FUTURE")
   })
 
   it("sorts by authority level then confidence", async () => {
-    const rules = await selectRules(["pausalni-prag"])
+    const result = await selectRules(["pausalni-prag"])
 
     // r1 should be first (LAW > GUIDANCE)
-    expect(rules[0]?.id).toBe("r1")
+    expect(result.rules[0]?.id).toBe("r1")
   })
 
-  it("returns empty array for unknown concepts", async () => {
-    const rules = await selectRules(["nepostojeci-koncept"])
+  it("returns empty result for unknown concepts", async () => {
+    const result = await selectRules(["nepostojeci-koncept"])
 
-    expect(rules).toEqual([])
+    expect(result.rules).toEqual([])
+    expect(result.ineligible).toEqual([])
   })
 
   it("includes source pointers in result", async () => {
-    const rules = await selectRules(["pausalni-prag"])
+    const result = await selectRules(["pausalni-prag"])
 
-    const r1 = rules.find((r) => r.id === "r1")
+    const r1 = result.rules.find((r) => r.id === "r1")
     expect(r1?.sourcePointers).toHaveLength(1)
+  })
+
+  it("returns asOfDate in result", async () => {
+    const result = await selectRules(["pausalni-prag"])
+
+    expect(result.asOfDate).toBeDefined()
+    expect(new Date(result.asOfDate).getTime()).toBeCloseTo(Date.now(), -3)
+  })
+
+  it("respects custom asOfDate for temporal filtering", async () => {
+    // Use a date in the past when r2 was still valid
+    const pastDate = new Date(lastYear.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days after lastYear
+    const result = await selectRules(["pausalni-prag"], { asOfDate: pastDate })
+
+    // r2 should now be eligible (it hadn't expired yet)
+    expect(result.rules.map((r) => r.id)).toContain("r2")
+    // r4 should still be future
+    expect(result.ineligible.find((i) => i.ruleId === "r4")?.reason).toBe("FUTURE")
   })
 })

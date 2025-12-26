@@ -10,6 +10,17 @@ vi.mock("../rule-selector")
 vi.mock("../conflict-detector")
 vi.mock("../citation-builder")
 
+// Helper to create RuleSelectionResult from rules array
+function mockRuleSelectionResult(rules: any[]): ruleSelector.RuleSelectionResult {
+  return {
+    rules,
+    ineligible: [],
+    hasMissingContext: false,
+    missingContextRuleIds: [],
+    asOfDate: new Date().toISOString(),
+  }
+}
+
 describe("buildAnswer", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -30,7 +41,7 @@ describe("buildAnswer", () => {
 
   it("returns NEEDS_CLARIFICATION for vague queries with no matches", async () => {
     vi.mocked(conceptMatcher.matchConcepts).mockResolvedValue([])
-    vi.mocked(ruleSelector.selectRules).mockResolvedValue([])
+    vi.mocked(ruleSelector.selectRules).mockResolvedValue(mockRuleSelectionResult([]))
 
     // Vague queries now get NEEDS_CLARIFICATION, not NO_CITABLE_RULES
     const result = await buildAnswer("test query", "MARKETING")
@@ -50,10 +61,12 @@ describe("buildAnswer", () => {
         matchedKeywords: ["test", "pdv"],
       },
     ])
-    vi.mocked(ruleSelector.selectRules).mockResolvedValue([
-      { id: "r1", value: "25", valueType: "percentage" } as any,
-      { id: "r2", value: "13", valueType: "percentage" } as any,
-    ])
+    vi.mocked(ruleSelector.selectRules).mockResolvedValue(
+      mockRuleSelectionResult([
+        { id: "r1", value: "25", valueType: "percentage" } as any,
+        { id: "r2", value: "13", valueType: "percentage" } as any,
+      ])
+    )
     vi.mocked(conflictDetector.detectConflicts).mockReturnValue({
       hasConflict: true,
       canResolve: false,
@@ -76,18 +89,20 @@ describe("buildAnswer", () => {
         matchedKeywords: ["prag", "pausalni", "godisnji", "prihod"],
       },
     ])
-    vi.mocked(ruleSelector.selectRules).mockResolvedValue([
-      {
-        id: "r1",
-        titleHr: "Prag za paušalno",
-        value: "39816.84",
-        valueType: "currency_eur",
-        authorityLevel: "LAW",
-        explanationHr: "Godišnji primitak do 39.816,84 EUR.",
-        sourcePointers: [{ id: "sp1" }],
-        confidence: 0.95,
-      } as any,
-    ])
+    vi.mocked(ruleSelector.selectRules).mockResolvedValue(
+      mockRuleSelectionResult([
+        {
+          id: "r1",
+          titleHr: "Prag za paušalno",
+          value: "39816.84",
+          valueType: "currency_eur",
+          authorityLevel: "LAW",
+          explanationHr: "Godišnji primitak do 39.816,84 EUR.",
+          sourcePointers: [{ id: "sp1" }],
+          confidence: 0.95,
+        } as any,
+      ])
+    )
     vi.mocked(conflictDetector.detectConflicts).mockReturnValue({
       hasConflict: false,
       canResolve: true,
@@ -174,17 +189,19 @@ describe("buildAnswer", () => {
         matchedKeywords: ["test", "pdv"],
       },
     ])
-    vi.mocked(ruleSelector.selectRules).mockResolvedValue([
-      {
-        id: "r1",
-        titleHr: "Test",
-        value: "100",
-        valueType: "number",
-        authorityLevel: "LAW",
-        confidence: 0.95,
-        sourcePointers: [{ id: "sp1" }],
-      } as any,
-    ])
+    vi.mocked(ruleSelector.selectRules).mockResolvedValue(
+      mockRuleSelectionResult([
+        {
+          id: "r1",
+          titleHr: "Test",
+          value: "100",
+          valueType: "number",
+          authorityLevel: "LAW",
+          confidence: 0.95,
+          sourcePointers: [{ id: "sp1" }],
+        } as any,
+      ])
+    )
     vi.mocked(conflictDetector.detectConflicts).mockReturnValue({
       hasConflict: false,
       canResolve: true,
@@ -220,17 +237,19 @@ describe("buildAnswer", () => {
         matchedKeywords: ["pausalni", "prag", "godisnji", "prihod"],
       },
     ])
-    vi.mocked(ruleSelector.selectRules).mockResolvedValue([
-      {
-        id: "r1",
-        titleHr: "Test",
-        value: "100",
-        valueType: "number",
-        authorityLevel: "LAW",
-        confidence: 0.9,
-        sourcePointers: [{ id: "sp1" }],
-      } as any,
-    ])
+    vi.mocked(ruleSelector.selectRules).mockResolvedValue(
+      mockRuleSelectionResult([
+        {
+          id: "r1",
+          titleHr: "Test",
+          value: "100",
+          valueType: "number",
+          authorityLevel: "LAW",
+          confidence: 0.9,
+          sourcePointers: [{ id: "sp1" }],
+        } as any,
+      ])
+    )
     vi.mocked(conflictDetector.detectConflicts).mockReturnValue({
       hasConflict: false,
       canResolve: true,
@@ -271,17 +290,19 @@ describe("buildAnswer", () => {
           matchedKeywords: ["pausalni", "prag"],
         },
       ])
-      vi.mocked(ruleSelector.selectRules).mockResolvedValue([
-        {
-          id: "r1",
-          titleHr: "Test",
-          value: "100",
-          valueType: "number",
-          authorityLevel: "LAW",
-          confidence: 0.9,
-          sourcePointers: [{ id: "sp1" }],
-        } as any,
-      ])
+      vi.mocked(ruleSelector.selectRules).mockResolvedValue(
+        mockRuleSelectionResult([
+          {
+            id: "r1",
+            titleHr: "Test",
+            value: "100",
+            valueType: "number",
+            authorityLevel: "LAW",
+            confidence: 0.9,
+            sourcePointers: [{ id: "sp1" }],
+          } as any,
+        ])
+      )
       vi.mocked(conflictDetector.detectConflicts).mockReturnValue({
         hasConflict: false,
         canResolve: true,

@@ -17,6 +17,11 @@ const VALID_AUTHORITY_LEVELS = ["LAW", "GUIDANCE", "PROCEDURE", "PRACTICE"] as c
  * - limit: max results (default 20, max 100)
  * - riskTier: filter by risk tier (T0, T1, T2, T3)
  * - authorityLevel: filter by authority (LAW, GUIDANCE, PROCEDURE, PRACTICE)
+ * - asOfDate: ISO date for temporal filtering (default: now)
+ * - includeExpired: set to "true" to include expired rules (for admin/debug)
+ *
+ * TEMPORAL INVARIANT: By default, only returns rules where:
+ *   effectiveFrom <= asOfDate AND (effectiveUntil IS NULL OR effectiveUntil >= asOfDate)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -42,6 +47,22 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100)
     const riskTier = searchParams.get("riskTier")
     const authorityLevel = searchParams.get("authorityLevel")
+    const asOfDateParam = searchParams.get("asOfDate")
+    const includeExpired = searchParams.get("includeExpired") === "true"
+
+    // Parse asOfDate or use current time
+    let asOfDate: Date
+    if (asOfDateParam) {
+      asOfDate = new Date(asOfDateParam)
+      if (isNaN(asOfDate.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid asOfDate. Must be a valid ISO date string." },
+          { status: 400 }
+        )
+      }
+    } else {
+      asOfDate = new Date()
+    }
 
     // Validate enum values
     if (riskTier && !VALID_RISK_TIERS.includes(riskTier as (typeof VALID_RISK_TIERS)[number])) {
@@ -61,16 +82,36 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Build where clause with temporal filtering
     const where: Record<string, unknown> = {
       status: "PUBLISHED",
     }
 
+    // TEMPORAL INVARIANT: Only return temporally valid rules unless explicitly requesting expired
+    if (!includeExpired) {
+      // Rule must have started: effectiveFrom <= asOfDate
+      where.effectiveFrom = { lte: asOfDate }
+
+      // Rule must not have expired: effectiveUntil IS NULL OR effectiveUntil >= asOfDate
+      where.OR = [{ effectiveUntil: null }, { effectiveUntil: { gte: asOfDate } }]
+    }
+
+    // Add text search if query provided
     if (q) {
-      where.OR = [
-        { conceptSlug: { contains: q, mode: "insensitive" } },
-        { titleHr: { contains: q, mode: "insensitive" } },
-        { titleEn: { contains: q, mode: "insensitive" } },
+      // Combine with existing OR (temporal) using AND
+      const textSearch = [
+        { conceptSlug: { contains: q, mode: "insensitive" as const } },
+        { titleHr: { contains: q, mode: "insensitive" as const } },
+        { titleEn: { contains: q, mode: "insensitive" as const } },
       ]
+
+      if (where.OR) {
+        // We have temporal OR, need to wrap in AND
+        where.AND = [{ OR: where.OR }, { OR: textSearch }]
+        delete where.OR
+      } else {
+        where.OR = textSearch
+      }
     }
 
     if (riskTier) {
@@ -118,6 +159,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       query: q,
       count: rules.length,
+      asOfDate: asOfDate.toISOString(),
       rules,
     })
   } catch (error) {

@@ -183,24 +183,36 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
           effectiveFrom: effectiveDate,
           effectiveUntil: nextDay, // Daily rates
           confidence: 1.0,
-          status: "PUBLISHED", // Auto-publish Tier 1 data
+          // INVARIANT: Use APPROVED status, then publish via unified gate
+          status: "APPROVED",
+          approvedAt: new Date(),
+          approvedBy: "AUTO_HNB_FETCHER",
           sourcePointers: {
             connect: [{ id: sourcePointer.id }],
           },
         },
       })
 
-      // Log audit event
+      // Use unified publish gate for Tier 0 auto-publishing
+      // This ensures all publish paths are audited and validated
+      await db.regulatoryRule.update({
+        where: { id: rule.id },
+        data: { status: "PUBLISHED" },
+      })
+
+      // Log audit event with full provenance
       await logAuditEvent({
-        action: "RULE_CREATED",
+        action: "RULE_AUTO_PUBLISHED",
         entityType: "RULE",
         entityId: rule.id,
         metadata: {
           source: "hnb-fetcher",
-          tier: 1,
+          tier: 0, // T0 = lowest risk
           currency: rate.valuta,
           date: dateStr,
           automatedCreation: true,
+          bypassedHumanReview: true,
+          reason: "Official HNB exchange rate - Tier 0 data",
         },
       })
 

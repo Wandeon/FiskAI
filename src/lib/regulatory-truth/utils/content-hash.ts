@@ -94,3 +94,65 @@ export function detectContentChange(
     isSignificant: hasChanged, // For now, any change is significant
   }
 }
+
+// ============================================
+// EVIDENCE INTEGRITY VERIFICATION
+// ============================================
+
+export interface EvidenceIntegrityCheck {
+  valid: boolean
+  expectedHash: string
+  actualHash: string
+  evidenceId: string
+  error?: string
+}
+
+/**
+ * Verify the integrity of an Evidence record.
+ * Compares stored contentHash against computed hash of rawContent.
+ *
+ * This should be called when reading evidence for regulatory operations
+ * to detect any tampering with the source content.
+ */
+export function verifyEvidenceIntegrity(evidence: {
+  id: string
+  rawContent: string
+  contentHash: string
+  contentType?: string
+}): EvidenceIntegrityCheck {
+  const actualHash = hashContent(evidence.rawContent, evidence.contentType)
+
+  const valid = actualHash === evidence.contentHash
+
+  return {
+    valid,
+    expectedHash: evidence.contentHash,
+    actualHash,
+    evidenceId: evidence.id,
+    ...(valid ? {} : { error: "Content hash mismatch - evidence may have been tampered with" }),
+  }
+}
+
+/**
+ * Verify multiple evidence records in batch.
+ * Returns array of invalid evidence (empty if all valid).
+ */
+export function verifyEvidenceBatch(
+  evidenceRecords: Array<{
+    id: string
+    rawContent: string
+    contentHash: string
+    contentType?: string
+  }>
+): EvidenceIntegrityCheck[] {
+  const results: EvidenceIntegrityCheck[] = []
+
+  for (const evidence of evidenceRecords) {
+    const check = verifyEvidenceIntegrity(evidence)
+    if (!check.valid) {
+      results.push(check)
+    }
+  }
+
+  return results
+}
