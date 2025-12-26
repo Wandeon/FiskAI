@@ -19,7 +19,7 @@ This skill documents the correct way to interact with the Coolify API for FiskAI
 
 ## API Authentication
 
-**Token Location:** `.env.local` or `.env` file
+**Token Location:** `.env` file (or `.env.local`)
 
 ```bash
 COOLIFY_API_TOKEN=4|apxkFaHnjDRwyZuRo4NHnlBrQvlLvMuYN6Iv1yVybd98f84b
@@ -45,7 +45,7 @@ Note: Most routes are prefixed with `/v1`. Exceptions: `/health`, `/feedback`
 
 ```bash
 curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
 ```
@@ -67,21 +67,21 @@ curl -X POST "http://152.53.146.3:8000/api/v1/deploy?uuid=xxx&force=true"
 
 ```bash
 curl -s "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)"
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)"
 ```
 
 ### Restart Application
 
 ```bash
 curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/restart" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)"
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)"
 ```
 
 ### Stop Application
 
 ```bash
 curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/stop" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)"
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)"
 ```
 
 ## Reading the Token
@@ -90,10 +90,10 @@ Always read the token from the environment file:
 
 ```bash
 # Get token value
-grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2
+grep COOLIFY_API_TOKEN .env | cut -d'=' -f2
 
 # Or use in curl directly
--H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)"
+-H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)"
 ```
 
 **NEVER hardcode the token in commands.**
@@ -118,7 +118,7 @@ grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2
 
    ```bash
    curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
-     -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
+     -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
      -H "Content-Type: application/json" \
      -d '{"force": true}'
    ```
@@ -129,7 +129,7 @@ grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2
 
    ```bash
    curl -s "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8" \
-     -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" | jq '.status'
+     -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" | jq '.status'
    ```
 
    Expected: `"running:healthy"`

@@ -30,7 +30,7 @@
 
 ```bash
 curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
 ```
@@ -39,14 +39,14 @@ curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8w
 
 ```bash
 curl -s "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" | jq '.status'
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" | jq '.status'
 ```
 
 **Update environment variables:**
 
 ```bash
 curl -X PATCH "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/envs" \
-  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"key": "KEY_NAME", "value": "value"}'
 ```
