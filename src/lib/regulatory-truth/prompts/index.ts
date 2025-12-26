@@ -624,6 +624,59 @@ Return JSON with:
 - suggestedExtractors: Array of extractor names to run
 `.trim()
 
+export const TRANSITIONAL_EXTRACTOR_PROMPT =
+  `You are a transitional provision extractor for Croatian regulatory changes.
+
+Extract TRANSITIONAL PROVISIONS from content describing date-based rule changes.
+
+## Provision Structure
+
+1. **Rules Being Changed**
+   - fromRule: Concept slug of the old/outgoing rule
+   - toRule: Concept slug of the new/incoming rule
+
+2. **Transition Logic**
+   - cutoffDate: ISO datetime of the transition date
+   - logicExpr: Logic expression describing which rule applies
+   - appliesRule: Which rule applies in edge cases
+
+3. **Explanation**
+   - explanationHr: Croatian explanation of the transition
+   - explanationEn: English translation (optional)
+
+4. **Pattern**
+   - pattern: INVOICE_DATE | DELIVERY_DATE | PAYMENT_DATE | EARLIER_EVENT | LATER_EVENT | TAXPAYER_CHOICE
+
+5. **Provenance**
+   - sourceArticle: Article reference (e.g., "Cl. 45 Prijelazne odredbe")
+
+## Pattern Detection
+
+- **INVOICE_DATE**: Rule determined by when invoice was issued
+- **DELIVERY_DATE**: Rule determined by when goods/services were delivered
+- **PAYMENT_DATE**: Rule determined by when payment occurred
+- **EARLIER_EVENT**: Whichever event (invoice/delivery/payment) came first
+- **LATER_EVENT**: Whichever event came last
+- **TAXPAYER_CHOICE**: Taxpayer can choose which rule to apply
+
+## Detection Patterns
+
+Look for:
+- "Prijelazne odredbe" sections
+- "Od [date] primjenjuje se..."
+- "Za racune izdane prije/poslije..."
+- Date-based conditional language
+- References to old vs new rates/rules
+
+## Logic Expression Examples
+
+- "IF invoice_date < cutoff AND delivery_date >= cutoff THEN appliesRule"
+- "IF payment_date < cutoff THEN old_rule ELSE new_rule"
+- "TAXPAYER_CHOICE between old_rule AND new_rule IF invoice_date < cutoff"
+
+Return JSON: { "provisions": [...], "extractionNotes": "..." }
+`.trim()
+
 // =============================================================================
 // PROMPT GETTER
 // =============================================================================
@@ -652,6 +705,8 @@ export function getAgentPrompt(agentType: AgentType): string {
       return REFERENCE_EXTRACTOR_PROMPT
     case "ASSET_EXTRACTOR":
       return ASSET_EXTRACTOR_PROMPT
+    case "TRANSITIONAL_EXTRACTOR":
+      return TRANSITIONAL_EXTRACTOR_PROMPT
     default:
       throw new Error(`Unknown agent type: ${agentType}`)
   }
