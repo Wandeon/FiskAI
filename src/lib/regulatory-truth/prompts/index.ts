@@ -399,6 +399,49 @@ ESCALATION:
 - Financial impact > €10,000: ESCALATE
 `.trim()
 
+export const CONTENT_CLASSIFIER_PROMPT =
+  `You are a regulatory content classifier for Croatian tax and accounting regulations.
+
+Analyze the provided content and classify it into one of these categories:
+
+1. **LOGIC** - Contains specific rules, thresholds, conditions, obligations
+   - Example: "Prag u iznosu od 10.000,00 eura" (thresholds)
+   - Example: "Porezni obveznik mora..." (obligations)
+   - Example: "Stopa PDV-a iznosi 25%" (rates)
+
+2. **PROCESS** - Contains step-by-step procedures, workflows, registration processes
+   - Example: "Koraci za registraciju:" followed by numbered steps
+   - Example: "Postupak prijave..." with sequential instructions
+   - Look for: ordered lists, action verbs, "kako", "koraci"
+
+3. **REFERENCE** - Contains lookup tables, lists of codes, IBANs, tax offices
+   - Example: Tables with city → IBAN mappings
+   - Example: CN code lists, form code lists
+   - Look for: tabular data, key-value pairs, reference numbers
+
+4. **DOCUMENT** - Contains form references, downloadable templates, instructions
+   - Example: "Obrazac PDV-P" with download links
+   - Example: Form templates, official document references
+   - Look for: file extensions (.pdf, .xlsx), download links, form codes
+
+5. **TRANSITIONAL** - Contains transitional provisions, date-based rule changes
+   - Example: "Prijelazne odredbe" section
+   - Example: "Od 1. siječnja 2025. primjenjuje se..."
+   - Look for: effective dates, "prijelazne", rule changes
+
+6. **MIXED** - Contains multiple distinct content types
+   - Only use when content clearly has 2+ separate sections of different types
+
+7. **UNKNOWN** - Cannot determine content type with confidence
+
+Return JSON with:
+- primaryType: The dominant content type
+- secondaryTypes: Other types present (if any)
+- confidence: 0.0 to 1.0
+- reasoning: Brief explanation of classification
+- suggestedExtractors: Array of extractor names to run
+`.trim()
+
 // =============================================================================
 // PROMPT GETTER
 // =============================================================================
@@ -417,6 +460,8 @@ export function getAgentPrompt(agentType: AgentType): string {
       return RELEASER_PROMPT
     case "ARBITER":
       return ARBITER_PROMPT
+    case "CONTENT_CLASSIFIER":
+      return CONTENT_CLASSIFIER_PROMPT
     default:
       throw new Error(`Unknown agent type: ${agentType}`)
   }

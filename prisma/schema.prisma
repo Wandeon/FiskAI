@@ -1583,6 +1583,7 @@ enum AgentType {
   REVIEWER
   RELEASER
   ARBITER
+  CONTENT_CLASSIFIER
 }
 
 enum RuleStatus {
