@@ -442,6 +442,54 @@ Extract ATOMIC CLAIMS from the regulatory content. Each claim must be a complete
 Return JSON: { "claims": [...], "extractionNotes": "..." }
 `.trim()
 
+export const PROCESS_EXTRACTOR_PROMPT =
+  `You are a regulatory process extractor for Croatian tax procedures.
+
+Extract REGULATORY PROCESSES from content that describes step-by-step procedures.
+
+## Process Structure
+
+1. **Identity**
+   - slug: URL-safe identifier (e.g., "oss-registration", "pdv-prijava")
+   - titleHr: Croatian title
+   - titleEn: English title (optional)
+   - jurisdiction: Default "HR"
+
+2. **Metadata**
+   - processType: REGISTRATION | FILING | APPEAL | CLOSURE | AMENDMENT | INQUIRY
+   - estimatedTime: Human-readable estimate (e.g., "3-5 radnih dana")
+   - prerequisites: JSON object with required items
+
+3. **Steps** (array, minimum 1)
+   - orderNum: Sequence number (1, 2, 3...)
+   - actionHr: Croatian description of the action
+   - actionEn: English translation (optional)
+   - requiresStepIds: IDs of steps that must complete first
+   - requiresAssets: Asset references needed for this step
+   - onSuccessStepId: Next step if successful
+   - onFailureStepId: Alternative step if failed
+   - failureAction: Description of failure handling
+
+## Detection Patterns
+
+Look for:
+- Numbered lists (1., 2., 3. or a), b), c))
+- "Koraci", "Postupak", "Kako"
+- Sequential action verbs
+- Form submission workflows
+- Registration procedures
+
+## Important Rules
+
+- Create unique slugs (no duplicates)
+- Steps must have sequential orderNum starting from 1
+- Extract all steps, including optional/conditional ones
+- Include failure paths where documented
+- Reference forms/documents in requiresAssets
+
+Return JSON: { "processes": [...], "extractionNotes": "..." }
+`.trim()
+
 export const CONTENT_CLASSIFIER_PROMPT =
   `You are a regulatory content classifier for Croatian tax and accounting regulations.
 
@@ -507,6 +555,8 @@ export function getAgentPrompt(agentType: AgentType): string {
       return CONTENT_CLASSIFIER_PROMPT
     case "CLAIM_EXTRACTOR":
       return CLAIM_EXTRACTOR_PROMPT
+    case "PROCESS_EXTRACTOR":
+      return PROCESS_EXTRACTOR_PROMPT
     default:
       throw new Error(`Unknown agent type: ${agentType}`)
   }
