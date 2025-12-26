@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, Grid3X3 } from "lucide-react"
+import { ArrowRight, Grid3X3, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PortalNavigation } from "./PortalNavigation"
 import { CommandPalette } from "@/components/ui/command-palette"
@@ -16,7 +16,11 @@ const NAV_LINKS = [
   { href: "/pricing", label: "Cijene" },
 ]
 
-export function MarketingHeader() {
+interface MarketingHeaderProps {
+  isLoggedIn?: boolean
+}
+
+export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
   const [portalOpen, setPortalOpen] = useState(false)
@@ -151,30 +155,56 @@ export function MarketingHeader() {
                 <Grid3X3 className="h-5 w-5" />
               </button>
 
-              {/* Primary CTA */}
-              <Link
-                href="/register"
-                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
-              >
-                <span className="hidden sm:inline">Započni</span>
-                <span className="sm:hidden">Start</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              {/* Primary CTA - changes based on login state */}
+              {isLoggedIn ? (
+                <a
+                  href="https://app.fiskai.hr/dashboard"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+                >
+                  <span className="hidden sm:inline">Otvori aplikaciju</span>
+                  <span className="sm:hidden">Aplikacija</span>
+                  <ExternalLink className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
 
-                {/* Shimmer effect */}
-                <motion.span
-                  className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{ x: ["0%", "200%"] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut",
-                  }}
-                />
+                  {/* Shimmer effect */}
+                  <motion.span
+                    className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["0%", "200%"] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: "easeInOut",
+                    }}
+                  />
 
-                {/* Glow on hover */}
-                <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
-              </Link>
+                  {/* Glow on hover */}
+                  <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-emerald-400 to-teal-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
+                </a>
+              ) : (
+                <Link
+                  href="/register"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+                >
+                  <span className="hidden sm:inline">Započni</span>
+                  <span className="sm:hidden">Start</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+
+                  {/* Shimmer effect */}
+                  <motion.span
+                    className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["0%", "200%"] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                      ease: "easeInOut",
+                    }}
+                  />
+
+                  {/* Glow on hover */}
+                  <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
