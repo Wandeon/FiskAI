@@ -24,27 +24,34 @@
 
 **Coolify Dashboard:** https://ci.fiskai.hr (or http://152.53.146.3:8000)
 
-**Deploy API:**
+**Application UUID:** `bsswgo8ggwgkw8c88wo8wcw8`
+
+**Deploy API (trigger deployment):**
 
 ```bash
-curl -X POST "http://152.53.146.3:8000/api/v1/deploy?uuid=bsswgo8ggwgkw8c88wo8wcw8&force=true" \
-  -H "Authorization: Bearer <COOLIFY_API_TOKEN>"
+curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
+  -H "Content-Type: application/json" \
+  -d '{"force": true}'
 ```
 
-**GitHub Webhook (auto-deploy):**
+**Check deployment status:**
 
-```
-http://152.53.146.3:8000/webhooks/source/github/events/manual
+```bash
+curl -s "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" | jq '.status'
 ```
 
 **Update environment variables:**
 
 ```bash
 curl -X PATCH "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/envs" \
-  -H "Authorization: Bearer <token>" \
+  -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env.local | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"key": "KEY_NAME", "value": "value"}'
 ```
+
+See `.claude/skills/coolify-deployment/SKILL.md` for complete API documentation.
 
 ## Database
 
