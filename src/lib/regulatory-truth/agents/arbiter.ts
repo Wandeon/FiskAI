@@ -12,6 +12,7 @@ import { runAgent } from "./runner"
 import type { AuthorityLevel } from "@prisma/client"
 import { logAuditEvent } from "../utils/audit-log"
 import { withSoftFail } from "../utils/soft-fail"
+import { findOverridingRules, doesOverride } from "../taxonomy/precedence-builder"
 
 // =============================================================================
 // ARBITER AGENT
@@ -531,4 +532,96 @@ export async function runArbiterBatch(limit: number = 10): Promise<{
   )
 
   return results
+}
+
+/**
+ * Resolve which rule takes precedence when multiple rules match
+ *
+ * Uses lex specialis principle: specific rules override general rules
+ * Resolution order:
+ * 1. Check OVERRIDES edges
+ * 2. Check specificity (more qualifiers = more specific)
+ * 3. Check authority level (LAW > GUIDANCE > PROCEDURE > PRACTICE)
+ * 4. Check recency (newer effective date wins)
+ */
+export async function resolveRulePrecedence(ruleIds: string[]): Promise<{
+  winningRuleId: string
+  reasoning: string
+  overriddenRuleIds: string[]
+}> {
+  if (ruleIds.length === 0) {
+    throw new Error("No rules to resolve")
+  }
+
+  if (ruleIds.length === 1) {
+    return {
+      winningRuleId: ruleIds[0],
+      reasoning: "Single rule matched",
+      overriddenRuleIds: [],
+    }
+  }
+
+  // Fetch all rules
+  const rules = await db.regulatoryRule.findMany({
+    where: { id: { in: ruleIds } },
+    include: {
+      incomingEdges: {
+        where: { relation: "OVERRIDES" },
+      },
+    },
+  })
+
+  // Step 1: Check for OVERRIDES edges
+  for (const rule of rules) {
+    // A rule with no incoming OVERRIDES edges is a candidate for winning
+    const overridingRuleIds = await findOverridingRules(rule.id)
+    const hasActiveOverride = overridingRuleIds.some((id) => ruleIds.includes(id))
+
+    if (!hasActiveOverride) {
+      // This rule is not overridden by any rule in our set
+      // Check if it overrides others
+      let overridesOthers = false
+      const overridden: string[] = []
+
+      for (const otherId of ruleIds) {
+        if (otherId !== rule.id && (await doesOverride(rule.id, otherId))) {
+          overridesOthers = true
+          overridden.push(otherId)
+        }
+      }
+
+      if (overridesOthers) {
+        return {
+          winningRuleId: rule.id,
+          reasoning: `Lex specialis: Rule ${rule.conceptSlug} overrides ${overridden.length} general rule(s)`,
+          overriddenRuleIds: overridden,
+        }
+      }
+    }
+  }
+
+  // Step 2: Sort by authority level
+  const authorityOrder = ["LAW", "GUIDANCE", "PROCEDURE", "PRACTICE"]
+  const sortedByAuthority = [...rules].sort((a, b) => {
+    return authorityOrder.indexOf(a.authorityLevel) - authorityOrder.indexOf(b.authorityLevel)
+  })
+
+  if (sortedByAuthority[0].authorityLevel !== sortedByAuthority[1].authorityLevel) {
+    return {
+      winningRuleId: sortedByAuthority[0].id,
+      reasoning: `Authority: ${sortedByAuthority[0].authorityLevel} takes precedence over ${sortedByAuthority[1].authorityLevel}`,
+      overriddenRuleIds: sortedByAuthority.slice(1).map((r) => r.id),
+    }
+  }
+
+  // Step 3: Sort by effective date (most recent wins)
+  const sortedByDate = [...rules].sort(
+    (a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime()
+  )
+
+  return {
+    winningRuleId: sortedByDate[0].id,
+    reasoning: `Recency: Rule effective from ${sortedByDate[0].effectiveFrom.toISOString()} is most recent`,
+    overriddenRuleIds: sortedByDate.slice(1).map((r) => r.id),
+  }
 }
