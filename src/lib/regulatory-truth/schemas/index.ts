@@ -10,3 +10,10 @@ export * from "./composer"
 export * from "./reviewer"
 export * from "./releaser"
 export * from "./arbiter"
+
+// Knowledge shapes schemas
+export * from "./atomic-claim"
+export * from "./process"
+export * from "./reference"
+export * from "./asset"
+export * from "./transitional"
