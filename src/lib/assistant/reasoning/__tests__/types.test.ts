@@ -5,6 +5,7 @@ import {
   REASONING_STAGES,
   isTerminal,
   getTerminalOutcome,
+  isNonTerminalStage,
   type ReasoningEvent,
   type ReasoningStage,
   type TerminalOutcome,
@@ -67,6 +68,23 @@ describe("Reasoning Types", () => {
     it("returns null for non-terminal stages", () => {
       const event = { stage: "ANALYSIS" } as ReasoningEvent
       expect(getTerminalOutcome(event)).toBeNull()
+    })
+  })
+
+  describe("isNonTerminalStage", () => {
+    it("returns true for non-terminal stages", () => {
+      expect(isNonTerminalStage("SOURCES")).toBe(true)
+      expect(isNonTerminalStage("CONTEXT_RESOLUTION")).toBe(true)
+      expect(isNonTerminalStage("ANALYSIS")).toBe(true)
+    })
+
+    it("returns false for terminal stages", () => {
+      expect(isNonTerminalStage("ANSWER")).toBe(false)
+      expect(isNonTerminalStage("ERROR")).toBe(false)
+    })
+
+    it("returns false for CLARIFICATION (not in REASONING_STAGES)", () => {
+      expect(isNonTerminalStage("CLARIFICATION")).toBe(false)
     })
   })
 })
