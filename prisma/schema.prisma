@@ -1631,6 +1631,7 @@ enum GraphEdgeType {
   EXEMPTS
   DEPENDS_ON
   SUPERSEDES
+  OVERRIDES      // Lex specialis - specific overrides general
 }
 
 enum AuthorityLevel {
@@ -1656,6 +1657,71 @@ enum ObligationType {
   NO_OBLIGATION   // Explicitly exempt/not applicable
   CONDITIONAL     // Depends on other factors (use appliesWhen)
   INFORMATIONAL   // Reference value, not a requirement
+}
+
+// ============================================================================
+// KNOWLEDGE SHAPES ENUMS
+// ============================================================================
+
+enum SubjectType {
+  TAXPAYER
+  EMPLOYER
+  COMPANY
+  INDIVIDUAL
+  ALL
+}
+
+enum AssertionType {
+  OBLIGATION
+  PROHIBITION
+  PERMISSION
+  DEFINITION
+}
+
+enum ProcessType {
+  REGISTRATION
+  FILING
+  APPEAL
+  CLOSURE
+  AMENDMENT
+  INQUIRY
+}
+
+enum ReferenceCategory {
+  IBAN
+  CN_CODE
+  TAX_OFFICE
+  INTEREST_RATE
+  EXCHANGE_RATE
+  FORM_CODE
+  DEADLINE_CALENDAR
+}
+
+enum AssetFormat {
+  PDF
+  XML
+  XLS
+  XLSX
+  DOC
+  DOCX
+  HTML
+}
+
+enum AssetType {
+  FORM
+  TEMPLATE
+  GUIDE
+  INSTRUCTION
+  REGULATION_TEXT
+}
+
+enum TransitionPattern {
+  INVOICE_DATE
+  DELIVERY_DATE
+  PAYMENT_DATE
+  EARLIER_EVENT
+  LATER_EVENT
+  TAXPAYER_CHOICE
 }
 
 model RegulatorySource {
