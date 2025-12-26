@@ -11,16 +11,8 @@ import { z } from "zod"
 import { runLogicEngine } from "./logic-engine"
 import { runProcessEngine } from "./process-engine"
 import { runReferenceEngine } from "./reference-engine"
-// import { runAssetEngine } from "./asset-engine"
-// import { runTemporalEngine } from "./temporal-engine"
-
-async function runAssetEngine(query: string, entities: { formCodes: string[] }): Promise<unknown> {
-  return { stub: true, engine: "asset", query, entities }
-}
-
-async function runTemporalEngine(query: string, entities: { dates: string[] }): Promise<unknown> {
-  return { stub: true, engine: "temporal", query, entities }
-}
+import { runAssetEngine } from "./asset-engine"
+import { runTemporalEngine } from "./temporal-engine"
 
 const RouterInputSchema = z.object({
   query: z.string(),
