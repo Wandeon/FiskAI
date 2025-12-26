@@ -1829,6 +1829,7 @@ model Evidence {
   referenceTables ReferenceTable[]
   assets          RegulatoryAsset[]
   transitionalProvisions TransitionalProvision[]
+  coverageReport    CoverageReport?
 
   @@unique([url, contentHash])
   @@index([sourceId])
@@ -2573,4 +2574,48 @@ model ReasoningTrace {
   @@index([riskTier])
   @@index([createdAt])
   @@index([confidence])
+}
+
+// ============================================================================
+// COVERAGE TRACKING
+// ============================================================================
+
+model CoverageReport {
+  id              String   @id @default(cuid())
+  evidenceId      String
+  createdAt       DateTime @default(now())
+
+  // Extraction counts by shape
+  claimsCount           Int   @default(0)
+  processesCount        Int   @default(0)
+  referenceTablesCount  Int   @default(0)
+  assetsCount           Int   @default(0)
+  provisionsCount       Int   @default(0)
+
+  // Legacy extraction (for comparison)
+  sourcePointersCount   Int   @default(0)
+
+  // Classification
+  primaryContentType    String?  // LOGIC, PROCESS, REFERENCE, etc.
+  classificationConfidence Float @default(0)
+
+  // Coverage assessment
+  coverageScore         Float    @default(0)  // 0-1, overall coverage
+  isComplete            Boolean  @default(false)
+  missingShapes         String[] // ["claims", "processes"]
+  warnings              String[] // Quality warnings
+
+  // Reviewer status
+  reviewerApproved      Boolean  @default(false)
+  reviewerNotes         String?
+  reviewedAt            DateTime?
+  reviewedBy            String?
+
+  // Relations
+  evidence              Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@unique([evidenceId])
+  @@index([coverageScore])
+  @@index([isComplete])
+  @@index([createdAt])
 }
