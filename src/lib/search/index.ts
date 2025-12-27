@@ -43,7 +43,11 @@ export async function loadSearchIndex(): Promise<SearchIndex> {
   } catch (error) {
     console.error("Error loading search index:", error)
     // Return empty index as fallback
-    searchIndex = { entries: [] }
+    searchIndex = {
+      version: "0.0.0",
+      generatedAt: new Date().toISOString(),
+      entries: [],
+    }
     fuseInstance = new Fuse([], {
       keys: [
         { name: "title", weight: 2 },
