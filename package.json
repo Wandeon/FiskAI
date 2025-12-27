@@ -45,6 +45,26 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "lint-staged": {
+    "src/app/(app)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(admin)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(staff)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/components/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(marketing)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: warn'"
+    ],
     "*.{ts,tsx,js,jsx}": [
       "prettier --write",
       "eslint --fix"
