@@ -7,6 +7,7 @@ import {
   getRedirectUrlForSystemRole,
   canAccessSubdomain,
 } from "@/lib/middleware/subdomain"
+import { getCacheHeaders } from "@/lib/cache-headers"
 
 // Routes to skip (API, static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
@@ -68,6 +69,15 @@ export async function middleware(request: NextRequest) {
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-subdomain", subdomain)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+
+    // Apply cache headers for public KB pages
+    const cacheHeaders = getCacheHeaders(pathname)
+    if (cacheHeaders) {
+      for (const [key, value] of Object.entries(cacheHeaders)) {
+        response.headers.set(key, value)
+      }
+    }
+
     return response
   }
 
