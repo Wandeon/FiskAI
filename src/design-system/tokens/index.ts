@@ -160,19 +160,7 @@ export {
   type DataVis,
 } from './data-vis';
 
-/**
- * Complete tokens object combining all token categories
- */
-export const tokens = {
-  primitives: {} as typeof import('./primitives').primitives,
-  semantic: {} as typeof import('./semantic').semantic,
-  layout: {} as typeof import('./layout').layout,
-  typography: {} as typeof import('./typography').typography,
-  motion: {} as typeof import('./motion').motion,
-  dataVis: {} as typeof import('./data-vis').dataVis,
-} as const;
-
-// Populate tokens object
+// Import values for combined tokens object
 import { primitives as primitivesImport } from './primitives';
 import { semantic as semanticImport } from './semantic';
 import { layout as layoutImport } from './layout';
@@ -180,11 +168,16 @@ import { typography as typographyImport } from './typography';
 import { motion as motionImport } from './motion';
 import { dataVis as dataVisImport } from './data-vis';
 
-(tokens as any).primitives = primitivesImport;
-(tokens as any).semantic = semanticImport;
-(tokens as any).layout = layoutImport;
-(tokens as any).typography = typographyImport;
-(tokens as any).motion = motionImport;
-(tokens as any).dataVis = dataVisImport;
+/**
+ * Complete tokens object combining all token categories
+ */
+export const tokens = {
+  primitives: primitivesImport,
+  semantic: semanticImport,
+  layout: layoutImport,
+  typography: typographyImport,
+  motion: motionImport,
+  dataVis: dataVisImport,
+} as const;
 
 export type Tokens = typeof tokens;

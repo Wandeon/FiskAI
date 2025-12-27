@@ -5,23 +5,6 @@
  * These tokens define spacing, sizing, and visual depth.
  */
 
-import {
-  spacing as spacingImport,
-  spacingSemantics as spacingSemanticsImport,
-  componentSpacing as componentSpacingImport,
-} from './spacing';
-
-import {
-  radius as radiusImport,
-  radiusSemantics as radiusSemanticsImport,
-} from './radius';
-
-import {
-  shadows as shadowsImport,
-  shadowsDark as shadowsDarkImport,
-  zIndex as zIndexImport,
-} from './elevation';
-
 export {
   spacing,
   spacingSemantics,
@@ -51,18 +34,36 @@ export {
   type Elevation,
 } from './elevation';
 
+// Import values for combined layout object
+import {
+  spacing,
+  spacingSemantics,
+  componentSpacing,
+} from './spacing';
+
+import {
+  radius,
+  radiusSemantics,
+} from './radius';
+
+import {
+  shadows,
+  shadowsDark,
+  zIndex,
+} from './elevation';
+
 /**
  * Combined layout tokens object for convenience
  */
 export const layout = {
-  spacing: spacingImport,
-  spacingSemantics: spacingSemanticsImport,
-  componentSpacing: componentSpacingImport,
-  radius: radiusImport,
-  radiusSemantics: radiusSemanticsImport,
-  shadows: shadowsImport,
-  shadowsDark: shadowsDarkImport,
-  zIndex: zIndexImport,
+  spacing,
+  spacingSemantics,
+  componentSpacing,
+  radius,
+  radiusSemantics,
+  shadows,
+  shadowsDark,
+  zIndex,
 } as const;
 
 export type Layout = typeof layout;
