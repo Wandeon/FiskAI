@@ -33,6 +33,14 @@ export type { AssetExtractionResult } from "./asset-extractor"
 export { runTransitionalExtractor } from "./transitional-extractor"
 export type { TransitionalExtractionResult } from "./transitional-extractor"
 
+export {
+  detectComparisonContent,
+  extractComparisonMatrix,
+  saveComparisonMatrix,
+  runComparisonExtractor,
+} from "./comparison-extractor"
+export type { ExtractionResult, ComparisonExtractionResult } from "./comparison-extractor"
+
 // Multi-shape orchestrator
 export { runMultiShapeExtraction } from "./multi-shape-extractor"
 export type { MultiShapeExtractionResult } from "./multi-shape-extractor"

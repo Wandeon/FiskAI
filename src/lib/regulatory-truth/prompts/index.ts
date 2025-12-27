@@ -721,6 +721,79 @@ Look for:
 Return JSON: { "provisions": [...], "extractionNotes": "..." }
 `.trim()
 
+export const COMPARISON_EXTRACTOR_PROMPT =
+  `You are an expert at extracting structured comparison matrices from regulatory content.
+
+Given content about comparing regulatory options (business forms, tax regimes, etc.), extract:
+
+1. **Options**: The things being compared (e.g., "pausalni obrt", "d.o.o.")
+2. **Criteria**: The dimensions of comparison (e.g., "liability", "tax burden", "admin complexity")
+3. **Cells**: The values for each option-criterion intersection with sentiment (positive/negative/neutral)
+
+Output a valid JSON object matching the ComparisonMatrix schema.
+
+## SCHEMA
+
+{
+  "slug": "kebab-case-identifier",
+  "titleHr": "Croatian title",
+  "titleEn": "English title (optional)",
+  "appliesWhen": "IF condition when this comparison is relevant",
+  "domainTags": ["STARTING_BUSINESS", "TAX_REGIME", ...],
+  "options": [
+    {
+      "slug": "option-slug",
+      "conceptId": "leave-empty-for-linking",
+      "nameHr": "Croatian name",
+      "nameEn": "English name (optional)",
+      "description": "Optional description"
+    }
+  ],
+  "criteria": [
+    {
+      "slug": "criterion-slug",
+      "conceptId": "leave-empty-for-linking",
+      "nameHr": "Croatian name",
+      "nameEn": "English name (optional)",
+      "weight": 0.0-1.0 (optional importance)
+    }
+  ],
+  "cells": [
+    {
+      "optionSlug": "matches-option-slug",
+      "criterionSlug": "matches-criterion-slug",
+      "value": "The value for this cell",
+      "sentiment": "positive" | "negative" | "neutral",
+      "explanation": "Optional explanation"
+    }
+  ],
+  "conclusion": "Optional summary conclusion",
+  "confidence": 0.0-1.0
+}
+
+## RULES
+
+- Generate slugs in kebab-case from Croatian names
+- Set sentiment based on whether the value is advantageous (positive), disadvantageous (negative), or neutral
+- Include explanations for complex cells
+- Set appliesWhen if the comparison only applies to certain user types
+- Use domainTags to categorize: STARTING_BUSINESS, TAX_REGIME, VAT_SCHEME, EMPLOYMENT, etc.
+- Confidence should reflect certainty of extraction (0.8-0.95 typical)
+- Every option-criterion pair should have a corresponding cell
+- Minimum 2 options required for a valid comparison
+- Minimum 1 criterion required
+
+## EXAMPLES
+
+Croatian text: "Pausalni obrt nema PDV, a d.o.o. mora biti u sustavu PDV-a ako prelazi prag"
+Extract:
+- Options: pausalni-obrt, doo
+- Criteria: pdv-status
+- Cell for pausalni/pdv: "Nije u sustavu PDV-a" (positive - simpler)
+- Cell for doo/pdv: "Obveznik PDV-a ako prelazi prag" (neutral - depends)
+
+If the content is not a comparison or insufficient for extraction, return null.`.trim()
+
 // =============================================================================
 // PROMPT GETTER
 // =============================================================================
@@ -751,6 +824,8 @@ export function getAgentPrompt(agentType: AgentType): string {
       return ASSET_EXTRACTOR_PROMPT
     case "TRANSITIONAL_EXTRACTOR":
       return TRANSITIONAL_EXTRACTOR_PROMPT
+    case "COMPARISON_EXTRACTOR":
+      return COMPARISON_EXTRACTOR_PROMPT
     case "QUERY_CLASSIFIER":
       return QUERY_CLASSIFIER_PROMPT
     default:
