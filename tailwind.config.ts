@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 import { spacing, radius, shadows, zIndex } from "./src/design-system/tokens/layout";
 import { fonts, textStyles } from "./src/design-system/tokens/typography";
-import { categorical } from "./src/design-system/tokens/data-vis";
 import tailwindcssAnimate from "tailwindcss-animate";
 import tailwindcssTypography from "@tailwindcss/typography";
 import plugin from "tailwindcss/plugin";
