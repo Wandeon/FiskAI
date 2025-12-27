@@ -216,8 +216,8 @@ async function validateINV5(): Promise<InvariantResult> {
       appliesWhen: r.appliesWhen,
       value: r.value,
       valueType: r.valueType,
-      effectiveFrom: r.effectiveFrom,
-      effectiveUntil: r.effectiveUntil,
+      effectiveFrom: r.effectiveFrom?.toISOString() || null,
+      effectiveUntil: r.effectiveUntil?.toISOString() || null,
     }))
 
     const computedHash = computeReleaseHash(ruleSnapshots)

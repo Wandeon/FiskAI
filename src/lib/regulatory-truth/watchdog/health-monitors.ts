@@ -306,9 +306,9 @@ export async function checkRedisConnectionHealth(): Promise<HealthCheckResult> {
 
   return {
     checkType: "PIPELINE_HEALTH" as const,
+    entityId: "redis",
     status: healthy ? "HEALTHY" : "CRITICAL",
     message: healthy ? "Redis connected" : "Redis connection failed",
-    metadata: {},
   }
 }
 
@@ -325,9 +325,9 @@ export async function checkDeadLetterQueueHealth(): Promise<HealthCheckResult> {
 
   return {
     checkType: "REJECTION_RATE" as const,
+    entityId: "dead-letter-queue",
     status,
     message: `${total} jobs in dead-letter queue`,
-    metadata: { waiting: counts.waiting, failed: counts.failed },
   }
 }
 
@@ -350,9 +350,9 @@ export async function checkQueueBacklogHealth(): Promise<HealthCheckResult> {
 
   return {
     checkType: "PIPELINE_HEALTH" as const,
+    entityId: "queue-backlog",
     status,
     message: `Max queue backlog: ${maxBacklog}`,
-    metadata: backlogs,
   }
 }
 

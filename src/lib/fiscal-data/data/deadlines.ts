@@ -201,7 +201,7 @@ export function getUpcomingDeadlines(
   ]
 
   for (const deadline of allDeadlines) {
-    const nextDate = getNextDeadline(deadline, fromDate)
+    const nextDate = getNextDeadline(deadline as { dates: string[]; frequency: string }, fromDate)
     if (nextDate <= endDate) {
       upcoming.push({
         name: deadline.name,

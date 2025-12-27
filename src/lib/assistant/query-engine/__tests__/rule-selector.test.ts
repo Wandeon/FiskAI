@@ -96,7 +96,7 @@ describe("selectRules", () => {
   beforeEach(() => {
     // Mock implementation that only filters by status (PUBLISHED)
     // The eligibility gate handles temporal filtering in-memory
-    vi.mocked(prisma.regulatoryRule.findMany).mockImplementation(async (args) => {
+    vi.mocked(prisma.regulatoryRule.findMany).mockImplementation((async (args: any) => {
       return mockRules.filter((rule) => {
         // Filter by conceptSlug
         const whereAny = args?.where as Record<string, unknown> | undefined
@@ -113,8 +113,8 @@ describe("selectRules", () => {
         }
 
         return true
-      }) as unknown as ReturnType<typeof prisma.regulatoryRule.findMany>
-    })
+      })
+    }) as any)
   })
 
   it("returns only PUBLISHED rules", async () => {

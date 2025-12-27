@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, act } from "@testing-library/react"
 import { useFocusManagement } from "../useFocusManagement"
+import type { ControllerStatus } from "../../types"
 
 describe("useFocusManagement", () => {
   let headlineRef: { current: HTMLHeadingElement | null }
@@ -25,11 +26,11 @@ describe("useFocusManagement", () => {
 
     const { rerender } = renderHook(
       ({ status }) => useFocusManagement({ status, headlineRef, inputRef }),
-      { initialProps: { status: "LOADING" as const } }
+      { initialProps: { status: "LOADING" as ControllerStatus } }
     )
 
     act(() => {
-      rerender({ status: "COMPLETE" as const })
+      rerender({ status: "COMPLETE" as ControllerStatus })
     })
 
     // Wait for requestAnimationFrame
@@ -43,10 +44,10 @@ describe("useFocusManagement", () => {
 
     const { rerender } = renderHook(
       ({ status }) => useFocusManagement({ status, headlineRef, inputRef }),
-      { initialProps: { status: "COMPLETE" as const } }
+      { initialProps: { status: "COMPLETE" as ControllerStatus } }
     )
 
-    rerender({ status: "IDLE" as const })
+    rerender({ status: "IDLE" as ControllerStatus })
 
     expect(focusSpy).toHaveBeenCalled()
   })
@@ -57,10 +58,10 @@ describe("useFocusManagement", () => {
 
     const { rerender } = renderHook(
       ({ status }) => useFocusManagement({ status, headlineRef, inputRef }),
-      { initialProps: { status: "LOADING" as const } }
+      { initialProps: { status: "LOADING" as ControllerStatus } }
     )
 
-    rerender({ status: "STREAMING" as const })
+    rerender({ status: "STREAMING" as ControllerStatus })
 
     expect(headlineFocusSpy).not.toHaveBeenCalled()
     expect(inputFocusSpy).not.toHaveBeenCalled()
@@ -71,11 +72,11 @@ describe("useFocusManagement", () => {
 
     const { rerender } = renderHook(
       ({ status }) => useFocusManagement({ status, headlineRef, inputRef }),
-      { initialProps: { status: "LOADING" as const } }
+      { initialProps: { status: "LOADING" as ControllerStatus } }
     )
 
     act(() => {
-      rerender({ status: "ERROR" as const })
+      rerender({ status: "ERROR" as ControllerStatus })
     })
 
     // Wait for requestAnimationFrame

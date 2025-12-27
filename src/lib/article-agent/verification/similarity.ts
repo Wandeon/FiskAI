@@ -37,7 +37,7 @@ export async function findSimilarChunks(
     LIMIT ${topK}
   `)
 
-  return results.rows as SimilarChunk[]
+  return results.rows as unknown as SimilarChunk[]
 }
 
 export async function updateChunkEmbedding(chunkId: string, embedding: number[]): Promise<void> {

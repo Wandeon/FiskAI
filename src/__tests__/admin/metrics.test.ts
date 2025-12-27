@@ -79,7 +79,7 @@ describe("Admin Metrics", () => {
       await getAdminMetrics()
 
       // Third call should be for thisWeekSignups with date filter
-      const call = vi.mocked(db.company.count).mock.calls[2]
+      const call = vi.mocked(db.company.count).mock.calls[2] as any
       expect(call[0]).toHaveProperty("where.createdAt.gte")
       expect(call[0].where.createdAt.gte).toBeInstanceOf(Date)
     })
@@ -223,7 +223,7 @@ describe("Admin Metrics", () => {
       await getComplianceHealth()
 
       // Second call should be for expiring certificates
-      const call = vi.mocked(db.fiscalCertificate.count).mock.calls[1]
+      const call = vi.mocked(db.fiscalCertificate.count).mock.calls[1] as any
       expect(call[0]).toHaveProperty("where.validUntil.lte")
       expect(call[0]).toHaveProperty("where.validUntil.gte")
     })

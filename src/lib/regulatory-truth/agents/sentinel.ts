@@ -190,13 +190,11 @@ async function findOrCreateSource(domain: string): Promise<{ id: string } | null
   try {
     source = await db.regulatorySource.create({
       data: {
+        slug: domain.replace(/\./g, "-").toLowerCase(),
         name: `Auto: ${domain}`,
-        shortName: domain.split(".")[0].toUpperCase(),
         url: `https://${domain}`,
-        sourceType: "GOVERNMENT",
-        jurisdiction: "HR",
+        hierarchy: 5, // Default uputa level
         isActive: true,
-        priority: 3, // Default medium priority
       },
     })
     console.log(`[sentinel] Created RegulatorySource: ${source.id} for ${domain}`)

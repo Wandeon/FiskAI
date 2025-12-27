@@ -1,34 +1,123 @@
-import type { MetadataRoute } from "next"
+import type { MetadataRoute } from "next";
+import {
+  routes,
+  getCanonicalBaseUrl,
+  isProductionSitemap,
+  type RouteCategory,
+} from "@/config/routes";
 
-function getBaseUrl() {
-  const env = process.env.NEXT_PUBLIC_APP_URL
-  if (env) return env.replace(/\/+$/, "")
-  return "http://localhost:3000"
-}
-
+/**
+ * Enterprise Robots.txt Generator
+ *
+ * Features:
+ * - Derives allow/disallow from route registry
+ * - Blocks all auth, app, staff, admin routes
+ * - Environment-safe (blocks everything in non-production)
+ */
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = getBaseUrl()
+  const baseUrl = getCanonicalBaseUrl();
+
+  // Safety: Block everything in non-production environments
+  if (!isProductionSitemap() || !baseUrl) {
+    return {
+      rules: {
+        userAgent: "*",
+        disallow: "/",
+      },
+    };
+  }
+
+  // Categories that should be indexed
+  const indexableCategories: RouteCategory[] = [
+    "core",
+    "marketing",
+    "tools",
+    "content",
+    "news",
+    "legal",
+  ];
+
+  // Get all indexable routes from registry
+  const allowedPaths = Object.values(routes)
+    .filter((r) => r.sitemap && indexableCategories.includes(r.category))
+    .map((r) => r.path.hr);
+
   return {
     rules: [
       {
         userAgent: "*",
-        allow: [
-          "/",
-          "/features",
-          "/pricing",
-          "/about",
-          "/contact",
-          "/security",
-          "/privacy",
-          "/terms",
-          "/dpa",
-          "/cookies",
-          "/ai-data-policy",
-          "/status",
+        allow: allowedPaths,
+        disallow: [
+          // Auth routes (from registry, category: auth)
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/reset-password",
+          "/verify-email",
+          "/check-email",
+          "/select-role",
+
+          // App routes (authenticated users only)
+          "/dashboard",
+          "/dashboard/*",
+          "/invoices",
+          "/invoices/*",
+          "/e-invoices",
+          "/e-invoices/*",
+          "/expenses",
+          "/expenses/*",
+          "/contacts",
+          "/contacts/*",
+          "/products",
+          "/products/*",
+          "/banking",
+          "/banking/*",
+          "/reports",
+          "/reports/*",
+          "/settings",
+          "/settings/*",
+          "/pausalni",
+          "/pausalni/*",
+          "/documents",
+          "/documents/*",
+          "/support",
+          "/support/*",
+          "/onboarding",
+          "/checklist",
+          "/compliance",
+          "/accountant",
+          "/asistent",
+          "/pos",
+          "/article-agent",
+          "/article-agent/*",
+
+          // Staff portal
+          "/staff",
+          "/staff/*",
+
+          // Admin portal
+          "/admin",
+          "/admin/*",
+          "/admin-login",
+          "/admin-old",
+          "/admin-old/*",
+
+          // API routes
+          "/api",
+          "/api/*",
+
+          // Next.js internals
+          "/_next",
+          "/_next/*",
+
+          // Common crawler traps
+          "/wp-admin",
+          "/wp-login",
+          "/.env",
+          "/*.json$",
         ],
-        disallow: ["/admin", "/api", "/dashboard", "/invoices", "/expenses", "/settings"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-  }
+  };
 }

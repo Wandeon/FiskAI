@@ -211,7 +211,7 @@ export async function runAgent<TInput, TOutput>(
         await db.agentRun.update({
           where: { id: run.id },
           data: {
-            rawOutput: parsed,
+            rawOutput: parsed as any,
             error: `Schema validation failed: ${outputValidation.error.message}`,
           },
         })

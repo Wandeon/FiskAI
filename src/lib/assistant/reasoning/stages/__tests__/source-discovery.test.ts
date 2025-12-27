@@ -58,9 +58,9 @@ describe("sourceDiscoveryStage", () => {
 
     const completeEvent = events.find((e) => e.status === "complete")
     expect(completeEvent).toBeDefined()
-    expect(completeEvent.data).toBeDefined()
+    expect(completeEvent!.data).toBeDefined()
 
-    const data = completeEvent.data as SourcesPayload
+    const data = completeEvent!.data as SourcesPayload
     expect(data.sources).toBeDefined()
     expect(Array.isArray(data.sources)).toBe(true)
   })

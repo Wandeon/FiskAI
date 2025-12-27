@@ -207,7 +207,7 @@ describe("Pausalni Launch E2E Tests", () => {
 
       // Step 1 incomplete
       expect(
-        !!(incompleteStep1.name?.trim() && incompleteStep1.oib && incompleteStep1.legalForm)
+        !!((incompleteStep1.name as string | null)?.trim() && incompleteStep1.oib && incompleteStep1.legalForm)
       ).toBe(false)
 
       // Step 1 complete, Step 2 incomplete
@@ -320,8 +320,8 @@ describe("Pausalni Launch E2E Tests", () => {
         startedAt: new Date(),
       }
 
-      vi.mocked(db.tutorialProgress.findFirst).mockResolvedValue(null)
-      vi.mocked(db.tutorialProgress.create).mockResolvedValue(mockProgress as any)
+      vi.mocked((db as any).tutorialProgress.findFirst).mockResolvedValue(null)
+      vi.mocked((db as any).tutorialProgress.create).mockResolvedValue(mockProgress as any)
 
       expect(mockProgress.trackId).toBe("pausalni-first-week")
       expect(mockProgress.currentDay).toBe(1)
@@ -338,7 +338,7 @@ describe("Pausalni Launch E2E Tests", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(db.tutorialProgress.findFirst).mockResolvedValue({
+      vi.mocked((db as any).tutorialProgress.findFirst).mockResolvedValue({
         id: "progress-1",
         companyId: "company-1",
         trackId: "pausalni-first-week",
@@ -346,7 +346,7 @@ describe("Pausalni Launch E2E Tests", () => {
         completedTasks: [],
       } as any)
 
-      vi.mocked(db.tutorialProgress.update).mockResolvedValue(mockProgress as any)
+      vi.mocked((db as any).tutorialProgress.update).mockResolvedValue(mockProgress as any)
 
       expect(mockProgress.completedTasks).toContain("task-1")
     })

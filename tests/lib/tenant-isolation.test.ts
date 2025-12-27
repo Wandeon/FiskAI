@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { PrismaClient } from '@prisma/client'
 import { withTenantIsolation, setTenantContext, getTenantContext } from '@/lib/prisma-extensions'
 

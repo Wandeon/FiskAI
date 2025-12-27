@@ -1,7 +1,7 @@
 // src/lib/assistant/reasoning/__tests__/event-factory.test.ts
 import { describe, it, expect, beforeEach } from "vitest"
 import { createEventFactory, type EventFactory } from "../event-factory"
-import { SCHEMA_VERSION } from "../types"
+import { REASONING_EVENT_VERSION } from "../types"
 
 describe("EventFactory", () => {
   let factory: EventFactory
@@ -42,7 +42,7 @@ describe("EventFactory", () => {
     it("includes schema version", () => {
       const event = factory.emit({ stage: "SOURCES", status: "started" })
 
-      expect(event.v).toBe(SCHEMA_VERSION)
+      expect(event.v).toBe(REASONING_EVENT_VERSION)
     })
 
     it("includes ISO timestamp", () => {

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { createSSESink } from "../sse-sink"
 import type { ReasoningEvent } from "../../types"
-import { SCHEMA_VERSION } from "../../types"
+import { REASONING_EVENT_VERSION } from "../../types"
 
 describe("SSESink", () => {
   it("has nonBlocking mode", () => {
@@ -23,7 +23,7 @@ describe("SSESink", () => {
     const sink = createSSESink(mockController as unknown as ReadableStreamDefaultController)
 
     const event: ReasoningEvent = {
-      v: SCHEMA_VERSION,
+      v: REASONING_EVENT_VERSION,
       id: "req_test_001",
       requestId: "req_test",
       seq: 1,
@@ -53,7 +53,7 @@ describe("SSESink", () => {
     const sink = createSSESink(mockController as unknown as ReadableStreamDefaultController)
 
     const event: ReasoningEvent = {
-      v: SCHEMA_VERSION,
+      v: REASONING_EVENT_VERSION,
       id: "req_test_final",
       requestId: "req_test",
       seq: 10,

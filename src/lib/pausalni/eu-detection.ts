@@ -143,7 +143,7 @@ export async function processTransactionsForEu(
           direction: "RECEIVED", // We received the service (outgoing payment)
           counterpartyName: tx.counterpartyName,
           counterpartyCountry: result.country,
-          transactionDate: tx.transactionDate,
+          transactionDate: tx.transactionDate.toISOString(),
           amount: String(Math.abs(tx.amount)),
           pdvRate: String(PDV_CONFIG.rate),
           pdvAmount: String(pdvAmount),
@@ -153,7 +153,7 @@ export async function processTransactionsForEu(
           detectionMethod: result.detectionMethod,
           confidenceScore: result.confidence,
           userConfirmed: false,
-        })
+        } as any)
         .onConflictDoNothing()
 
       detected++

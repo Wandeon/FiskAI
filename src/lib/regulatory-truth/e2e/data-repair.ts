@@ -93,7 +93,14 @@ async function repairReleaseHashes(): Promise<{ fixed: number; errors: string[] 
       effectiveUntil: r.effectiveUntil,
     }))
 
-    const correctHash = computeReleaseHash(ruleSnapshots)
+    // Convert dates to ISO strings for RuleSnapshot compatibility
+    const ruleSnapshotsForHash = ruleSnapshots.map((r) => ({
+      ...r,
+      effectiveFrom: r.effectiveFrom?.toISOString() || null,
+      effectiveUntil: r.effectiveUntil?.toISOString() || null,
+    }))
+
+    const correctHash = computeReleaseHash(ruleSnapshotsForHash)
 
     if (correctHash !== release.contentHash) {
       try {

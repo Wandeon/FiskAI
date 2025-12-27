@@ -79,7 +79,7 @@ describe("Admin Flows E2E Tests", () => {
           },
         }),
         needsHelp: await db.company.count({
-          where: { needsHelp: true },
+          where: { needsHelp: true } as any,
         }),
       }
 
@@ -475,10 +475,10 @@ describe("Admin Flows E2E Tests", () => {
 
       const updated = await db.company.update({
         where: { id: "company-1" },
-        data: { needsHelp: true },
+        data: { needsHelp: true } as any,
       })
 
-      expect(updated.needsHelp).toBe(true)
+      expect((updated as any).needsHelp).toBe(true)
     })
 
     it("updates subscription status", async () => {

@@ -1,6 +1,7 @@
 // src/lib/assistant/reasoning/client/__tests__/sse-parser.test.ts
 import { describe, it, expect } from "vitest"
 import { parseSSEMessage, SSEMessage } from "../sse-parser"
+import type { ReasoningEvent } from "../../types"
 
 describe("parseSSEMessage", () => {
   it("parses reasoning event", () => {
@@ -14,7 +15,7 @@ data: {"v":1,"stage":"SOURCES","status":"started"}
     expect(message).not.toBeNull()
     expect(message?.type).toBe("reasoning")
     expect(message?.id).toBe("req_test_001")
-    expect(message?.data.stage).toBe("SOURCES")
+    expect((message?.data as ReasoningEvent).stage).toBe("SOURCES")
   })
 
   it("parses terminal event", () => {
@@ -26,7 +27,7 @@ data: {"v":1,"stage":"ANSWER","status":"complete"}
     const message = parseSSEMessage(raw)
 
     expect(message?.type).toBe("terminal")
-    expect(message?.data.stage).toBe("ANSWER")
+    expect((message?.data as ReasoningEvent).stage).toBe("ANSWER")
   })
 
   it("parses heartbeat", () => {

@@ -303,8 +303,8 @@ export async function getNotificationCenterFeed({
     try {
       const urgentItems = (checklistItems?.items || []).filter(
         (item) =>
-          !item.completedAt &&
-          !item.dismissedAt &&
+          !(item as any).completedAt &&
+          !(item as any).dismissedAt &&
           (item.urgency === "critical" || item.urgency === "soon")
       )
 

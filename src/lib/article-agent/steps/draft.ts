@@ -56,7 +56,7 @@ export async function writeDraft(job: ArticleJob): Promise<string> {
 
 function buildDraftPrompt(type: ArticleJob["type"], factSheet: FactSheet, claims: Claim[]): string {
   const template = DRAFTING_PROMPTS[type]
-  const entities = factSheet.keyEntities as KeyEntities
+  const entities = factSheet.keyEntities as unknown as KeyEntities
 
   const claimsText = claims
     .map((c) => `- [${c.category}] ${c.statement}${c.quote ? ` ("${c.quote}")` : ""}`)

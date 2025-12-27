@@ -84,7 +84,7 @@ describe("Tenant List", () => {
 
       await getTenantList({ legalForm: "OBRT_PAUSAL" })
 
-      const call = vi.mocked(db.company.findMany).mock.calls[0]
+      const call = vi.mocked(db.company.findMany).mock.calls[0] as any
       expect(call[0].where.legalForm).toBe("OBRT_PAUSAL")
     })
 
@@ -94,7 +94,7 @@ describe("Tenant List", () => {
 
       await getTenantList({ subscriptionStatus: "active" })
 
-      const call = vi.mocked(db.company.findMany).mock.calls[0]
+      const call = vi.mocked(db.company.findMany).mock.calls[0] as any
       expect(call[0].where.subscriptionStatus).toBe("active")
     })
 
@@ -104,7 +104,7 @@ describe("Tenant List", () => {
 
       await getTenantList({ search: "test" })
 
-      const call = vi.mocked(db.company.findMany).mock.calls[0]
+      const call = vi.mocked(db.company.findMany).mock.calls[0] as any
       expect(call[0].where.OR).toBeDefined()
       expect(call[0].where.OR[0]).toHaveProperty("name")
       expect(call[0].where.OR[1]).toHaveProperty("oib")
@@ -330,7 +330,7 @@ describe("Tenant List", () => {
 
       await getTenantList({}, { field: "createdAt", order: "desc" }, { page: 3, pageSize: 15 })
 
-      const call = vi.mocked(db.company.findMany).mock.calls[0]
+      const call = vi.mocked(db.company.findMany).mock.calls[0] as any
       expect(call[0].skip).toBe(30) // (3-1) * 15
       expect(call[0].take).toBe(15)
     })
@@ -410,7 +410,7 @@ describe("Tenant List", () => {
         search: "test company",
       })
 
-      const call = vi.mocked(db.company.findMany).mock.calls[0]
+      const call = vi.mocked(db.company.findMany).mock.calls[0] as any
       expect(call[0].where.legalForm).toBe("OBRT_PAUSAL")
       expect(call[0].where.subscriptionStatus).toBe("active")
       expect(call[0].where.OR).toBeDefined()

@@ -3,13 +3,13 @@ import { describe, it, expect, vi } from "vitest"
 import { consumeReasoning } from "../consumer"
 import type { ReasoningSink } from "../types"
 import type { ReasoningEvent, TerminalPayload } from "../../types"
-import { SCHEMA_VERSION } from "../../types"
+import { REASONING_EVENT_VERSION } from "../../types"
 
 describe("consumeReasoning", () => {
   it("writes all events to all sinks", async () => {
     const events: ReasoningEvent[] = [
       {
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_000",
         requestId: "req_test",
         seq: 0,
@@ -18,7 +18,7 @@ describe("consumeReasoning", () => {
         status: "started",
       },
       {
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_001",
         requestId: "req_test",
         seq: 1,
@@ -56,7 +56,7 @@ describe("consumeReasoning", () => {
   it("awaits critical sinks for critical events", async () => {
     const events: ReasoningEvent[] = [
       {
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_000",
         requestId: "req_test",
         seq: 0,
@@ -76,8 +76,8 @@ describe("consumeReasoning", () => {
         code: "INTERNAL",
         message: "Test",
         correlationId: "req_test",
-        retriable: true,
-      } as TerminalPayload
+        retryable: true,
+      } as unknown as TerminalPayload
     }
 
     const writePromise = new Promise<void>((resolve) => setTimeout(resolve, 10))

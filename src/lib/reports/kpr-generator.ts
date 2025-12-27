@@ -128,7 +128,7 @@ export async function generateKPRReport(
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate || undefined,
         buyerName: invoice.buyer?.name || "Nepoznat kupac",
-        buyerOib: invoice.buyer?.oib,
+        buyerOib: invoice.buyer?.oib ?? undefined,
         netAmount: Number(vatByRate.net),
         vat25Percent: Number(vatByRate.vat25),
         vat13Percent: Number(vatByRate.vat13),

@@ -111,7 +111,7 @@ export async function detectExpensePatterns(companyId: string): Promise<PatternI
     if (!exp.categoryId) continue
     const monthKey = format(new Date(exp.date), "yyyy-MM")
     const catMap = categoryMonthly.get(exp.categoryId) || new Map()
-    catMap.set(monthKey, (catMap.get(monthKey) || 0) + Number(exp.amount))
+    catMap.set(monthKey, (catMap.get(monthKey) || 0) + Number((exp as any).totalAmount || 0))
     categoryMonthly.set(exp.categoryId, catMap)
   }
 

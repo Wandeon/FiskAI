@@ -319,7 +319,7 @@ export function withTenantIsolation(prisma: PrismaClient) {
               args.data = args.data.map((item: Record<string, unknown>) => ({
                 ...item,
                 companyId: context.companyId,
-              }))
+              })) as any
             } else {
               args.data = {
                 ...args.data,

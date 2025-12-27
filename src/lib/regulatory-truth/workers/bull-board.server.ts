@@ -14,7 +14,7 @@ import {
   deadletterQueue,
 } from "./queues"
 
-const PORT = process.env.BULL_BOARD_PORT || 3003
+const PORT = parseInt(process.env.BULL_BOARD_PORT || "3003", 10)
 
 const serverAdapter = new ExpressAdapter()
 serverAdapter.setBasePath("/")
@@ -34,7 +34,8 @@ createBullBoard({
 })
 
 const app = express()
-app.use("/", serverAdapter.getRouter())
+const router = serverAdapter.getRouter()
+app.use(router)
 
 app.listen(PORT, () => {
   console.log(`[bull-board] Dashboard running at http://localhost:${PORT}`)

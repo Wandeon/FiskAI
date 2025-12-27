@@ -117,10 +117,11 @@ export function generateObligationsICS({
     // Create the main event (all-day event on due date)
     const event: EventAttributes = {
       start: dueDate,
+      duration: { days: 1 },
       title,
       description,
-      status: "CONFIRMED",
-      busyStatus: "FREE",
+      status: "CONFIRMED" as const,
+      busyStatus: "FREE" as const,
       categories: ["Paušalni obrt", "Plaćanje"],
       uid: obligation.id,
       // Alarms for reminders
@@ -141,13 +142,9 @@ export function generateObligationsICS({
           trigger: { days: 1, before: true },
         },
       ],
-    }
-
-    // Add organizer if company name provided
-    if (companyName) {
-      event.organizer = {
-        name: companyName,
-      }
+      ...(companyName && {
+        organizer: { name: companyName },
+      }),
     }
 
     events.push(event)

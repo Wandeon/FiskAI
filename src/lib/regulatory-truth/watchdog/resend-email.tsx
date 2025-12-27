@@ -122,13 +122,13 @@ async function getQueueHealth(): Promise<QueueHealth[]> {
 async function getConsolidatorResult(): Promise<ConsolidatorResult | undefined> {
   try {
     const latestSnapshot = await db.truthHealthSnapshot.findFirst({
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
     })
 
     if (!latestSnapshot) return undefined
 
     return {
-      duplicateGroupsFound: latestSnapshot.duplicateGroups,
+      duplicateGroupsFound: latestSnapshot.duplicateGroupsDetected,
       orphanedConceptsFound: latestSnapshot.orphanedConcepts,
       issuesResolved: 0, // Would need to track this separately
     }

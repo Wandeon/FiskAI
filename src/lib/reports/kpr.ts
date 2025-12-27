@@ -283,11 +283,11 @@ export function kprToCsvLegacy(summary: KprSummary): string {
   return [header, ...lines, totals].join("\n")
 }
 
-export function posdXml(summary: KprSummary, from?: Date, to?: Date): string {
+export function posdXml(summary: KprSummary, from?: Date | null, to?: Date | null): string {
   const periodFrom = from ? formatDate(from) : ""
   const periodTo = to ? formatDate(to) : ""
   const totalInvoices = summary.rows.length
-  const paidGross = summary.totalGross.toFixed(2)
+  const paidGross = (summary.totalGross ?? 0).toFixed(2)
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <POSDReport>
@@ -297,8 +297,8 @@ export function posdXml(summary: KprSummary, from?: Date, to?: Date): string {
   </Period>
   <Totals>
     <InvoiceCount>${totalInvoices}</InvoiceCount>
-    <TotalNet>${summary.totalNet.toFixed(2)}</TotalNet>
-    <TotalVAT>${summary.totalVat.toFixed(2)}</TotalVAT>
+    <TotalNet>${(summary.totalNet ?? 0).toFixed(2)}</TotalNet>
+    <TotalVAT>${(summary.totalVat ?? 0).toFixed(2)}</TotalVAT>
     <TotalGross>${paidGross}</TotalGross>
   </Totals>
 </POSDReport>`
@@ -310,7 +310,7 @@ function numberFromDecimal(value: Decimal | number | null | undefined): number {
   return Number(value.toString())
 }
 
-function formatDate(date: Date | null): string {
+function formatDate(date: Date | null | undefined): string {
   if (!date) return ""
   return date.toISOString().slice(0, 10)
 }

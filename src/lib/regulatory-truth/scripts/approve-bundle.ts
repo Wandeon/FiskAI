@@ -164,7 +164,7 @@ Examples:
 
       if (result.success) {
         console.log(
-          `✓ Released ${result.publishedRuleIds.length} rules as version ${result.output?.version}`
+          `✓ Released ${result.publishedRuleIds.length} rules as version ${result.output?.release?.version}`
         )
       } else {
         console.error("✗ Release failed:", result.error)

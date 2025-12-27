@@ -388,13 +388,10 @@ describe("Weekly Digest", () => {
       actionItems: [
         {
           id: "alert-1",
-          type: "critical-limit",
           level: "critical",
-          companyId: "company-1",
           companyName: "Critical Company",
           title: "95% of limit reached",
           description: "Current: €57,000",
-          createdAt: new Date(),
           autoAction: "Urgent outreach",
         },
       ],
@@ -537,13 +534,10 @@ describe("Weekly Digest", () => {
       const data = createMockDigestData()
       data.actionItems = Array.from({ length: 15 }, (_, i) => ({
         id: `alert-${i}`,
-        type: "critical-limit" as const,
         level: "critical" as const,
-        companyId: `company-${i}`,
         companyName: `Company ${i}`,
         title: `Alert ${i}`,
         description: "Test",
-        createdAt: new Date(),
       }))
 
       const html = formatDigestEmail(data)

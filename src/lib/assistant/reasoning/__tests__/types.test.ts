@@ -1,33 +1,38 @@
 // src/lib/assistant/reasoning/__tests__/types.test.ts
 import { describe, it, expect } from "vitest"
 import {
-  SCHEMA_VERSION,
+  REASONING_EVENT_VERSION,
   REASONING_STAGES,
   isTerminal,
   getTerminalOutcome,
-  isNonTerminalStage,
   type ReasoningEvent,
   type ReasoningStage,
   type TerminalOutcome,
 } from "../types"
 
 describe("Reasoning Types", () => {
-  describe("SCHEMA_VERSION", () => {
+  describe("REASONING_EVENT_VERSION", () => {
     it("should be 1", () => {
-      expect(SCHEMA_VERSION).toBe(1)
+      expect(REASONING_EVENT_VERSION).toBe(1)
     })
   })
 
   describe("REASONING_STAGES", () => {
-    it("should contain all 7 reasoning stages in order", () => {
+    it("should contain all reasoning stages in order", () => {
       expect(REASONING_STAGES).toEqual([
+        "QUESTION_INTAKE",
         "CONTEXT_RESOLUTION",
+        "CLARIFICATION",
         "SOURCES",
         "RETRIEVAL",
         "APPLICABILITY",
         "CONFLICTS",
         "ANALYSIS",
         "CONFIDENCE",
+        "ANSWER",
+        "CONDITIONAL_ANSWER",
+        "REFUSAL",
+        "ERROR",
       ])
     })
   })
@@ -38,8 +43,8 @@ describe("Reasoning Types", () => {
       expect(isTerminal(event)).toBe(true)
     })
 
-    it("returns true for QUALIFIED_ANSWER stage", () => {
-      const event = { stage: "QUALIFIED_ANSWER" } as ReasoningEvent
+    it("returns true for CONDITIONAL_ANSWER stage", () => {
+      const event = { stage: "CONDITIONAL_ANSWER" } as ReasoningEvent
       expect(isTerminal(event)).toBe(true)
     })
 
@@ -71,20 +76,16 @@ describe("Reasoning Types", () => {
     })
   })
 
-  describe("isNonTerminalStage", () => {
-    it("returns true for non-terminal stages", () => {
-      expect(isNonTerminalStage("SOURCES")).toBe(true)
-      expect(isNonTerminalStage("CONTEXT_RESOLUTION")).toBe(true)
-      expect(isNonTerminalStage("ANALYSIS")).toBe(true)
+  describe("isTerminal helper", () => {
+    it("returns true for terminal stages", () => {
+      expect(isTerminal({ stage: "ANSWER" } as ReasoningEvent)).toBe(true)
+      expect(isTerminal({ stage: "ERROR" } as ReasoningEvent)).toBe(true)
     })
 
-    it("returns false for terminal stages", () => {
-      expect(isNonTerminalStage("ANSWER")).toBe(false)
-      expect(isNonTerminalStage("ERROR")).toBe(false)
-    })
-
-    it("returns false for CLARIFICATION (not in REASONING_STAGES)", () => {
-      expect(isNonTerminalStage("CLARIFICATION")).toBe(false)
+    it("returns false for non-terminal stages", () => {
+      expect(isTerminal({ stage: "SOURCES" } as ReasoningEvent)).toBe(false)
+      expect(isTerminal({ stage: "CONTEXT_RESOLUTION" } as ReasoningEvent)).toBe(false)
+      expect(isTerminal({ stage: "ANALYSIS" } as ReasoningEvent)).toBe(false)
     })
   })
 })

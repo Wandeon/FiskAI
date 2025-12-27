@@ -2,10 +2,10 @@
 import { describe, it, expect } from "vitest"
 import { createSelectors, getTerminalFromEvents } from "../selectors"
 import type { ReasoningEvent } from "../../types"
-import { SCHEMA_VERSION } from "../../types"
+import { REASONING_EVENT_VERSION } from "../../types"
 
 const createEvent = (stage: string, status: string, seq: number): ReasoningEvent => ({
-  v: SCHEMA_VERSION,
+  v: REASONING_EVENT_VERSION,
   id: `req_test_${String(seq).padStart(3, "0")}`,
   requestId: "req_test",
   seq,

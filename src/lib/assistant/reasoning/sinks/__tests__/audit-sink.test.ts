@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { createAuditSink } from "../audit-sink"
 import type { ReasoningEvent, UserContextSnapshot } from "../../types"
-import { SCHEMA_VERSION } from "../../types"
+import { REASONING_EVENT_VERSION } from "../../types"
 
 // Mock Prisma
 vi.mock("@/lib/prisma", () => ({
@@ -34,7 +34,7 @@ describe("AuditSink", () => {
     it("buffers events without writing to DB", async () => {
       const sink = createAuditSink("req_test", mockUserContext)
       const event: ReasoningEvent = {
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_001",
         requestId: "req_test",
         seq: 1,
@@ -57,7 +57,7 @@ describe("AuditSink", () => {
 
       // Buffer some events
       sink.write({
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_000",
         requestId: "req_test",
         seq: 0,
@@ -80,7 +80,7 @@ describe("AuditSink", () => {
       } as ReasoningEvent)
 
       sink.write({
-        v: SCHEMA_VERSION,
+        v: REASONING_EVENT_VERSION,
         id: "req_test_001",
         requestId: "req_test",
         seq: 1,

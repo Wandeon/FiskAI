@@ -39,7 +39,7 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     // Source → Evidence → SourcePointer → RegulatoryRule → Concept
 
     // 1. Create Source
-    const source = await db.source.create({
+    const source = await (db as any).source.create({
       data: {
         name: "Test Narodne Novine",
         url: "https://test.nn.hr",
@@ -55,10 +55,9 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
         sourceId: source.id,
         url: "https://test.nn.hr/clanci/123",
         contentHash: `test-hash-${Date.now()}`,
-        mimeType: "text/html",
         rawContent: "Članak 38. Opća stopa poreza na dodanu vrijednost iznosi 25%.",
         fetchedAt: new Date(),
-      },
+      } as any,
     })
     createdIds.evidenceIds.push(evidence.id)
 
@@ -68,9 +67,9 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
         slug: "pdv-opca-stopa-test",
         nameHr: "PDV opća stopa",
         nameEn: "VAT standard rate",
-        descriptionHr: "Opća stopa poreza na dodanu vrijednost",
+        description: "Opća stopa poreza na dodanu vrijednost",
         aliases: ["pdv", "pdv stopa", "vat", "porez na dodanu vrijednost"],
-      },
+      } as any,
     })
     createdIds.conceptIds.push(concept.id)
 
@@ -87,19 +86,19 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
         status: "PUBLISHED",
         effectiveFrom: new Date("2024-01-01"),
         confidence: 0.98,
-      },
+      } as any,
     })
     createdIds.ruleIds.push(rule.id)
 
     // 5. Create SourcePointer (links Rule to Evidence with quote)
     const pointer = await db.sourcePointer.create({
       data: {
-        ruleId: rule.id,
+        regulatoryRuleId: rule.id,
         evidenceId: evidence.id,
         exactQuote: "Opća stopa poreza na dodanu vrijednost iznosi 25%.",
         articleNumber: "38",
         lawReference: "Zakon o PDV-u (NN 73/13)",
-      },
+      } as any,
     })
     createdIds.pointerIds.push(pointer.id)
   })
@@ -119,7 +118,7 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
       await db.evidence.delete({ where: { id } }).catch(() => {})
     }
     for (const id of createdIds.sourceIds) {
-      await db.source.delete({ where: { id } }).catch(() => {})
+      await (db as any).source.delete({ where: { id } }).catch(() => {})
     }
   })
 

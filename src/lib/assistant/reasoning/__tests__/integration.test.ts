@@ -380,7 +380,7 @@ describe("Pipeline Integration", () => {
         expect(returnValue.asOfDate).toBeDefined()
         expect(returnValue.answerHr).toBeDefined()
         expect(returnValue.citations).toBeDefined()
-        expect(returnValue.citations.length).toBeGreaterThan(0)
+        expect(returnValue.citations!.length).toBeGreaterThan(0)
       } else {
         // If not ANSWER, test should still pass - just checking structure
         expect(returnValue.outcome).toBeDefined()
@@ -393,7 +393,7 @@ describe("Pipeline Integration", () => {
       const { returnValue } = await collectGenerator(generator)
 
       if (returnValue.outcome === "ANSWER") {
-        for (const citation of returnValue.citations) {
+        for (const citation of returnValue.citations!) {
           expect(citation.id).toBeDefined()
           expect(citation.title).toBeDefined()
           expect(citation.quote).toBeDefined()

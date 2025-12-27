@@ -142,10 +142,10 @@ async function parseDoc(
 
     // Get all text parts
     const body = doc.getBody() || ""
-    const headers = doc.getHeaders({ includeFooters: false }) || ""
+    const headers = doc.getHeaders() || ""
     const footers = doc.getFooters() || ""
-    const footnotes = doc.getFootnotes() || ""
-    const endnotes = doc.getEndnotes() || ""
+    const footnotes = (doc as any).getFootnotes?.() || ""
+    const endnotes = (doc as any).getEndnotes?.() || ""
 
     // Combine all text parts
     const allText = [body, headers, footers, footnotes, endnotes].filter(Boolean).join("\n\n")

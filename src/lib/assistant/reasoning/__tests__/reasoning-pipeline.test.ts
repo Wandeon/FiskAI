@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { buildAnswerWithReasoning } from "../reasoning-pipeline"
+import type { ReasoningEvent } from "../types"
 
 // Mock dependencies
 vi.mock("@/lib/db", () => ({
@@ -34,8 +35,8 @@ describe("Reasoning Pipeline", () => {
     const firstEvent = await generator.next()
 
     expect(firstEvent.done).toBe(false)
-    expect(firstEvent.value.stage).toBe("QUESTION_INTAKE")
-    expect(firstEvent.value.status).toBe("started")
+    expect((firstEvent.value as ReasoningEvent).stage).toBe("QUESTION_INTAKE")
+    expect((firstEvent.value as ReasoningEvent).status).toBe("started")
   })
 
   it("should emit events in correct order", async () => {

@@ -88,16 +88,42 @@ describe("Citation Compliance (Integration)", () => {
     ]
 
     for (const fixture of fixtures) {
+      // First, get or create a test source
+      const source = await db.regulatorySource.upsert({
+        where: { slug: "test-citation-source" },
+        create: {
+          slug: "test-citation-source",
+          name: "Test Citation Source",
+          url: "https://test.example.com",
+          isActive: false,
+        },
+        update: {},
+      })
+
       const evidence = await db.evidence.create({
         data: {
+          sourceId: source.id,
           url: `https://test.example.com/${fixture.conceptSlug}`,
           contentHash: `test-hash-${fixture.conceptSlug}-${Date.now()}`,
-          mimeType: "text/html",
+          contentType: "html",
           rawContent: fixture.quote,
           fetchedAt: new Date(),
         },
       })
       createdIds.evidenceIds.push(evidence.id)
+
+      // Create source pointer first
+      const sourcePointer = await db.sourcePointer.create({
+        data: {
+          evidenceId: evidence.id,
+          domain: "test",
+          valueType: "string",
+          extractedValue: fixture.value,
+          displayValue: fixture.value,
+          exactQuote: fixture.quote,
+          confidence: 0.95,
+        },
+      })
 
       const rule = await db.regulatoryRule.create({
         data: {
@@ -113,12 +139,7 @@ describe("Citation Compliance (Integration)", () => {
           status: "PUBLISHED",
           confidence: 0.95,
           sourcePointers: {
-            create: {
-              evidenceId: evidence.id,
-              exactQuote: fixture.quote,
-              charStart: 0,
-              charEnd: fixture.quote.length,
-            },
+            connect: { id: sourcePointer.id },
           },
         },
       })
@@ -129,9 +150,16 @@ describe("Citation Compliance (Integration)", () => {
   })
 
   after(async () => {
-    // Cleanup test data
+    // Cleanup test data - disconnect sourcePointers from rules first
+    for (const ruleId of createdIds.ruleIds) {
+      await db.regulatoryRule.update({
+        where: { id: ruleId },
+        data: { sourcePointers: { set: [] } },
+      })
+    }
+    // Delete source pointers associated with our evidence
     await db.sourcePointer.deleteMany({
-      where: { ruleId: { in: createdIds.ruleIds } },
+      where: { evidenceId: { in: createdIds.evidenceIds } },
     })
     await db.regulatoryRule.deleteMany({
       where: { id: { in: createdIds.ruleIds } },

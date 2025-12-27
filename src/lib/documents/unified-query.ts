@@ -158,12 +158,13 @@ export async function queryUnifiedDocuments(
           ...(search
             ? {
                 OR: [
-                  { vendor: { contains: search, mode: "insensitive" } },
-                  { description: { contains: search, mode: "insensitive" } },
+                  { vendor: { name: { contains: search, mode: "insensitive" as const } } },
+                  { description: { contains: search, mode: "insensitive" as const } },
                 ],
               }
             : {}),
-        },
+        } as any,
+        include: { vendor: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       }),
       // Counts
@@ -201,13 +202,13 @@ export async function queryUnifiedDocuments(
   }))
 
   // Normalize expenses
-  const normalizedExpenses: UnifiedDocument[] = expenses.map((exp) => ({
+  const normalizedExpenses: UnifiedDocument[] = expenses.map((exp: any) => ({
     id: exp.id,
     category: "expense",
     date: exp.date,
-    number: exp.receiptNumber || exp.description?.slice(0, 30) || "Bez broja",
-    counterparty: exp.vendor || null,
-    amount: Number(exp.amount),
+    number: exp.receiptUrl?.slice(0, 30) || exp.description?.slice(0, 30) || "Bez broja",
+    counterparty: exp.vendor?.name || null,
+    amount: Number(exp.totalAmount),
     currency: exp.currency,
     status: EXPENSE_STATUS_LABELS[exp.status] || exp.status,
     statusColor: exp.status === "PAID" ? "green" : exp.status === "CANCELLED" ? "red" : "gray",

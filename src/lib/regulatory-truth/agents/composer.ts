@@ -307,7 +307,12 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
 
   // PHASE 4: Validate explanation against source evidence
   // This prevents hallucination by ensuring modal verbs and values come from sources
-  const sourceQuotes = existingPointers.map((p) => p.exactQuote).filter(Boolean)
+  // Fetch the actual source pointers with exactQuote
+  const pointersWithQuotes = await db.sourcePointer.findMany({
+    where: { id: { in: validSourcePointerIds } },
+    select: { exactQuote: true },
+  })
+  const sourceQuotes = pointersWithQuotes.map((p) => p.exactQuote).filter(Boolean) as string[]
   const explanationValidation = validateExplanation(
     draftRule.explanation_hr,
     draftRule.explanation_en,
@@ -317,7 +322,7 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
 
   // Determine final explanation - use quote-only fallback if validation fails
   let finalExplanationHr = draftRule.explanation_hr
-  let finalExplanationEn = draftRule.explanation_en
+  let finalExplanationEn: string | null = draftRule.explanation_en ?? null
 
   if (!explanationValidation.valid) {
     console.warn(

@@ -107,13 +107,13 @@ export async function processNextImportJob() {
       await db.bankImport.create({
         data: {
           companyId: job.companyId,
-          bankAccountId: nullToUndefined(job.bankAccountId),
+          bankAccountId: job.bankAccountId ?? undefined,
           fileName: job.originalName,
           format: ImportFormat.XML_CAMT053,
           transactionCount: transactions,
           importedAt: new Date(),
           importedBy: job.userId,
-        },
+        } as any,
       })
     }
     return { status: "ok", jobId: job.id }
@@ -181,7 +181,7 @@ async function handleXml(jobId: string) {
     data: {
       importJobId: jobId,
       companyId: job.companyId,
-      bankAccountId: nullToUndefined(job.bankAccountId),
+      bankAccountId: job.bankAccountId ?? "",
       statementDate,
       periodStart,
       periodEnd,
@@ -238,7 +238,7 @@ async function handleXml(jobId: string) {
           reference: ref,
           counterpartyName: counterparty,
           counterpartyIban: iban,
-          matchStatus: "UNMATCHED",
+          matchStatus: "UNMATCHED" as const,
           confidenceScore: 0,
         }
       }),
@@ -283,7 +283,7 @@ async function handlePdf(jobId: string) {
     data: {
       importJobId: jobId,
       companyId: job.companyId,
-      bankAccountId: nullToUndefined(job.bankAccountId),
+      bankAccountId: job.bankAccountId ?? "",
       statementDate: statementMeta.statementDate,
       periodStart: statementMeta.periodStart,
       periodEnd: statementMeta.periodEnd,
@@ -359,7 +359,7 @@ async function handlePdf(jobId: string) {
       await db.bankTransaction.createMany({
         data: txnsToStore.map((t) => ({
           companyId: job.companyId,
-          bankAccountId: nullToUndefined(job.bankAccountId),
+          bankAccountId: job.bankAccountId ?? "",
           date: new Date(t.date),
           description: t.description || "",
           amount: new Prisma.Decimal(t.amount),
@@ -367,7 +367,7 @@ async function handlePdf(jobId: string) {
           reference: t.reference || null,
           counterpartyName: t.payee || null,
           counterpartyIban: t.counterpartyIban || null,
-          matchStatus: "UNMATCHED",
+          matchStatus: "UNMATCHED" as const,
           confidenceScore: 0,
         })),
       })

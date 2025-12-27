@@ -64,7 +64,7 @@ async function loadRoutes() {
   const unique = new Map<string, string>()
   for (const route of routes) {
     if (!unique.has(route.route)) {
-      unique.set(route.route, route.file)
+      unique.set(route.route, (route as any).file)
     }
   }
 

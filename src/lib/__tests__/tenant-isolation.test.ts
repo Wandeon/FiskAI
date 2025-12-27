@@ -47,8 +47,8 @@ class MockPrismaClient {
       ]
 
       models.forEach((modelName) => {
-        const model = modelName.toLowerCase() as keyof MockPrismaClient
-        if (!extended[model as any]) {
+        const model = modelName.toLowerCase()
+        if (!(extended as any)[model]) {
           ;(extended as any)[model] = {}
         }
 
@@ -298,7 +298,7 @@ describe("Tenant Isolation System", () => {
       }
 
       // Temporarily replace mockDbQuery
-      global.mockDbQuery = mockQueryWithWrongCompany as any
+      ;(globalThis as any).mockDbQuery = mockQueryWithWrongCompany as any
 
       await runWithTenant({ companyId: "company-123", userId: "user-456" }, async () => {
         const result = await db.contact.findUnique({
@@ -310,7 +310,7 @@ describe("Tenant Isolation System", () => {
       })
 
       // Restore original
-      global.mockDbQuery = originalQuery as any
+      ;(globalThis as any).mockDbQuery = originalQuery as any
     })
   })
 

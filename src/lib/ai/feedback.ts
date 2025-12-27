@@ -33,7 +33,7 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
         entityId: input.entityId,
         operation: input.operation,
         feedback: input.feedback,
-        correction: input.correction || null,
+        correction: (input.correction ?? undefined) as any,
         notes: input.notes || null,
       },
     })

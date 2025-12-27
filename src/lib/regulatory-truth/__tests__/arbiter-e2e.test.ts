@@ -69,7 +69,7 @@ describe("Arbiter E2E", () => {
         conflictType: "SOURCE_CONFLICT",
         status: "OPEN",
         description: `[STRUCTURAL] E2E Test: Rules have overlapping effective dates. LAW (Rule B) may supersede GUIDANCE (Rule A).`,
-        detectionMethod: "STRUCTURAL",
+        metadata: { detectionMethod: "STRUCTURAL" },
       },
     })
     conflictId = conflict.id
@@ -79,11 +79,11 @@ describe("Arbiter E2E", () => {
     // Cleanup: delete agent runs for this conflict
     await db.agentRun.deleteMany({
       where: {
-        inputPayload: {
+        input: {
           path: ["conflictId"],
           equals: conflictId,
         },
-      },
+      } as any,
     })
 
     // Delete conflict
@@ -127,8 +127,9 @@ describe("Arbiter E2E", () => {
 
       // Verify arbiter rationale exists in agent output
       if (result.output) {
-        assert.ok(result.output.rationale, "Arbiter output should include rationale")
-        assert.ok(result.output.rationale.length > 10, "Rationale should be substantive, not empty")
+        const output = result.output as any
+        assert.ok(output.rationale, "Arbiter output should include rationale")
+        assert.ok(output.rationale.length > 10, "Rationale should be substantive, not empty")
       }
     })
 
@@ -136,17 +137,17 @@ describe("Arbiter E2E", () => {
       // Check for AgentRun record
       const agentRun = await db.agentRun.findFirst({
         where: {
-          agentType: "arbiter",
-          inputPayload: {
+          agentType: "ARBITER",
+          input: {
             path: ["conflictId"],
             equals: conflictId,
           },
-        },
-        orderBy: { createdAt: "desc" },
+        } as any,
+        orderBy: { startedAt: "desc" },
       })
 
       assert.ok(agentRun, "AgentRun record should exist for arbiter")
-      assert.strictEqual(agentRun.agentType, "arbiter")
+      assert.strictEqual(agentRun.agentType, "ARBITER")
 
       // AgentRun should be SUCCESS or FAILED (not still running)
       assert.ok(
@@ -158,7 +159,7 @@ describe("Arbiter E2E", () => {
       if (agentRun.status === "SUCCESS") {
         assert.ok(agentRun.completedAt, "Successful run should have completedAt")
         const durationMs =
-          new Date(agentRun.completedAt).getTime() - new Date(agentRun.createdAt).getTime()
+          new Date(agentRun.completedAt).getTime() - new Date(agentRun.startedAt).getTime()
         assert.ok(durationMs > 0, "Duration should be positive")
         assert.ok(durationMs < 60000, "Arbiter should complete within 60 seconds")
       }
@@ -175,19 +176,19 @@ describe("Arbiter E2E", () => {
       // If resolved, check if the resolution mentions authority
       if (updatedConflict?.status === "RESOLVED" && updatedConflict.resolution) {
         // The resolution should reference the winning rule or authority
-        const resolution = updatedConflict.resolution.toLowerCase()
+        const resolutionStr = JSON.stringify(updatedConflict.resolution).toLowerCase()
         const mentionsAuthority =
-          resolution.includes("law") ||
-          resolution.includes("authority") ||
-          resolution.includes("supersede") ||
-          resolution.includes("higher") ||
-          resolution.includes("zakon") // Croatian for "law"
+          resolutionStr.includes("law") ||
+          resolutionStr.includes("authority") ||
+          resolutionStr.includes("supersede") ||
+          resolutionStr.includes("higher") ||
+          resolutionStr.includes("zakon") // Croatian for "law"
 
         // This is an informational assertion - log but don't fail
         if (!mentionsAuthority) {
           console.log(
             "[arbiter-e2e] Note: Resolution does not explicitly mention authority hierarchy:",
-            updatedConflict.resolution.substring(0, 200)
+            JSON.stringify(updatedConflict.resolution).substring(0, 200)
           )
         }
       }

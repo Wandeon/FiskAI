@@ -115,7 +115,7 @@ describe("ReasoningMetrics", () => {
     it("tracks high confidence disputes separately", () => {
       metrics.recordOutcome("req_1", "ANSWER", 1000)
       metrics.recordOutcome("req_2", "ANSWER", 1000)
-      metrics.recordOutcome("req_3", "QUALIFIED_ANSWER", 1000)
+      metrics.recordOutcome("req_3", "CONDITIONAL_ANSWER", 1000)
       metrics.recordDispute("req_1", 0.95) // High confidence
       metrics.recordDispute("req_2", 0.7) // Low confidence
 
@@ -151,7 +151,7 @@ describe("ReasoningMetrics", () => {
       const stats = metrics.getStats()
 
       expect(stats.outcomes.ANSWER).toBe(0)
-      expect(stats.outcomes.QUALIFIED_ANSWER).toBe(0)
+      expect(stats.outcomes.CONDITIONAL_ANSWER).toBe(0)
       expect(stats.outcomes.REFUSAL).toBe(0)
       expect(stats.outcomes.ERROR).toBe(0)
     })
