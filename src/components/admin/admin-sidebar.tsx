@@ -14,6 +14,7 @@ import {
   FileText,
   AlertTriangle,
   Mail,
+  Newspaper,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -27,6 +28,7 @@ const navigation = [
   { name: "Staff", href: "/staff", icon: Users },
   { name: "Alerts", href: "/alerts", icon: AlertTriangle },
   { name: "Digest Preview", href: "/digest", icon: Mail },
+  { name: "News", href: "/news", icon: Newspaper },
   { name: "Subscriptions", href: "/subscriptions", icon: CreditCard },
   { name: "Services", href: "/services", icon: Server },
   { name: "Support", href: "/support", icon: MessageSquare },
