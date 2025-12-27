@@ -30,4 +30,5 @@ export {
   QueryClassificationSchema,
   type QueryIntent,
   type QueryClassification,
+  type ExtractedEntities,
 } from "../schemas/query-intent"

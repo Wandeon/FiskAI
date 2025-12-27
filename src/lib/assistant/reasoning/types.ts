@@ -1,274 +1,212 @@
 // src/lib/assistant/reasoning/types.ts
 
-// === SCHEMA VERSION ===
-export const SCHEMA_VERSION = 1 as const
+/**
+ * Schema version for reasoning events
+ */
+export const REASONING_EVENT_VERSION = 1
 
-// === REASONING STAGES ===
-export const REASONING_STAGES = [
-  "CONTEXT_RESOLUTION",
-  "SOURCES",
-  "RETRIEVAL",
-  "APPLICABILITY",
-  "CONFLICTS",
-  "ANALYSIS",
-  "CONFIDENCE",
-] as const
-
+/**
+ * All possible reasoning stages
+ */
 export type ReasoningStage =
+  | "QUESTION_INTAKE"
   | "CONTEXT_RESOLUTION"
   | "CLARIFICATION"
   | "SOURCES"
   | "RETRIEVAL"
   | "APPLICABILITY"
-  | "CONFLICTS"
   | "ANALYSIS"
   | "CONFIDENCE"
   | "ANSWER"
-  | "QUALIFIED_ANSWER"
+  | "CONDITIONAL_ANSWER"
   | "REFUSAL"
   | "ERROR"
 
-export type ReasoningStatus = "started" | "progress" | "checkpoint" | "complete" | "awaiting_input"
+/**
+ * Event status
+ */
+export type EventStatus = "started" | "progress" | "checkpoint" | "complete" | "awaiting_input"
 
-export type Severity = "info" | "warning" | "critical"
+/**
+ * Severity level for events
+ */
+export type EventSeverity = "info" | "warning" | "critical"
 
-export type TerminalOutcome = "ANSWER" | "QUALIFIED_ANSWER" | "REFUSAL" | "ERROR"
+/**
+ * Progress tracking
+ */
+export interface EventProgress {
+  current: number
+  total?: number
+}
 
-export type RiskTier = "T0" | "T1" | "T2" | "T3"
+/**
+ * Stage-specific payload types
+ */
+export interface QuestionIntakePayload {
+  normalizedQuery: string
+  detectedLanguage: string
+  entities: {
+    subjects: string[]
+    products: string[]
+    locations: string[]
+    dates: string[]
+  }
+}
 
-// === BASE EVENT ===
-export interface BaseReasoningEvent {
-  v: typeof SCHEMA_VERSION
+export interface ContextResolutionPayload {
+  domain: string
+  jurisdiction: string
+  riskTier: string
+  userContext?: Record<string, unknown>
+  confidence: number
+}
+
+export interface ClarificationPayload {
+  question: string
+  questionHr: string
+  options?: string[]
+  dimensionNeeded: string
+}
+
+export interface SourcePayload {
+  sourceId: string
+  sourceName: string
+  sourceType: string
+  url?: string
+}
+
+export interface RetrievalPayload {
+  intent: string
+  conceptsMatched: string[]
+  rulesRetrieved: number
+}
+
+export interface ApplicabilityPayload {
+  eligibleRules: number
+  excludedRules: number
+  exclusionReasons: string[]
+  coverageResult: {
+    requiredScore: number
+    totalScore: number
+    terminalOutcome: string
+  }
+}
+
+export interface AnalysisPayload {
+  checkpoint?: string
+  conflictsDetected: number
+  riskAssessment?: string
+}
+
+export interface ConfidencePayload {
+  overallConfidence: number
+  sourceConfidence: number
+  ruleConfidence: number
+  coverageConfidence: number
+}
+
+export interface AnswerPayload {
+  answer: string
+  answerHr: string
+  citations: Array<{
+    ruleId: string
+    ruleName: string
+    sourceUrl?: string
+  }>
+  value?: string
+  valueType?: string
+}
+
+export interface ConditionalAnswerPayload {
+  branches: Array<{
+    condition: string
+    conditionHr: string
+    answer: string
+    answerHr: string
+    probability?: number
+  }>
+  commonParts?: string
+}
+
+export interface RefusalPayload {
+  code: string
+  messageHr: string
+  messageEn: string
+  nextSteps: Array<{
+    type: string
+    prompt?: string
+    promptHr?: string
+  }>
+  context?: {
+    missingDimensions?: string[]
+    conflictingRules?: string[]
+  }
+}
+
+export interface ErrorPayload {
+  correlationId: string
+  message: string
+  retryable: boolean
+}
+
+/**
+ * Union of all payload types
+ */
+export type StagePayload =
+  | QuestionIntakePayload
+  | ContextResolutionPayload
+  | ClarificationPayload
+  | SourcePayload
+  | RetrievalPayload
+  | ApplicabilityPayload
+  | AnalysisPayload
+  | ConfidencePayload
+  | AnswerPayload
+  | ConditionalAnswerPayload
+  | RefusalPayload
+  | ErrorPayload
+
+/**
+ * Core reasoning event structure
+ */
+export interface ReasoningEvent {
+  v: typeof REASONING_EVENT_VERSION
   id: string
   requestId: string
   seq: number
   ts: string
   stage: ReasoningStage
-  status: ReasoningStatus
+  status: EventStatus
   message?: string
-  severity?: Severity
-  progress?: { current: number; total?: number }
-  trace?: { runId: string; span?: string }
-  meta?: Record<string, unknown>
-}
-
-// === USER CONTEXT SNAPSHOT ===
-export interface UserContextSnapshot {
-  vatStatus?: "registered" | "unregistered" | "unknown"
-  turnoverBand?: string
-  companySize?: "micro" | "small" | "medium" | "large"
-  jurisdiction?: string
-  assumedDefaults: string[]
-}
-
-// === STAGE PAYLOADS ===
-
-export interface ContextResolutionPayload {
-  summary: string
-  jurisdiction: "HR" | "EU" | "UNKNOWN"
-  domain: "TAX" | "LABOR" | "COMPANY" | "FINANCE" | "OTHER"
-  riskTier: RiskTier
-  language: "hr" | "en"
-  intent: "QUESTION" | "HOWTO" | "CHECKLIST" | "UNKNOWN"
-  asOfDate: string
-  entities: Array<{ type: string; value: string; confidence: number }>
-  confidence: number
-  requiresClarification: boolean
-  userContextSnapshot: UserContextSnapshot
-}
-
-export interface ClarificationPayload {
-  question: string
-  options?: Array<{ label: string; value: string }>
-  freeformAllowed: boolean
-}
-
-export interface SourceSummary {
-  id: string
-  name: string
-  authority: "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE"
-  url?: string
-}
-
-export interface SourcesPayload {
-  summary: string
-  sources: SourceSummary[]
-}
-
-export interface RetrievalPayload {
-  summary: string
-  concepts: string[]
-  candidateCount: number
-}
-
-export type ExclusionCode =
-  | "THRESHOLD_EXCEEDED"
-  | "DATE_MISMATCH"
-  | "JURISDICTION_MISMATCH"
-  | "MISSING_CONTEXT"
-  | "CONDITION_FALSE"
-
-export interface RuleExclusion {
-  ruleId: string
-  ruleTitle: string
-  code: ExclusionCode
-  expected: string
-  actual: string
-  source: "user_profile" | "query" | "assumed_default"
-  userCanFix: boolean
-}
-
-export interface ApplicabilityPayload {
-  summary: string
-  eligibleCount: number
-  ineligibleCount: number
-  exclusions: RuleExclusion[]
-}
-
-export interface ConflictsPayload {
-  summary: string
-  conflictCount: number
-  resolved: number
-  unresolved: number
-  canProceedWithWarning: boolean
-}
-
-export interface AnalysisPayload {
-  summary: string
-  bullets: string[]
-  comparedSources?: string[]
-}
-
-export interface InteractiveDriver {
-  id: string
-  label: string
-  currentValue: boolean
-  canToggle: boolean
-  affectedStages: ReasoningStage[]
-}
-
-export interface ConfidencePayload {
-  summary: string
-  score: number
-  label: "LOW" | "MEDIUM" | "HIGH"
-  drivers: string[]
-  evidenceStrength: "SINGLE_SOURCE" | "MULTI_SOURCE"
-  wouldBeLowerIf?: string[]
-  interactiveDrivers?: InteractiveDriver[]
-}
-
-export interface Citation {
-  id: string
-  title: string
-  authority: "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE"
-  quote: string
-  url: string
-  evidenceId: string
-  fetchedAt: string
-}
-
-export interface FinalAnswerPayload {
-  asOfDate: string
-  answerHr: string
-  structured?: {
-    obligations?: string[]
-    deadlines?: string[]
-    thresholds?: string[]
-    exceptions?: string[]
-    actions?: string[]
-  }
-  citations: Citation[]
-  limits?: string[]
-}
-
-export interface ConflictWarning {
-  description: string
-  sourceA: { name: string; says: string }
-  sourceB: { name: string; says: string }
-  practicalResolution?: string
-}
-
-export interface QualifiedAnswerPayload {
-  asOfDate: string
-  answerHr: string
-  structured?: {
-    obligations?: string[]
-    deadlines?: string[]
-    thresholds?: string[]
-    exceptions?: string[]
-    actions?: string[]
-  }
-  citations: Citation[]
-  conflictWarnings: ConflictWarning[]
-  caveats: string[]
-  limits?: string[]
-}
-
-export interface RefusalPayload {
-  reason:
-    | "NO_CITABLE_RULES"
-    | "OUT_OF_SCOPE"
-    | "MISSING_CLIENT_DATA"
-    | "UNRESOLVED_CONFLICT"
-    | "NEEDS_CLARIFICATION"
-    | "UNSUPPORTED_JURISDICTION"
-    | "UNSUPPORTED_DOMAIN"
-  message: string
-  relatedTopics?: string[]
-  requiredFields?: string[]
-}
-
-export interface ErrorPayload {
-  code: "INTERNAL" | "VALIDATION_FAILED" | "CAPACITY" | "TIMEOUT"
-  message: string
-  correlationId: string
-  retriable: boolean
-}
-
-// === DISCRIMINATED UNION EVENT ===
-export type StagePayload =
-  | ContextResolutionPayload
-  | ClarificationPayload
-  | SourcesPayload
-  | RetrievalPayload
-  | ApplicabilityPayload
-  | ConflictsPayload
-  | AnalysisPayload
-  | ConfidencePayload
-  | FinalAnswerPayload
-  | QualifiedAnswerPayload
-  | RefusalPayload
-  | ErrorPayload
-
-export interface ReasoningEvent extends BaseReasoningEvent {
+  severity?: EventSeverity
+  progress?: EventProgress
   data?: StagePayload
 }
 
-// === TERMINAL PAYLOAD ===
+/**
+ * Terminal payloads (final outcomes)
+ */
 export type TerminalPayload =
-  | ({ outcome: "ANSWER" } & FinalAnswerPayload)
-  | ({ outcome: "QUALIFIED_ANSWER" } & QualifiedAnswerPayload)
-  | ({ outcome: "REFUSAL" } & RefusalPayload)
-  | ({ outcome: "ERROR" } & ErrorPayload)
+  | AnswerPayload
+  | ConditionalAnswerPayload
+  | RefusalPayload
+  | ErrorPayload
 
-// === UTILITY FUNCTIONS ===
-export function isTerminal(event: ReasoningEvent): boolean {
-  return (
-    event.stage === "ANSWER" ||
-    event.stage === "QUALIFIED_ANSWER" ||
-    event.stage === "REFUSAL" ||
-    event.stage === "ERROR"
-  )
+/**
+ * User context for pipeline
+ */
+export interface UserContext {
+  userId?: string
+  companyId?: string
+  isVatPayer?: boolean
+  legalForm?: string
+  jurisdiction?: string
 }
 
-export function getTerminalOutcome(event: ReasoningEvent): TerminalOutcome | null {
-  if (event.stage === "ANSWER") return "ANSWER"
-  if (event.stage === "QUALIFIED_ANSWER") return "QUALIFIED_ANSWER"
-  if (event.stage === "REFUSAL") return "REFUSAL"
-  if (event.stage === "ERROR") return "ERROR"
-  return null
-}
-
-export function isNonTerminalStage(stage: ReasoningStage): boolean {
-  return REASONING_STAGES.includes(stage as (typeof REASONING_STAGES)[number])
+/**
+ * Helper to create event ID
+ */
+export function createEventId(requestId: string, seq: number): string {
+  return `${requestId}_${String(seq).padStart(3, "0")}`
 }
