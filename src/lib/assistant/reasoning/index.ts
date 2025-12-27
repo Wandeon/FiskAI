@@ -1,7 +1,11 @@
 // src/lib/assistant/reasoning/index.ts
 
-// Types
+// Types - export everything from types module
 export * from "./types"
+
+// Re-export commonly used values for convenience
+export { REASONING_STAGES } from "./types"
+export type { RiskTier } from "./types"
 
 // Core pipeline
 export { buildAnswerWithReasoning } from "./reasoning-pipeline"

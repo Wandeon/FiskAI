@@ -66,7 +66,7 @@ const saveOnboardingSchema = z.object({
   name: z.string().min(1),
   oib: z.string().regex(/^\d{11}$/),
   legalForm: z.enum(["OBRT_PAUSAL", "OBRT_REAL", "OBRT_VAT", "JDOO", "DOO"]),
-  competence: z.enum(["guided", "standard", "expert"]).optional(),
+  competence: z.enum(["beginner", "average", "pro"]).optional(),
   address: z.string().min(1),
   postalCode: z.string().min(1),
   city: z.string().min(1),

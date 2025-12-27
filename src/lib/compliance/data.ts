@@ -66,7 +66,7 @@ export async function getCertificateStatus(companyId: string): Promise<Certifica
   const certificate = await db.fiscalCertificate.findFirst({
     where: {
       companyId,
-      environment: "PRODUCTION",
+      environment: "PROD",
       status: "ACTIVE",
     },
     orderBy: {
@@ -158,7 +158,7 @@ export async function getFiscalizationStats(companyId: string): Promise<Fiscaliz
   })
 
   const total = allRequests.length
-  const success = allRequests.filter((r) => r.status === "SUCCESS").length
+  const success = allRequests.filter((r) => r.status === "COMPLETED").length
   const failed = allRequests.filter((r) => r.status === "FAILED").length
   const successRate = total > 0 ? (success / total) * 100 : 0
 

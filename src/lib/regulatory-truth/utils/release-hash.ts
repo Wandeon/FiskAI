@@ -1,6 +1,8 @@
 // src/lib/regulatory-truth/utils/release-hash.ts
 import { createHash } from "crypto"
-import type { PrismaClient } from "@prisma/client"
+import type { db } from "@/lib/db"
+
+type DbClient = typeof db
 
 export interface RuleSnapshot {
   conceptSlug: string
@@ -94,9 +96,9 @@ export function computeReleaseHash(rules: RuleSnapshot[]): string {
  */
 export async function verifyReleaseHash(
   releaseId: string,
-  db: PrismaClient
+  dbClient: DbClient
 ): Promise<{ valid: boolean; stored: string; computed: string; ruleCount: number }> {
-  const release = await db.ruleRelease.findUnique({
+  const release = await dbClient.ruleRelease.findUnique({
     where: { id: releaseId },
     include: {
       rules: {

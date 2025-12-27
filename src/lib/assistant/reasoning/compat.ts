@@ -4,11 +4,11 @@ import { buildAnswerWithReasoning } from "./pipeline"
 import {
   isTerminal,
   type TerminalPayload,
-  type FinalAnswerPayload,
-  type QualifiedAnswerPayload,
-  type RefusalPayload,
+  type AnswerPayload,
+  type ConditionalAnswerPayload,
   type ErrorPayload,
 } from "./types"
+import type { RefusalPayload } from "./refusal-policy"
 import {
   SCHEMA_VERSION as LEGACY_SCHEMA_VERSION,
   type AssistantResponse,
@@ -17,6 +17,37 @@ import {
   type Surface,
   type RefusalReason as LegacyRefusalReason,
 } from "@/lib/assistant/types"
+
+// Type aliases for backward compatibility
+type FinalAnswerPayload = AnswerPayload & {
+  outcome?: "ANSWER"
+  asOfDate?: string
+  citations?: Array<{
+    id: string
+    title: string
+    authority: string
+    quote: string
+    url: string
+    evidenceId: string
+    fetchedAt: string
+  }>
+}
+
+type QualifiedAnswerPayload = ConditionalAnswerPayload & {
+  outcome?: "QUALIFIED_ANSWER"
+  answerHr: string
+  asOfDate?: string
+  conflictWarnings: Array<{ description: string }>
+  citations?: FinalAnswerPayload["citations"]
+}
+
+// Extended RefusalPayload for compat layer
+type ExtendedRefusalPayload = RefusalPayload & {
+  outcome?: "REFUSAL"
+  message?: string
+  reason?: string
+  relatedTopics?: string[]
+}
 
 /**
  * Backward-compatible wrapper that runs the new reasoning pipeline
@@ -92,73 +123,90 @@ function mapToLegacyResponse(
     createdAt: new Date().toISOString(),
   }
 
-  switch (payload.outcome) {
-    case "ANSWER": {
-      const answer = payload as FinalAnswerPayload & { outcome: "ANSWER" }
-      return {
-        ...base,
-        kind: "ANSWER",
-        headline: answer.answerHr.substring(0, 120),
-        directAnswer: answer.answerHr,
-        asOfDate: answer.asOfDate,
-        citations: mapCitations(answer.citations),
-        confidence: { level: "HIGH", score: 0.9 },
-      }
-    }
+  // Determine outcome type from payload structure
+  const outcome = (payload as { outcome?: string }).outcome
 
-    case "QUALIFIED_ANSWER": {
-      const qualified = payload as QualifiedAnswerPayload & { outcome: "QUALIFIED_ANSWER" }
-      return {
-        ...base,
-        kind: "ANSWER",
-        headline: qualified.answerHr.substring(0, 120),
-        directAnswer: qualified.answerHr,
-        asOfDate: qualified.asOfDate,
-        citations: mapCitations(qualified.citations),
-        confidence: { level: "MEDIUM", score: 0.7 },
-        conflict:
-          qualified.conflictWarnings.length > 0
-            ? {
-                status: "CONTEXT_DEPENDENT",
-                description: qualified.conflictWarnings[0].description,
-                sources: [],
-              }
-            : undefined,
-      }
+  if (outcome === "ANSWER" || "answerHr" in payload) {
+    const answer = payload as FinalAnswerPayload
+    return {
+      ...base,
+      kind: "ANSWER",
+      headline: (answer.answerHr || "").substring(0, 120),
+      directAnswer: answer.answerHr || "",
+      asOfDate: answer.asOfDate,
+      citations: mapCitations(answer.citations),
+      confidence: { level: "HIGH", score: 0.9 },
     }
+  }
 
-    case "REFUSAL": {
-      const refusal = payload as RefusalPayload & { outcome: "REFUSAL" }
-      return {
-        ...base,
-        kind: "REFUSAL",
-        headline: refusal.message.substring(0, 120),
-        directAnswer: "",
-        refusalReason: mapRefusalReason(refusal.reason),
-        refusal: {
-          message: refusal.message,
-          relatedTopics: refusal.relatedTopics,
-        },
-      }
+  if (outcome === "CONDITIONAL_ANSWER" || "branches" in payload) {
+    const qualified = payload as QualifiedAnswerPayload
+    const answerHr = qualified.answerHr || ""
+    const conflictWarnings = qualified.conflictWarnings || []
+    return {
+      ...base,
+      kind: "ANSWER",
+      headline: answerHr.substring(0, 120),
+      directAnswer: answerHr,
+      asOfDate: qualified.asOfDate,
+      citations: mapCitations(qualified.citations),
+      confidence: { level: "MEDIUM", score: 0.7 },
+      conflict:
+        conflictWarnings.length > 0
+          ? {
+              status: "CONTEXT_DEPENDENT",
+              description: conflictWarnings[0].description,
+              sources: [],
+            }
+          : undefined,
     }
+  }
 
-    case "ERROR": {
-      const error = payload as ErrorPayload & { outcome: "ERROR" }
-      return {
-        ...base,
-        kind: "REFUSAL",
-        headline: "Doslo je do pogreske",
-        directAnswer: "",
-        refusalReason: "NO_CITABLE_RULES",
-        refusal: {
-          message: error.message,
-        },
-        error: {
-          message: error.message,
-          retryable: error.retriable,
-        },
-      }
+  if (outcome === "REFUSAL" || "template" in payload) {
+    const refusal = payload as ExtendedRefusalPayload
+    const message = refusal.message || refusal.template?.messageHr || "Nije moguće odgovoriti"
+    const reason = refusal.reason || refusal.template?.code || "OUT_OF_SCOPE"
+    return {
+      ...base,
+      kind: "REFUSAL",
+      headline: message.substring(0, 120),
+      directAnswer: "",
+      refusalReason: mapRefusalReason(reason),
+      refusal: {
+        message,
+        relatedTopics: refusal.relatedTopics,
+      },
     }
+  }
+
+  if (outcome === "ERROR" || "correlationId" in payload) {
+    const error = payload as ErrorPayload
+    return {
+      ...base,
+      kind: "REFUSAL",
+      headline: "Doslo je do pogreske",
+      directAnswer: "",
+      refusalReason: "NO_CITABLE_RULES",
+      refusal: {
+        message: error.message,
+      },
+      error: {
+        message: error.message,
+        retryable: error.retryable,
+      },
+    }
+  }
+
+  // Fallback for unknown payload types
+  return {
+    ...base,
+    kind: "REFUSAL",
+    headline: "Nepoznata pogreška",
+    directAnswer: "",
+    refusalReason: "NO_CITABLE_RULES",
+    refusal: {
+      message: "Nepoznati tip odgovora",
+    },
   }
 }
 
@@ -166,40 +214,68 @@ function mapCitations(citations: FinalAnswerPayload["citations"]): CitationBlock
   if (!citations || citations.length === 0) return undefined
 
   const primary = citations[0]
+  if (!primary.id || !primary.title || !primary.quote || !primary.url) {
+    return undefined
+  }
+
   const primaryCard: SourceCard = {
     id: primary.id,
     title: primary.title,
-    authority: primary.authority,
+    authority: primary.authority as "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE",
     quote: primary.quote,
     url: primary.url,
-    effectiveFrom: primary.fetchedAt.split("T")[0],
+    effectiveFrom: primary.fetchedAt?.split("T")[0] || new Date().toISOString().split("T")[0],
     confidence: 0.9,
-    evidenceId: primary.evidenceId,
-    fetchedAt: primary.fetchedAt,
+    evidenceId: primary.evidenceId || "",
+    fetchedAt: primary.fetchedAt || new Date().toISOString(),
   }
 
-  const supporting: SourceCard[] = citations.slice(1).map((c) => ({
-    id: c.id,
-    title: c.title,
-    authority: c.authority,
-    quote: c.quote,
-    url: c.url,
-    effectiveFrom: c.fetchedAt.split("T")[0],
-    confidence: 0.8,
-    evidenceId: c.evidenceId,
-    fetchedAt: c.fetchedAt,
-  }))
+  const supporting: SourceCard[] = citations
+    .slice(1)
+    .filter((c) => c.id && c.title && c.quote && c.url)
+    .map((c) => ({
+      id: c.id!,
+      title: c.title!,
+      authority: c.authority as "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE",
+      quote: c.quote!,
+      url: c.url!,
+      effectiveFrom: c.fetchedAt?.split("T")[0] || new Date().toISOString().split("T")[0],
+      confidence: 0.8,
+      evidenceId: c.evidenceId || "",
+      fetchedAt: c.fetchedAt || new Date().toISOString(),
+    }))
 
   return { primary: primaryCard, supporting }
 }
 
 /**
- * Maps reasoning RefusalPayload.reason to legacy RefusalReason.
+ * Maps reasoning RefusalPayload to legacy RefusalReason.
  * UNSUPPORTED_DOMAIN is mapped to OUT_OF_SCOPE as a fallback.
  */
-function mapRefusalReason(reason: RefusalPayload["reason"]): LegacyRefusalReason {
-  if (reason === "UNSUPPORTED_DOMAIN") {
-    return "OUT_OF_SCOPE"
+function mapRefusalReason(reason: string | undefined): LegacyRefusalReason {
+  if (!reason) return "OUT_OF_SCOPE"
+  // Map from various reason codes to valid LegacyRefusalReason
+  const reasonMapping: Record<string, LegacyRefusalReason> = {
+    UNSUPPORTED_DOMAIN: "OUT_OF_SCOPE",
+    CANNOT_VERIFY: "NO_CITABLE_RULES",
+    TOO_COMPLEX: "OUT_OF_SCOPE",
+    CONFLICTING_RULES: "UNRESOLVED_CONFLICT",
+    AMBIGUOUS_QUERY: "NEEDS_CLARIFICATION",
   }
-  return reason
+  if (reason in reasonMapping) {
+    return reasonMapping[reason]
+  }
+  // Check if it's a valid LegacyRefusalReason
+  const validReasons: LegacyRefusalReason[] = [
+    "OUT_OF_SCOPE",
+    "NO_CITABLE_RULES",
+    "MISSING_CLIENT_DATA",
+    "UNRESOLVED_CONFLICT",
+    "NEEDS_CLARIFICATION",
+    "UNSUPPORTED_JURISDICTION",
+  ]
+  if (validReasons.includes(reason as LegacyRefusalReason)) {
+    return reason as LegacyRefusalReason
+  }
+  return "OUT_OF_SCOPE"
 }

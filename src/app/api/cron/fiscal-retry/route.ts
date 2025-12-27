@@ -89,7 +89,7 @@ export async function GET(request: Request) {
             status: isFinalAttempt ? "DEAD" : "FAILED",
             errorCode: error?.poreznaCode,
             errorMessage: error?.message,
-            nextRetryAt: isFinalAttempt ? null : nextRetryAt,
+            nextRetryAt: isFinalAttempt ? undefined : nextRetryAt,
           },
         })
 

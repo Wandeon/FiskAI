@@ -23,23 +23,48 @@ export const COMPETENCE_LABELS: Record<CompetenceLevel, string> = {
 export type ProgressionStage =
   | "onboarding" // Stage 0: Currently in the 4-step wizard
   | "setup" // Stage 1: Profile done, ready for 1st invoice/data
+  | "needs-customer" // Substage: needs first customer
+  | "needs-product" // Substage: needs first product
+  | "needs-invoice" // Substage: needs first invoice
+  | "needs-statements" // Substage: needs bank statements
   | "active" // Stage 2: Operational (1+ invoice or statement)
   | "strategic" // Stage 3: Maintenance/Strategic (10+ invoices or VAT)
+  | "complete" // Stage 4: All stages complete
 
-export const STAGE_ORDER: ProgressionStage[] = ["onboarding", "setup", "active", "strategic"]
+export const STAGE_ORDER: ProgressionStage[] = [
+  "onboarding",
+  "setup",
+  "needs-customer",
+  "needs-product",
+  "needs-invoice",
+  "needs-statements",
+  "active",
+  "strategic",
+  "complete",
+]
 
 export const STAGE_LABELS: Record<ProgressionStage, string> = {
   onboarding: "Registracija",
   setup: "Postavljanje",
+  "needs-customer": "Dodaj kupca",
+  "needs-product": "Dodaj proizvod",
+  "needs-invoice": "Kreiraj račun",
+  "needs-statements": "Uvezi izvode",
   active: "Operativno",
   strategic: "Strateški",
+  complete: "Gotovo",
 }
 
 export const STAGE_ICONS: Record<ProgressionStage, string> = {
   onboarding: "📝",
   setup: "⚙️",
+  "needs-customer": "👤",
+  "needs-product": "📦",
+  "needs-invoice": "🧾",
+  "needs-statements": "🏦",
   active: "🚀",
   strategic: "📈",
+  complete: "✅",
 }
 
 // ============================================================================
@@ -151,11 +176,52 @@ export const PROGRESSION_LOCKED: Record<
     ],
     unlockHint: "Izradite prvi račun ili uvezite podatke",
   },
+  "needs-customer": {
+    locked: [
+      "card:invoice-funnel",
+      "card:revenue-trend",
+      "card:insights",
+      "card:advanced-insights",
+      "nav:reports",
+      "page:reports",
+    ],
+    unlockHint: "Dodajte prvog kupca",
+  },
+  "needs-product": {
+    locked: [
+      "card:invoice-funnel",
+      "card:revenue-trend",
+      "card:insights",
+      "card:advanced-insights",
+      "nav:reports",
+      "page:reports",
+    ],
+    unlockHint: "Dodajte prvi proizvod",
+  },
+  "needs-invoice": {
+    locked: [
+      "card:invoice-funnel",
+      "card:revenue-trend",
+      "card:insights",
+      "card:advanced-insights",
+      "nav:reports",
+      "page:reports",
+    ],
+    unlockHint: "Kreirajte prvu fakturu",
+  },
+  "needs-statements": {
+    locked: ["card:revenue-trend", "card:insights", "card:advanced-insights"],
+    unlockHint: "Uvezite bankovne izvode",
+  },
   active: {
     locked: ["card:insights", "card:advanced-insights"],
     unlockHint: "Prikupite više podataka za dublje uvide",
   },
   strategic: {
+    locked: [],
+    unlockHint: "",
+  },
+  complete: {
     locked: [],
     unlockHint: "",
   },
@@ -275,10 +341,13 @@ export function getNextAction(effectiveStage: ProgressionStage): {
 } | null {
   const actions: Record<ProgressionStage, { href: string; label: string; icon: string } | null> = {
     onboarding: { href: "/onboarding", label: "Dovršite registraciju", icon: "📝" },
+    setup: { href: "/contacts/new", label: "Počnite s radom", icon: "⚙️" },
     "needs-customer": { href: "/contacts/new", label: "Dodaj prvog kupca", icon: "👤" },
     "needs-product": { href: "/products/new", label: "Dodaj prvi proizvod", icon: "📦" },
     "needs-invoice": { href: "/invoices/new", label: "Kreiraj prvu fakturu", icon: "🧾" },
     "needs-statements": { href: "/bank/import", label: "Uvezi bankovne izvode", icon: "🏦" },
+    active: { href: "/dashboard", label: "Nastavi raditi", icon: "🚀" },
+    strategic: { href: "/reports", label: "Pregledaj izvještaje", icon: "📈" },
     complete: null,
   }
   return actions[effectiveStage]

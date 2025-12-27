@@ -45,6 +45,26 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "lint-staged": {
+    "src/app/(app)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(admin)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(staff)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/components/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
+    ],
+    "src/app/(marketing)/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: warn'"
+    ],
     "*.{ts,tsx,js,jsx}": [
       "prettier --write",
       "eslint --fix"
@@ -168,6 +188,7 @@
     "axe-core": "^4.11.0",
     "eslint": "^8",
     "eslint-config-next": "^15.5.0",
+    "eslint-plugin-fisk-design-system": "file:src/design-system/eslint",
     "husky": "^9.1.7",
     "jest-axe": "^10.0.0",
     "lint-staged": "^16.2.7",

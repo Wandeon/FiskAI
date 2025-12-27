@@ -475,7 +475,7 @@ async function processEndpoint(
 
     console.log(`[sentinel] Discovered ${newItemCount} new items from ${endpoint.name}`)
     return { newItems: newItemCount }
-  } catch (_error) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
 
     await db.discoveryEndpoint.update({
@@ -567,7 +567,7 @@ export async function runSentinel(
     console.log(
       `[sentinel] Complete: ${result.endpointsChecked} endpoints, ${result.newItemsDiscovered} new items`
     )
-  } catch (_error) {
+  } catch (error) {
     result.success = false
     result.errors.push(error instanceof Error ? error.message : String(error))
   }
@@ -887,7 +887,7 @@ export async function fetchDiscoveredItems(limit: number = 100): Promise<{
 
         fetched++
       }
-    } catch (_error) {
+    } catch (error) {
       failed++
       await db.discoveredItem.update({
         where: { id: item.id },

@@ -87,7 +87,7 @@ export function FiscalStatusPanel({ requests, stats }: FiscalStatusPanelProps) {
 
   const getStatusIcon = (status: string) => {
     const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]
-    if (!config) return AlertCircle
+    if (!config) return <AlertCircle className="h-4 w-4 text-gray-600" />
     const Icon = config.icon
     return <Icon className={`h-4 w-4 ${config.color}`} />
   }

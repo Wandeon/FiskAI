@@ -1,3 +1,4 @@
+@import "../design-system/css/variables.css";
 @import "../styles/dense-mode.css";
 
 @tailwind base;

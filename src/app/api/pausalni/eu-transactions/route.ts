@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       counterpartyName: tx.counterpartyName,
       counterpartyIban: tx.counterpartyIban,
       amount: parseFloat(tx.amount.toString()),
-      date: tx.date,
+      transactionDate: tx.date,
     }))
 
     // Process transactions for EU detection

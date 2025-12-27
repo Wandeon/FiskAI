@@ -38,6 +38,7 @@ export const VISIBILITY_ELEMENTS = {
   "nav:corporate-tax": { type: "nav", label: "Porez na dobit", path: "/corporate-tax" },
   "nav:bank": { type: "nav", label: "Banka", path: "/banking" },
   "nav:pos": { type: "nav", label: "POS", path: "/pos" },
+  "nav:compliance": { type: "nav", label: "Usklađenost", path: "/compliance" },
   "nav:settings": { type: "nav", label: "Postavke", path: "/settings" },
   "nav:api-settings": { type: "nav", label: "API postavke", path: "/settings/api" },
   "nav:checklist": { type: "nav", label: "Checklist", path: "/checklist" },

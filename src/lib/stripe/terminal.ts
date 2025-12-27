@@ -130,6 +130,14 @@ export async function getReaderStatus(readerId: string): Promise<{
 
   try {
     const reader = await stripe.terminal.readers.retrieve(readerId)
+    // Check if reader is deleted
+    if (reader.deleted) {
+      return {
+        online: false,
+        label: readerId,
+        status: "deleted",
+      }
+    }
     return {
       online: reader.status === "online",
       label: reader.label || readerId,

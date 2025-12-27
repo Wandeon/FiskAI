@@ -107,7 +107,7 @@ async function processJob(
         errorCode: classification.code,
         errorMessage: classification.message,
         lastHttpStatus: classification.httpStatus,
-        nextRetryAt: classification.retriable ? calculateNextRetry(attemptCount) : null,
+        nextRetryAt: classification.retriable ? calculateNextRetry(attemptCount) : undefined,
         lockedAt: null,
         lockedBy: null,
       },

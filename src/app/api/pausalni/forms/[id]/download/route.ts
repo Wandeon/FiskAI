@@ -16,7 +16,8 @@ import { generateZpXml, type ZpFormData } from "@/lib/pausalni/forms/zp-generato
  * Returns the XML file with proper content-type headers for download
  */
 export const GET = withApiLogging(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     try {
       const user = await requireAuth()
       const company = await requireCompany(user.id!)
@@ -31,7 +32,7 @@ export const GET = withApiLogging(
         return NextResponse.json({ error: "Not a paušalni obrt" }, { status: 400 })
       }
 
-      const formId = params.id
+      const formId = id
 
       // Fetch the form from database
       const [form] = await drizzleDb

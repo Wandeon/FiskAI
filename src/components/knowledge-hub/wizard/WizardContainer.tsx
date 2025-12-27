@@ -129,7 +129,9 @@ export function WizardContainer() {
     }
   }, [])
 
-  const transition = reduce ? { duration: 0 } : { duration: 0.26, ease: [0.16, 1, 0.3, 1] }
+  const transition = reduce
+    ? { duration: 0 }
+    : { duration: 0.26, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
 
   return (
     <div className="max-w-2xl mx-auto">

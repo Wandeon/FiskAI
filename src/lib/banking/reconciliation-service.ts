@@ -61,7 +61,7 @@ export async function runAutoMatchTransactions(params: AutoMatchParams) {
     amount: Number(txn.amount),
     description: txn.description,
     reference: txn.reference || "",
-    type: txn.amount >= 0 ? "credit" : "debit",
+    type: Number(txn.amount) >= 0 ? "credit" : "debit",
     currency: txn.bankAccount?.currency || "EUR",
   }))
 
@@ -82,7 +82,10 @@ export async function runAutoMatchTransactions(params: AutoMatchParams) {
     const updateData: Prisma.BankTransactionUpdateInput = {
       confidenceScore: result.confidenceScore,
       matchStatus: shouldAutoMatch ? MatchStatus.AUTO_MATCHED : MatchStatus.UNMATCHED,
-      matchedInvoiceId: shouldAutoMatch ? result.matchedInvoiceId : null,
+      matchedInvoice:
+        shouldAutoMatch && result.matchedInvoiceId
+          ? { connect: { id: result.matchedInvoiceId } }
+          : { disconnect: true },
       matchedAt: shouldAutoMatch ? new Date() : null,
       matchedBy: shouldAutoMatch ? userId : null,
     }
@@ -105,7 +108,7 @@ export async function runAutoMatchTransactions(params: AutoMatchParams) {
       }
     } else {
       updateData.matchStatus = MatchStatus.UNMATCHED
-      updateData.matchedInvoiceId = null
+      updateData.matchedInvoice = { disconnect: true }
       updateData.matchedAt = null
       updateData.matchedBy = null
     }

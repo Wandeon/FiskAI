@@ -258,7 +258,7 @@ export async function* buildAnswerWithReasoning(
       code: "INTERNAL",
       message: "An unexpected error occurred",
       correlationId: requestId,
-      retriable: true,
+      retryable: true,
     }
 
     yield factory.emit({

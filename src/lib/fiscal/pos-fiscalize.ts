@@ -1,7 +1,7 @@
 import { calculateZKI, validateZKIInput } from "@/lib/e-invoice/zki"
 import { db } from "@/lib/db"
 import { executeFiscalRequest } from "./fiscal-pipeline"
-import { FiscalRequestStatus, FiscalRequestMessageType } from "@prisma/client"
+import { FiscalStatus, FiscalMessageType } from "@prisma/client"
 
 const FORCE_DEMO_MODE = process.env.FISCAL_DEMO_MODE === "true"
 
@@ -105,10 +105,9 @@ export async function fiscalizePosSale(input: PosFiscalInput): Promise<PosFiscal
         companyId: company.id,
         invoiceId: invoice.id,
         certificateId: certificate.id,
-        messageType: "RACUN" as FiscalRequestMessageType,
-        status: "PROCESSING" as FiscalRequestStatus,
+        messageType: "RACUN" as FiscalMessageType,
+        status: "PROCESSING" as FiscalStatus,
         attemptCount: 1,
-        lastAttemptAt: new Date(),
       },
     })
 

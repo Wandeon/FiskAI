@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     const fileName = `kpr-${company.oib}-${new Date().toISOString().slice(0, 10)}.pdf`
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

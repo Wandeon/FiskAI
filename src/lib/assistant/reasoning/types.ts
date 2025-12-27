@@ -15,12 +15,37 @@ export type ReasoningStage =
   | "SOURCES"
   | "RETRIEVAL"
   | "APPLICABILITY"
+  | "CONFLICTS"
   | "ANALYSIS"
   | "CONFIDENCE"
   | "ANSWER"
   | "CONDITIONAL_ANSWER"
   | "REFUSAL"
   | "ERROR"
+
+/**
+ * Array of all reasoning stages in order
+ */
+export const REASONING_STAGES: ReasoningStage[] = [
+  "QUESTION_INTAKE",
+  "CONTEXT_RESOLUTION",
+  "CLARIFICATION",
+  "SOURCES",
+  "RETRIEVAL",
+  "APPLICABILITY",
+  "CONFLICTS",
+  "ANALYSIS",
+  "CONFIDENCE",
+  "ANSWER",
+  "CONDITIONAL_ANSWER",
+  "REFUSAL",
+  "ERROR",
+]
+
+/**
+ * Risk tier classification
+ */
+export type RiskTier = "T0" | "T1" | "T2" | "T3"
 
 /**
  * Event status
@@ -55,18 +80,27 @@ export interface QuestionIntakePayload {
 }
 
 export interface ContextResolutionPayload {
-  domain: string
+  domain?: string
   jurisdiction: string
   riskTier: string
+  summary?: string
+  language?: string
+  intent?: string
+  asOfDate?: string
+  entities?: Array<{ type: string; value: string; confidence: number }>
   userContext?: Record<string, unknown>
+  userContextSnapshot?: UserContextSnapshot
   confidence: number
+  requiresClarification?: boolean
+  suggestedClarifications?: string[]
 }
 
 export interface ClarificationPayload {
   question: string
-  questionHr: string
-  options?: string[]
-  dimensionNeeded: string
+  questionHr?: string
+  options?: string[] | Array<{ label: string; value: string }>
+  dimensionNeeded?: string
+  freeformAllowed?: boolean
 }
 
 export interface SourcePayload {
@@ -107,15 +141,30 @@ export interface ConfidencePayload {
 }
 
 export interface AnswerPayload {
-  answer: string
+  answer?: string
   answerHr: string
-  citations: Array<{
-    ruleId: string
-    ruleName: string
+  asOfDate?: string
+  citations?: Array<{
+    // Either rule-based format
+    ruleId?: string
+    ruleName?: string
     sourceUrl?: string
+    // Or evidence-based format
+    id?: string
+    title?: string
+    authority?: string
+    quote?: string
+    url?: string
+    evidenceId?: string
+    fetchedAt?: string
   }>
   value?: string
   valueType?: string
+  structured?: {
+    obligations?: string[]
+    deadlines?: string[]
+    thresholds?: string[]
+  }
 }
 
 export interface ConditionalAnswerPayload {
@@ -130,24 +179,57 @@ export interface ConditionalAnswerPayload {
 }
 
 export interface RefusalPayload {
-  code: string
-  messageHr: string
-  messageEn: string
-  nextSteps: Array<{
+  code?: string
+  reason?: string // Alias for code
+  messageHr?: string
+  messageEn?: string
+  message?: string // Shorthand for messageHr
+  nextSteps?: Array<{
     type: string
     prompt?: string
     promptHr?: string
   }>
+  relatedTopics?: string[]
   context?: {
     missingDimensions?: string[]
     conflictingRules?: string[]
+  }
+  // Template structure (from compat layer)
+  template?: {
+    code: string
+    messageHr: string
+    nextSteps?: Array<{
+      type: string
+      prompt?: string
+      promptHr?: string
+    }>
   }
 }
 
 export interface ErrorPayload {
   correlationId: string
+  code?: string // Error code
   message: string
   retryable: boolean
+}
+
+/**
+ * Conflicts stage payload
+ */
+export interface ConflictsStagePayload {
+  summary?: string
+  conflictCount?: number
+  resolved?: number
+  unresolved?: number
+  canProceedWithWarning?: boolean
+}
+
+/**
+ * Generic stage payload for stages that just need summary/progress info
+ */
+export interface GenericStagePayload {
+  summary?: string
+  [key: string]: unknown
 }
 
 /**
@@ -160,12 +242,14 @@ export type StagePayload =
   | SourcePayload
   | RetrievalPayload
   | ApplicabilityPayload
+  | ConflictsStagePayload
   | AnalysisPayload
   | ConfidencePayload
   | AnswerPayload
   | ConditionalAnswerPayload
   | RefusalPayload
   | ErrorPayload
+  | GenericStagePayload
 
 /**
  * Core reasoning event structure
@@ -188,10 +272,10 @@ export interface ReasoningEvent {
  * Terminal payloads (final outcomes)
  */
 export type TerminalPayload =
-  | AnswerPayload
-  | ConditionalAnswerPayload
-  | RefusalPayload
-  | ErrorPayload
+  | (AnswerPayload & { outcome?: "ANSWER" })
+  | (ConditionalAnswerPayload & { outcome?: "CONDITIONAL_ANSWER" })
+  | (RefusalPayload & { outcome?: "REFUSAL" })
+  | (ErrorPayload & { outcome?: "ERROR" })
 
 /**
  * User context for pipeline
@@ -205,8 +289,69 @@ export interface UserContext {
 }
 
 /**
+ * User context snapshot for audit logging
+ */
+export interface UserContextSnapshot {
+  vatStatus?: "registered" | "unregistered" | "unknown"
+  turnoverBand?: string
+  companySize?: "micro" | "small" | "medium" | "large"
+  jurisdiction?: string
+  assumedDefaults: string[]
+  resolvedContext?: UserContext
+}
+
+/**
+ * Terminal outcome type
+ */
+export type TerminalOutcome = "ANSWER" | "CONDITIONAL_ANSWER" | "REFUSAL" | "ERROR"
+
+/**
+ * Check if an event is terminal
+ */
+export function isTerminal(event: ReasoningEvent): boolean {
+  return ["ANSWER", "CONDITIONAL_ANSWER", "REFUSAL", "ERROR"].includes(event.stage)
+}
+
+/**
+ * Get terminal outcome from event
+ */
+export function getTerminalOutcome(event: ReasoningEvent): TerminalOutcome | null {
+  if (isTerminal(event)) {
+    return event.stage as TerminalOutcome
+  }
+  return null
+}
+
+/**
+ * Conflicts payload for analysis stage
+ */
+export interface ConflictsPayload {
+  conflictId: string
+  ruleIds: string[]
+  resolution?: string
+}
+
+/**
  * Helper to create event ID
  */
 export function createEventId(requestId: string, seq: number): string {
   return `${requestId}_${String(seq).padStart(3, "0")}`
+}
+
+/**
+ * Source summary for source discovery stage
+ */
+export interface SourceSummary {
+  id: string
+  name: string
+  authority: string
+  url?: string
+}
+
+/**
+ * Sources stage payload
+ */
+export interface SourcesPayload {
+  summary: string
+  sources: SourceSummary[]
 }

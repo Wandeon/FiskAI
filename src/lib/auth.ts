@@ -42,7 +42,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // Rate limiting for login attempts
-        const identifier = `login_${credentials.email.toLowerCase()}`
+        const email = credentials.email as string
+        const identifier = `login_${email.toLowerCase()}`
         const rateLimitResult = checkRateLimit(identifier, "LOGIN")
 
         if (!rateLimitResult.allowed) {
@@ -191,9 +192,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Log successful sign in for audit purposes
       console.log(`User ${user.email} signed in via ${account?.provider || "credentials"}`)
     },
-    async signOut({ token, session }) {
+    async signOut(message) {
       // Log sign out for audit purposes
-      console.log(`User ${token.email} signed out`)
+      const email =
+        "token" in message
+          ? message.token?.email
+          : "session" in message
+            ? (message.session as { user?: { email?: string } } | null)?.user?.email
+            : "unknown"
+      console.log(`User ${email} signed out`)
     },
   },
 })

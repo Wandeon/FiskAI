@@ -127,6 +127,7 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
 
   // Map subdomain to route group
+  // Note: "marketing" is handled above and returns early, so subdomain here is only "staff" | "app" | "admin"
   let routeGroup = ""
   switch (subdomain) {
     case "admin":
@@ -136,11 +137,6 @@ export async function middleware(request: NextRequest) {
       routeGroup = "/(staff)"
       break
     case "app":
-      routeGroup = "/(app)"
-      break
-    case "marketing":
-      routeGroup = "/(marketing)"
-      break
     default:
       routeGroup = "/(app)"
   }

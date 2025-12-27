@@ -42,15 +42,10 @@ function calculateOnboardingStep(data: OnboardingData | null): 1 | 2 | 3 | 4 | 5
   if (!step4Complete) return 4
 
   // Step 5: Paušalni Profile (only for OBRT_PAUSAL)
+  // Note: Paušalni fields are stored in the client store, not in server data
+  // So for OBRT_PAUSAL, return 5 to let them complete the paušalni profile step
   if (data.legalForm === "OBRT_PAUSAL") {
-    const step5Complete = !!(
-      data.acceptsCash !== undefined &&
-      data.hasEmployees !== undefined &&
-      data.employedElsewhere !== undefined &&
-      data.hasEuVatId !== undefined &&
-      data.taxBracket
-    )
-    if (!step5Complete) return 5
+    return 5
   }
 
   // All complete

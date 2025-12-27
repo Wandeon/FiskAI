@@ -38,7 +38,7 @@ function calculateObrtDohodakCosts(revenue: number, expenses: number) {
         taxableIncome - bracket.min,
         bracket.max === Infinity ? taxableIncome - bracket.min : bracket.max - bracket.min
       )
-      yearlyTax += taxableInBracket * bracket.rate
+      yearlyTax += taxableInBracket * (bracket.rate ?? 0)
     }
   }
 

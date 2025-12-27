@@ -76,7 +76,7 @@ export function MarketingVideo({
       loop
       preload="metadata"
       autoPlay={!reduce}
-      controls={reduce}
+      controls={reduce ?? false}
       aria-label={label}
     />
   )

@@ -21,11 +21,16 @@ export const POST = withApiLogging(
       const body = await request.json()
       const { paidDate, paidAmount, notes } = body
 
+      // Format date as YYYY-MM-DD string for drizzle date column
+      const formattedPaidDate = paidDate
+        ? new Date(paidDate).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0]
+
       const updated = await drizzleDb
         .update(paymentObligation)
         .set({
           status: OBLIGATION_STATUS.PAID,
-          paidDate: paidDate ? new Date(paidDate) : new Date(),
+          paidDate: formattedPaidDate,
           paidAmount: paidAmount?.toString(),
           matchType: "MANUAL",
           notes,
