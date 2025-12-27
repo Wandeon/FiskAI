@@ -214,40 +214,60 @@ function mapCitations(citations: FinalAnswerPayload["citations"]): CitationBlock
   if (!citations || citations.length === 0) return undefined
 
   const primary = citations[0]
+  if (!primary.id || !primary.title || !primary.quote || !primary.url) {
+    return undefined
+  }
+
   const primaryCard: SourceCard = {
     id: primary.id,
     title: primary.title,
-    authority: primary.authority,
+    authority: primary.authority as "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE",
     quote: primary.quote,
     url: primary.url,
-    effectiveFrom: primary.fetchedAt.split("T")[0],
+    effectiveFrom: primary.fetchedAt?.split("T")[0] || new Date().toISOString().split("T")[0],
     confidence: 0.9,
-    evidenceId: primary.evidenceId,
-    fetchedAt: primary.fetchedAt,
+    evidenceId: primary.evidenceId || "",
+    fetchedAt: primary.fetchedAt || new Date().toISOString(),
   }
 
-  const supporting: SourceCard[] = citations.slice(1).map((c) => ({
-    id: c.id,
-    title: c.title,
-    authority: c.authority,
-    quote: c.quote,
-    url: c.url,
-    effectiveFrom: c.fetchedAt.split("T")[0],
-    confidence: 0.8,
-    evidenceId: c.evidenceId,
-    fetchedAt: c.fetchedAt,
-  }))
+  const supporting: SourceCard[] = citations
+    .slice(1)
+    .filter((c) => c.id && c.title && c.quote && c.url)
+    .map((c) => ({
+      id: c.id!,
+      title: c.title!,
+      authority: c.authority as "LAW" | "REGULATION" | "GUIDANCE" | "PRACTICE",
+      quote: c.quote!,
+      url: c.url!,
+      effectiveFrom: c.fetchedAt?.split("T")[0] || new Date().toISOString().split("T")[0],
+      confidence: 0.8,
+      evidenceId: c.evidenceId || "",
+      fetchedAt: c.fetchedAt || new Date().toISOString(),
+    }))
 
   return { primary: primaryCard, supporting }
 }
 
 /**
- * Maps reasoning RefusalPayload.reason to legacy RefusalReason.
+ * Maps reasoning RefusalPayload to legacy RefusalReason.
  * UNSUPPORTED_DOMAIN is mapped to OUT_OF_SCOPE as a fallback.
  */
-function mapRefusalReason(reason: RefusalPayload["reason"]): LegacyRefusalReason {
+function mapRefusalReason(reason: string | undefined): LegacyRefusalReason {
+  if (!reason) return "OUT_OF_SCOPE"
   if (reason === "UNSUPPORTED_DOMAIN") {
     return "OUT_OF_SCOPE"
   }
-  return reason
+  // Check if it's a valid LegacyRefusalReason
+  const validReasons: LegacyRefusalReason[] = [
+    "OUT_OF_SCOPE",
+    "CANNOT_VERIFY",
+    "TOO_COMPLEX",
+    "NO_CITABLE_RULES",
+    "CONFLICTING_RULES",
+    "AMBIGUOUS_QUERY",
+  ]
+  if (validReasons.includes(reason as LegacyRefusalReason)) {
+    return reason as LegacyRefusalReason
+  }
+  return "OUT_OF_SCOPE"
 }
