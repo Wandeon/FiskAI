@@ -6,6 +6,7 @@ import {
   type EvaluationContext,
   type EligibilityResult,
 } from "./rule-eligibility"
+import type { ObligationType } from "../types"
 
 const AUTHORITY_RANK: Record<string, number> = {
   LAW: 1,
@@ -13,8 +14,6 @@ const AUTHORITY_RANK: Record<string, number> = {
   GUIDANCE: 3,
   PRACTICE: 4,
 }
-
-export type ObligationType = "OBLIGATION" | "NO_OBLIGATION" | "CONDITIONAL" | "INFORMATIONAL"
 
 export interface RuleCandidate {
   id: string

@@ -1,15 +1,6 @@
 import { logger } from "@/lib/logger"
 import { db } from "@/lib/db"
-import { getUsageThisMonth } from "./usage-tracking"
-
-/**
- * Rate limit configuration per subscription plan
- */
-export type AIOperation =
-  | "ocr_receipt"
-  | "extract_receipt"
-  | "extract_invoice"
-  | "categorize_expense"
+import { getUsageThisMonth, type AIOperation } from "./usage-tracking"
 
 /**
  * Rate limits per plan (monthly limits)

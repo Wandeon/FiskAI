@@ -4,6 +4,17 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useCapabilities } from "@/hooks/use-capabilities"
 import Link from "next/link"
+import type { ModuleKey } from "@/lib/modules/definitions"
+
+// Map component module names to actual ModuleKey values
+const moduleKeyMap: Record<string, ModuleKey | null> = {
+  invoicing: "invoicing",
+  eInvoicing: "e-invoicing",
+  expenses: "expenses",
+  banking: "banking",
+  reports: "reports-basic",
+  settings: null, // Settings is always available
+}
 
 export function FeatureGuard({
   module,
@@ -14,7 +25,10 @@ export function FeatureGuard({
 }) {
   const capabilities = useCapabilities()
   const router = useRouter()
-  const enabled = capabilities.modules[module]?.enabled !== false
+
+  // Map to actual module key, or treat as always enabled if null
+  const moduleKey = moduleKeyMap[module]
+  const enabled = moduleKey === null ? true : capabilities.modules[moduleKey]?.enabled !== false
 
   useEffect(() => {
     if (!enabled) {
