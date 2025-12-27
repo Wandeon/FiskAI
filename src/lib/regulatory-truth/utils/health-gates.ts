@@ -362,7 +362,7 @@ async function checkReleaseBlockedAttempts(): Promise<HealthGate> {
   // Count releaser runs that failed due to unapproved T0/T1 rules
   const blockedReleases = await db.agentRun.count({
     where: {
-      agentType: "releaser",
+      agentType: "RELEASER",
       status: "FAILED",
       createdAt: { gte: cutoff },
       OR: [
@@ -374,7 +374,7 @@ async function checkReleaseBlockedAttempts(): Promise<HealthGate> {
 
   const totalReleaseAttempts = await db.agentRun.count({
     where: {
-      agentType: "releaser",
+      agentType: "RELEASER",
       createdAt: { gte: cutoff },
     },
   })

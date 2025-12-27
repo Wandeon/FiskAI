@@ -36,3 +36,59 @@ declare module "mime-types" {
   export const types: Record<string, string>
   export const extensions: Record<string, string[]>
 }
+
+declare module "word-extractor" {
+  interface Document {
+    getBody(): string
+    getHeaders(): string[]
+    getFooters(): string[]
+    getAnnotations(): string[]
+  }
+
+  class WordExtractor {
+    extract(filePath: string | Buffer): Promise<Document>
+  }
+
+  export = WordExtractor
+}
+
+declare module "express" {
+  import { Server } from "http"
+
+  interface Request {
+    body: unknown
+    params: Record<string, string>
+    query: Record<string, string | string[] | undefined>
+    headers: Record<string, string | string[] | undefined>
+    method: string
+    url: string
+    path: string
+  }
+
+  interface Response {
+    status(code: number): Response
+    json(body: unknown): Response
+    send(body: unknown): Response
+    end(): void
+    set(field: string, value: string): Response
+  }
+
+  type NextFunction = (err?: unknown) => void
+  type RequestHandler = (req: Request, res: Response, next: NextFunction) => void | Promise<void>
+
+  interface Router {
+    use(...handlers: RequestHandler[]): Router
+    get(path: string, ...handlers: RequestHandler[]): Router
+    post(path: string, ...handlers: RequestHandler[]): Router
+    put(path: string, ...handlers: RequestHandler[]): Router
+    delete(path: string, ...handlers: RequestHandler[]): Router
+  }
+
+  interface Application extends Router {
+    listen(port: number, callback?: () => void): Server
+  }
+
+  function express(): Application
+
+  export = express
+}

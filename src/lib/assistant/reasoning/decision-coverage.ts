@@ -38,7 +38,7 @@ export interface ConditionalBranch {
 /**
  * Terminal outcome types
  */
-export type TerminalOutcome = "ANSWER" | "CONDITIONAL_ANSWER" | "REFUSAL"
+export type TerminalOutcome = "ANSWER" | "CONDITIONAL_ANSWER" | "REFUSAL" | "ERROR"
 
 /**
  * Result of decision coverage calculation

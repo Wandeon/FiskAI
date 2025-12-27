@@ -1,5 +1,8 @@
 import { db } from "@/lib/db"
-import { Decimal } from "@prisma/client/runtime/library"
+import { Prisma } from "@prisma/client"
+
+// Decimal is now accessed via Prisma namespace
+type Decimal = Prisma.Decimal
 
 export type KprRow = {
   date: Date | null

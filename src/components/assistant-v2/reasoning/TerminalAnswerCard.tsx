@@ -5,11 +5,35 @@ import { cn } from "@/lib/utils"
 import { AlertTriangle, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import type {
   TerminalOutcome,
-  FinalAnswerPayload,
-  QualifiedAnswerPayload,
+  AnswerPayload,
+  ConditionalAnswerPayload,
   RefusalPayload,
   ErrorPayload,
 } from "@/lib/assistant/reasoning"
+
+// Extended answer payload for UI with additional fields
+interface FinalAnswerPayload extends AnswerPayload {
+  asOfDate?: string
+  structured?: {
+    obligations?: string[]
+    deadlines?: string[]
+    thresholds?: string[]
+  }
+  citations?: Array<{ title: string; quote: string; url: string }>
+}
+
+// Extended conditional answer payload for UI
+interface QualifiedAnswerPayload extends Omit<ConditionalAnswerPayload, "branches"> {
+  answerHr: string
+  conflictWarnings: Array<{
+    description: string
+    sourceA: { name: string; says: string }
+    sourceB: { name: string; says: string }
+    practicalResolution?: string
+  }>
+  caveats: string[]
+  citations: Array<{ title: string; quote: string; url: string }>
+}
 
 interface TerminalAnswerCardProps {
   outcome: TerminalOutcome
@@ -21,7 +45,7 @@ export function TerminalAnswerCard({ outcome, payload, className }: TerminalAnsw
   switch (outcome) {
     case "ANSWER":
       return <AnswerCard payload={payload as FinalAnswerPayload} className={className} />
-    case "QUALIFIED_ANSWER":
+    case "CONDITIONAL_ANSWER":
       return (
         <QualifiedAnswerCard payload={payload as QualifiedAnswerPayload} className={className} />
       )
@@ -131,21 +155,19 @@ function RefusalCard({ payload, className }: { payload: RefusalPayload; classNam
 
       {/* Content */}
       <div className="p-4">
-        <p className="text-gray-700">{payload.message}</p>
+        <p className="text-gray-700">{payload.messageHr}</p>
 
-        {/* Related topics */}
-        {payload.relatedTopics && payload.relatedTopics.length > 0 && (
+        {/* Next steps */}
+        {payload.nextSteps && payload.nextSteps.length > 0 && (
           <div className="mt-4">
-            <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">
-              Možda ste mislili na
-            </h4>
+            <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Sljedeći koraci</h4>
             <div className="flex flex-wrap gap-2">
-              {payload.relatedTopics.map((topic, i) => (
+              {payload.nextSteps.map((step, i) => (
                 <button
                   key={i}
                   className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-full hover:bg-blue-100 transition-colors"
                 >
-                  {topic}
+                  {step.promptHr || step.prompt || step.type}
                 </button>
               ))}
             </div>
@@ -171,7 +193,7 @@ function ErrorCard({ payload, className }: { payload: ErrorPayload; className?: 
       <div className="p-4">
         <p className="text-gray-700">{payload.message}</p>
 
-        {payload.retriable && (
+        {payload.retryable && (
           <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
             Pokušaj ponovo
           </button>

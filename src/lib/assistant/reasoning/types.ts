@@ -23,6 +23,29 @@ export type ReasoningStage =
   | "ERROR"
 
 /**
+ * Array of all reasoning stages in order
+ */
+export const REASONING_STAGES: ReasoningStage[] = [
+  "QUESTION_INTAKE",
+  "CONTEXT_RESOLUTION",
+  "CLARIFICATION",
+  "SOURCES",
+  "RETRIEVAL",
+  "APPLICABILITY",
+  "ANALYSIS",
+  "CONFIDENCE",
+  "ANSWER",
+  "CONDITIONAL_ANSWER",
+  "REFUSAL",
+  "ERROR",
+]
+
+/**
+ * Risk tier classification
+ */
+export type RiskTier = "T1" | "T2" | "T3"
+
+/**
  * Event status
  */
 export type EventStatus = "started" | "progress" | "checkpoint" | "complete" | "awaiting_input"
