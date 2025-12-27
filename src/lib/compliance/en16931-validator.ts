@@ -19,8 +19,9 @@ export interface ComplianceResult {
 export interface EN16931Invoice extends EInvoice {
   lines: EInvoiceLine[]
   // Optional relation data (when included in query)
-  company?: { oib?: string; name?: string }
-  buyer?: { oib?: string; name?: string }
+  company?: { oib?: string | null; name?: string } | null
+  buyer?: { oib?: string | null; name?: string } | null
+  seller?: { oib?: string | null; name?: string } | null
 }
 
 // Helper to safely convert Decimal to number for comparisons

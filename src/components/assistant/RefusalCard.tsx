@@ -29,7 +29,7 @@ export function RefusalCard({
   className,
   onNextStepClick,
 }: RefusalCardProps) {
-  const { code, messageHr, messageEn, nextSteps, context } = payload
+  const { code, messageHr, messageEn, nextSteps = [], context } = payload
 
   // Determine severity from code
   const severity =
