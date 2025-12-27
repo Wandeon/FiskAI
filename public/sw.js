@@ -22,6 +22,18 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return
 
   const url = new URL(event.request.url)
+
+  // Skip authenticated app subdomains entirely (app.fiskai.hr, staff.fiskai.hr, admin.fiskai.hr)
+  const hostname = url.hostname
+  if (
+    hostname.startsWith("app.") ||
+    hostname.startsWith("staff.") ||
+    hostname.startsWith("admin.")
+  ) {
+    return
+  }
+
+  // Skip API and authenticated route paths on main domain
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/app/") ||

@@ -2,6 +2,15 @@ import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Suspense } from "react"
 import { Toaster } from "sonner"
+import { AnalyticsProvider } from "@/components/providers/analytics-provider"
+import { OfflineIndicator } from "@/components/layout/offline-indicator"
+import { JsonLd } from "@/components/seo/JsonLd"
+import {
+  generateOrganizationSchema,
+  generateWebSiteSchema,
+  generateSoftwareApplicationSchema,
+} from "@/lib/schema/generators"
+import "./globals.css"
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
@@ -14,15 +23,6 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
   variable: "--font-jetbrains",
 })
-import { AnalyticsProvider } from "@/components/providers/analytics-provider"
-import { OfflineIndicator } from "@/components/layout/offline-indicator"
-import { JsonLd } from "@/components/seo/JsonLd"
-import {
-  generateOrganizationSchema,
-  generateWebSiteSchema,
-  generateSoftwareApplicationSchema,
-} from "@/lib/schema/generators"
-import "./globals.css"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://fiskai.hr"
 

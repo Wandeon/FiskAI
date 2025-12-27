@@ -32,9 +32,14 @@ export async function verifyTurnstileToken(token: string, ip: string): Promise<b
   const secretKey = process.env.TURNSTILE_SECRET_KEY
 
   if (!secretKey) {
-    console.warn("TURNSTILE_SECRET_KEY not configured")
-    // Fail open in development to allow testing without Turnstile
-    return true
+    // Only fail open in development to allow testing without Turnstile
+    // In production, fail closed for security
+    if (process.env.NODE_ENV === "development") {
+      console.warn("TURNSTILE_SECRET_KEY not configured - allowing in development")
+      return true
+    }
+    console.error("TURNSTILE_SECRET_KEY not configured in production - rejecting request")
+    return false
   }
 
   try {
