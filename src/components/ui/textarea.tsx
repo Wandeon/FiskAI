@@ -1,30 +1,36 @@
-import { forwardRef, TextareaHTMLAttributes } from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  error?: string | boolean;
 }
 
-const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, id, ...props }, ref) => {
-    const errorId = error && id ? `${id}-error` : undefined
-
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, error, ...props }, ref) => {
     return (
       <textarea
-        id={id}
-        aria-invalid={error ? "true" : undefined}
-        aria-describedby={errorId}
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-base md:text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          error && "border-red-500 focus-visible:ring-red-500",
+          // Base styles
+          "flex min-h-[80px] w-full rounded-md border px-3 py-2 text-body-base",
+          "bg-surface text-foreground placeholder:text-muted",
+          "transition-colors resize-none",
+          // Focus styles
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2",
+          // Disabled styles
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          // Default border
+          !error && "border-border",
+          // Error state
+          error && "border-danger focus-visible:ring-danger",
           className
         )}
         ref={ref}
         {...props}
       />
-    )
+    );
   }
-)
-Textarea.displayName = "Textarea"
+);
+Textarea.displayName = "Textarea";
 
-export { Textarea }
+export { Textarea };
