@@ -188,6 +188,7 @@
     "axe-core": "^4.11.0",
     "eslint": "^8",
     "eslint-config-next": "^15.5.0",
+    "eslint-plugin-fisk-design-system": "file:src/design-system/eslint",
     "husky": "^9.1.7",
     "jest-axe": "^10.0.0",
     "lint-staged": "^16.2.7",

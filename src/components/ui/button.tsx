@@ -11,9 +11,15 @@ const buttonVariants = cva(
       variant: {
         primary:
           "bg-interactive text-inverse hover:bg-interactive-hover",
+        // Backward compatibility alias for primary
+        default:
+          "bg-interactive text-inverse hover:bg-interactive-hover",
         secondary:
           "bg-surface border border-border text-foreground hover:bg-surface-1",
         danger:
+          "bg-danger text-inverse hover:bg-danger/90",
+        // Backward compatibility alias for danger
+        destructive:
           "bg-danger text-inverse hover:bg-danger/90",
         ghost:
           "text-foreground hover:bg-surface-1",

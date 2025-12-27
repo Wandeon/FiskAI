@@ -18,6 +18,9 @@ const badgeVariants = cva(
           "bg-warning-bg text-warning-text border border-warning-border",
         danger:
           "bg-danger-bg text-danger-text border border-danger-border",
+        // Backward compatibility alias for danger
+        destructive:
+          "bg-danger-bg text-danger-text border border-danger-border",
         info:
           "bg-info-bg text-info-text border border-info-border",
         outline:
