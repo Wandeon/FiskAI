@@ -1,7 +1,10 @@
-import type { Config } from "tailwindcss"
-import { designTokens } from "./src/styles/tokens"
-import tailwindcssAnimate from "tailwindcss-animate"
-import tailwindcssTypography from "@tailwindcss/typography"
+import type { Config } from "tailwindcss";
+import { spacing, radius, shadows, zIndex } from "./src/design-system/tokens/layout";
+import { fonts, textStyles } from "./src/design-system/tokens/typography";
+import { categorical } from "./src/design-system/tokens/data-vis";
+import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssTypography from "@tailwindcss/typography";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   darkMode: "class",
@@ -11,66 +14,144 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    // ═══════════════════════════════════════════════════════════════
+    // OVERRIDE (not extend) - Removes default Tailwind colors
+    // This makes blue-600, red-500, etc. unavailable
+    // ═══════════════════════════════════════════════════════════════
+
+    spacing: spacing,
+    borderRadius: radius,
+    zIndex: zIndex,
+    boxShadow: shadows,
+
+    fontFamily: {
+      sans: fonts.sans,
+      heading: fonts.heading,
+      mono: fonts.mono,
+    },
+
+    colors: {
+      // Utility colors (always needed)
+      transparent: "transparent",
+      current: "currentColor",
+      white: "#ffffff",
+      black: "#000000",
+
+      // ─────────────────────────────────────────────────────────────
+      // SURFACE LADDER
+      // ─────────────────────────────────────────────────────────────
+      base: "var(--surface-base)",
+      surface: {
+        DEFAULT: "var(--surface-0)",
+        1: "var(--surface-1)",
+        2: "var(--surface-2)",
+        elevated: "var(--surface-elevated)",
+      },
+      overlay: "var(--overlay)",
+
+      // ─────────────────────────────────────────────────────────────
+      // TEXT COLORS
+      // ─────────────────────────────────────────────────────────────
+      foreground: "var(--text-primary)",
+      secondary: "var(--text-secondary)",
+      tertiary: "var(--text-tertiary)",
+      muted: "var(--text-disabled)",
+      inverse: "var(--text-inverse)",
+      link: "var(--text-link)",
+
+      // ─────────────────────────────────────────────────────────────
+      // INTERACTIVE COLORS
+      // ─────────────────────────────────────────────────────────────
+      interactive: {
+        DEFAULT: "var(--interactive-primary)",
+        hover: "var(--interactive-primary-hover)",
+        secondary: "var(--interactive-secondary)",
+        "secondary-hover": "var(--interactive-secondary-hover)",
+        ghost: "var(--interactive-ghost)",
+        "ghost-hover": "var(--interactive-ghost-hover)",
+      },
+
+      // ─────────────────────────────────────────────────────────────
+      // BORDER COLORS
+      // ─────────────────────────────────────────────────────────────
+      border: {
+        DEFAULT: "var(--border-default)",
+        subtle: "var(--border-subtle)",
+        strong: "var(--border-strong)",
+        focus: "var(--border-focus)",
+      },
+
+      // ─────────────────────────────────────────────────────────────
+      // STATUS COLORS (bundled bg/text/border)
+      // ─────────────────────────────────────────────────────────────
+      success: {
+        DEFAULT: "var(--success)",
+        bg: "var(--success-bg)",
+        text: "var(--success-text)",
+        border: "var(--success-border)",
+        icon: "var(--success-icon)",
+      },
+      warning: {
+        DEFAULT: "var(--warning)",
+        bg: "var(--warning-bg)",
+        text: "var(--warning-text)",
+        border: "var(--warning-border)",
+        icon: "var(--warning-icon)",
+      },
+      danger: {
+        DEFAULT: "var(--danger)",
+        bg: "var(--danger-bg)",
+        text: "var(--danger-text)",
+        border: "var(--danger-border)",
+        icon: "var(--danger-icon)",
+      },
+      info: {
+        DEFAULT: "var(--info)",
+        bg: "var(--info-bg)",
+        text: "var(--info-text)",
+        border: "var(--info-border)",
+        icon: "var(--info-icon)",
+      },
+
+      // ─────────────────────────────────────────────────────────────
+      // ACCENT (Marketing)
+      // ─────────────────────────────────────────────────────────────
+      accent: {
+        DEFAULT: "var(--accent)",
+        light: "var(--accent-light)",
+        dark: "var(--accent-dark)",
+      },
+
+      // ─────────────────────────────────────────────────────────────
+      // CHART COLORS (Data Visualization)
+      // ─────────────────────────────────────────────────────────────
+      chart: {
+        1: "var(--chart-series-1)",
+        2: "var(--chart-series-2)",
+        3: "var(--chart-series-3)",
+        4: "var(--chart-series-4)",
+        5: "var(--chart-series-5)",
+        6: "var(--chart-series-6)",
+        7: "var(--chart-series-7)",
+        8: "var(--chart-series-8)",
+        grid: "var(--chart-grid)",
+        axis: "var(--chart-axis)",
+      },
+    },
+
     extend: {
-      colors: {
-        brand: designTokens.colors.brand,
-        neutral: designTokens.colors.neutrals,
-        surface: {
-          DEFAULT: "var(--surface)",
-          secondary: "var(--surface-secondary)",
-          elevated: "var(--surface-elevated)",
-        },
-        // Semantic colors
-        success: {
-          50: "#f0fdf4",
-          500: "#22c55e",
-          600: "#16a34a",
-        },
-        warning: {
-          50: "#fffbeb",
-          100: "#fef3c7",
-          500: "#f59e0b",
-          600: "#d97706",
-          700: "#b45309",
-        },
-        danger: {
-          50: "#fef2f2",
-          500: "#ef4444",
-          600: "#dc2626",
-        },
-      },
-      borderRadius: {
-        card: designTokens.radii.card,
-        button: designTokens.radii.md,
-        pill: designTokens.radii.pill,
-      },
-      boxShadow: {
-        card: designTokens.shadows.card,
-        "card-hover": designTokens.shadows.cardHover,
-        elevated: designTokens.shadows.elevated,
-        glow: designTokens.shadows.glow,
-      },
-      spacing: {
-        "18": designTokens.spacing["18"],
-        "22": designTokens.spacing["22"],
-        "88": designTokens.spacing["88"],
-      },
-      fontSize: {
-        xxs: ["0.625rem", { lineHeight: "0.875rem" }],
-      },
-      fontFamily: {
-        sans: designTokens.typography.fontFamily,
-        heading: designTokens.typography.headingFont,
-      },
+      // ─────────────────────────────────────────────────────────────
+      // ANIMATIONS (keep existing)
+      // ─────────────────────────────────────────────────────────────
       animation: {
         "slide-in": "slideIn 0.2s ease-out",
         "slide-in-right": "slideInRight 0.2s ease-out",
         "slide-out": "slideOut 0.15s ease-in",
-        "fade-in": "fadeIn 0.15s ease-out",
-        "fade-out": "fadeOut 0.1s ease-in",
-        "scale-in": "scaleIn 0.15s ease-out",
-        "scale-out": "scaleOut 0.1s ease-in",
-        "bounce-in": "bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        "fade-in": "fadeIn var(--duration-normal) var(--ease-out)",
+        "fade-out": "fadeOut var(--duration-fast) var(--ease-in)",
+        "scale-in": "scaleIn var(--duration-normal) var(--ease-out)",
+        "scale-out": "scaleOut var(--duration-fast) var(--ease-in)",
+        "bounce-in": "bounceIn 0.3s var(--ease-spring)",
         "pulse-subtle": "pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "accordion-down": "accordionDown 0.2s ease-out",
         "accordion-up": "accordionUp 0.2s ease-out",
@@ -126,44 +207,44 @@ const config: Config = {
       },
       transitionDuration: {
         "0": "0ms",
-        "150": "150ms",
-        "200": "200ms",
-        "300": "300ms",
+        "fast": "var(--duration-fast)",
+        "normal": "var(--duration-normal)",
+        "slow": "var(--duration-slow)",
       },
       transitionTimingFunction: {
-        "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        "bounce-in": "var(--ease-spring)",
+        smooth: "var(--ease-in-out)",
       },
       typography: {
         DEFAULT: {
           css: {
-            color: "var(--foreground)",
+            color: "var(--text-primary)",
             a: {
-              color: "var(--accent)",
+              color: "var(--text-link)",
               textDecoration: "underline",
               textUnderlineOffset: "4px",
               fontWeight: "600",
             },
-            strong: { color: "var(--foreground)" },
-            h1: { fontFamily: "var(--font-heading)" },
-            h2: { fontFamily: "var(--font-heading)" },
-            h3: { fontFamily: "var(--font-heading)" },
-            h4: { fontFamily: "var(--font-heading)" },
+            strong: { color: "var(--text-primary)" },
+            h1: { fontFamily: fonts.heading },
+            h2: { fontFamily: fonts.heading },
+            h3: { fontFamily: fonts.heading },
+            h4: { fontFamily: fonts.heading },
             code: {
-              color: "var(--foreground)",
-              backgroundColor: "var(--surface-secondary)",
+              color: "var(--text-primary)",
+              backgroundColor: "var(--surface-1)",
               padding: "0.15rem 0.35rem",
-              borderRadius: "0.375rem",
-              border: "1px solid var(--border)",
+              borderRadius: radius.sm,
+              border: "1px solid var(--border-default)",
               fontWeight: "600",
             },
             "code::before": { content: "''" },
             "code::after": { content: "''" },
             pre: {
-              color: "var(--foreground)",
-              backgroundColor: "var(--surface-secondary)",
-              border: "1px solid var(--border)",
-              borderRadius: "0.75rem",
+              color: "var(--text-primary)",
+              backgroundColor: "var(--surface-1)",
+              border: "1px solid var(--border-default)",
+              borderRadius: radius.lg,
             },
             "pre code": {
               backgroundColor: "transparent",
@@ -172,19 +253,75 @@ const config: Config = {
               fontWeight: "500",
             },
             blockquote: {
-              borderLeftColor: "var(--border)",
-              color: "var(--foreground)",
+              borderLeftColor: "var(--border-default)",
+              color: "var(--text-primary)",
             },
-            hr: { borderColor: "var(--border)" },
-            "ul > li::marker": { color: "var(--muted)" },
-            "ol > li::marker": { color: "var(--muted)" },
-            thead: { borderBottomColor: "var(--border)" },
-            "tbody tr": { borderBottomColor: "var(--border)" },
+            hr: { borderColor: "var(--border-default)" },
+            "ul > li::marker": { color: "var(--text-disabled)" },
+            "ol > li::marker": { color: "var(--text-disabled)" },
+            thead: { borderBottomColor: "var(--border-default)" },
+            "tbody tr": { borderBottomColor: "var(--border-default)" },
           },
         },
       },
     },
   },
-  plugins: [tailwindcssAnimate, tailwindcssTypography],
-}
-export default config
+  plugins: [
+    tailwindcssAnimate,
+    tailwindcssTypography,
+
+    // ═══════════════════════════════════════════════════════════════
+    // TYPOGRAPHY PLUGIN - Pre-composed text styles
+    // ═══════════════════════════════════════════════════════════════
+    plugin(function({ addComponents }) {
+      const typographyComponents: Record<string, Record<string, string>> = {};
+
+      for (const [name, style] of Object.entries(textStyles)) {
+        const componentClass = `.text-${name}`;
+        typographyComponents[componentClass] = {
+          fontSize: style.fontSize,
+          lineHeight: style.lineHeight,
+          fontWeight: style.fontWeight,
+          ...(style.letterSpacing && { letterSpacing: style.letterSpacing }),
+          ...(style.fontFamily && { fontFamily: style.fontFamily }),
+        };
+      }
+
+      addComponents(typographyComponents);
+    }),
+
+    // ═══════════════════════════════════════════════════════════════
+    // UTILITY CLASSES
+    // ═══════════════════════════════════════════════════════════════
+    plugin(function({ addUtilities }) {
+      addUtilities({
+        // Focus ring
+        ".focus-ring": {
+          "@apply focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2": {},
+        },
+        // Card styles
+        ".card": {
+          backgroundColor: "var(--surface-0)",
+          borderRadius: radius.lg,
+          border: "1px solid var(--border-default)",
+          boxShadow: shadows.card,
+        },
+        ".card-hover": {
+          transition: "box-shadow 200ms, transform 200ms",
+          "&:hover": {
+            boxShadow: shadows.cardHover,
+            transform: "translateY(-2px)",
+          },
+        },
+        // Glass effect
+        ".glass": {
+          backgroundColor: "rgba(255, 255, 255, 0.08)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+        },
+      });
+    }),
+  ],
+};
+
+export default config;
