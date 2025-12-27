@@ -1,6 +1,19 @@
 import type { Metadata, Viewport } from "next"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Suspense } from "react"
 import { Toaster } from "sonner"
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--font-inter",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jetbrains",
+})
 import { AnalyticsProvider } from "@/components/providers/analytics-provider"
 import { OfflineIndicator } from "@/components/layout/offline-indicator"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -122,7 +135,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="hr" className="dark">
+    <html lang="hr" className={`${inter.variable} ${jetbrainsMono.variable} dark`}>
       <head>
         {/* Resource hints: Preconnect to third-party origins for faster connection establishment */}
         <link rel="preconnect" href="https://eu.posthog.com" crossOrigin="anonymous" />
