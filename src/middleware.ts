@@ -8,6 +8,13 @@ import {
   canAccessSubdomain,
 } from "@/lib/middleware/subdomain"
 import { getCacheHeaders } from "@/lib/cache-headers"
+import {
+  detectAIBot,
+  shouldSkipPath,
+  shouldTrackCrawl,
+  buildCrawlEvent,
+  trackCrawlerHit,
+} from "@/lib/ai-crawler"
 
 // Routes to skip (API, static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
@@ -50,6 +57,27 @@ export async function middleware(request: NextRequest) {
     },
     "Incoming request"
   )
+
+  // AI Crawler Detection - fire and forget (non-blocking)
+  const userAgent = request.headers.get("user-agent") || ""
+  if (!shouldSkipPath(pathname)) {
+    const botName = detectAIBot(userAgent)
+    if (botName && shouldTrackCrawl(botName, pathname)) {
+      const crawlEvent = buildCrawlEvent(botName, pathname, request.method)
+      // Fire and forget - don't await
+      trackCrawlerHit(crawlEvent).catch(() => {
+        // Silently ignore errors
+      })
+      logger.debug(
+        {
+          requestId,
+          botName,
+          path: pathname,
+        },
+        "AI crawler detected"
+      )
+    }
+  }
 
   // Skip static files and API routes
   if (shouldSkipRoute(pathname)) {
