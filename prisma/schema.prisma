@@ -1590,6 +1590,7 @@ enum AgentType {
   ASSET_EXTRACTOR
   TRANSITIONAL_EXTRACTOR
   QUERY_CLASSIFIER
+  COMPARISON_EXTRACTOR
 }
 
 enum RuleStatus {
@@ -1830,6 +1831,7 @@ model Evidence {
   assets          RegulatoryAsset[]
   transitionalProvisions TransitionalProvision[]
   coverageReport    CoverageReport?
+  comparisonMatrices ComparisonMatrix[]
 
   @@unique([url, contentHash])
   @@index([sourceId])
@@ -2618,4 +2620,37 @@ model CoverageReport {
   @@index([coverageScore])
   @@index([isComplete])
   @@index([createdAt])
+}
+
+// ============================================================================
+// SHAPE 8: COMPARISON MATRIX (Strategic Comparisons)
+// ============================================================================
+
+model ComparisonMatrix {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  titleHr     String
+  titleEn     String?
+
+  // Contextual Anchor for retrieval
+  appliesWhen String?  @db.Text  // "IF user_type == 'freelancer' OR revenue < 40000"
+  domainTags  String[]           // ["STARTING_BUSINESS", "TAX_REGIME"]
+
+  // Structured data (JSON for flexibility)
+  options     Json     // ComparisonOption[]
+  criteria    Json     // ComparisonCriterion[]
+  cells       Json     // ComparisonCell[]
+
+  // Optional conclusion
+  conclusion  String?  @db.Text
+
+  // Provenance
+  evidenceId  String?
+  evidence    Evidence? @relation(fields: [evidenceId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([domainTags])
+  @@index([evidenceId])
 }
