@@ -12,7 +12,7 @@ const feedbackSchema = z.object({
   entityId: z.string().min(1),
   operation: z.enum(["ocr_receipt", "ocr_invoice", "category_suggestion"]),
   feedback: z.enum(["correct", "incorrect", "partial"]),
-  correction: z.record(z.unknown()).optional(),
+  correction: z.record(z.string(), z.unknown()).optional(),
   notes: z.string().optional(),
 })
 

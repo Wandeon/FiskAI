@@ -205,6 +205,45 @@ export interface UserContext {
 }
 
 /**
+ * User context snapshot for audit logging
+ */
+export interface UserContextSnapshot {
+  assumedDefaults: string[]
+  resolvedContext?: UserContext
+}
+
+/**
+ * Terminal outcome type
+ */
+export type TerminalOutcome = "ANSWER" | "CONDITIONAL_ANSWER" | "REFUSAL" | "ERROR"
+
+/**
+ * Check if an event is terminal
+ */
+export function isTerminal(event: ReasoningEvent): boolean {
+  return ["ANSWER", "CONDITIONAL_ANSWER", "REFUSAL", "ERROR"].includes(event.stage)
+}
+
+/**
+ * Get terminal outcome from event
+ */
+export function getTerminalOutcome(event: ReasoningEvent): TerminalOutcome | null {
+  if (isTerminal(event)) {
+    return event.stage as TerminalOutcome
+  }
+  return null
+}
+
+/**
+ * Conflicts payload for analysis stage
+ */
+export interface ConflictsPayload {
+  conflictId: string
+  ruleIds: string[]
+  resolution?: string
+}
+
+/**
  * Helper to create event ID
  */
 export function createEventId(requestId: string, seq: number): string {
