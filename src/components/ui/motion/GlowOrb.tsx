@@ -32,7 +32,7 @@ const animationVariants = {
     transition: {
       duration: 8,
       repeat: Infinity,
-      ease: "easeInOut",
+      ease: "easeInOut" as const,
     },
   },
   float: {
@@ -43,7 +43,7 @@ const animationVariants = {
     transition: {
       duration: 10,
       repeat: Infinity,
-      ease: "easeInOut",
+      ease: "easeInOut" as const,
     },
   },
   drift: {
@@ -54,7 +54,7 @@ const animationVariants = {
     transition: {
       duration: 12,
       repeat: Infinity,
-      ease: "easeInOut",
+      ease: "easeInOut" as const,
     },
   },
 }

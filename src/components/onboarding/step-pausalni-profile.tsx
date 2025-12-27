@@ -101,8 +101,18 @@ export function StepPausalniProfile() {
     setIsSaving(true)
     try {
       await saveOnboardingData({
-        ...data,
-        hasCompletedOnboarding: true,
+        name: data.name!,
+        oib: data.oib!,
+        legalForm: data.legalForm!,
+        competence: data.competence,
+        address: data.address!,
+        postalCode: data.postalCode!,
+        city: data.city!,
+        country: data.country!,
+        email: data.email!,
+        phone: data.phone || undefined,
+        iban: data.iban!,
+        isVatPayer: data.isVatPayer ?? false,
       })
       router.push("/dashboard")
     } catch (error) {

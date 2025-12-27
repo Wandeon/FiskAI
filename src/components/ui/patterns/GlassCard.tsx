@@ -37,8 +37,16 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
 
     // If hover is enabled, wrap in HoverScale
     if (hover) {
+      // Extract only the props that HoverScale accepts
+      const { onClick, onMouseEnter, onMouseLeave, ...restProps } = props
       return (
-        <HoverScale ref={ref} className={cardClasses} {...props}>
+        <HoverScale
+          ref={ref}
+          className={cardClasses}
+          onClick={onClick}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
           {content}
         </HoverScale>
       )

@@ -212,7 +212,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <Fiskalizacija2Wizard variant="compact" />
+                <Fiskalizacija2Wizard />
               </motion.div>
 
               <motion.div
@@ -244,7 +244,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
       <MiniAssistant />
 
       {/* FEATURE CARDS */}
-      <Reveal asChild>
+      <Reveal>
         <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <Stagger className="grid gap-6 md:grid-cols-3">
             <StaggerItem>
@@ -390,7 +390,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
       </section>
 
       {/* Guides Preview Section */}
-      <Reveal asChild>
+      <Reveal>
         <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <div className="mb-10 text-center">
             <h2 className="text-display text-3xl font-semibold">Vodiči za poslovanje</h2>

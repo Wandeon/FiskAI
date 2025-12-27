@@ -91,7 +91,9 @@ function FeaturePreview({
   const preview = previews[index]
   const activeMedia = media?.[index] ?? null
   const Icon = preview.icon
-  const shellTransition = reduce ? { duration: 0 } : { duration: 0.35, ease: [0.16, 1, 0.3, 1] }
+  const shellTransition = reduce
+    ? { duration: 0 }
+    : { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-card">

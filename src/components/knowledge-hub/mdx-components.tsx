@@ -49,7 +49,10 @@ function nodeToText(node: ReactNode): string {
   if (node == null) return ""
   if (typeof node === "string" || typeof node === "number") return String(node)
   if (Array.isArray(node)) return node.map(nodeToText).join("")
-  if (isValidElement(node)) return nodeToText(node.props?.children)
+  if (isValidElement(node)) {
+    const props = node.props as { children?: ReactNode }
+    return nodeToText(props.children)
+  }
   return ""
 }
 

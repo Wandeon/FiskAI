@@ -1,25 +1,25 @@
 // src/components/auth/AnimatedButton.tsx
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
-import { forwardRef, ButtonHTMLAttributes } from "react"
+import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion"
+import { forwardRef } from "react"
 import { cn } from "@/lib/utils"
 
 type ButtonState = "idle" | "loading" | "success" | "error"
 
-interface AnimatedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// Omit conflicting event types from HTML button attributes
+type MotionButtonProps = Omit<
+  HTMLMotionProps<"button">,
+  "onAnimationStart" | "onDragStart" | "onDragEnd" | "onDrag"
+>
+
+interface AnimatedButtonProps extends MotionButtonProps {
   state?: ButtonState
   children: React.ReactNode
 }
 
 const CheckIcon = () => (
-  <svg
-    className="h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={3}
-  >
+  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
     <motion.path
       initial={{ pathLength: 0 }}
       animate={{ pathLength: 1 }}
