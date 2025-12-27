@@ -77,14 +77,21 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Format dates as YYYY-MM-DD strings for drizzle date columns
+    const formattedPdvIdSince =
+      hasPdvId && pdvIdSince ? new Date(pdvIdSince).toISOString().split("T")[0] : null
+    const formattedHokMemberSince = hokMemberSince
+      ? new Date(hokMemberSince).toISOString().split("T")[0]
+      : null
+
     const updated = await drizzleDb
       .update(pausalniProfile)
       .set({
         hasPdvId: hasPdvId ?? false,
         pdvId: hasPdvId ? pdvId : null,
-        pdvIdSince: hasPdvId && pdvIdSince ? new Date(pdvIdSince) : null,
+        pdvIdSince: formattedPdvIdSince,
         euActive: euActive ?? false,
-        hokMemberSince: hokMemberSince ? new Date(hokMemberSince) : null,
+        hokMemberSince: formattedHokMemberSince,
         tourismActivity: tourismActivity ?? false,
         updatedAt: new Date(),
       })
@@ -99,9 +106,9 @@ export async function PUT(request: NextRequest) {
           companyId: company.id,
           hasPdvId: hasPdvId ?? false,
           pdvId: hasPdvId ? pdvId : null,
-          pdvIdSince: hasPdvId && pdvIdSince ? new Date(pdvIdSince) : null,
+          pdvIdSince: formattedPdvIdSince,
           euActive: euActive ?? false,
-          hokMemberSince: hokMemberSince ? new Date(hokMemberSince) : null,
+          hokMemberSince: formattedHokMemberSince,
           tourismActivity: tourismActivity ?? false,
         })
         .returning()

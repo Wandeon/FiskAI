@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
-import { DocumentType } from "@prisma/client"
+import { DocumentType, Prisma } from "@prisma/client"
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
@@ -49,7 +49,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       where: { id },
       data: {
         status: "PENDING",
-        extractedData: null,
+        extractedData: Prisma.JsonNull,
       },
     })
 

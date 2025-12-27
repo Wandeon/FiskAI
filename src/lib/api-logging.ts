@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { runWithContext } from "./context"
 import { logger } from "./logger"
 
-type RouteHandler = (request: NextRequest) => Promise<Response>
+type RouteHandler<T = unknown> = (request: NextRequest, context: T) => Promise<Response>
 
 /**
  * Wraps an API route handler with logging context.
@@ -12,8 +12,8 @@ type RouteHandler = (request: NextRequest) => Promise<Response>
  * - Logs request completion with duration
  * - Logs errors with stack traces
  */
-export function withApiLogging(handler: RouteHandler): RouteHandler {
-  return async (request: NextRequest) => {
+export function withApiLogging<T = unknown>(handler: RouteHandler<T>): RouteHandler<T> {
+  return async (request: NextRequest, context: T) => {
     const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID()
     const startedAt = Date.now()
 
@@ -25,7 +25,7 @@ export function withApiLogging(handler: RouteHandler): RouteHandler {
       },
       async () => {
         try {
-          const response = await handler(request)
+          const response = await handler(request, context)
           const durationMs = Date.now() - startedAt
 
           logger.info(

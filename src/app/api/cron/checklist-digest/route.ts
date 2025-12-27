@@ -55,9 +55,9 @@ export async function GET(request: Request) {
         .limit(1)
 
       // Skip if user disabled email digest
-      const digestPref = prefs?.emailDigest || "weekly"
+      const digestPref = (prefs?.emailDigest || "weekly") as "daily" | "weekly" | "none"
       if (digestPref === "none") continue
-      if (!digestTypes.includes(digestPref)) continue
+      if (!digestTypes.includes(digestPref as "daily" | "weekly")) continue
 
       // Process each company the user manages
       for (const companyUser of user.companies) {
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
             react: ChecklistDigestEmail({
               userName: user.name || undefined,
               companyName: companyUser.company.name,
-              period: digestPref,
+              period: digestPref as "daily" | "weekly",
               items: pendingItems,
               completedCount,
               dashboardUrl: `${baseUrl}/dashboard`,

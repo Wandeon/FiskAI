@@ -61,17 +61,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Re-run the specified pass
     if (pass === 1) {
       // Pass 1: Classify & Write
-      const classification = await classifyNewsItem({
-        id: sourceItem.id,
-        title: sourceItem.originalTitle,
-        content: sourceItem.originalContent || "",
-        sourceUrl: sourceItem.sourceUrl,
-      })
+      const classification = await classifyNewsItem(sourceItem)
 
-      const article = await writeArticle({
-        item: sourceItem,
-        impact: classification.impact as "high" | "medium" | "low",
-      })
+      const article = await writeArticle(
+        sourceItem,
+        classification.impact as "high" | "medium" | "low"
+      )
 
       aiPasses.pass1 = {
         timestamp: new Date().toISOString(),
@@ -97,11 +92,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ error: "Cannot run Pass 2 without Pass 1" }, { status: 400 })
       }
 
-      const review = await reviewArticle({
-        id: post.id,
-        title: post.title,
-        content: post.content,
-      })
+      const review = await reviewArticle(
+        {
+          title: post.title || "",
+          content: post.content || "",
+        },
+        {
+          title: sourceItem.originalTitle || "",
+          content: sourceItem.originalContent || "",
+          url: sourceItem.sourceUrl || "",
+        }
+      )
 
       aiPasses.pass2 = {
         timestamp: new Date().toISOString(),
@@ -124,15 +125,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         )
       }
 
-      const rewrite = await rewriteArticle({
-        id: post.id,
-        draft: {
+      const rewrite = await rewriteArticle(
+        {
           title: aiPasses.pass1.title,
           content: aiPasses.pass1.content,
-          excerpt: post.excerpt || "",
         },
-        feedback: aiPasses.pass2,
-      })
+        aiPasses.pass2,
+        {
+          title: sourceItem.originalTitle || "",
+          content: sourceItem.originalContent || "",
+          url: sourceItem.sourceUrl || "",
+        }
+      )
 
       aiPasses.pass3 = {
         timestamp: new Date().toISOString(),

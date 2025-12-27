@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   const parsed = createAssignmentSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors }, { status: 400 })
+    return NextResponse.json({ error: parsed.error.issues }, { status: 400 })
   }
 
   const { staffId, companyId, notes } = parsed.data

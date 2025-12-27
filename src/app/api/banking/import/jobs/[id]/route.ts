@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { db } from "@/lib/db"
@@ -67,7 +68,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       pageCount,
       pagesVerified,
       pagesNeedsVision,
-      pagesFailed,
     },
   })
 }

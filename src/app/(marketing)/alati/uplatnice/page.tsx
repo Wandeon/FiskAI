@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 }
 
 export default function PaymentSlipsPage() {
-  const incomeCodeExample = Object.keys(POZIV_NA_BROJ_CODES.incomeTypes)[0]
+  const incomeCodes = Object.keys(POZIV_NA_BROJ_CODES.incomeTypes) as Array<
+    keyof typeof POZIV_NA_BROJ_CODES.incomeTypes
+  >
+  const incomeCodeExample = incomeCodes[0]
   const incomeCodeLabel = incomeCodeExample
     ? POZIV_NA_BROJ_CODES.incomeTypes[incomeCodeExample]
     : undefined
