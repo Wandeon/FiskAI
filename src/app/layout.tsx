@@ -71,8 +71,7 @@ export const metadata: Metadata = {
     // { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
     // apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
-  // TODO: Add site.webmanifest when PWA support is ready
-  // manifest: "/site.webmanifest",
+  manifest: "/site.webmanifest",
   openGraph: {
     type: "website",
     locale: "hr_HR",
