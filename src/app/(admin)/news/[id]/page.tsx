@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsPostSources, newsItems, newsCategories } from "@/lib/db/schema/news"
 import { eq } from "drizzle-orm"
-import PostEditorClient from "./PostEditorClient"
+import PostEditorClient from "@/components/admin/news/PostEditorClient"
 
 export const dynamic = "force-dynamic"
 

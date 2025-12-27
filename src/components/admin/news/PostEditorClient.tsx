@@ -123,7 +123,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
       {/* Left: Editor (2/3 width) */}
       <div className="lg:col-span-2 space-y-4">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card">
-          <h3 className="mb-4 text-lg font-semibold">Uredi sadržaj</h3>
+          <h3 className="mb-4 text-lg font-semibold">Uredi sadrzaj</h3>
 
           {/* Title */}
           <div className="mb-4">
@@ -256,7 +256,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
           {/* Content */}
           <div className="mb-4">
             <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">
-              Sadržaj (Markdown)
+              Sadrzaj (Markdown)
             </label>
             <textarea
               value={formData.content}
@@ -268,7 +268,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
 
           {/* Excerpt */}
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">Sažetak</label>
+            <label className="mb-1 block text-sm font-semibold text-[var(--muted)]">Sazetak</label>
             <textarea
               value={formData.excerpt}
               onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}

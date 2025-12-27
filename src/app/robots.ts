@@ -99,9 +99,6 @@ export default function robots(): MetadataRoute.Robots {
           "/admin",
           "/admin/*",
           "/admin-login",
-          "/admin-old",
-          "/admin-old/*",
-
           // API routes
           "/api",
           "/api/*",

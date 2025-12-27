@@ -73,12 +73,12 @@ export default async function AdminNewsPage() {
           <div className="text-sm font-semibold">Napomena (konfiguracija)</div>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--muted)]">
             {!cronConfigured && (
-              <li>`CRON_SECRET` nije postavljen — ručno pokretanje cron jobova neće raditi.</li>
+              <li>`CRON_SECRET` nije postavljen — rucno pokretanje cron jobova nece raditi.</li>
             )}
             {!aiConfigured && (
               <li>
-                AI ključ nije postavljen — fetch može povući izvore, ali ne može klasificirati i
-                napisati članke.
+                AI kljuc nije postavljen — fetch moze povuci izvore, ali ne moze klasificirati i
+                napisati clanke.
               </li>
             )}
             {aiConfigured && aiProvider && <li>AI provider: {aiProvider}</li>}
@@ -96,7 +96,7 @@ export default async function AdminNewsPage() {
 
       {/* Tonight's Queue Panel */}
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-card">
-        <h3 className="mb-4 text-lg font-semibold">Večerašnji zadaci</h3>
+        <h3 className="mb-4 text-lg font-semibold">Vecerašnji zadaci</h3>
         <div className="space-y-3">
           <CronJob time="23:00" name="Fetch & Classify" job="fetch-classify" />
           <CronJob time="23:30" name="Review" job="review" />
@@ -159,7 +159,7 @@ export default async function AdminNewsPage() {
                         <Eye className="h-4 w-4" />
                       </Link>
                       <Link
-                        href={`/admin/vijesti/${post.id}`}
+                        href={`/news/${post.id}`}
                         className="rounded-lg border border-[var(--border)] p-2 hover:bg-[var(--surface-secondary)]"
                         title="Edit"
                       >
