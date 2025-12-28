@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -122,6 +122,15 @@ export function SystemStatusPage({
   const [refreshJobId, setRefreshJobId] = useState<string | null>(null)
   const [refreshError, setRefreshError] = useState<string | null>(null)
 
+  // Track if component is mounted to prevent memory leaks in polling
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
   const pollJobStatus = useCallback(async (jobId: string) => {
     try {
       const response = await fetch(`/api/admin/system-status/refresh/${jobId}`)
@@ -136,8 +145,10 @@ export function SystemStatusPage({
         setRefreshJobId(null)
         setLock(null)
       } else if (data.status === "PENDING" || data.status === "RUNNING") {
-        // Continue polling
-        setTimeout(() => pollJobStatus(jobId), 2000)
+        // Continue polling only if component is still mounted
+        if (mountedRef.current) {
+          setTimeout(() => pollJobStatus(jobId), 2000)
+        }
       }
     } catch (error) {
       setRefreshError("Failed to check refresh status")
@@ -222,7 +233,7 @@ export function SystemStatusPage({
 
       {/* Error Banner */}
       {refreshError && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50" role="alert" aria-live="assertive">
           <CardContent className="py-3">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-4 w-4" />
