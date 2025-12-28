@@ -212,9 +212,10 @@ export function createSystemStatusWorker(): Worker<RefreshJobPayload> {
       }
 
       // Process with heartbeat support
+      const lockDuration = 120000 // Match worker lockDuration setting
       const result = await processRefreshJob(job.data, async () => {
-        // BullMQ updateProgress extends the lock TTL
-        await job.updateProgress(50)
+        // Extend the lock to prevent job from being marked as stalled
+        await job.extendLock(job.token!, lockDuration)
       })
 
       return result
