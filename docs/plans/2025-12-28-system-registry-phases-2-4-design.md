@@ -70,8 +70,8 @@ changedFiles → prefix match against codeRef/codeRefs → directComponents
 | LIB | `codeRef` prefix (e.g., `src/lib/auth/` matches `src/lib/auth/session.ts`) |
 | ROUTE_GROUP | `src/app/api/<group>/...` where group is extracted from id |
 | WORKER | Worker TS file path OR docker-compose service stanza |
-| INTEGRATION | `codeRef` prefix (typically `src/lib/<integration>/`) |
-| QUEUE | Queue factory file path |
+| INTEGRATION | `codeRef`/`codeRefs` prefix (typically `src/lib/integrations/<name>/`) |
+| QUEUE | Queue factory file path (allowlisted constructor paths) |
 
 #### Step 2: Transitive Impact Set
 
@@ -106,10 +106,11 @@ function reverseReachable(directComponents: string[], graph: DependencyGraph): T
 - `MAX_NODES_CAP = 50` to prevent runaway on highly connected graphs
 - Cycle detection via visited set
 - Return truncation flag so UI can indicate incomplete analysis
+- Critical path tagging must run independently of any truncated transitive set (separate bounded BFS that stops on path hits)
 
 #### Step 3: Critical Path Tagging
 
-For each critical path defined in governance, compute distance from direct impact:
+For each critical path defined in declarations (`CRITICAL_PATHS`), compute distance from direct impact:
 
 ```typescript
 interface CriticalPathImpact {
@@ -150,7 +151,7 @@ function computeBlastScore(analysis: BlastAnalysis): Criticality {
   }
 
   // +1 tier if SECURITY-owned component touched
-  if (analysis.directComponents.some(c => c.owner === '@fiskai/security')) {
+  if (analysis.directComponents.some(c => c.owner === 'team:security')) {
     score = bumpTier(score);
   }
 
@@ -201,6 +202,8 @@ Tier progression: `LOW → MEDIUM → HIGH → CRITICAL`
 </details>
 ```
 
+Owner mentions in PR comments are rendered via a mapping from `team:*` slugs to GitHub teams; registry remains canonical as `team:*`.
+
 ### GitHub Check Configuration
 
 **Check name:** `registry/blast-radius`
@@ -218,11 +221,15 @@ Tier progression: `LOW → MEDIUM → HIGH → CRITICAL`
 - List of required reviewers based on owner overlap
 - Link to detailed drift report in `docs/system-registry/`
 - Remediation suggestions if governance issues found
+- No file/line annotations in v1 (summary only); annotations can be added later with diff parsing
 
 ### CI Integration
 
 ```yaml
 # .github/workflows/registry-check.yml additions
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # needed for git diff between base/head
 - name: Compute Blast Radius
   run: |
     npx tsx src/lib/system-registry/scripts/blast-radius.ts \
@@ -254,9 +261,9 @@ Tier progression: `LOW → MEDIUM → HIGH → CRITICAL`
 2. **Build dependency graph module** - Parse dependencies[], compute usedBy[]
 3. **Implement direct impact matching** - Map changed files to components
 4. **Implement transitive computation** - reverseReachable with safety bounds
-5. **Implement critical path tagging** - Distance calculation
+5. **Implement critical path tagging** - Distance calculation (from CRITICAL_PATHS, independent BFS)
 6. **Implement scoring system** - Tier bumping logic
-7. **Create PR comment formatter** - Markdown generation
+7. **Create PR comment formatter** - Markdown generation + owner mention mapping
 8. **Create GitHub Check reporter** - Status and output
 9. **Wire into CI** - GitHub Actions workflow additions
 10. **Progressive rollout** - Start with WARN, schedule FAIL date
@@ -348,8 +355,8 @@ For spreadsheet analysis and compliance audits:
 
 ```csv
 component_id,type,name,owner,criticality,codeRef,dependencies,last_verified
-lib-auth,LIB,Auth Library,@fiskai/security,CRITICAL,src/lib/auth/,"lib-db,lib-config",2025-01-15
-integration-stripe,INTEGRATION,Stripe Integration,@fiskai/billing,HIGH,src/lib/stripe/,"lib-billing",2025-01-15
+lib-auth,LIB,Auth Library,team:security,CRITICAL,src/lib/auth/,"lib-db,lib-config",2025-01-15
+integration-stripe,INTEGRATION,Stripe Integration,team:billing,HIGH,src/lib/integrations/stripe/,"lib-billing",2025-01-15
 ```
 
 **Use cases:**
@@ -385,7 +392,7 @@ For trend analysis and incident correlation:
 
 ```jsonl
 {"timestamp":"2025-01-15T10:00:00Z","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":false}
-{"timestamp":"2025-01-15T10:05:00Z","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":true,"resolution":"added @fiskai/security"}
+{"timestamp":"2025-01-15T10:05:00Z","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":true,"resolution":"added team:security"}
 {"timestamp":"2025-01-15T11:00:00Z","component":"worker-ocr","issue":"codeRef_invalid","severity":"HIGH","resolved":false}
 ```
 
@@ -412,8 +419,9 @@ npx tsx src/lib/system-registry/scripts/export.ts --format drift-history --since
 ### Storage Strategy
 
 - Exports written to `docs/system-registry/exports/`
-- Git-committed for audit trail (manual, not automatic)
-- CI generates on-demand via workflow dispatch
+- Drift history stored in `docs/system-registry/drift-history.jsonl` (append-only, committed by scheduled CI)
+- Exports git-committed for audit trail when needed (manual, not automatic)
+- CI generates on-demand exports via workflow dispatch
 - Old exports retained for 1 year minimum
 
 ### Implementation Tasks
@@ -424,6 +432,7 @@ npx tsx src/lib/system-registry/scripts/export.ts --format drift-history --since
 4. **Implement drift history** - JSON Lines with timestamp tracking
 5. **Create CLI script** - Command-line interface
 6. **Add workflow dispatch** - GitHub Actions for on-demand exports
+7. **Add scheduled history capture** - Append drift history to JSONL on main
 
 ### Files to Create
 
@@ -505,7 +514,7 @@ Based on ROI analysis (developer velocity primary, vibecoded team context):
 
 ## Appendix: Critical Paths
 
-Critical paths are defined in governance.ts and represent business-critical flows:
+Critical paths are defined in `src/lib/system-registry/declarations.ts` and represent business-critical flows:
 
 | Path | Components | Why Critical |
 |------|------------|--------------|
@@ -521,9 +530,11 @@ Changes affecting critical paths get +1 tier bump in blast scoring.
 ## Appendix: Governance Integration
 
 Phase 3 computation uses governance.ts for:
-- Critical path definitions
 - Owner validation rules
+- Queue constructor allowlist
 - Excluded patterns (don't flag as drift)
 - Criticality thresholds
+
+Critical paths are sourced from declarations (`CRITICAL_PATHS`).
 
 Any changes to governance.ts require CODEOWNERS approval (@fiskai/platform + @fiskai/security).

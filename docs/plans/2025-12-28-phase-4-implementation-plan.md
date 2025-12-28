@@ -71,7 +71,7 @@ async function exportRegistry(options: ExportOptions): Promise<ExportResult>;
 **Output format:**
 ```csv
 component_id,type,name,owner,criticality,codeRef,dependencies,healthCheck_endpoint,alertChannel,last_verified
-lib-auth,LIB,Auth Library,@fiskai/security,CRITICAL,src/lib/auth/,"lib-db,lib-config",/api/health/auth,#ops-critical,2025-01-15T10:00:00Z
+lib-auth,LIB,Auth Library,team:security,CRITICAL,src/lib/auth/,"lib-db,lib-config",/api/health/auth,#ops-critical,2025-01-15T10:00:00Z
 ```
 
 **Columns:**
@@ -138,7 +138,7 @@ regulatory-export-YYYY-MM-DD/
 **Implementation:**
 1. Create temp directory
 2. Generate ownership-matrix.csv (reuse CSV exporter)
-3. Export critical paths from governance
+3. Export critical paths from declarations (`CRITICAL_PATHS`)
 4. Generate current drift report
 5. Snapshot governance config
 6. Export each component as JSON
@@ -169,7 +169,7 @@ regulatory-export-YYYY-MM-DD/
 **Output format (JSON Lines):**
 ```jsonl
 {"timestamp":"2025-01-15T10:00:00Z","runId":"abc123","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":false}
-{"timestamp":"2025-01-15T10:05:00Z","runId":"abc123","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":true,"resolution":"added @fiskai/security"}
+{"timestamp":"2025-01-15T10:05:00Z","runId":"abc123","component":"lib-auth","issue":"owner_missing","severity":"CRITICAL","resolved":true,"resolution":"added team:security"}
 ```
 
 **Schema per line:**
@@ -187,27 +187,31 @@ interface DriftHistoryEntry {
 ```
 
 **Implementation:**
-1. Load historical drift reports from git history
-2. Parse each report to extract issues
-3. Compare consecutive reports to detect resolutions
-4. Filter by --since date if provided
-5. Output as JSONL
+1. Load `docs/system-registry/drift-history.jsonl` (append-only history log)
+2. Parse each line into DriftHistoryEntry (skip empty lines)
+3. Filter by --since date if provided
+4. Output as JSONL (filtered copy)
+5. Fail with a clear error if the history file is missing
+
+**History capture:**
+- Add `src/lib/system-registry/scripts/history-capture.ts` to append the latest drift run to `docs/system-registry/drift-history.jsonl`
+- Capture script compares current issues to the previous run and appends resolved entries when issues disappear
 
 **Historical data source:**
-- `docs/system-registry/drift-report-ci.md` versions in git
-- Parse markdown to extract issue lists
-- Correlate across commits
+- `docs/system-registry/drift-history.jsonl` committed by scheduled CI on main
+- Append-only, single source of truth for history exports
 
 **Tests:**
 - Entries are valid JSON
 - One entry per line
-- Resolution detection works
+- Missing history file fails clearly
 - Since filtering works
+- Capture script appends resolved entries
 
 **Acceptance criteria:**
 - Valid JSONL output
 - Historical data extracted
-- Resolutions tracked
+- History file is the source of truth (append-only)
 
 ---
 
@@ -255,9 +259,9 @@ npx tsx src/lib/system-registry/scripts/export.ts --format csv --output ./export
 
 ---
 
-## Task 6: Add Workflow Dispatch for On-Demand Exports
+## Task 6: Add Workflows for Exports + Drift History Capture
 
-**File:** `.github/workflows/registry-export.yml`
+**Files:** `.github/workflows/registry-export.yml`, `.github/workflows/registry-history.yml`
 
 **Workflow:**
 ```yaml
@@ -307,15 +311,54 @@ jobs:
           retention-days: 90
 ```
 
+**History workflow:**
+```yaml
+name: Registry Drift History
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Capture history
+        run: npx tsx src/lib/system-registry/scripts/history-capture.ts
+
+      - name: Commit history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/system-registry/drift-history.jsonl
+          git commit -m "chore(registry): append drift history" || exit 0
+          git push
+```
+
 **Tests:**
-- Workflow runs on dispatch
+- Export workflow runs on dispatch
 - All format options work
-- Artifact uploaded correctly
+- Export artifact uploaded correctly
+- History workflow appends JSONL and commits
 
 **Acceptance criteria:**
-- Can trigger from GitHub UI
+- Can trigger export from GitHub UI
 - Exports available as artifacts
 - 90-day retention
+- History workflow commits append-only JSONL to main
 
 ---
 
@@ -353,6 +396,7 @@ npx tsx src/lib/system-registry/scripts/export.ts --format csv
 
 Exports are git-committed manually when needed for audit trail.
 On-demand exports via CI are retained for 90 days.
+Drift history is append-only and committed by the scheduled history workflow.
 ```
 
 **Acceptance criteria:**
@@ -369,6 +413,7 @@ On-demand exports via CI are retained for 90 days.
 - [ ] Regulatory pack exporter working
 - [ ] Drift history exporter working
 - [ ] CLI entry point working
-- [ ] GitHub workflow created
+- [ ] Export and history workflows created
+- [ ] Drift history JSONL captured on schedule
 - [ ] Directory structure in place
 - [ ] Can generate all three formats

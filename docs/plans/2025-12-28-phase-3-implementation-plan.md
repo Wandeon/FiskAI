@@ -86,7 +86,7 @@ function reverseReachable(graph: DependencyGraph, startNodes: string[], maxNodes
 interface DirectImpact {
   component: DeclaredComponent;
   matchedFiles: string[];
-  matchType: 'codeRef' | 'codeRefs' | 'route_group' | 'worker' | 'integration';
+  matchType: 'codeRef' | 'codeRefs' | 'route_group' | 'worker' | 'integration' | 'queue';
 }
 
 function computeDirectImpact(
@@ -96,10 +96,10 @@ function computeDirectImpact(
 ```
 
 **Matching rules:**
-1. **LIB/INTEGRATION:** File starts with codeRef or any codeRefs[] prefix
+1. **LIB/INTEGRATION:** File starts with codeRef or any codeRefs[] prefix (integration root is typically `src/lib/integrations/<name>/`)
 2. **ROUTE_GROUP:** File under `src/app/api/<group>/` where group from component id
 3. **WORKER:** File matches worker path OR docker-compose service stanza
-4. **QUEUE:** File matches queue factory path
+4. **QUEUE:** File matches allowlisted queue factory path (from governance)
 
 **Tests:**
 - Single file matches single component
@@ -175,13 +175,13 @@ interface CriticalPathImpact {
 function computeCriticalPathImpacts(
   directComponents: string[],
   transitiveImpacts: TransitiveImpact[],
-  criticalPaths: Record<string, string[]>
+  criticalPaths: CriticalPath[]
 ): CriticalPathImpact[];
 ```
 
 **Implementation:**
-1. Load critical path definitions from governance.ts
-2. For each path, check if any component is in direct or transitive set
+1. Load critical path definitions from `CRITICAL_PATHS` in declarations
+2. Compute critical path hits using a separate bounded BFS (do not rely on truncated transitive sets)
 3. Compute minimum distance to any path member
 4. List which components in the path are affected
 
@@ -192,7 +192,7 @@ function computeCriticalPathImpacts(
 - Multiple paths can be impacted
 
 **Acceptance criteria:**
-- Critical paths loaded from governance
+- Critical paths loaded from declarations
 - Distance calculation accurate
 - All impacted components listed
 
@@ -224,7 +224,7 @@ function computeBlastScore(
 **Bump rules:**
 1. Base = max criticality of direct components
 2. +1 tier if any critical path impacted
-3. +1 tier if @fiskai/security is owner of any direct
+3. +1 tier if team:security is owner of any direct
 4. +1 tier if governance issues exist
 
 **Tests:**
@@ -253,7 +253,7 @@ interface BlastAnalysis {
   transitiveImpacts: TransitiveImpact[];
   criticalPathImpacts: CriticalPathImpact[];
   score: BlastScore;
-  owners: string[];
+  owners: string[];  // canonical team:* slugs
   truncated: boolean;
 }
 
@@ -293,6 +293,7 @@ function formatPRComment(analysis: BlastAnalysis): string;
 - Output matches design format
 - Filtering works correctly
 - Valid markdown
+- Owner mentions rendered via mapping from team:* to @fiskai/<team>
 
 ---
 
@@ -311,7 +312,7 @@ interface CheckOutput {
   title: string;
   summary: string;
   text: string;  // Detailed markdown
-  annotations: Array<{
+  annotations?: Array<{
     path: string;
     start_line: number;
     end_line: number;
@@ -334,7 +335,7 @@ function formatGitHubCheck(
 **Tests:**
 - All score levels produce correct status
 - Enforcement mode affects CRITICAL handling
-- Annotations include file locations
+- Annotations omitted in v1 (empty or undefined)
 - Output is valid GitHub Check format
 
 **Acceptance criteria:**
@@ -360,18 +361,19 @@ npx tsx src/lib/system-registry/scripts/blast-radius.ts \
 
 **Implementation:**
 1. Parse arguments
-2. Get changed files from git diff
-3. Load declarations and governance
-4. Build dependency graph
-5. Compute blast radius
-6. Format output
-7. Write to file or stdout
+2. Get changed files from git diff (base/head must be present)
+3. Fail with a clear error if base/head is missing or diff is empty due to shallow checkout
+4. Load declarations and governance
+5. Build dependency graph
+6. Compute blast radius
+7. Format output
+8. Write to file or stdout
 
 **Tests:**
 - All output formats work
 - Both enforcement modes work
 - Writes to correct location
-- Error handling for missing shas
+- Error handling for missing shas or shallow history
 
 **Acceptance criteria:**
 - CLI works end-to-end
@@ -391,6 +393,9 @@ npx tsx src/lib/system-registry/scripts/blast-radius.ts \
 
 **Workflow additions:**
 ```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # required for base/head diff
 - name: Compute Blast Radius
   if: github.event_name == 'pull_request'
   run: |

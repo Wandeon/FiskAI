@@ -96,12 +96,12 @@ interface DeclaredComponent {
 - WORKER without slo gets warning
 - Component with slo but no alertChannel fails
 - Invalid runbook path gets warning
-- All rules can be disabled via governance
+- No global rule disable (suppression only via governed exclusions)
 
 **Acceptance criteria:**
 - Rules fire correctly
 - Warnings vs failures correct
-- Rules can be suppressed
+- Suppression requires explicit, expiring governance exclusions
 
 ---
 
@@ -114,10 +114,10 @@ interface DeclaredComponent {
 Example for lib-auth:
 ```typescript
 {
-  id: 'lib-auth',
+  componentId: 'lib-auth',
   type: 'LIB',
   name: 'Auth Library',
-  owner: '@fiskai/security',
+  owner: 'team:security',
   criticality: 'CRITICAL',
   codeRef: 'src/lib/auth/',
   // NEW

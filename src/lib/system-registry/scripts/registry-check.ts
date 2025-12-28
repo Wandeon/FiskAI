@@ -24,6 +24,7 @@ import {
   HARVESTED_TYPES,
 } from "../compute-drift"
 import { ALL_COMPONENTS as DECLARED_COMPONENTS } from "../declarations"
+import { shouldFailRegistryCheck } from "./registry-check-utils"
 
 interface Options {
   json: boolean
@@ -60,6 +61,13 @@ async function main() {
   for (const r of harvestResult.metadata.harvesterResults) {
     console.error(`   - ${r.name}: ${r.componentCount} (${r.durationMs}ms)`)
   }
+  if (harvestResult.errors.length > 0) {
+    console.error("")
+    console.error("   Harvester errors:")
+    for (const err of harvestResult.errors) {
+      console.error(`   - ${err.path}: ${err.message}`)
+    }
+  }
   console.error("")
 
   // Step 2: Compute drift (with codeRef verification for all declared components)
@@ -90,6 +98,15 @@ async function main() {
   console.error(`   - Declared Not Observed:    ${driftResult.summary.declaredNotObservedCount}`)
   console.error(`   - CodeRef Invalid:          ${driftResult.summary.codeRefInvalidCount}`)
   console.error(`   - Metadata Gaps:            ${driftResult.summary.metadataGapCount}`)
+  console.error(`   - Unknown Integrations:     ${driftResult.summary.unknownIntegrationCount}`)
+  console.error(`   - Critical Issues:          ${driftResult.summary.criticalIssues}`)
+  console.error(`   - High Issues:              ${driftResult.summary.highIssues}`)
+  if (driftResult.governanceViolations.length > 0) {
+    console.error(`   - Governance Violations:    ${driftResult.governanceViolations.length} ⚠️`)
+  }
+  if (driftResult.deprecatedOwners.length > 0) {
+    console.error(`   - Deprecated Owners:        ${driftResult.deprecatedOwners.length}`)
+  }
   console.error("")
 
   // Step 3: Enforce rules
@@ -132,9 +149,11 @@ async function main() {
   }
 
   // Step 5: Exit with appropriate code
-  const failed = options.failOnWarn
-    ? !enforcementResult.passed || enforcementResult.warnings.length > 0
-    : !enforcementResult.passed
+  const failed = shouldFailRegistryCheck({
+    harvesterErrors: harvestResult.errors,
+    enforcement: enforcementResult,
+    failOnWarn: options.failOnWarn,
+  })
 
   if (failed) {
     console.error("")

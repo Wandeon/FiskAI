@@ -12,6 +12,7 @@ import { join } from "path"
 import * as yaml from "js-yaml"
 import type { HarvesterResult, HarvesterError } from "./types"
 import { createObservedComponent, toComponentId } from "./types"
+import { WORKER_SERVICE_EXCLUSIONS } from "../governance"
 
 const COMPOSE_FILE = "docker-compose.workers.yml"
 
@@ -95,13 +96,13 @@ export async function harvestWorkers(projectRoot: string): Promise<HarvesterResu
     }
   }
 
+  const excluded = new Set(WORKER_SERVICE_EXCLUSIONS.map((e) => e.name))
+
   // Convert services to ObservedComponents
   const components = Object.entries(compose.services)
-    .filter(([name]) => {
-      // Filter to only worker services (not db, redis, etc.)
-      return name.startsWith("worker-") || name.includes("drainer") || name.includes("scheduler")
-    })
-    .map(([name, service]) => {
+    .sort(([a], [b]) => a.localeCompare(b))
+    .filter(([name]) => !excluded.has(name))
+    .map(([name]) => {
       // Extract worker name from service name
       const workerName = name.replace(/^fiskai-/, "").replace(/^worker-/, "")
 

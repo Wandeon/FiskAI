@@ -10,17 +10,11 @@
  * - Export statements with "Queue" in name
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "fs"
+import { existsSync, readFileSync, readdirSync } from "fs"
 import { join, relative } from "path"
 import type { HarvesterResult, HarvesterError } from "./types"
 import { createObservedComponent, toComponentId } from "./types"
-
-// Known queue definition files
-const QUEUE_FILES = [
-  "src/lib/regulatory-truth/workers/queues.ts",
-  "src/lib/queues/index.ts",
-  "src/lib/queues.ts",
-]
+import { ALLOWED_QUEUE_CONSTRUCTOR_PATHS } from "../governance"
 
 // Regex patterns for queue detection
 const QUEUE_PATTERNS = [
@@ -39,6 +33,12 @@ interface QueueInfo {
 }
 
 /**
+ * Maximum number of files to scan when searching for queues.
+ * Prevents runaway scans on large repos.
+ */
+const MAX_QUEUE_SCAN_FILES = 5000
+
+/**
  * Validates that a queue name is a real queue name, not a variable or placeholder.
  */
 function isValidQueueName(name: string): boolean {
@@ -51,18 +51,61 @@ function isValidQueueName(name: string): boolean {
 }
 
 /**
- * Extracts queue names from a TypeScript file.
+ * Recursively collects .ts/.tsx files under a directory with a scan cap.
  */
-function extractQueues(filePath: string, projectRoot: string): QueueInfo[] {
+function collectSourceFiles(
+  dirPath: string,
+  fileList: string[],
+  hitLimit: { value: boolean }
+) {
+  if (hitLimit.value) return
+
+  const entries = readdirSync(dirPath, { withFileTypes: true })
+  entries.sort((a, b) => a.name.localeCompare(b.name))
+
+  for (const entry of entries) {
+    if (hitLimit.value) return
+    const fullPath = join(dirPath, entry.name)
+
+    if (entry.isDirectory()) {
+      if (
+        !entry.name.startsWith(".") &&
+        !entry.name.startsWith("__") &&
+        entry.name !== "node_modules"
+      ) {
+        collectSourceFiles(fullPath, fileList, hitLimit)
+      }
+      continue
+    }
+
+    if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
+      fileList.push(fullPath)
+      if (fileList.length > MAX_QUEUE_SCAN_FILES) {
+        hitLimit.value = true
+        return
+      }
+    }
+  }
+}
+
+/**
+ * Extracts queue names and constructor usage from a TypeScript file.
+ */
+function parseQueueFile(
+  filePath: string,
+  projectRoot: string
+): { queues: QueueInfo[]; hasQueueConstructor: boolean } {
   const queues: QueueInfo[] = []
   const seen = new Set<string>()
 
   if (!existsSync(filePath)) {
-    return queues
+    return { queues, hasQueueConstructor: false }
   }
 
   const content = readFileSync(filePath, "utf-8")
   const relativePath = relative(projectRoot, filePath)
+
+  const hasQueueConstructor = /new\s+Queue\s*(<[^>]+>)?\s*\(/.test(content)
 
   // Pattern 1: createQueue("name", ...) - factory pattern
   const createQueuePattern = /createQueue\s*\(\s*["']([^"']+)["']/g
@@ -111,40 +154,7 @@ function extractQueues(filePath: string, projectRoot: string): QueueInfo[] {
     }
   }
 
-  return queues
-}
-
-/**
- * Recursively searches for queue definitions in a directory.
- */
-function searchForQueues(
-  dirPath: string,
-  projectRoot: string
-): QueueInfo[] {
-  const queues: QueueInfo[] = []
-
-  if (!existsSync(dirPath)) {
-    return queues
-  }
-
-  const entries = readdirSync(dirPath, { withFileTypes: true })
-
-  for (const entry of entries) {
-    const fullPath = join(dirPath, entry.name)
-
-    if (entry.isDirectory()) {
-      if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
-        queues.push(...searchForQueues(fullPath, projectRoot))
-      }
-    } else if (
-      entry.name.includes("queue") &&
-      (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))
-    ) {
-      queues.push(...extractQueues(fullPath, projectRoot))
-    }
-  }
-
-  return queues
+  return { queues, hasQueueConstructor }
 }
 
 /**
@@ -157,32 +167,58 @@ export async function harvestQueues(projectRoot: string): Promise<HarvesterResul
   const seen = new Set<string>()
   const scannedPaths: string[] = []
 
-  // First, check known queue files
-  for (const queueFile of QUEUE_FILES) {
-    const fullPath = join(projectRoot, queueFile)
-    if (existsSync(fullPath)) {
-      scannedPaths.push(queueFile)
-      const queues = extractQueues(fullPath, projectRoot)
-      for (const q of queues) {
-        if (!seen.has(q.name)) {
-          seen.add(q.name)
-          allQueues.push(q)
-        }
-      }
+  const libPath = join(projectRoot, "src/lib")
+  if (!existsSync(libPath)) {
+    return {
+      components: [],
+      errors: [
+        {
+          path: libPath,
+          message: "src/lib directory does not exist",
+          recoverable: false,
+        },
+      ],
+      metadata: {
+        harvesterName: "harvest-queues",
+        executedAt: new Date().toISOString(),
+        durationMs: Date.now() - startTime,
+        scanPaths: ["src/lib"],
+      },
     }
   }
 
-  // If no queues found in known files, search src/lib
-  if (allQueues.length === 0) {
-    const libPath = join(projectRoot, "src/lib")
-    if (existsSync(libPath)) {
-      scannedPaths.push("src/lib")
-      const queues = searchForQueues(libPath, projectRoot)
-      for (const q of queues) {
-        if (!seen.has(q.name)) {
-          seen.add(q.name)
-          allQueues.push(q)
-        }
+  scannedPaths.push("src/lib")
+  const queueFiles: string[] = []
+  const hitLimit = { value: false }
+  collectSourceFiles(libPath, queueFiles, hitLimit)
+
+  if (hitLimit.value) {
+    errors.push({
+      path: "src/lib",
+      message: `Queue scan exceeded file limit (${MAX_QUEUE_SCAN_FILES})`,
+      recoverable: false,
+    })
+  }
+
+  for (const filePath of queueFiles) {
+    const { queues, hasQueueConstructor } = parseQueueFile(filePath, projectRoot)
+    const relativePath = relative(projectRoot, filePath)
+
+    if (
+      hasQueueConstructor &&
+      !ALLOWED_QUEUE_CONSTRUCTOR_PATHS.includes(relativePath as (typeof ALLOWED_QUEUE_CONSTRUCTOR_PATHS)[number])
+    ) {
+      errors.push({
+        path: relativePath,
+        message: "Queue constructor used outside allowed factory file",
+        recoverable: false,
+      })
+    }
+
+    for (const q of queues) {
+      if (!seen.has(q.name)) {
+        seen.add(q.name)
+        allQueues.push(q)
       }
     }
   }
