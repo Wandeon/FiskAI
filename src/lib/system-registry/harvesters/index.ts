@@ -10,6 +10,10 @@ export { harvestJobs } from "./harvest-jobs"
 export { harvestWorkers } from "./harvest-workers"
 export { harvestQueues } from "./harvest-queues"
 export { harvestModules } from "./harvest-modules"
+export { harvestLibs } from "./harvest-libs"
+export { harvestStores } from "./harvest-stores"
+export { harvestIntegrations } from "./harvest-integrations"
+export { harvestUI } from "./harvest-ui"
 export * from "./types"
 
 import type { HarvesterResult, HarvesterError } from "./types"
@@ -20,6 +24,10 @@ import { harvestJobs } from "./harvest-jobs"
 import { harvestWorkers } from "./harvest-workers"
 import { harvestQueues } from "./harvest-queues"
 import { harvestModules } from "./harvest-modules"
+import { harvestLibs } from "./harvest-libs"
+import { harvestStores } from "./harvest-stores"
+import { harvestIntegrations } from "./harvest-integrations"
+import { harvestUI } from "./harvest-ui"
 
 export interface FullHarvestResult {
   components: ObservedComponent[]
@@ -51,6 +59,10 @@ export async function harvestAll(projectRoot: string): Promise<FullHarvestResult
     { name: "workers", fn: harvestWorkers },
     { name: "queues", fn: harvestQueues },
     { name: "modules", fn: harvestModules },
+    { name: "libs", fn: harvestLibs },
+    { name: "stores", fn: harvestStores },
+    { name: "integrations", fn: harvestIntegrations },
+    { name: "ui", fn: harvestUI },
   ]
 
   for (const { name, fn } of harvesters) {

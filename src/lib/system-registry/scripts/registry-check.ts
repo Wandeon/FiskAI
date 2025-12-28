@@ -17,7 +17,13 @@
 import { writeFileSync, mkdirSync } from "fs"
 import { join, dirname } from "path"
 import { harvestAll } from "../harvesters"
-import { computeDrift, enforceRules, formatDriftMarkdown } from "../compute-drift"
+import {
+  computeDrift,
+  enforceRules,
+  formatDriftMarkdown,
+  HARVESTED_TYPES,
+  UNHARVESTED_TYPES,
+} from "../compute-drift"
 import { ALL_COMPONENTS as DECLARED_COMPONENTS } from "../declarations"
 
 interface Options {
@@ -46,23 +52,50 @@ async function main() {
 
   // Step 1: Harvest all components
   console.error("📥 Harvesting observed components...")
+  console.error(`   Harvested types: ${HARVESTED_TYPES.join(", ")}`)
+  console.error(`   Unharvested types (codeRef verified): ${UNHARVESTED_TYPES.join(", ")}`)
+  console.error("")
+
   const harvestResult = await harvestAll(options.projectRoot)
 
-  console.error(`   Found ${harvestResult.components.length} components`)
+  console.error(`   Found ${harvestResult.components.length} components (harvested types only)`)
   for (const r of harvestResult.metadata.harvesterResults) {
-    console.error(`   - ${r.name}: ${r.componentCount} components (${r.durationMs}ms)`)
+    console.error(`   - ${r.name}: ${r.componentCount} (${r.durationMs}ms)`)
   }
   console.error("")
 
-  // Step 2: Compute drift
-  console.error("📊 Computing drift...")
-  const driftResult = computeDrift(harvestResult.components, DECLARED_COMPONENTS)
+  // Step 2: Compute drift (with codeRef verification for unharvested types)
+  console.error("📊 Computing drift (+ codeRef verification for unharvested types)...")
+  const driftResult = computeDrift(
+    harvestResult.components,
+    DECLARED_COMPONENTS,
+    options.projectRoot
+  )
 
-  console.error(`   Observed: ${driftResult.summary.totalObserved}`)
-  console.error(`   Declared: ${driftResult.summary.totalDeclared}`)
-  console.error(`   Observed Not Declared: ${driftResult.summary.observedNotDeclaredCount}`)
-  console.error(`   Declared Not Observed: ${driftResult.summary.declaredNotObservedCount}`)
-  console.error(`   Metadata Gaps: ${driftResult.summary.metadataGapCount}`)
+  console.error("")
+  console.error("   Type Coverage Matrix:")
+  console.error("   ┌──────────────┬───────────┬──────────┬──────────┬────────────┐")
+  console.error("   │ Type         │ Harvested │ Declared │ Observed │ CodeRef OK │")
+  console.error("   ├──────────────┼───────────┼──────────┼──────────┼────────────┤")
+  for (const tc of driftResult.typeCoverage) {
+    const harvested = tc.harvested ? "Yes" : "No"
+    const observed = tc.harvested ? String(tc.observed).padStart(8) : "   -    "
+    const codeRefOk = tc.harvested ? "   -    " : String(tc.codeRefVerified).padStart(8)
+    console.error(
+      `   │ ${tc.type.padEnd(12)} │ ${harvested.padStart(9)} │ ${String(tc.declared).padStart(8)} │ ${observed} │ ${codeRefOk}   │`
+    )
+  }
+  console.error("   └──────────────┴───────────┴──────────┴──────────┴────────────┘")
+  console.error("")
+
+  console.error("   Summary:")
+  console.error(`   - Observed (Harvested):     ${driftResult.summary.observedHarvested}`)
+  console.error(`   - Declared (Total):         ${driftResult.summary.declaredTotal}`)
+  console.error(`   - Declared (Unharvested):   ${driftResult.summary.declaredUnharvested}`)
+  console.error(`   - Observed Not Declared:    ${driftResult.summary.observedNotDeclaredCount}`)
+  console.error(`   - Declared Not Observed:    ${driftResult.summary.declaredNotObservedCount}`)
+  console.error(`   - CodeRef Missing:          ${driftResult.summary.codeRefMissingCount}`)
+  console.error(`   - Metadata Gaps:            ${driftResult.summary.metadataGapCount}`)
   console.error("")
 
   // Step 3: Enforce rules
@@ -86,12 +119,15 @@ async function main() {
     console.log(
       JSON.stringify(
         {
+          schemaVersion: "1.0.0",
           harvest: harvestResult,
           drift: driftResult,
           enforcement: enforcementResult,
           metadata: {
             executedAt: new Date().toISOString(),
             durationMs: Date.now() - startTime,
+            harvestedTypes: HARVESTED_TYPES,
+            unharvestedTypes: UNHARVESTED_TYPES,
           },
         },
         null,
@@ -112,15 +148,22 @@ async function main() {
     console.error("❌ Registry check FAILED")
     console.error("")
     if (enforcementResult.failures.length > 0) {
-      console.error("Failures:")
+      console.error("Failures (must fix before merge):")
       for (const f of enforcementResult.failures) {
-        console.error(`  - ${f.componentId}: ${f.message}`)
+        console.error(`  ❌ ${f.componentId} (${f.type}): ${f.message}`)
       }
     }
     process.exit(1)
   } else {
     console.error("")
     console.error("✅ Registry check PASSED")
+    if (enforcementResult.warnings.length > 0) {
+      console.error("")
+      console.error("Warnings (should address soon):")
+      for (const w of enforcementResult.warnings) {
+        console.error(`  ⚠️  ${w.componentId} (${w.type}): ${w.message}`)
+      }
+    }
     process.exit(0)
   }
 }
