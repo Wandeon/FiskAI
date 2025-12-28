@@ -32,6 +32,9 @@ import {
   isIgnoredComponent,
   CODEREF_REQUIRED_TYPES,
   CODEREF_REQUIRED_CRITICALITIES,
+  validateOwner,
+  validateGovernance,
+  type GovernanceViolation,
 } from "./governance"
 
 /**
@@ -58,11 +61,24 @@ export interface TypeCoverage {
   codeRefMissing: number
 }
 
+export interface DeprecatedOwnerEntry {
+  componentId: string
+  owner: string
+  migratesTo: string
+  reason: string
+}
+
 export interface DriftResult {
   observedNotDeclared: DriftEntry[]
   declaredNotObserved: DriftEntry[]
   metadataGaps: DriftEntry[]
   codeRefInvalid: DriftEntry[]
+  /** Unknown integrations that need triage */
+  unknownIntegrations: DriftEntry[]
+  /** Governance validation violations */
+  governanceViolations: GovernanceViolation[]
+  /** Components using deprecated owner slugs */
+  deprecatedOwners: DeprecatedOwnerEntry[]
   summary: {
     /** Total components found by harvesters */
     observedTotal: number
@@ -73,6 +89,8 @@ export interface DriftResult {
     metadataGapCount: number
     /** Declared components with invalid/missing codeRef paths */
     codeRefInvalidCount: number
+    /** Unknown integrations requiring triage */
+    unknownIntegrationCount: number
     criticalIssues: number
     highIssues: number
   }
@@ -189,6 +207,11 @@ export function computeDrift(
   const declaredNotObserved: DriftEntry[] = []
   const metadataGaps: DriftEntry[] = []
   const codeRefInvalid: DriftEntry[] = []
+  const unknownIntegrations: DriftEntry[] = []
+  const deprecatedOwners: DeprecatedOwnerEntry[] = []
+
+  // Validate governance integrity
+  const governanceViolations = validateGovernance()
 
   // Track type coverage
   const typeStats = new Map<
@@ -213,6 +236,31 @@ export function computeDrift(
     // Skip ignored components
     if (isIgnoredComponent(decl.componentId)) {
       continue
+    }
+
+    // Check for deprecated owners
+    if (decl.owner) {
+      const ownerValidation = validateOwner(decl.owner)
+      if (ownerValidation.deprecated) {
+        deprecatedOwners.push({
+          componentId: decl.componentId,
+          owner: decl.owner,
+          migratesTo: ownerValidation.migratesTo!,
+          reason: ownerValidation.reason!,
+        })
+      }
+    }
+
+    // Validate internal flag usage (only valid for LIB)
+    if (decl.internal !== undefined && decl.type !== "LIB") {
+      metadataGaps.push({
+        componentId: decl.componentId,
+        type: decl.type,
+        driftType: "METADATA_GAP",
+        risk: decl.criticality,
+        reason: `internal flag is only valid for LIB type, found on ${decl.type}`,
+        gaps: [],
+      })
     }
 
     // Verify codeRef for all declared components that have one
@@ -253,6 +301,39 @@ export function computeDrift(
         })
       }
     }
+
+    // Validate codeRefs[] if provided
+    if (decl.codeRefs !== undefined) {
+      // Empty array is invalid - if you declare codeRefs, it must contain paths
+      if (decl.codeRefs.length === 0) {
+        codeRefInvalid.push({
+          componentId: decl.componentId,
+          type: decl.type,
+          driftType: "CODEREF_INVALID",
+          risk: decl.criticality,
+          declaredSource: "codeRefs[]",
+          reason: "codeRefs[] is declared but empty - remove or add paths",
+        })
+      } else {
+        // Verify each path in codeRefs exists
+        for (const ref of decl.codeRefs) {
+          const exists = verifyCodeRef(projectRoot, ref)
+          if (!exists) {
+            const enforcement = CODEREF_REQUIRED_CRITICALITIES[decl.criticality]
+            if (enforcement) {
+              codeRefInvalid.push({
+                componentId: decl.componentId,
+                type: decl.type,
+                driftType: "CODEREF_INVALID",
+                risk: decl.criticality,
+                declaredSource: ref,
+                reason: `codeRefs[] path does not exist: ${ref}`,
+              })
+            }
+          }
+        }
+      }
+    }
   }
 
   // Find observed but not declared
@@ -260,13 +341,31 @@ export function computeDrift(
     const resolvedId = aliasMap.get(obs.componentId) || obs.componentId
     if (!declaredIds.has(resolvedId)) {
       const criticality = inferCriticality(obs.componentId, obs.type)
-      observedNotDeclared.push({
-        componentId: obs.componentId,
-        type: obs.type,
-        driftType: "OBSERVED_NOT_DECLARED",
-        risk: criticality,
-        observedAt: obs.observedAt,
-      })
+
+      // Check if this is an unknown integration
+      const isUnknownIntegration =
+        obs.type === "INTEGRATION" &&
+        obs.metadata?.isUnknown === true
+
+      if (isUnknownIntegration) {
+        // Unknown integrations get their own list with HIGH risk
+        unknownIntegrations.push({
+          componentId: obs.componentId,
+          type: obs.type,
+          driftType: "OBSERVED_NOT_DECLARED",
+          risk: "HIGH", // Unknown external services are HIGH risk
+          observedAt: obs.observedAt,
+          reason: "Unknown integration detected - requires declaration or explicit ignore decision",
+        })
+      } else {
+        observedNotDeclared.push({
+          componentId: obs.componentId,
+          type: obs.type,
+          driftType: "OBSERVED_NOT_DECLARED",
+          risk: criticality,
+          observedAt: obs.observedAt,
+        })
+      }
     }
   }
 
@@ -295,14 +394,18 @@ export function computeDrift(
   for (const decl of declared) {
     const gaps: DriftEntry["gaps"] = []
 
-    if (!decl.owner) {
+    const ownerValidation = decl.owner ? validateOwner(decl.owner) : null
+    const ownerMissing = !decl.owner || (ownerValidation && !ownerValidation.valid)
+    if (ownerMissing) {
       if (decl.criticality === "CRITICAL" || decl.criticality === "HIGH") {
         gaps.push("NO_OWNER")
       }
     }
 
     if (!decl.docsRef) {
-      if (decl.criticality === "CRITICAL") {
+      // Internal libs have relaxed docsRef requirements
+      const isInternalLib = decl.type === "LIB" && decl.internal === true
+      if (decl.criticality === "CRITICAL" && !isInternalLib) {
         gaps.push("NO_DOCS")
       }
     }
@@ -337,6 +440,8 @@ export function computeDrift(
   declaredNotObserved.sort(sortByComponentId)
   metadataGaps.sort(sortByComponentId)
   codeRefInvalid.sort(sortByComponentId)
+  unknownIntegrations.sort(sortByComponentId)
+  deprecatedOwners.sort((a, b) => a.componentId.localeCompare(b.componentId))
 
   // Build type coverage matrix
   const typeCoverage: TypeCoverage[] = COMPONENT_TYPES.map((type) => {
@@ -356,19 +461,24 @@ export function computeDrift(
     observedNotDeclared.filter((d) => d.risk === "CRITICAL").length +
     declaredNotObserved.filter((d) => d.risk === "CRITICAL").length +
     metadataGaps.filter((d) => d.risk === "CRITICAL").length +
-    codeRefInvalid.filter((d) => d.risk === "CRITICAL").length
+    codeRefInvalid.filter((d) => d.risk === "CRITICAL").length +
+    unknownIntegrations.filter((d) => d.risk === "CRITICAL").length
 
   const highIssues =
     observedNotDeclared.filter((d) => d.risk === "HIGH").length +
     declaredNotObserved.filter((d) => d.risk === "HIGH").length +
     metadataGaps.filter((d) => d.risk === "HIGH").length +
-    codeRefInvalid.filter((d) => d.risk === "HIGH").length
+    codeRefInvalid.filter((d) => d.risk === "HIGH").length +
+    unknownIntegrations.filter((d) => d.risk === "HIGH").length
 
   return {
     observedNotDeclared,
     declaredNotObserved,
     metadataGaps,
     codeRefInvalid,
+    unknownIntegrations,
+    governanceViolations,
+    deprecatedOwners,
     summary: {
       observedTotal: observed.length,
       declaredTotal: declared.length,
@@ -376,6 +486,7 @@ export function computeDrift(
       declaredNotObservedCount: declaredNotObserved.length,
       metadataGapCount: metadataGaps.length,
       codeRefInvalidCount: codeRefInvalid.length,
+      unknownIntegrationCount: unknownIntegrations.length,
       criticalIssues,
       highIssues,
     },
@@ -393,6 +504,16 @@ export function enforceRules(
 ): EnforcementResult {
   const failures: EnforcementFailure[] = []
   const warnings: EnforcementFailure[] = []
+
+  // Check governance violations (always FAIL)
+  for (const violation of driftResult.governanceViolations) {
+    failures.push({
+      componentId: violation.name,
+      type: "LIB", // Governance violations are typically about exclusions
+      rule: "Governance integrity",
+      message: `Governance violation in ${violation.type}: ${violation.issue}`,
+    })
+  }
 
   // Check OBSERVED_NOT_DECLARED against MUST_BE_DECLARED rules
   for (const drift of driftResult.observedNotDeclared) {
@@ -416,6 +537,35 @@ export function enforceRules(
     }
   }
 
+  // Unknown integrations always WARN (prevents silent external service additions)
+  for (const drift of driftResult.unknownIntegrations) {
+    warnings.push({
+      componentId: drift.componentId,
+      type: drift.type,
+      rule: "Unknown integration detection",
+      message: `Unknown integration detected: ${drift.componentId} - requires declaration or explicit ignore`,
+    })
+  }
+
+  // Check DECLARED_NOT_OBSERVED for CRITICAL/HIGH (paper registry prevention)
+  for (const drift of driftResult.declaredNotObserved) {
+    if (drift.risk === "CRITICAL") {
+      failures.push({
+        componentId: drift.componentId,
+        type: drift.type,
+        rule: "CRITICAL components must exist in codebase",
+        message: `Component ${drift.componentId} is declared but not observed - possible paper registry entry or detection gap`,
+      })
+    } else if (drift.risk === "HIGH") {
+      warnings.push({
+        componentId: drift.componentId,
+        type: drift.type,
+        rule: "HIGH components should exist in codebase",
+        message: `Component ${drift.componentId} is declared but not observed - verify it exists or remove declaration`,
+      })
+    }
+  }
+
   // Check codeRef invalid for CRITICAL/HIGH components using governance rules
   for (const drift of driftResult.codeRefInvalid) {
     const enforcement = CODEREF_REQUIRED_CRITICALITIES[drift.risk]
@@ -434,6 +584,16 @@ export function enforceRules(
         message: `Component ${drift.componentId} has invalid/missing codeRef: ${drift.declaredSource || "(not provided)"}`,
       })
     }
+  }
+
+  // Check deprecated owners (WARN to allow migration period)
+  for (const entry of driftResult.deprecatedOwners) {
+    warnings.push({
+      componentId: entry.componentId,
+      type: "MODULE", // Owner deprecation applies across types
+      rule: "Owner migration required",
+      message: `Component ${entry.componentId} uses deprecated owner "${entry.owner}" - migrate to "${entry.migratesTo}" (${entry.reason})`,
+    })
   }
 
   // Check metadata gaps against MUST_HAVE_OWNER and MUST_HAVE_DOCS rules
@@ -523,6 +683,7 @@ export function formatDriftMarkdown(
     `| CodeRef Invalid | ${driftResult.summary.codeRefInvalidCount} | Declared paths that don't exist |`
   )
   lines.push(`| Metadata Gaps | ${driftResult.summary.metadataGapCount} | Missing owner/docs/deps |`)
+  lines.push(`| Unknown Integrations | ${driftResult.summary.unknownIntegrationCount} | External services needing triage |`)
   lines.push(`| Critical Issues | ${driftResult.summary.criticalIssues} | Requires immediate fix |`)
   lines.push(`| High Issues | ${driftResult.summary.highIssues} | Should fix soon |`)
   lines.push("")
@@ -567,6 +728,48 @@ export function formatDriftMarkdown(
       }
       lines.push("")
     }
+  }
+
+  // Governance Violations (always show if any)
+  if (driftResult.governanceViolations.length > 0) {
+    lines.push("## Governance Violations")
+    lines.push("")
+    lines.push("These violations indicate governance.ts integrity issues that MUST be fixed:")
+    lines.push("")
+    lines.push("| Type | Name | Issue |")
+    lines.push("|------|------|-------|")
+    for (const v of driftResult.governanceViolations) {
+      lines.push(`| ${v.type} | ${v.name} | ${v.issue} |`)
+    }
+    lines.push("")
+  }
+
+  // Unknown Integrations (require triage)
+  if (driftResult.unknownIntegrations.length > 0) {
+    lines.push("## Unknown Integrations (Require Triage)")
+    lines.push("")
+    lines.push("External services detected but not declared in governance.ts:")
+    lines.push("")
+    lines.push("| Component ID | Observed At | Action Required |")
+    lines.push("|--------------|-------------|-----------------|")
+    for (const d of driftResult.unknownIntegrations) {
+      lines.push(`| ${d.componentId} | ${d.observedAt?.join(", ") || "-"} | Declare in governance.ts or add to registry |`)
+    }
+    lines.push("")
+  }
+
+  // Deprecated Owners (migration required)
+  if (driftResult.deprecatedOwners.length > 0) {
+    lines.push("## Deprecated Owners (Migration Required)")
+    lines.push("")
+    lines.push("Components using deprecated owner slugs that should migrate:")
+    lines.push("")
+    lines.push("| Component ID | Current Owner | Migrate To | Reason |")
+    lines.push("|--------------|---------------|------------|--------|")
+    for (const d of driftResult.deprecatedOwners) {
+      lines.push(`| ${d.componentId} | ${d.owner} | ${d.migratesTo} | ${d.reason} |`)
+    }
+    lines.push("")
   }
 
   // CodeRef Invalid (critical)

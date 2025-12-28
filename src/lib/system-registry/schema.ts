@@ -57,8 +57,7 @@ export interface SystemComponent {
 
   /**
    * Owner identifier.
-   * Format: "team:<slug>" or "person:<slug>"
-   * CRITICAL components MUST have owner.
+   * Format: "team:<slug>" (required for CRITICAL/HIGH)
    * null only allowed for MEDIUM/LOW.
    */
   owner: string | null
@@ -68,6 +67,13 @@ export interface SystemComponent {
 
   /** Primary code location. null = no single location */
   codeRef: string | null
+
+  /**
+   * Additional code locations beyond codeRef for multi-file components.
+   * Use for components that span multiple directories (e.g., a library
+   * with src/lib/foo and src/app/foo). If provided, must be non-empty.
+   */
+  codeRefs?: string[]
 
   /** Components this depends on */
   dependencies: ComponentDependency[]
@@ -83,6 +89,20 @@ export interface SystemComponent {
 
   /** Critical paths this component participates in */
   criticalPaths?: string[]
+
+  /**
+   * Internal component flag.
+   * Only valid for type === "LIB".
+   *
+   * internal=true: Shared utility, helper, non-contract code.
+   *   - Still must be declared (prevents shadow systems)
+   *   - Relaxed docsRef requirements
+   *   - Not user-facing
+   *
+   * internal=false (default): Real platform boundary.
+   *   - Full enforcement applies
+   */
+  internal?: boolean
 
   /** Free-form metadata for type-specific info */
   metadata?: Record<string, unknown>
@@ -161,13 +181,13 @@ export interface EnforcementRule {
  * These are the governance gates.
  */
 export const DEFAULT_ENFORCEMENT_RULES: EnforcementRule[] = [
-  // ROUTE_GROUP enforcement (CRITICAL only in phase 1)
+  // ROUTE_GROUP enforcement (all)
   {
     types: ["ROUTE_GROUP"],
-    criticalities: ["CRITICAL"],
+    criticalities: ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
     check: "MUST_BE_DECLARED",
     action: "FAIL",
-    description: "CRITICAL API route groups must be declared in registry",
+    description: "All API route groups must be declared in registry",
   },
   // JOB enforcement (all)
   {
