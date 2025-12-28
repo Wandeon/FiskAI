@@ -171,6 +171,19 @@ Hardcoded colors are blocked by the `no-hardcoded-colors` ESLint rule:
 
 ### 7.6 Component Architecture
 
+FiskAI uses a 4-layer component architecture with ESLint-enforced import boundaries.
+
+**Layer Hierarchy:**
+
+```
+tokens (design-system)     → can be imported by anything
+ui (primitives) + motion   → can import tokens, lib/utils only
+patterns                   → can import ui + tokens + motion
+sections                   → can import patterns + ui + tokens + motion
+templates                  → can import sections + patterns + ui + tokens
+pages                      → can import templates + data loaders only
+```
+
 **Primitives (`/src/components/ui/primitives/`):**
 | Component | Variants | Description |
 |-----------|----------|-------------|
@@ -178,21 +191,52 @@ Hardcoded colors are blocked by the `no-hardcoded-colors` ESLint rule:
 | `Badge` | tech, category, subtle, success, warning, danger | Status badges |
 | `Card` | glass, elevated, gradient, flat | Container variants |
 
-**Patterns (`/src/components/ui/patterns/`):**
+**UI Patterns (`/src/components/ui/patterns/`):**
 | Component | Description |
 |-----------|-------------|
 | `GradientButton` | Primary CTA with gradient and hover animation |
 | `GlassCard` | Glass morphism card with optional glow |
 | `SectionBackground` | Page section background patterns |
 
-**Motion (`/src/components/ui/motion/`):**
+**Motion (`/src/components/motion/`):**
 | Component | Description |
 |-----------|-------------|
 | `FadeIn` | Fade animation on scroll into view |
 | `HoverScale` | Scale animation on hover/tap |
 | `GlowOrb` | Animated background orb effect |
-| `Reveal` | Slide-up reveal on scroll |
-| `Stagger` | Staggered animation for lists |
+| `Reveal` | Slide-up reveal on scroll (uses `useReducedMotion`) |
+| `Stagger` | Staggered animation for lists (uses `useReducedMotion`) |
+
+**Patterns (`/src/components/patterns/`):**
+| Component | Description |
+|-----------|-------------|
+| `SectionHeading` | Consistent typography for section headers |
+| `IconBadge` | Icon in colored circle with status variants |
+| `FeatureCard` | Glass card with icon, title, description |
+
+**Sections (`/src/components/sections/`):**
+| Component | Description |
+|-----------|-------------|
+| `HeroSection` | Full-width hero with background effects |
+| `FeatureGrid` | Grid of feature cards with stagger animation |
+| `CTASection` | Call-to-action section with background |
+
+**Templates (`/src/components/templates/`):**
+| Component | Scope | Description |
+|-----------|-------|-------------|
+| `MarketingPageTemplate` | Marketing portal | Standard marketing page layout |
+
+**ESLint Import Boundaries:**
+
+The following imports are blocked by `import/no-restricted-paths`:
+
+- `ui/` cannot import from `patterns/`, `sections/`, `templates/`
+- `motion/` cannot import from `patterns/`, `sections/`, `templates/`
+- `patterns/` cannot import from `sections/`, `templates/`
+- `sections/` cannot import from `templates/`
+- All `components/` cannot import from `app/`
+
+See `docs/03_ARCHITECTURE/COMPONENT_LAYERS_MIGRATION.md` for migration guide.
 
 ### 7.7 Living Truth UI Components
 
