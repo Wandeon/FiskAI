@@ -241,3 +241,28 @@ export async function releaseRefreshLock(lockKey: string): Promise<void> {
     console.warn("[releaseRefreshLock] Lock not found:", lockKey)
   }
 }
+
+// ============================================================================
+// Query Operations (for Admin UI)
+// ============================================================================
+
+/**
+ * Get recent events, ordered by most recent first.
+ */
+export async function getRecentEvents(limit: number = 20) {
+  return db.systemRegistryStatusEvent.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  })
+}
+
+/**
+ * Get the current active lock (if any).
+ */
+export async function getCurrentLock() {
+  return db.systemRegistryRefreshLock.findFirst({
+    where: {
+      lockedUntil: { gt: new Date() },
+    },
+  })
+}
