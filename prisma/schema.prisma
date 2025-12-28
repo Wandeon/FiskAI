@@ -1957,7 +1957,7 @@ model SourcePointer {
   // Start/end offsets into Evidence.rawContent where exactQuote was found
   startOffset     Int?
   endOffset       Int?
-  matchType       SourcePointerMatchType?  @default(NOT_VERIFIED)
+  matchType       SourcePointerMatchType?  @default(PENDING_VERIFICATION)
 
   evidence        Evidence @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
   rules           RegulatoryRule[] @relation("RuleSourcePointers")
@@ -2541,9 +2541,10 @@ enum AuditResult {
 }
 
 enum SourcePointerMatchType {
-  EXACT         // Quote found exactly as stored
-  NORMALIZED    // Quote found after whitespace/unicode normalization
-  NOT_VERIFIED  // Quote not yet verified against evidence
+  EXACT                  // Quote found exactly as stored
+  NORMALIZED             // Quote found after whitespace/unicode normalization
+  NOT_FOUND              // Quote does not exist in evidence (broken provenance)
+  PENDING_VERIFICATION   // Quote not yet checked against evidence
 }
 
 model WatchdogHealth {

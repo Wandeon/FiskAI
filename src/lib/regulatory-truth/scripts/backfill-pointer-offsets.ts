@@ -5,9 +5,9 @@
 //   npx tsx src/lib/regulatory-truth/scripts/backfill-pointer-offsets.ts [--dry-run] [--batch-size=100]
 //
 // This script:
-// 1. Finds all SourcePointers with matchType = NOT_VERIFIED (or null)
+// 1. Finds all SourcePointers with matchType = PENDING_VERIFICATION (or null)
 // 2. For each, attempts to find exactQuote in Evidence.rawContent
-// 3. Updates with offsets and matchType (EXACT or NORMALIZED)
+// 3. Updates with offsets and matchType (EXACT, NORMALIZED, or NOT_FOUND)
 // 4. Logs failures for manual review
 
 import { db } from "@/lib/db"
@@ -43,7 +43,7 @@ async function backfillPointerOffsets(options: {
   // Find all unverified pointers
   const totalCount = await db.sourcePointer.count({
     where: {
-      OR: [{ matchType: null }, { matchType: "NOT_VERIFIED" }],
+      OR: [{ matchType: null }, { matchType: "PENDING_VERIFICATION" }],
     },
   })
 
@@ -56,7 +56,7 @@ async function backfillPointerOffsets(options: {
   while (offset < totalCount) {
     const pointers = await db.sourcePointer.findMany({
       where: {
-        OR: [{ matchType: null }, { matchType: "NOT_VERIFIED" }],
+        OR: [{ matchType: null }, { matchType: "PENDING_VERIFICATION" }],
       },
       include: {
         evidence: {
@@ -148,14 +148,14 @@ async function backfillPointerOffsets(options: {
   return result
 }
 
-function matchTypeToEnum(matchType: MatchType): "EXACT" | "NORMALIZED" | "NOT_VERIFIED" {
+function matchTypeToEnum(matchType: MatchType): "EXACT" | "NORMALIZED" | "NOT_FOUND" {
   switch (matchType) {
     case "exact":
       return "EXACT"
     case "normalized":
       return "NORMALIZED"
     case "not_found":
-      return "NOT_VERIFIED"
+      return "NOT_FOUND"
   }
 }
 

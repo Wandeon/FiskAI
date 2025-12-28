@@ -115,6 +115,7 @@ async function validateRuleProvenance(
 
   const pointerResults: ProvenanceValidationResult[] = []
   const failures: ProvenanceValidationResult[] = []
+  const isCriticalTier = riskTier === "T0" || riskTier === "T1"
 
   for (const pointer of rule.sourcePointers) {
     // Validate quote exists in evidence
@@ -136,6 +137,23 @@ async function validateRuleProvenance(
       if (!policyCheck.acceptable) {
         validationResult.valid = false
         validationResult.error = policyCheck.reason
+      }
+    }
+
+    // HARD GATE: T0/T1 require EXACT match with valid offsets
+    if (validationResult.valid && isCriticalTier) {
+      // Must be exact match (already checked by isMatchTypeAcceptableForTier, but be explicit)
+      if (validationResult.matchResult.matchType !== "exact") {
+        validationResult.valid = false
+        validationResult.error = `${riskTier} rules require EXACT match, got ${validationResult.matchResult.matchType}`
+      }
+      // Must have valid offsets
+      else if (
+        validationResult.matchResult.start === undefined ||
+        validationResult.matchResult.end === undefined
+      ) {
+        validationResult.valid = false
+        validationResult.error = `${riskTier} rules require byte-level offsets, offsets are missing`
       }
     }
 
@@ -172,14 +190,14 @@ async function validateRuleProvenance(
  */
 function matchTypeToEnum(
   matchType: "exact" | "normalized" | "not_found"
-): "EXACT" | "NORMALIZED" | "NOT_VERIFIED" {
+): "EXACT" | "NORMALIZED" | "NOT_FOUND" {
   switch (matchType) {
     case "exact":
       return "EXACT"
     case "normalized":
       return "NORMALIZED"
     case "not_found":
-      return "NOT_VERIFIED"
+      return "NOT_FOUND"
   }
 }
 

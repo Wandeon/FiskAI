@@ -160,7 +160,7 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
           // Set offsets at creation time for Tier 1 structured data
           startOffset: quoteStart !== -1 ? quoteStart : null,
           endOffset: quoteEnd,
-          matchType: quoteStart !== -1 ? "EXACT" : "NOT_VERIFIED",
+          matchType: quoteStart !== -1 ? "EXACT" : "NOT_FOUND",
         },
       })
 
@@ -189,9 +189,12 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
           conceptSlug,
           titleHr: `Tečaj EUR/${rate.valuta} za ${rate.datum_primjene}`,
           titleEn: `Exchange Rate EUR/${rate.valuta} for ${rate.datum_primjene}`,
-          riskTier: "T0", // Lowest risk - official rates
-          authorityLevel: "LAW", // Official central bank rates
-          automationPolicy: "ALLOW", // Eligible for auto-approval
+          // T3: Low risk - reference values used for currency conversion
+          // NOT T0/T1 - exchange rates are not critical tax rates or legal deadlines
+          riskTier: "T3",
+          // PROCEDURE: Reference data from central bank, not binding law
+          authorityLevel: "PROCEDURE",
+          automationPolicy: "ALLOW", // Eligible for auto-approval via pipeline
           appliesWhen: JSON.stringify({
             and: [
               { eq: ["currency_from", "EUR"] },
