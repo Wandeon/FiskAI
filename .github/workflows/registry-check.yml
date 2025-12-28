@@ -51,12 +51,15 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
+          # Progressive enforcement rollout:
+          # - Sprint 0-1: 'warn' (comment + neutral check)
+          # - Sprint 2+: Change to 'fail' to block CRITICAL PRs
+          BLAST_RADIUS_ENFORCEMENT_MODE: warn
         run: |
           npx tsx src/lib/system-registry/scripts/blast-radius.ts \
             --base-sha "$BASE_SHA" \
             --head-sha "$HEAD_SHA" \
             --output-format pr-comment \
-            --enforcement-mode warn \
             --write-comment
         continue-on-error: true
 

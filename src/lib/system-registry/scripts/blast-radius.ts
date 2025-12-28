@@ -78,8 +78,13 @@ Required:
 
 Options:
   --output-format <format>   Output format: pr-comment, github-check, json (default: pr-comment)
-  --enforcement-mode <mode>  Enforcement mode: warn, fail (default: warn)
+  --enforcement-mode <mode>  Enforcement mode: warn, fail
+                             Default: BLAST_RADIUS_ENFORCEMENT_MODE env var, or 'warn'
   --write-comment            Write output to docs/system-registry/blast-radius-comment.json
+
+Environment Variables:
+  BLAST_RADIUS_ENFORCEMENT_MODE   Default enforcement mode when --enforcement-mode not provided
+                                  Values: warn, fail (default: warn)
 
 Exit codes:
   0  LOW/MEDIUM score, or HIGH/CRITICAL in warn mode
@@ -88,11 +93,25 @@ Exit codes:
 `)
 }
 
+/**
+ * Gets the default enforcement mode from environment variable.
+ * Falls back to 'warn' if not set or invalid.
+ */
+function getDefaultEnforcementMode(): EnforcementMode {
+  const envMode = process.env.BLAST_RADIUS_ENFORCEMENT_MODE?.toLowerCase()
+  if (envMode === "fail") {
+    return "fail"
+  }
+  // Default to 'warn' for any other value (including undefined, empty, or invalid)
+  return "warn"
+}
+
 function parseArgs(): CLIOptions | null {
   const args = process.argv.slice(2)
+  const defaultEnforcementMode = getDefaultEnforcementMode()
   const options: Partial<CLIOptions> = {
     outputFormat: "pr-comment",
-    enforcementMode: "warn",
+    enforcementMode: defaultEnforcementMode,
     writeComment: false,
     projectRoot: process.cwd(),
   }
@@ -400,7 +419,9 @@ async function main(): Promise<void> {
   console.error(`Base SHA: ${options.baseSha}`)
   console.error(`Head SHA: ${options.headSha}`)
   console.error(`Output Format: ${options.outputFormat}`)
-  console.error(`Enforcement Mode: ${options.enforcementMode}`)
+  const envMode = process.env.BLAST_RADIUS_ENFORCEMENT_MODE
+  const modeSource = envMode ? `env: BLAST_RADIUS_ENFORCEMENT_MODE=${envMode}` : "default"
+  console.error(`Enforcement Mode: ${options.enforcementMode} (${modeSource})`)
   console.error("")
 
   // Get changed files
