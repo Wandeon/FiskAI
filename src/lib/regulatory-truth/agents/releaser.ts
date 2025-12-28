@@ -13,6 +13,11 @@ import { logAuditEvent } from "../utils/audit-log"
 import { computeReleaseHash, normalizeDate, type RuleSnapshot } from "../utils/release-hash"
 import { checkBatchEvidenceStrength } from "../utils/evidence-strength"
 import { publishRules } from "../services/rule-status-service"
+import {
+  emitContentSyncEvent,
+  mapRtlDomainToContentDomain,
+} from "../content-sync"
+import type { RiskTier } from "../schemas/common"
 
 // =============================================================================
 // RELEASER AGENT
@@ -381,6 +386,64 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
       releaseId: release.id,
       publishedRuleIds: [],
       error: `Failed to publish rules: ${publishResult.errors.join("; ")}`,
+    }
+  }
+
+  // ==========================================================================
+  // Emit Content Sync Events (non-blocking)
+  // ==========================================================================
+  // Emit a ContentSyncEvent for each published rule to trigger MDX guide updates.
+  // This is async and non-blocking - failures are logged but don't fail the release.
+
+  for (const rule of rules) {
+    // Gather source pointer IDs and evidence IDs for traceability
+    const ruleSourcePointerIds = rule.sourcePointers.map((sp) => sp.id)
+    const ruleEvidenceIds = [...new Set(rule.sourcePointers.map((sp) => sp.evidenceId))]
+
+    // Determine change type based on whether this rule supersedes another
+    // If supersedesId exists, it's an update; otherwise it's a create
+    // Note: REPEALED status would indicate a repeal, but that's handled separately
+    const changeType =
+      rule.status === "REPEALED" ? "repeal" : rule.supersedesId ? "update" : "create"
+
+    // Get domain from the first source pointer (they should all be the same domain)
+    const rtlDomain = rule.sourcePointers[0]?.domain ?? "pausalni"
+    const contentDomain = mapRtlDomainToContentDomain(rtlDomain)
+
+    // Find primary source URL from the first source pointer with a law reference
+    const primarySourceUrl = rule.sourcePointers.find((sp) => sp.lawReference)?.lawReference
+
+    // Get previous value if this rule supersedes another
+    let previousValue: string | undefined
+    if (rule.supersedesId) {
+      const supersededRule = await db.regulatoryRule.findUnique({
+        where: { id: rule.supersedesId },
+        select: { value: true },
+      })
+      previousValue = supersededRule?.value
+    }
+
+    try {
+      await emitContentSyncEvent({
+        type: "RULE_RELEASED",
+        ruleId: rule.id,
+        conceptId: rule.conceptId ?? rule.conceptSlug, // Fall back to conceptSlug if no conceptId
+        domain: contentDomain,
+        effectiveFrom: rule.effectiveFrom,
+        changeType: changeType as "create" | "update" | "repeal",
+        ruleTier: rule.riskTier as RiskTier,
+        sourcePointerIds: ruleSourcePointerIds,
+        evidenceIds: ruleEvidenceIds,
+        previousValue,
+        newValue: rule.value,
+        valueType: rule.valueType as "currency" | "percentage" | "date" | "threshold" | "text",
+        primarySourceUrl,
+        confidenceLevel: Math.round(rule.confidence * 100),
+      })
+      console.log(`[releaser] Emitted content sync event for rule ${rule.id} (${rule.conceptSlug})`)
+    } catch (error) {
+      // Log but don't fail release - content sync is non-blocking
+      console.error(`[releaser] Failed to emit content sync event for rule ${rule.id}:`, error)
     }
   }
 
