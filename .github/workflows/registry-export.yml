@@ -1,0 +1,52 @@
+name: Registry Export
+
+on:
+  workflow_dispatch:
+    inputs:
+      format:
+        description: 'Export format'
+        required: true
+        type: choice
+        options:
+          - csv
+          - regulatory-pack
+          - drift-history
+      since:
+        description: 'Since date for drift-history (YYYY-MM-DD)'
+        required: false
+        type: string
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create exports directory
+        run: mkdir -p docs/system-registry/exports
+
+      - name: Run export script
+        run: |
+          if [ -n "${{ inputs.since }}" ]; then
+            npx tsx src/lib/system-registry/scripts/export.ts --format ${{ inputs.format }} --since ${{ inputs.since }}
+          else
+            npx tsx src/lib/system-registry/scripts/export.ts --format ${{ inputs.format }}
+          fi
+
+      - name: Upload export artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-export-${{ inputs.format }}-${{ github.run_id }}
+          path: docs/system-registry/exports/*
+          retention-days: 90
+          if-no-files-found: warn

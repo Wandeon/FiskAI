@@ -1,0 +1,59 @@
+name: Registry History
+
+on:
+  schedule:
+    # Run daily at 2am UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force capture even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  capture-history:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create history directory
+        run: mkdir -p docs/system-registry/history
+
+      - name: Capture drift history
+        run: |
+          npx tsx src/lib/system-registry/scripts/export.ts --format drift-history --output docs/system-registry/history/
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet docs/system-registry/history/; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push history
+        if: steps.changes.outputs.has_changes == 'true' || inputs.force == true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/system-registry/history/
+          git commit -m "chore: capture registry drift history $(date +%Y-%m-%d)"
+          git push
