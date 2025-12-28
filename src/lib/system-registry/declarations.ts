@@ -115,6 +115,12 @@ export const UI_COMPONENTS: SystemComponent[] = [
       { componentId: "store-postgresql", type: "HARD" },
     ],
     criticalPaths: ["path-authentication"],
+    healthCheck: {
+      endpoint: "/api/health/app",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/ui-portal-app.md",
   },
   {
     componentId: "ui-portal-staff",
@@ -168,6 +174,12 @@ export const MODULE_COMPONENTS: SystemComponent[] = [
       { componentId: "module-products", type: "SOFT" },
     ],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/health/invoicing",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/module-invoicing.md",
   },
   {
     componentId: "module-e-invoicing",
@@ -183,6 +195,12 @@ export const MODULE_COMPONENTS: SystemComponent[] = [
       { componentId: "store-r2", type: "SOFT" },
     ],
     criticalPaths: [],
+    healthCheck: {
+      endpoint: "/api/health/e-invoicing",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/module-e-invoicing.md",
   },
   {
     componentId: "module-fiscalization",
@@ -198,6 +216,12 @@ export const MODULE_COMPONENTS: SystemComponent[] = [
       { componentId: "lib-fiscal", type: "HARD" },
     ],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/health/fiscalization",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/module-fiscalization.md",
   },
   {
     componentId: "module-contacts",
@@ -300,6 +324,12 @@ export const MODULE_COMPONENTS: SystemComponent[] = [
     codeRef: "src/lib/modules/definitions.ts",
     dependencies: [{ componentId: "store-postgresql", type: "HARD" }],
     criticalPaths: [],
+    healthCheck: {
+      endpoint: "/api/health/pausalni",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/module-pausalni.md",
   },
   {
     componentId: "module-vat",
@@ -312,6 +342,12 @@ export const MODULE_COMPONENTS: SystemComponent[] = [
     codeRef: "src/lib/modules/definitions.ts",
     dependencies: [{ componentId: "store-postgresql", type: "HARD" }],
     criticalPaths: [],
+    healthCheck: {
+      endpoint: "/api/health/vat",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/module-vat.md",
   },
   {
     componentId: "module-corporate-tax",
@@ -428,6 +464,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-authentication"],
     metadata: { endpointCount: 6 },
+    healthCheck: {
+      endpoint: "/api/health/auth",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-auth.md",
   },
   {
     componentId: "route-group-bank",
@@ -473,6 +515,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-billing"],
     metadata: { endpointCount: 3 },
+    healthCheck: {
+      endpoint: "/api/health/billing",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-billing.md",
   },
   {
     componentId: "route-group-cache",
@@ -525,6 +573,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     dependencies: [],
     criticalPaths: [],
     metadata: { endpointCount: 12 },
+    healthCheck: {
+      endpoint: "/api/health/cron",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-cron.md",
   },
   {
     componentId: "route-group-deadlines",
@@ -551,6 +605,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     dependencies: [{ componentId: "module-e-invoicing", type: "HARD" }],
     criticalPaths: [],
     metadata: { endpointCount: 2 },
+    healthCheck: {
+      endpoint: "/api/health/e-invoices",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-e-invoices.md",
   },
   {
     componentId: "route-group-email",
@@ -629,6 +689,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     dependencies: [{ componentId: "module-invoicing", type: "HARD" }],
     criticalPaths: ["path-fiscalization"],
     metadata: { endpointCount: 1 },
+    healthCheck: {
+      endpoint: "/api/health/invoices",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-invoices.md",
   },
   {
     componentId: "route-group-knowledge-hub",
@@ -707,6 +773,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     dependencies: [{ componentId: "module-pausalni", type: "HARD" }],
     criticalPaths: [],
     metadata: { endpointCount: 12 },
+    healthCheck: {
+      endpoint: "/api/health/pausalni",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-pausalni.md",
   },
   {
     componentId: "route-group-products",
@@ -850,6 +922,12 @@ export const ROUTE_GROUP_COMPONENTS: SystemComponent[] = [
     dependencies: [{ componentId: "lib-auth", type: "HARD" }],
     criticalPaths: ["path-authentication"],
     metadata: { endpointCount: 6 },
+    healthCheck: {
+      endpoint: "/api/health/webauthn",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/route-group-webauthn.md",
   },
   {
     componentId: "route-group-webhooks",
@@ -885,6 +963,12 @@ export const WORKER_COMPONENTS: SystemComponent[] = [
       { componentId: "lib-regulatory-truth", type: "HARD" },
     ],
     criticalPaths: ["path-rtl-pipeline"],
+    healthCheck: {
+      command: "pgrep -f orchestrator.worker",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/worker-orchestrator.md",
   },
   {
     componentId: "worker-sentinel",
@@ -900,6 +984,12 @@ export const WORKER_COMPONENTS: SystemComponent[] = [
       { componentId: "queue-sentinel", type: "HARD" },
     ],
     criticalPaths: ["path-rtl-pipeline"],
+    healthCheck: {
+      command: "pgrep -f sentinel.worker",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/worker-sentinel.md",
   },
   {
     componentId: "worker-extractor",
@@ -917,6 +1007,12 @@ export const WORKER_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-rtl-pipeline"],
     metadata: { replicas: 2, concurrency: 2 },
+    healthCheck: {
+      command: "pgrep -f extractor.worker",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/worker-extractor.md",
   },
   {
     componentId: "worker-ocr",
@@ -948,6 +1044,12 @@ export const WORKER_COMPONENTS: SystemComponent[] = [
       { componentId: "queue-compose", type: "HARD" },
     ],
     criticalPaths: ["path-rtl-pipeline"],
+    healthCheck: {
+      command: "pgrep -f composer.worker",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/worker-composer.md",
   },
   {
     componentId: "worker-reviewer",
@@ -990,6 +1092,12 @@ export const WORKER_COMPONENTS: SystemComponent[] = [
       { componentId: "queue-release", type: "HARD" },
     ],
     criticalPaths: ["path-rtl-pipeline"],
+    healthCheck: {
+      command: "pgrep -f releaser.worker",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/worker-releaser.md",
   },
   {
     componentId: "worker-arbiter",
@@ -1039,6 +1147,12 @@ export const JOB_COMPONENTS: SystemComponent[] = [
       { componentId: "integration-fina-cis", type: "HARD" },
     ],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/cron/fiscal-processor",
+      interval: "60s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/job-fiscal-processor.md",
   },
   {
     componentId: "job-fetch-news",
@@ -1114,6 +1228,12 @@ export const JOB_COMPONENTS: SystemComponent[] = [
       { componentId: "integration-fina-cis", type: "HARD" },
     ],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/cron/fiscal-retry",
+      interval: "60s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/job-fiscal-retry.md",
   },
   {
     componentId: "job-weekly-digest",
@@ -1174,6 +1294,12 @@ export const JOB_COMPONENTS: SystemComponent[] = [
     codeRef: "src/app/api/cron/certificate-check/route.ts",
     dependencies: [{ componentId: "lib-fiscal", type: "HARD" }],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/cron/certificate-check",
+      interval: "60s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/job-certificate-check.md",
   },
 ]
 
@@ -1272,6 +1398,12 @@ export const QUEUE_COMPONENTS: SystemComponent[] = [
     dependencies: [{ componentId: "store-redis", type: "HARD" }],
     criticalPaths: ["path-rtl-pipeline"],
     metadata: { rateLimiter: { max: 2, duration: 60000 } },
+    healthCheck: {
+      command: "redis-cli LLEN bull:release:waiting",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/queue-release.md",
   },
   {
     componentId: "queue-consolidator",
@@ -1343,6 +1475,12 @@ export const STORE_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-authentication", "path-fiscalization", "path-billing"],
     metadata: { modelCount: 82 },
+    healthCheck: {
+      command: "pg_isready -h localhost -p 5432",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/store-postgresql.md",
   },
   {
     componentId: "store-redis",
@@ -1379,6 +1517,12 @@ export const STORE_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-rtl-pipeline"],
     metadata: { maxMemory: "512mb" },
+    healthCheck: {
+      command: "redis-cli ping",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/store-redis.md",
   },
   {
     componentId: "store-r2",
@@ -1441,6 +1585,12 @@ export const INTEGRATION_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-billing"],
     metadata: { features: ["billing", "terminal", "webhooks"] },
+    healthCheck: {
+      endpoint: "/api/health/stripe",
+      interval: "60s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/integration-stripe.md",
   },
   {
     componentId: "integration-gocardless",
@@ -1476,6 +1626,12 @@ export const INTEGRATION_COMPONENTS: SystemComponent[] = [
       "job-fiscal-retry",
     ],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/health/fina-cis",
+      interval: "60s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/integration-fina-cis.md",
   },
   {
     componentId: "integration-ollama",
@@ -1532,6 +1688,12 @@ export const LIB_COMPONENTS: SystemComponent[] = [
     ],
     criticalPaths: ["path-rtl-pipeline"],
     metadata: { subdirectories: 22 },
+    healthCheck: {
+      endpoint: "/api/health/regulatory-truth",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/lib-regulatory-truth.md",
   },
   {
     componentId: "lib-assistant",
@@ -1557,6 +1719,12 @@ export const LIB_COMPONENTS: SystemComponent[] = [
     codeRef: "src/lib/auth/",
     dependencies: [{ componentId: "store-postgresql", type: "HARD" }],
     criticalPaths: ["path-authentication"],
+    healthCheck: {
+      endpoint: "/api/health/auth",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/lib-auth.md",
   },
   {
     componentId: "lib-guidance",
@@ -1606,6 +1774,12 @@ export const LIB_COMPONENTS: SystemComponent[] = [
     codeRef: "src/lib/fiscal/",
     dependencies: [{ componentId: "integration-fina-cis", type: "HARD" }],
     criticalPaths: ["path-fiscalization"],
+    healthCheck: {
+      endpoint: "/api/health/fiscal",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/lib-fiscal.md",
   },
   {
     componentId: "lib-billing",
@@ -1618,6 +1792,12 @@ export const LIB_COMPONENTS: SystemComponent[] = [
     codeRef: "src/lib/billing/",
     dependencies: [{ componentId: "integration-stripe", type: "HARD" }],
     criticalPaths: ["path-billing"],
+    healthCheck: {
+      endpoint: "/api/health/billing",
+      interval: "30s",
+    },
+    alertChannel: "#ops-critical",
+    runbook: "docs/runbooks/lib-billing.md",
   },
   {
     componentId: "lib-cache",
