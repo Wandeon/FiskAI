@@ -213,6 +213,16 @@ Docker builds take 10-15 minutes. Instead:
 
 ```
 docs/
+├── product-bible/       # Product Bible (modular chapters)
+│   ├── 00-INDEX.md      # Master index with version history
+│   ├── 01-VISION-ARCHITECTURE.md
+│   ├── 02-USERS-JOURNEYS.md
+│   ├── 03-LEGAL-COMPLIANCE.md
+│   ├── 04-ACCESS-CONTROL.md
+│   ├── 05-UI-EXPERIENCE.md
+│   ├── 06-INTEGRATIONS.md
+│   ├── 07-DATA-API.md
+│   └── 08-APPENDIXES.md
 ├── 01_ARCHITECTURE/     # System architecture
 ├── 02_FEATURES/         # Feature specifications
 ├── 04_OPERATIONS/       # Operations runbooks
@@ -221,5 +231,7 @@ docs/
 ├── _meta/               # Meta-documentation
 └── plans/               # Implementation plans
 ```
+
+**Product Bible:** For complete product specification (vision, personas, compliance, modules, UI flows, API), see [docs/product-bible/00-INDEX.md](./docs/product-bible/00-INDEX.md).
 
 See [docs/DOC-MAP.md](./docs/DOC-MAP.md) for complete documentation structure.
