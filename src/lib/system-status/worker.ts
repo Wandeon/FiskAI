@@ -8,7 +8,7 @@
  * - Lock TTL heartbeat while running
  */
 
-import { Worker, Job } from "bullmq"
+import { Worker, Job, UnrecoverableError } from "bullmq"
 import { computeSystemStatusSnapshot } from "./refresh"
 import { diffSnapshots } from "./diff"
 import {
@@ -20,7 +20,8 @@ import {
   getRefreshJob,
   acquireRefreshLock,
 } from "./store"
-import { createWorkerConnection } from "@/lib/regulatory-truth/workers/redis"
+import { createWorkerConnection, closeRedis } from "@/lib/regulatory-truth/workers/redis"
+import { deadletterQueue } from "@/lib/regulatory-truth/workers/queues"
 
 const PREFIX = process.env.BULLMQ_PREFIX || "fiskai"
 const QUEUE_NAME = "system-status"
@@ -158,7 +159,11 @@ export async function processRefreshJob(
       error: error instanceof Error ? error.message : String(error),
     })
 
-    throw error
+    // Prevent retries for non-transient errors
+    if (!isTransientError(error)) {
+      throw new UnrecoverableError(error instanceof Error ? error.message : String(error))
+    }
+    throw error // Allow retry for transient errors
   } finally {
     // Always release lock
     await releaseRefreshLock(lockKey)
@@ -235,22 +240,28 @@ export function createSystemStatusWorker(): Worker<RefreshJobPayload> {
     if (!job) return
 
     const attemptsMade = job.attemptsMade
-    const maxRetries = 1 // Max 1 retry for transient errors
+    const maxAttempts = job.opts.attempts || 2
 
     console.error(
-      `[system-status-worker] Job ${job.id} failed (attempt ${attemptsMade}):`,
+      `[system-status-worker] Job ${job.id} failed (attempt ${attemptsMade}/${maxAttempts}):`,
       err.message
     )
 
-    // Only retry if it's a transient error and we haven't exceeded retries
-    if (attemptsMade < maxRetries && isTransientError(err)) {
+    // Move to dead letter queue after max attempts
+    if (attemptsMade >= maxAttempts) {
+      await deadletterQueue.add("failed", {
+        originalQueue: "system-status",
+        jobId: job.id,
+        jobName: job.name,
+        data: job.data,
+        error: err.message,
+        failedAt: new Date().toISOString(),
+      })
+      console.log(`[system-status-worker] Job ${job.id} moved to dead letter queue`)
+    } else if (isTransientError(err)) {
       console.log(`[system-status-worker] Job ${job.id} will be retried (transient error)`)
     } else {
-      console.log(
-        `[system-status-worker] Job ${job.id} will not be retried (${
-          isTransientError(err) ? "max retries exceeded" : "non-transient error"
-        })`
-      )
+      console.log(`[system-status-worker] Job ${job.id} will not be retried (non-transient error)`)
     }
   })
 
@@ -273,6 +284,7 @@ export function setupGracefulShutdown(worker: Worker): void {
   const shutdown = async (signal: string) => {
     console.log(`\n[system-status-worker] Received ${signal}, shutting down gracefully...`)
     await worker.close()
+    await closeRedis()
     console.log("[system-status-worker] Shutdown complete")
     process.exit(0)
   }
