@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod"
-import { db } from "@/lib/db"
+import { db, getTenantContext } from "@/lib/db"
 import {
   requireAuth,
   requireCompanyWithContext,
@@ -31,9 +31,15 @@ export async function createProduct(formData: z.infer<typeof productSchema>) {
       return { error: "Neispravni podaci", details: validatedFields.error.flatten() }
     }
 
+    const context = getTenantContext()
+    if (!context) {
+      return { error: "Nedostaje kontekst tvrtke" }
+    }
+
     const product = await db.product.create({
       data: {
         ...validatedFields.data,
+        companyId: context.companyId,
         description: validatedFields.data.description || null,
         sku: validatedFields.data.sku || null,
       },

@@ -351,8 +351,9 @@ describe("Admin Alerts", () => {
       await getActiveAlerts()
 
       const call = vi.mocked(db.fiscalCertificate.findMany).mock.calls[0]
-      expect(call?.[0]?.where?.validUntil).toHaveProperty("lte")
-      expect(call?.[0]?.where?.validUntil).toHaveProperty("gte")
+      const where = call?.[0]?.where as { validUntil?: { lte?: Date; gte?: Date } }
+      expect(where?.validUntil).toHaveProperty("lte")
+      expect(where?.validUntil).toHaveProperty("gte")
     })
 
     it("returns empty array when no alerts", async () => {

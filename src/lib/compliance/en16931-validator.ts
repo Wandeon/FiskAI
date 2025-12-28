@@ -1,7 +1,7 @@
 // src/lib/compliance/en16931-validator.ts
 // EN 16931 compliance validation for e-invoices
 
-import { EInvoice, EInvoiceLine, Contact, Company, Decimal } from "@prisma/client"
+import { EInvoice, EInvoiceLine, Contact, Company } from "@prisma/client"
 import { logger } from "@/lib/logger"
 
 export interface ComplianceResult {

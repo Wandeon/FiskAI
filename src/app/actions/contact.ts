@@ -1,7 +1,7 @@
 "use server"
 
 import { z } from "zod"
-import { db } from "@/lib/db"
+import { db, getTenantContext } from "@/lib/db"
 import {
   requireAuth,
   requireCompanyWithContext,
@@ -20,18 +20,23 @@ export async function createContact(formData: z.infer<typeof contactSchema>) {
       return { error: "Invalid fields", details: validatedFields.error.flatten() }
     }
 
-    const data = {
-      ...validatedFields.data,
-      oib: validatedFields.data.oib || null,
-      vatNumber: validatedFields.data.vatNumber || null,
-      address: validatedFields.data.address || null,
-      city: validatedFields.data.city || null,
-      postalCode: validatedFields.data.postalCode || null,
-      email: validatedFields.data.email || null,
-      phone: validatedFields.data.phone || null,
+    const context = getTenantContext()
+    if (!context) {
+      return { error: "No tenant context" }
     }
+
     const contact = await db.contact.create({
-      data,
+      data: {
+        ...validatedFields.data,
+        companyId: context.companyId,
+        oib: validatedFields.data.oib || null,
+        vatNumber: validatedFields.data.vatNumber || null,
+        address: validatedFields.data.address || null,
+        city: validatedFields.data.city || null,
+        postalCode: validatedFields.data.postalCode || null,
+        email: validatedFields.data.email || null,
+        phone: validatedFields.data.phone || null,
+      },
     })
 
     revalidatePath("/contacts")
