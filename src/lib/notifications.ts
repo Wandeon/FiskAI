@@ -26,6 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
+  // Core CRUD operations
   CREATE: "Kreirano",
   UPDATE: "Ažurirano",
   DELETE: "Obrisano",
@@ -33,6 +34,39 @@ const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   EXPORT: "Izvezeno",
   LOGIN: "Prijava",
   LOGOUT: "Odjava",
+
+  // Regulatory Truth Layer - Evidence
+  EVIDENCE_FETCHED: "Dokaz dohvaćen",
+  EVIDENCE_HASH_REPAIRED: "Hash dokaza popravljen",
+
+  // Regulatory Truth Layer - Rules
+  RULE_CREATED: "Pravilo kreirano",
+  RULE_APPROVED: "Pravilo odobreno",
+  RULE_PUBLISHED: "Pravilo objavljeno",
+  RULE_AUTO_PUBLISHED: "Pravilo automatski objavljeno",
+  RULE_REJECTED: "Pravilo odbijeno",
+  RULE_REJECTED_TEST_DATA: "Pravilo odbijeno (test podaci)",
+  RULE_DELETED: "Pravilo obrisano",
+  RULE_MERGED: "Pravilo spojeno",
+  RULE_ROLLBACK: "Pravilo vraćeno",
+  RULE_QUEUED_FOR_REVIEW: "Pravilo u redu za pregled",
+  RULE_CONCEPT_LINKED: "Pravilo povezano s konceptom",
+  MERGE_RULES: "Pravila spojena",
+
+  // Regulatory Truth Layer - Concepts
+  CONCEPT_CREATED: "Koncept kreiran",
+  CONCEPT_MERGED: "Koncept spojen",
+  CONFIDENCE_DECAY_APPLIED: "Primjenjen pad pouzdanosti",
+
+  // Regulatory Truth Layer - Conflicts
+  CONFLICT_CREATED: "Konflikt kreiran",
+  CONFLICT_RESOLVED: "Konflikt riješen",
+  CONFLICT_ESCALATED: "Konflikt eskaliran",
+
+  // Regulatory Truth Layer - Releases
+  RELEASE_PUBLISHED: "Izdanje objavljeno",
+  RELEASE_ROLLED_BACK: "Izdanje vraćeno",
+  RELEASE_HASH_REPAIRED: "Hash izdanja popravljen",
 }
 
 const ENTITY_LABELS: Record<string, string> = {

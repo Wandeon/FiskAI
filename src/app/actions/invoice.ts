@@ -448,7 +448,7 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
 
     const eInvoice = await db.eInvoice.create({
       data: {
-        companyId,
+        companyId: company.id,
         direction: "OUTBOUND",
         buyerId,
         invoiceNumber,

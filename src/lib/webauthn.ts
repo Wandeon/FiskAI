@@ -92,11 +92,12 @@ export async function generateWebAuthnRegistrationOptions(
   const options = await generateRegistrationOptions({
     rpName: RP_NAME,
     rpID: RP_ID,
+    userID: userId,
     userName,
     userDisplayName,
     attestationType: "none",
     excludeCredentials: existingCredentials.map((cred) => ({
-      id: toBase64UrlId(cred.credentialId),
+      id: toBufferFromId(cred.credentialId),
       type: "public-key" as const,
       transports: cred.transports
         ? (JSON.parse(cred.transports) as AuthenticatorTransportFuture[])
@@ -154,7 +155,7 @@ export async function generateWebAuthnAuthenticationOptions(
   const options = await generateAuthenticationOptions({
     rpID: RP_ID,
     allowCredentials: credentials.map((cred) => ({
-      id: toBase64UrlId(cred.credentialId),
+      id: toBufferFromId(cred.credentialId),
       type: "public-key" as const,
       transports: cred.transports
         ? (JSON.parse(cred.transports) as AuthenticatorTransportFuture[])

@@ -1,21 +1,9 @@
 // src/lib/regulatory-truth/utils/audit-log.ts
 
 import { db } from "@/lib/db"
-import { Prisma } from "@prisma/client"
+import { Prisma, AuditAction } from "@prisma/client"
 
-export type AuditAction =
-  | "RULE_CREATED"
-  | "RULE_APPROVED"
-  | "RULE_REJECTED"
-  | "RULE_PUBLISHED"
-  | "RULE_ROLLBACK"
-  | "CONFLICT_CREATED"
-  | "CONFLICT_RESOLVED"
-  | "CONFLICT_ESCALATED"
-  | "CONCEPT_CREATED"
-  | "RELEASE_PUBLISHED"
-  | "RELEASE_ROLLED_BACK"
-  | "EVIDENCE_FETCHED"
+export type { AuditAction }
 
 export type EntityType = "RULE" | "CONFLICT" | "RELEASE" | "EVIDENCE" | "CONCEPT" | "SYSTEM"
 

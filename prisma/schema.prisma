@@ -1319,6 +1319,7 @@ enum InvoiceType {
 }
 
 enum AuditAction {
+  // Core CRUD operations
   CREATE
   UPDATE
   DELETE
@@ -1326,6 +1327,39 @@ enum AuditAction {
   EXPORT
   LOGIN
   LOGOUT
+
+  // Regulatory Truth Layer - Evidence
+  EVIDENCE_FETCHED
+  EVIDENCE_HASH_REPAIRED
+
+  // Regulatory Truth Layer - Rules
+  RULE_CREATED
+  RULE_APPROVED
+  RULE_PUBLISHED
+  RULE_AUTO_PUBLISHED
+  RULE_REJECTED
+  RULE_REJECTED_TEST_DATA
+  RULE_DELETED
+  RULE_MERGED
+  RULE_ROLLBACK
+  RULE_QUEUED_FOR_REVIEW
+  RULE_CONCEPT_LINKED
+  MERGE_RULES
+
+  // Regulatory Truth Layer - Concepts
+  CONCEPT_CREATED
+  CONCEPT_MERGED
+  CONFIDENCE_DECAY_APPLIED
+
+  // Regulatory Truth Layer - Conflicts
+  CONFLICT_CREATED
+  CONFLICT_RESOLVED
+  CONFLICT_ESCALATED
+
+  // Regulatory Truth Layer - Releases
+  RELEASE_PUBLISHED
+  RELEASE_ROLLED_BACK
+  RELEASE_HASH_REPAIRED
 }
 
 enum ExpenseStatus {
