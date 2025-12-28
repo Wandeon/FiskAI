@@ -15,12 +15,14 @@ import { describe, it, expect } from "vitest"
 import {
   computeDirectImpact,
   computeTransitiveImpact,
+  computeCriticalPathImpacts,
   DEFAULT_MAX_TRANSITIVE_NODES,
   type DirectImpact,
   type TransitiveImpact,
+  type CriticalPathImpact,
 } from "../system-registry/blast-radius"
 import { buildGraph } from "../system-registry/dependency-graph"
-import type { SystemComponent, ComponentDependency } from "../system-registry/schema"
+import type { SystemComponent, ComponentDependency, CriticalPath } from "../system-registry/schema"
 
 /**
  * Helper to create a minimal SystemComponent for testing.
@@ -986,5 +988,368 @@ describe("computeTransitiveImpact", () => {
 describe("DEFAULT_MAX_TRANSITIVE_NODES constant", () => {
   it("is exported and equals 50", () => {
     expect(DEFAULT_MAX_TRANSITIVE_NODES).toBe(50)
+  })
+})
+
+/**
+ * Helper to create a minimal CriticalPath for testing.
+ */
+function makeCriticalPath(
+  pathId: string,
+  name: string,
+  components: string[],
+  reason: string = "Test reason"
+): CriticalPath {
+  return {
+    pathId,
+    name,
+    components,
+    reason,
+  }
+}
+
+/**
+ * Helper to create a TransitiveImpact for testing.
+ */
+function makeTransitiveImpact(
+  componentId: string,
+  distance: number,
+  pathThrough: string[] = []
+): TransitiveImpact {
+  return {
+    component: makeComponent(componentId, "LIB", `src/lib/${componentId}/`),
+    distance,
+    pathThrough,
+  }
+}
+
+describe("computeCriticalPathImpacts", () => {
+  describe("basic cases", () => {
+    it("returns empty array when no critical paths provided", () => {
+      const result = computeCriticalPathImpacts(
+        ["lib-auth"],
+        [],
+        []
+      )
+      expect(result).toEqual([])
+    })
+
+    it("returns empty array when no impacts provided", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing", "integration-stripe"]),
+      ]
+      const result = computeCriticalPathImpacts([], [], criticalPaths)
+      expect(result).toEqual([])
+    })
+
+    it("returns empty array when no critical path components are impacted", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing", "integration-stripe"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-auth"], // Not in billing path
+        [],
+        criticalPaths
+      )
+      expect(result).toEqual([])
+    })
+  })
+
+  describe("direct impact (distance 0)", () => {
+    it("returns distance 0 when direct component is on critical path", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing", "integration-stripe"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-billing"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].pathId).toBe("path-billing")
+      expect(result[0].pathName).toBe("Billing Path")
+      expect(result[0].distance).toBe(0)
+      expect(result[0].impactedComponents).toEqual(["lib-billing"])
+    })
+
+    it("lists all direct impact components on the path", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing", "integration-stripe", "route-group-webhooks"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-billing", "route-group-webhooks"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].distance).toBe(0)
+      expect(result[0].impactedComponents).toEqual(["lib-billing", "route-group-webhooks"])
+    })
+
+    it("returns distance 0 even when transitive impacts exist", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing", "integration-stripe"]),
+      ]
+      const transitiveImpacts = [
+        makeTransitiveImpact("integration-stripe", 2, ["other", "component"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-billing"], // Direct impact
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].distance).toBe(0) // Direct takes precedence
+      expect(result[0].impactedComponents).toContain("lib-billing")
+      expect(result[0].impactedComponents).toContain("integration-stripe")
+    })
+  })
+
+  describe("transitive impact", () => {
+    it("returns correct distance for transitive impact", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-auth", "Authentication Path", ["lib-auth", "store-postgresql"]),
+      ]
+      const transitiveImpacts = [
+        makeTransitiveImpact("lib-auth", 3, ["A", "B", "C"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        [],
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].pathId).toBe("path-auth")
+      expect(result[0].distance).toBe(3)
+      expect(result[0].impactedComponents).toEqual(["lib-auth"])
+    })
+
+    it("returns minimum distance when multiple path components have different distances", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-fiscal", "Fiscalization Path", ["lib-fiscal", "integration-fina-cis", "job-fiscal-processor"]),
+      ]
+      const transitiveImpacts = [
+        makeTransitiveImpact("lib-fiscal", 1, ["direct"]),
+        makeTransitiveImpact("integration-fina-cis", 4, ["A", "B", "C", "D"]),
+        makeTransitiveImpact("job-fiscal-processor", 2, ["X", "Y"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        [],
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].distance).toBe(1) // Minimum of 1, 4, 2
+      expect(result[0].impactedComponents).toEqual([
+        "integration-fina-cis",
+        "job-fiscal-processor",
+        "lib-fiscal",
+      ])
+    })
+  })
+
+  describe("multiple critical paths", () => {
+    it("returns multiple impacts when multiple paths are affected", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-auth", "Authentication Path", ["lib-auth"]),
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing"]),
+        makeCriticalPath("path-fiscal", "Fiscalization Path", ["lib-fiscal"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-auth", "lib-billing"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(2)
+      expect(result.map(r => r.pathId)).toEqual(["path-auth", "path-billing"])
+    })
+
+    it("only returns affected paths", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-auth", "Authentication Path", ["lib-auth"]),
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing"]),
+        makeCriticalPath("path-fiscal", "Fiscalization Path", ["lib-fiscal"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-auth"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].pathId).toBe("path-auth")
+    })
+
+    it("handles paths with different distances correctly", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-auth", "Authentication Path", ["lib-auth"]),
+        makeCriticalPath("path-billing", "Billing Path", ["lib-billing"]),
+      ]
+      const transitiveImpacts = [
+        makeTransitiveImpact("lib-billing", 2, ["X", "Y"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-auth"], // Direct impact to auth
+        transitiveImpacts, // Transitive impact to billing
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(2)
+
+      const authImpact = result.find(r => r.pathId === "path-auth")
+      const billingImpact = result.find(r => r.pathId === "path-billing")
+
+      expect(authImpact?.distance).toBe(0) // Direct
+      expect(billingImpact?.distance).toBe(2) // Transitive
+    })
+  })
+
+  describe("edge cases", () => {
+    it("handles duplicate components in transitive impacts", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-test", "Test Path", ["lib-test"]),
+      ]
+      // Same component with different distances (shouldn't happen normally, but handle gracefully)
+      const transitiveImpacts = [
+        makeTransitiveImpact("lib-test", 3, ["A", "B", "C"]),
+        makeTransitiveImpact("lib-test", 1, ["X"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        [],
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].distance).toBe(1) // Should use minimum
+    })
+
+    it("returns sorted results by pathId", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-zebra", "Zebra Path", ["lib-z"]),
+        makeCriticalPath("path-alpha", "Alpha Path", ["lib-a"]),
+        makeCriticalPath("path-middle", "Middle Path", ["lib-m"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-z", "lib-a", "lib-m"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(3)
+      expect(result.map(r => r.pathId)).toEqual([
+        "path-alpha",
+        "path-middle",
+        "path-zebra",
+      ])
+    })
+
+    it("returns sorted impactedComponents within each result", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-test", "Test Path", ["lib-z", "lib-a", "lib-m"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-z", "lib-a", "lib-m"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].impactedComponents).toEqual(["lib-a", "lib-m", "lib-z"])
+    })
+
+    it("handles path with no components", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-empty", "Empty Path", []),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-auth"],
+        [],
+        criticalPaths
+      )
+
+      expect(result).toEqual([])
+    })
+
+    it("handles component that is both direct and transitive (direct wins)", () => {
+      const criticalPaths = [
+        makeCriticalPath("path-test", "Test Path", ["lib-test"]),
+      ]
+      const transitiveImpacts = [
+        makeTransitiveImpact("lib-test", 5, ["A", "B", "C", "D", "E"]),
+      ]
+      const result = computeCriticalPathImpacts(
+        ["lib-test"], // Also a direct impact
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].distance).toBe(0) // Direct takes precedence
+    })
+  })
+
+  describe("integration with real CRITICAL_PATHS structure", () => {
+    it("works with production-like critical path definitions", () => {
+      // Simulate production critical paths structure
+      const criticalPaths: CriticalPath[] = [
+        {
+          pathId: "path-fiscalization",
+          name: "Fiscalization Path",
+          components: [
+            "module-fiscalization",
+            "lib-fiscal",
+            "integration-fina-cis",
+            "job-fiscal-processor",
+            "job-fiscal-retry",
+            "job-certificate-check",
+          ],
+          reason: "Legal requirement - invoice fiscalization with Croatian Tax Authority",
+          sloTarget: "99.9% success rate, <5s processing time",
+        },
+        {
+          pathId: "path-billing",
+          name: "Billing Path",
+          components: [
+            "route-group-billing",
+            "lib-billing",
+            "integration-stripe",
+            "route-group-webhooks",
+          ],
+          reason: "Money movement - subscription billing and payment processing",
+          sloTarget: "99.95% uptime, webhooks processed <30s",
+        },
+      ]
+
+      // Simulate: lib-fiscal is directly changed, and integration-stripe is transitively affected
+      const transitiveImpacts = [
+        makeTransitiveImpact("integration-stripe", 2, ["A", "B"]),
+      ]
+
+      const result = computeCriticalPathImpacts(
+        ["lib-fiscal"],
+        transitiveImpacts,
+        criticalPaths
+      )
+
+      expect(result).toHaveLength(2)
+
+      const fiscalImpact = result.find(r => r.pathId === "path-fiscalization")
+      const billingImpact = result.find(r => r.pathId === "path-billing")
+
+      expect(fiscalImpact).toBeDefined()
+      expect(fiscalImpact?.distance).toBe(0)
+      expect(fiscalImpact?.impactedComponents).toContain("lib-fiscal")
+
+      expect(billingImpact).toBeDefined()
+      expect(billingImpact?.distance).toBe(2)
+      expect(billingImpact?.impactedComponents).toContain("integration-stripe")
+    })
   })
 })

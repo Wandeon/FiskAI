@@ -29,7 +29,7 @@
  * ```
  */
 
-import type { SystemComponent } from "./schema"
+import type { SystemComponent, CriticalPath } from "./schema"
 import { ALLOWED_QUEUE_CONSTRUCTOR_PATHS } from "./governance"
 import type { DependencyGraph } from "./dependency-graph"
 
@@ -483,4 +483,127 @@ export function computeTransitiveImpact(
     ),
     truncated: false,
   }
+}
+
+/**
+ * Represents the impact on a critical path when components change.
+ *
+ * Critical paths are business-critical flows (billing, fiscalization, auth, etc.)
+ * that need special attention when changes affect them.
+ */
+export interface CriticalPathImpact {
+  /** Name of the critical path (from CriticalPath.name) */
+  pathName: string
+
+  /** Path ID for reference (from CriticalPath.pathId) */
+  pathId: string
+
+  /**
+   * Distance to the critical path:
+   * - 0 if a direct impact component is on the critical path
+   * - N if the nearest transitive impact component is N hops away
+   */
+  distance: number
+
+  /** List of component IDs in this path that are affected */
+  impactedComponents: string[]
+}
+
+/**
+ * Computes which critical paths are impacted by a set of changes.
+ *
+ * For each critical path, checks if any of its components appear in either:
+ * 1. Direct impacts (distance = 0)
+ * 2. Transitive impacts (distance = min distance from transitive impacts)
+ *
+ * @param directComponents - Component IDs that are directly impacted
+ * @param transitiveImpacts - Transitive impact results from computeTransitiveImpact
+ * @param criticalPaths - Critical path definitions to check against
+ * @returns Array of CriticalPathImpact, one per affected critical path
+ *
+ * @example
+ * ```typescript
+ * const direct = computeDirectImpact(changedFiles, components)
+ * const directIds = direct.map(d => d.component.componentId)
+ * const { impacts: transitive } = computeTransitiveImpact(directIds, graph, components)
+ *
+ * const criticalPathImpacts = computeCriticalPathImpacts(
+ *   directIds,
+ *   transitive,
+ *   CRITICAL_PATHS
+ * )
+ *
+ * // criticalPathImpacts = [
+ * //   { pathName: "Billing Path", pathId: "path-billing", distance: 0, impactedComponents: ["lib-billing"] },
+ * //   { pathName: "Authentication Path", pathId: "path-authentication", distance: 2, impactedComponents: ["lib-auth"] },
+ * // ]
+ * ```
+ */
+export function computeCriticalPathImpacts(
+  directComponents: string[],
+  transitiveImpacts: TransitiveImpact[],
+  criticalPaths: CriticalPath[]
+): CriticalPathImpact[] {
+  // Handle empty inputs
+  if (criticalPaths.length === 0) {
+    return []
+  }
+
+  if (directComponents.length === 0 && transitiveImpacts.length === 0) {
+    return []
+  }
+
+  // Create a set of direct components for O(1) lookup
+  const directSet = new Set(directComponents)
+
+  // Create a map of transitive component ID -> minimum distance
+  const transitiveDistanceMap = new Map<string, number>()
+  for (const impact of transitiveImpacts) {
+    const componentId = impact.component.componentId
+    const existingDistance = transitiveDistanceMap.get(componentId)
+    if (existingDistance === undefined || impact.distance < existingDistance) {
+      transitiveDistanceMap.set(componentId, impact.distance)
+    }
+  }
+
+  const results: CriticalPathImpact[] = []
+
+  for (const path of criticalPaths) {
+    const impactedComponents: string[] = []
+    let minDistance: number | null = null
+
+    // Check each component in the critical path
+    for (const componentId of path.components) {
+      // Check if it's a direct impact (distance = 0)
+      if (directSet.has(componentId)) {
+        impactedComponents.push(componentId)
+        if (minDistance === null || 0 < minDistance) {
+          minDistance = 0
+        }
+        continue
+      }
+
+      // Check if it's a transitive impact
+      const transitiveDistance = transitiveDistanceMap.get(componentId)
+      if (transitiveDistance !== undefined) {
+        impactedComponents.push(componentId)
+        if (minDistance === null || transitiveDistance < minDistance) {
+          minDistance = transitiveDistance
+        }
+      }
+    }
+
+    // Only include path if at least one component is affected
+    if (impactedComponents.length > 0 && minDistance !== null) {
+      results.push({
+        pathName: path.name,
+        pathId: path.pathId,
+        distance: minDistance,
+        impactedComponents: impactedComponents.sort(), // Sort for deterministic output
+      })
+    }
+  }
+
+  // Sort by pathId for deterministic output
+  return results.sort((a, b) => a.pathId.localeCompare(b.pathId))
 }
