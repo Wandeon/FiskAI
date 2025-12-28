@@ -607,3 +607,167 @@ export function computeCriticalPathImpacts(
   // Sort by pathId for deterministic output
   return results.sort((a, b) => a.pathId.localeCompare(b.pathId))
 }
+
+/**
+ * Criticality levels used for blast score computation.
+ * Re-exported for convenience (same as ComponentCriticality).
+ */
+export type Criticality = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+
+/**
+ * Ordered criticality levels from lowest to highest.
+ * Used for tier progression and bumping.
+ */
+const CRITICALITY_ORDER: Criticality[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+
+/**
+ * A tier bump that was applied during blast score computation.
+ */
+export interface TierBump {
+  /** Reason for the bump */
+  reason: string
+  /** Criticality before the bump */
+  from: Criticality
+  /** Criticality after the bump */
+  to: Criticality
+}
+
+/**
+ * Result of blast score computation.
+ * Contains the final score, base score, and any bumps applied.
+ */
+export interface BlastScore {
+  /** Final computed criticality after all bumps */
+  score: Criticality
+  /** Initial criticality based on max of direct components */
+  baseScore: Criticality
+  /** List of tier bumps that were applied */
+  bumps: TierBump[]
+}
+
+/**
+ * Gets the next tier up from the given criticality.
+ * Returns the same tier if already at CRITICAL (ceiling).
+ */
+function bumpTier(criticality: Criticality): Criticality {
+  const index = CRITICALITY_ORDER.indexOf(criticality)
+  // CRITICAL is the ceiling - can't go higher
+  if (index >= CRITICALITY_ORDER.length - 1) {
+    return criticality
+  }
+  return CRITICALITY_ORDER[index + 1]
+}
+
+/**
+ * Checks if any direct impact component is owned by team:security.
+ */
+function hasSecurityOwner(directImpacts: DirectImpact[]): boolean {
+  for (const impact of directImpacts) {
+    if (impact.component.owner === "team:security") {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Computes the blast score for a set of changes.
+ *
+ * The scoring system aggregates all impact information into a single
+ * criticality score that determines enforcement behavior.
+ *
+ * Bump rules:
+ * 1. Base = max criticality of direct components (defaults to LOW if no direct impacts)
+ * 2. +1 tier if any critical path is impacted
+ * 3. +1 tier if team:security is owner of any directly impacted component
+ * 4. +1 tier if governance issues exist
+ *
+ * Tier progression: LOW -> MEDIUM -> HIGH -> CRITICAL
+ * CRITICAL is the ceiling (cannot be bumped higher).
+ *
+ * @param directImpacts - Components directly affected by file changes
+ * @param criticalPathImpacts - Critical paths that are affected
+ * @param governanceIssues - List of governance issues (e.g., missing owners)
+ * @returns BlastScore with final score, base score, and bump history
+ *
+ * @example
+ * ```typescript
+ * const direct = computeDirectImpact(changedFiles, components)
+ * const { impacts: transitive } = computeTransitiveImpact(directIds, graph, components)
+ * const criticalPaths = computeCriticalPathImpacts(directIds, transitive, CRITICAL_PATHS)
+ *
+ * const blastScore = computeBlastScore(direct, criticalPaths, [])
+ *
+ * // blastScore = {
+ * //   score: "HIGH",
+ * //   baseScore: "MEDIUM",
+ * //   bumps: [{ reason: "Critical path impacted: Billing Path", from: "MEDIUM", to: "HIGH" }]
+ * // }
+ * ```
+ */
+export function computeBlastScore(
+  directImpacts: DirectImpact[],
+  criticalPathImpacts: CriticalPathImpact[],
+  governanceIssues: string[]
+): BlastScore {
+  const bumps: TierBump[] = []
+
+  // Step 1: Compute base score from max criticality of direct components
+  let baseScore: Criticality = "LOW"
+  for (const impact of directImpacts) {
+    const criticality = impact.component.criticality as Criticality
+    const currentIndex = CRITICALITY_ORDER.indexOf(baseScore)
+    const impactIndex = CRITICALITY_ORDER.indexOf(criticality)
+    if (impactIndex > currentIndex) {
+      baseScore = criticality
+    }
+  }
+
+  let currentScore = baseScore
+
+  // Step 2: +1 tier if any critical path is impacted
+  if (criticalPathImpacts.length > 0) {
+    const newScore = bumpTier(currentScore)
+    if (newScore !== currentScore) {
+      const pathNames = criticalPathImpacts.map((p) => p.pathName).join(", ")
+      bumps.push({
+        reason: `Critical path impacted: ${pathNames}`,
+        from: currentScore,
+        to: newScore,
+      })
+      currentScore = newScore
+    }
+  }
+
+  // Step 3: +1 tier if team:security is owner of any directly impacted component
+  if (hasSecurityOwner(directImpacts)) {
+    const newScore = bumpTier(currentScore)
+    if (newScore !== currentScore) {
+      bumps.push({
+        reason: "Security team owns impacted component",
+        from: currentScore,
+        to: newScore,
+      })
+      currentScore = newScore
+    }
+  }
+
+  // Step 4: +1 tier if governance issues exist
+  if (governanceIssues.length > 0) {
+    const newScore = bumpTier(currentScore)
+    if (newScore !== currentScore) {
+      bumps.push({
+        reason: `Governance issues: ${governanceIssues.join(", ")}`,
+        from: currentScore,
+        to: newScore,
+      })
+      currentScore = newScore
+    }
+  }
+
+  return {
+    score: currentScore,
+    baseScore,
+    bumps,
+  }
+}
