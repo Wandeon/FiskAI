@@ -117,6 +117,24 @@ docker exec fiskai-db psql -U fiskai -d fiskai -c \
 - `/src/app/(staff)/` - Staff portal
 - `/src/app/(admin)/` - Admin portal
 
+## Component Architecture
+
+4-layer component system with ESLint-enforced import boundaries:
+
+```
+ui/ + motion/  →  patterns/  →  sections/  →  templates/  →  pages
+```
+
+- `src/components/ui/` - Primitives (Button, Card, Badge)
+- `src/components/motion/` - Animation behaviors (Reveal, Stagger)
+- `src/components/patterns/` - Composed primitives (SectionHeading, FeatureCard)
+- `src/components/sections/` - Page sections (HeroSection, FeatureGrid)
+- `src/components/templates/` - Portal-scoped templates (MarketingPageTemplate)
+
+**Rule:** Each layer can only import from layers to its left. ESLint blocks upward imports.
+
+See `docs/03_ARCHITECTURE/COMPONENT_LAYERS_MIGRATION.md` for migration guide.
+
 ## Module System
 
 16 toggleable modules stored in `Company.entitlements[]`:
@@ -242,6 +260,7 @@ docs/
 **Product Bible:** For complete product specification (vision, personas, compliance, modules, UI flows, API), see [docs/product-bible/00-INDEX.md](./docs/product-bible/00-INDEX.md).
 
 **Architecture Docs:**
+
 - [RTL Architecture](./docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md) - Complete Regulatory Truth Layer specification
 - [AI Assistant](./docs/03_ARCHITECTURE/AI_ASSISTANT.md) - AI Assistant system architecture
 
