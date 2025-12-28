@@ -12,7 +12,14 @@
  */
 
 import { describe, it, expect } from "vitest"
-import { computeDirectImpact, type DirectImpact } from "../system-registry/blast-radius"
+import {
+  computeDirectImpact,
+  computeTransitiveImpact,
+  DEFAULT_MAX_TRANSITIVE_NODES,
+  type DirectImpact,
+  type TransitiveImpact,
+} from "../system-registry/blast-radius"
+import { buildGraph } from "../system-registry/dependency-graph"
 import type { SystemComponent, ComponentDependency } from "../system-registry/schema"
 
 /**
@@ -532,5 +539,452 @@ describe("computeDirectImpact", () => {
         "src/lib/test/z.ts",
       ])
     })
+  })
+})
+
+describe("computeTransitiveImpact", () => {
+  describe("basic cases", () => {
+    it("returns empty when no transitive deps exist", () => {
+      // A is directly impacted, but nothing depends on A
+      const components = [makeComponent("A", "LIB", "src/lib/a/")]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["A"], graph, components)
+
+      expect(result.impacts).toEqual([])
+      expect(result.truncated).toBe(false)
+    })
+
+    it("returns empty when direct components have no dependents", () => {
+      // A depends on B, but B is the direct impact, so A is transitive
+      // However, if we pass A as direct, and nothing depends on A, empty result
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/"),
+      ]
+      const graph = buildGraph(components)
+
+      // A is direct, nothing depends on A
+      const result = computeTransitiveImpact(["A"], graph, components)
+
+      expect(result.impacts).toEqual([])
+      expect(result.truncated).toBe(false)
+    })
+
+    it("excludes direct components from results", () => {
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/"),
+      ]
+      const graph = buildGraph(components)
+
+      // B is direct, A depends on B
+      const result = computeTransitiveImpact(["B"], graph, components)
+
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].component.componentId).toBe("A")
+      // B should not be in results
+      expect(result.impacts.some((i) => i.component.componentId === "B")).toBe(
+        false
+      )
+    })
+  })
+
+  describe("distance calculation", () => {
+    it("computes distance 1 for direct dependents", () => {
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["B"], graph, components)
+
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].distance).toBe(1)
+    })
+
+    it("computes correct distances for linear chain", () => {
+      // A -> B -> C (A depends on B, B depends on C)
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "C", type: "HARD" }],
+        }),
+        makeComponent("C", "LIB", "src/lib/c/"),
+      ]
+      const graph = buildGraph(components)
+
+      // C is direct impact
+      const result = computeTransitiveImpact(["C"], graph, components)
+
+      expect(result.impacts).toHaveLength(2)
+
+      const impactB = result.impacts.find(
+        (i) => i.component.componentId === "B"
+      )
+      const impactA = result.impacts.find(
+        (i) => i.component.componentId === "A"
+      )
+
+      expect(impactB?.distance).toBe(1) // B directly depends on C
+      expect(impactA?.distance).toBe(2) // A depends on B which depends on C
+    })
+
+    it("computes minimum distance for diamond pattern", () => {
+      // Diamond: A -> B, A -> C, B -> D, C -> D
+      // If D is direct, both B and C are distance 1
+      // A is distance 2 (through either B or C)
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [
+            { componentId: "B", type: "HARD" },
+            { componentId: "C", type: "HARD" },
+          ],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "D", type: "HARD" }],
+        }),
+        makeComponent("C", "LIB", "src/lib/c/", {
+          dependencies: [{ componentId: "D", type: "HARD" }],
+        }),
+        makeComponent("D", "LIB", "src/lib/d/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["D"], graph, components)
+
+      expect(result.impacts).toHaveLength(3)
+
+      const impactB = result.impacts.find(
+        (i) => i.component.componentId === "B"
+      )
+      const impactC = result.impacts.find(
+        (i) => i.component.componentId === "C"
+      )
+      const impactA = result.impacts.find(
+        (i) => i.component.componentId === "A"
+      )
+
+      expect(impactB?.distance).toBe(1)
+      expect(impactC?.distance).toBe(1)
+      expect(impactA?.distance).toBe(2)
+    })
+  })
+
+  describe("path reconstruction", () => {
+    it("tracks path for distance 1", () => {
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["B"], graph, components)
+
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].pathThrough).toEqual(["B"])
+    })
+
+    it("tracks path for linear chain", () => {
+      // A -> B -> C
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "C", type: "HARD" }],
+        }),
+        makeComponent("C", "LIB", "src/lib/c/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["C"], graph, components)
+
+      const impactB = result.impacts.find(
+        (i) => i.component.componentId === "B"
+      )
+      const impactA = result.impacts.find(
+        (i) => i.component.componentId === "A"
+      )
+
+      expect(impactB?.pathThrough).toEqual(["C"])
+      expect(impactA?.pathThrough).toEqual(["C", "B"])
+    })
+
+    it("captures one valid path for diamond pattern", () => {
+      // Diamond: A -> B, A -> C, B -> D, C -> D
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [
+            { componentId: "B", type: "HARD" },
+            { componentId: "C", type: "HARD" },
+          ],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "D", type: "HARD" }],
+        }),
+        makeComponent("C", "LIB", "src/lib/c/", {
+          dependencies: [{ componentId: "D", type: "HARD" }],
+        }),
+        makeComponent("D", "LIB", "src/lib/d/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["D"], graph, components)
+
+      const impactA = result.impacts.find(
+        (i) => i.component.componentId === "A"
+      )
+
+      // A's path should be either ["D", "B"] or ["D", "C"]
+      // It should have length 2 (distance is 2)
+      expect(impactA?.pathThrough).toHaveLength(2)
+      expect(impactA?.pathThrough[0]).toBe("D")
+      expect(["B", "C"]).toContain(impactA?.pathThrough[1])
+    })
+  })
+
+  describe("cycle handling", () => {
+    it("handles cycles without infinite loop", () => {
+      // A -> B -> A (cycle)
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "A", type: "HARD" }],
+        }),
+      ]
+      const graph = buildGraph(components)
+
+      // A is direct, B depends on A
+      const result = computeTransitiveImpact(["A"], graph, components)
+
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].component.componentId).toBe("B")
+      expect(result.impacts[0].distance).toBe(1)
+      expect(result.truncated).toBe(false)
+    })
+
+    it("handles larger cycles", () => {
+      // A -> B -> C -> A
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "B", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "C", type: "HARD" }],
+        }),
+        makeComponent("C", "LIB", "src/lib/c/", {
+          dependencies: [{ componentId: "A", type: "HARD" }],
+        }),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["A"], graph, components)
+
+      // B and C should be found, but A is direct (excluded)
+      expect(result.impacts).toHaveLength(2)
+      expect(
+        result.impacts.some((i) => i.component.componentId === "B")
+      ).toBe(true)
+      expect(
+        result.impacts.some((i) => i.component.componentId === "C")
+      ).toBe(true)
+      expect(result.truncated).toBe(false)
+    })
+  })
+
+  describe("truncation", () => {
+    it("truncates at maxNodes limit", () => {
+      // Create a star pattern: many components depend on ROOT
+      const components: SystemComponent[] = [
+        makeComponent("ROOT", "LIB", "src/lib/root/"),
+      ]
+
+      for (let i = 0; i < 100; i++) {
+        components.push(
+          makeComponent(`DEP${i}`, "LIB", `src/lib/dep${i}/`, {
+            dependencies: [{ componentId: "ROOT", type: "HARD" }],
+          })
+        )
+      }
+
+      const graph = buildGraph(components)
+      const result = computeTransitiveImpact(["ROOT"], graph, components)
+
+      expect(result.impacts.length).toBe(DEFAULT_MAX_TRANSITIVE_NODES)
+      expect(result.truncated).toBe(true)
+    })
+
+    it("respects custom maxNodes parameter", () => {
+      const components: SystemComponent[] = [
+        makeComponent("ROOT", "LIB", "src/lib/root/"),
+      ]
+
+      for (let i = 0; i < 20; i++) {
+        components.push(
+          makeComponent(`DEP${i}`, "LIB", `src/lib/dep${i}/`, {
+            dependencies: [{ componentId: "ROOT", type: "HARD" }],
+          })
+        )
+      }
+
+      const graph = buildGraph(components)
+      const result = computeTransitiveImpact(["ROOT"], graph, components, 5)
+
+      expect(result.impacts.length).toBe(5)
+      expect(result.truncated).toBe(true)
+    })
+
+    it("does not truncate when under limit", () => {
+      const components: SystemComponent[] = [
+        makeComponent("ROOT", "LIB", "src/lib/root/"),
+      ]
+
+      for (let i = 0; i < 10; i++) {
+        components.push(
+          makeComponent(`DEP${i}`, "LIB", `src/lib/dep${i}/`, {
+            dependencies: [{ componentId: "ROOT", type: "HARD" }],
+          })
+        )
+      }
+
+      const graph = buildGraph(components)
+      const result = computeTransitiveImpact(["ROOT"], graph, components)
+
+      expect(result.impacts.length).toBe(10)
+      expect(result.truncated).toBe(false)
+    })
+  })
+
+  describe("multiple direct components", () => {
+    it("handles multiple direct components", () => {
+      // A -> X, B -> Y
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "X", type: "HARD" }],
+        }),
+        makeComponent("B", "LIB", "src/lib/b/", {
+          dependencies: [{ componentId: "Y", type: "HARD" }],
+        }),
+        makeComponent("X", "LIB", "src/lib/x/"),
+        makeComponent("Y", "LIB", "src/lib/y/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["X", "Y"], graph, components)
+
+      expect(result.impacts).toHaveLength(2)
+      expect(
+        result.impacts.some((i) => i.component.componentId === "A")
+      ).toBe(true)
+      expect(
+        result.impacts.some((i) => i.component.componentId === "B")
+      ).toBe(true)
+    })
+
+    it("handles overlapping transitive impacts from multiple direct components", () => {
+      // A -> X, A -> Y (A depends on both X and Y)
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [
+            { componentId: "X", type: "HARD" },
+            { componentId: "Y", type: "HARD" },
+          ],
+        }),
+        makeComponent("X", "LIB", "src/lib/x/"),
+        makeComponent("Y", "LIB", "src/lib/y/"),
+      ]
+      const graph = buildGraph(components)
+
+      // Both X and Y are direct, A depends on both
+      const result = computeTransitiveImpact(["X", "Y"], graph, components)
+
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].component.componentId).toBe("A")
+      expect(result.impacts[0].distance).toBe(1)
+    })
+  })
+
+  describe("edge cases", () => {
+    it("handles empty direct components", () => {
+      const components = [makeComponent("A", "LIB", "src/lib/a/")]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact([], graph, components)
+
+      expect(result.impacts).toEqual([])
+      expect(result.truncated).toBe(false)
+    })
+
+    it("handles non-existent direct component gracefully", () => {
+      const components = [makeComponent("A", "LIB", "src/lib/a/")]
+      const graph = buildGraph(components)
+
+      // "Z" doesn't exist
+      const result = computeTransitiveImpact(["Z"], graph, components)
+
+      expect(result.impacts).toEqual([])
+      expect(result.truncated).toBe(false)
+    })
+
+    it("handles undeclared dependency in graph", () => {
+      // A depends on UNDECLARED, but UNDECLARED is not in components list
+      const components = [
+        makeComponent("A", "LIB", "src/lib/a/", {
+          dependencies: [{ componentId: "UNDECLARED", type: "HARD" }],
+        }),
+      ]
+      const graph = buildGraph(components)
+
+      // UNDECLARED is direct, A depends on it
+      const result = computeTransitiveImpact(["UNDECLARED"], graph, components)
+
+      // A should still be found (it depends on UNDECLARED)
+      expect(result.impacts).toHaveLength(1)
+      expect(result.impacts[0].component.componentId).toBe("A")
+    })
+
+    it("returns sorted results by componentId", () => {
+      const components = [
+        makeComponent("Zebra", "LIB", "src/lib/zebra/", {
+          dependencies: [{ componentId: "ROOT", type: "HARD" }],
+        }),
+        makeComponent("Alpha", "LIB", "src/lib/alpha/", {
+          dependencies: [{ componentId: "ROOT", type: "HARD" }],
+        }),
+        makeComponent("Middle", "LIB", "src/lib/middle/", {
+          dependencies: [{ componentId: "ROOT", type: "HARD" }],
+        }),
+        makeComponent("ROOT", "LIB", "src/lib/root/"),
+      ]
+      const graph = buildGraph(components)
+
+      const result = computeTransitiveImpact(["ROOT"], graph, components)
+
+      expect(result.impacts.map((i) => i.component.componentId)).toEqual([
+        "Alpha",
+        "Middle",
+        "Zebra",
+      ])
+    })
+  })
+})
+
+describe("DEFAULT_MAX_TRANSITIVE_NODES constant", () => {
+  it("is exported and equals 50", () => {
+    expect(DEFAULT_MAX_TRANSITIVE_NODES).toBe(50)
   })
 })

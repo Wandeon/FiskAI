@@ -100,9 +100,13 @@ export type {
 } from "./dependency-graph"
 
 // Blast radius exports
-export { computeDirectImpact } from "./blast-radius"
+export {
+  computeDirectImpact,
+  computeTransitiveImpact,
+  DEFAULT_MAX_TRANSITIVE_NODES,
+} from "./blast-radius"
 
-export type { DirectImpact, MatchType } from "./blast-radius"
+export type { DirectImpact, MatchType, TransitiveImpact } from "./blast-radius"
 
 // Utility: Get component by ID
 export function getComponent(componentId: string) {

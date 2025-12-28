@@ -31,6 +31,7 @@
 
 import type { SystemComponent } from "./schema"
 import { ALLOWED_QUEUE_CONSTRUCTOR_PATHS } from "./governance"
+import type { DependencyGraph } from "./dependency-graph"
 
 /**
  * Type of match that linked a file to a component.
@@ -56,6 +57,21 @@ export interface DirectImpact {
 
   /** How the match was determined */
   matchType: MatchType
+}
+
+/**
+ * A component transitively impacted through dependency chains.
+ * These are components that depend (directly or indirectly) on directly impacted components.
+ */
+export interface TransitiveImpact {
+  /** The transitively affected component */
+  component: SystemComponent
+
+  /** Number of hops from the nearest direct impact (1 = directly depends on a direct impact) */
+  distance: number
+
+  /** Component chain showing how this component was reached from a direct impact */
+  pathThrough: string[]
 }
 
 /**
@@ -320,4 +336,151 @@ export function computeDirectImpact(
   return results.sort((a, b) =>
     a.component.componentId.localeCompare(b.component.componentId)
   )
+}
+
+/**
+ * Default maximum number of transitive impact nodes to return.
+ * Prevents unbounded memory usage on large dependency graphs.
+ */
+export const DEFAULT_MAX_TRANSITIVE_NODES = 50
+
+/**
+ * Computes transitive impact from directly affected components.
+ *
+ * Given a set of directly impacted component IDs, finds all components that
+ * (directly or indirectly) depend on those components. Uses BFS traversal
+ * to track distance and path from the nearest direct impact.
+ *
+ * Semantics:
+ * - If A depends on B, changes to B affect A
+ * - Direct components are NOT included in transitive results
+ * - Distance 1 = directly depends on a direct component
+ * - Distance 2 = depends on something that depends on a direct component
+ *
+ * @param directComponents - Component IDs that are directly impacted
+ * @param graph - The dependency graph to traverse
+ * @param components - All declared system components (for lookup)
+ * @param maxNodes - Maximum number of transitive impacts to return (default: 50)
+ * @returns Object with transitive impacts and truncation flag
+ *
+ * @example
+ * ```typescript
+ * const direct = computeDirectImpact(changedFiles, components)
+ * const directIds = direct.map(d => d.component.componentId)
+ * const graph = buildGraph(components)
+ *
+ * const { impacts, truncated } = computeTransitiveImpact(
+ *   directIds,
+ *   graph,
+ *   components
+ * )
+ *
+ * // impacts = [
+ * //   { component: lib-auth, distance: 1, pathThrough: ["store-postgresql"] },
+ * //   { component: ui-portal, distance: 2, pathThrough: ["store-postgresql", "lib-auth"] },
+ * // ]
+ * ```
+ */
+export function computeTransitiveImpact(
+  directComponents: string[],
+  graph: DependencyGraph,
+  components: SystemComponent[],
+  maxNodes: number = DEFAULT_MAX_TRANSITIVE_NODES
+): {
+  impacts: TransitiveImpact[]
+  truncated: boolean
+} {
+  // Build lookup map for components
+  const componentMap = new Map<string, SystemComponent>()
+  for (const c of components) {
+    componentMap.set(c.componentId, c)
+  }
+
+  // Track visited nodes and their metadata
+  const visited = new Set<string>()
+  const result: TransitiveImpact[] = []
+
+  // Mark direct components as visited (they are excluded from transitive results)
+  for (const id of directComponents) {
+    visited.add(id)
+  }
+
+  // BFS queue: [componentId, distance, pathThrough]
+  // pathThrough is the chain of component IDs from direct impact to this node
+  const queue: Array<{ id: string; distance: number; pathThrough: string[] }> =
+    []
+
+  // Seed queue with components that directly depend on direct components
+  for (const directId of directComponents) {
+    const users = graph.usedBy.get(directId)
+    if (users) {
+      for (const userId of users) {
+        if (!visited.has(userId)) {
+          queue.push({
+            id: userId,
+            distance: 1,
+            pathThrough: [directId],
+          })
+        }
+      }
+    }
+  }
+
+  // BFS traversal
+  while (queue.length > 0) {
+    // Check if we've hit the cap
+    if (result.length >= maxNodes) {
+      return {
+        impacts: result.sort((a, b) =>
+          a.component.componentId.localeCompare(b.component.componentId)
+        ),
+        truncated: true,
+      }
+    }
+
+    const { id: currentId, distance, pathThrough } = queue.shift()!
+
+    // Skip if already visited (handles cycles and duplicate paths)
+    if (visited.has(currentId)) {
+      continue
+    }
+
+    visited.add(currentId)
+
+    // Look up the component
+    const component = componentMap.get(currentId)
+    if (!component) {
+      // Component referenced in graph but not in components list (undeclared dependency)
+      // Still track it in visited to prevent cycles, but don't add to results
+      continue
+    }
+
+    // Add to results
+    result.push({
+      component,
+      distance,
+      pathThrough,
+    })
+
+    // Add dependents of this node to the queue
+    const users = graph.usedBy.get(currentId)
+    if (users) {
+      for (const userId of users) {
+        if (!visited.has(userId)) {
+          queue.push({
+            id: userId,
+            distance: distance + 1,
+            pathThrough: [...pathThrough, currentId],
+          })
+        }
+      }
+    }
+  }
+
+  return {
+    impacts: result.sort((a, b) =>
+      a.component.componentId.localeCompare(b.component.componentId)
+    ),
+    truncated: false,
+  }
 }
