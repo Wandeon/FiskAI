@@ -110,6 +110,11 @@ export {
 
 export type { DirectImpact, MatchType, TransitiveImpact } from "./blast-radius"
 
+// Export module exports
+export { exportRegistry, EXPORT_FORMATS, DEFAULT_OUTPUT_DIR, getDefaultOutputPath } from "./export"
+
+export type { ExportFormat, ExportOptions, ExportResult, FormatHandler } from "./export"
+
 // Utility: Get component by ID
 export function getComponent(componentId: string) {
   const { DECLARED_COMPONENTS } = require("./declarations")
