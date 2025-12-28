@@ -2,7 +2,7 @@
 
 > **Canonical documentation structure. Every concept exists in exactly one file.**
 >
-> Last updated: 2024-12-24
+> Last updated: 2025-12-28
 
 ---
 
@@ -17,11 +17,16 @@ docs/
 ├── 01_ARCHITECTURE/               # System architecture
 │   ├── overview.md                # High-level system design
 │   ├── two-layer-model.md         # Discovery + Processing layers
-│   └── trust-guarantees.md        # Evidence, no hallucinations, fail-closed
+│   ├── trust-guarantees.md        # Evidence, no hallucinations, fail-closed
+│   └── REGULATORY_TRUTH_LAYER.md  # Complete RTL architecture (PR #128)
 │
 ├── 02_FEATURES/                   # Feature specifications (109 files)
-│   ├── FEATURE_REGISTRY.md        # Master feature list
+│   ├── FEATURE_REGISTRY.md        # Master feature list (status granularity PR #124)
 │   └── features/                  # Individual feature specs
+│       └── staff-portal.md        # Staff Portal gap analysis (PR #126)
+│
+├── 03_ARCHITECTURE/               # Component architecture (NEW)
+│   └── AI_ASSISTANT.md            # AI Assistant system architecture (PR #127)
 │
 ├── 03_CODEMAP/                    # Code navigation
 │   ├── routes.md                  # App routes by subdomain
@@ -74,11 +79,18 @@ docs/
 
 ### docs/01_ARCHITECTURE/
 
-| Canonical             | Sources Merged                                                  | Status |
-| --------------------- | --------------------------------------------------------------- | ------ |
-| `overview.md`         | `docs/design/architecture.md`, `PHASE1_FEATURE_ARCHITECTURE.md` | CREATE |
-| `two-layer-model.md`  | `docs/regulatory-truth/` architecture sections                  | CREATE |
-| `trust-guarantees.md` | `docs/_meta/invariants.md` references                           | CREATE |
+| Canonical                    | Sources Merged                                                  | Status |
+| ---------------------------- | --------------------------------------------------------------- | ------ |
+| `overview.md`                | `docs/design/architecture.md`, `PHASE1_FEATURE_ARCHITECTURE.md` | DONE   |
+| `two-layer-model.md`         | `docs/regulatory-truth/` architecture sections                  | DONE   |
+| `trust-guarantees.md`        | `docs/_meta/invariants.md` references                           | DONE   |
+| `REGULATORY_TRUTH_LAYER.md`  | Scattered RTL docs, PR #128                                     | DONE   |
+
+### docs/03_ARCHITECTURE/ (NEW - Component Architecture)
+
+| Canonical          | Sources Merged                         | Status |
+| ------------------ | -------------------------------------- | ------ |
+| `AI_ASSISTANT.md`  | 90+ files in `/src/lib/assistant/`, PR #127 | DONE   |
 
 ### docs/04_OPERATIONS/
 
@@ -174,7 +186,7 @@ These files are accurate and canonical:
 
 ### docs/
 
-- `docs/02_FEATURES/` - All 109 feature specs
+- `docs/02_FEATURES/` - All 109 feature specs (FEATURE_REGISTRY.md updated PR #124)
 - `docs/06_ROADMAP/` - Roadmap docs
 - `docs/_meta/` - Meta documentation
 - `docs/PRODUCT_BIBLE.md` - Product documentation
@@ -191,6 +203,18 @@ These files are accurate and canonical:
 ### src/
 
 - All inline READMEs in source directories
+
+---
+
+## Recently Added Documentation (2025-12-28)
+
+| PR    | File                                            | Description                          |
+| ----- | ----------------------------------------------- | ------------------------------------ |
+| #124  | `docs/02_FEATURES/FEATURE_REGISTRY.md`          | Status granularity ([I]/[P]/[S]/[D]) |
+| #125  | `docs/product-bible/09-GUIDANCE-SYSTEM.md`      | Guidance System specification        |
+| #126  | `docs/02_FEATURES/features/staff-portal.md`     | Staff Portal gap analysis            |
+| #127  | `docs/03_ARCHITECTURE/AI_ASSISTANT.md`          | AI Assistant architecture            |
+| #128  | `docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md`| RTL consolidated architecture        |
 
 ---
 

@@ -1,6 +1,6 @@
 # FiskAI Project Notes
 
-> Canonical document - reviewed 2024-12-24
+> Canonical document - reviewed 2025-12-28
 >
 > This file provides AI assistants with project context. For full documentation, see [docs/](./docs/).
 
@@ -148,6 +148,8 @@ Key variables configured:
 
 ## Regulatory Truth Layer
 
+> **Full Architecture:** See [docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md](./docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md)
+
 Two-layer execution model for processing Croatian regulatory content:
 
 **Layer A: Daily Discovery** (Scheduled)
@@ -222,9 +224,14 @@ docs/
 │   ├── 05-UI-EXPERIENCE.md
 │   ├── 06-INTEGRATIONS.md
 │   ├── 07-DATA-API.md
-│   └── 08-APPENDIXES.md
+│   ├── 08-APPENDIXES.md
+│   └── 09-GUIDANCE-SYSTEM.md    # NEW: Adaptive help system
 ├── 01_ARCHITECTURE/     # System architecture
+│   └── REGULATORY_TRUTH_LAYER.md  # Complete RTL architecture
 ├── 02_FEATURES/         # Feature specifications
+│   └── FEATURE_REGISTRY.md        # Master feature list with status
+├── 03_ARCHITECTURE/     # Component architecture
+│   └── AI_ASSISTANT.md            # AI Assistant system architecture
 ├── 04_OPERATIONS/       # Operations runbooks
 ├── 05_REGULATORY/       # Regulatory Truth Layer
 ├── 07_AUDITS/           # Audit reports
@@ -233,5 +240,9 @@ docs/
 ```
 
 **Product Bible:** For complete product specification (vision, personas, compliance, modules, UI flows, API), see [docs/product-bible/00-INDEX.md](./docs/product-bible/00-INDEX.md).
+
+**Architecture Docs:**
+- [RTL Architecture](./docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md) - Complete Regulatory Truth Layer specification
+- [AI Assistant](./docs/03_ARCHITECTURE/AI_ASSISTANT.md) - AI Assistant system architecture
 
 See [docs/DOC-MAP.md](./docs/DOC-MAP.md) for complete documentation structure.
