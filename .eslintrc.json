@@ -26,6 +26,15 @@
             "message": "Primitives cannot import upward. Use tokens or lib/utils only."
           },
           {
+            "target": "components/motion/**/*",
+            "from": [
+              "components/patterns/**/*",
+              "components/sections/**/*",
+              "components/templates/**/*"
+            ],
+            "message": "Motion components cannot import upward. Use tokens or lib/utils only."
+          },
+          {
             "target": "components/patterns/**/*",
             "from": ["components/sections/**/*", "components/templates/**/*"],
             "message": "Patterns cannot import upward (sections or templates)."
