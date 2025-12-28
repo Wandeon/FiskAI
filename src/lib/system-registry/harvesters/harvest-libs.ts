@@ -6,40 +6,19 @@
  *
  * A library is any directory under src/lib/ that:
  * - Contains at least one .ts file
- * - Is not a worker directory
- * - Is not a module directory
+ * - Is not excluded in governance.ts
+ *
+ * IMPORTANT: Exclusions are controlled by governance.ts, not hardcoded here.
+ * Changes to exclusions require CODEOWNERS approval.
  */
 
 import { existsSync, readdirSync, statSync } from "fs"
 import { join, relative } from "path"
 import type { HarvesterResult, HarvesterError } from "./types"
 import { createObservedComponent, toComponentId } from "./types"
+import { getLibExclusions } from "../governance"
 
 const LIB_ROOT = "src/lib"
-
-// Directories that are NOT libraries (they're other component types or internal utilities)
-const EXCLUDED_DIRS = [
-  "modules", // MODULE type
-  "regulatory-truth", // Contains workers (lib-regulatory-truth is manually declared)
-  "__tests__", // Tests
-  "email", // Internal utility
-  "ui", // UI components
-  "db", // Database utilities
-  "schema", // Schema utilities
-  "validations", // Internal validations
-  "a11y", // Accessibility utilities
-  "security", // Security utilities
-  "monitoring", // Internal monitoring
-  "shortcuts", // Internal utility
-  "stores", // Internal store utilities
-  "pdf", // Internal PDF utility
-  "posd", // Internal utility
-  "search", // Internal search utility
-  "marketing-audit", // Script, not a library
-  "backup", // Internal utility
-  "archive", // Internal utility
-  "system-registry", // This registry (meta!)
-]
 
 interface LibInfo {
   name: string
@@ -113,13 +92,16 @@ export async function harvestLibs(projectRoot: string): Promise<HarvesterResult>
     }
   }
 
+  // Get exclusions from governance
+  const excludedDirs = getLibExclusions()
+
   // Get top-level directories
   const entries = readdirSync(libRoot, { withFileTypes: true })
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
     if (entry.name.startsWith("_") || entry.name.startsWith(".")) continue
-    if (EXCLUDED_DIRS.includes(entry.name)) continue
+    if (excludedDirs.includes(entry.name)) continue
 
     const libPath = join(libRoot, entry.name)
 

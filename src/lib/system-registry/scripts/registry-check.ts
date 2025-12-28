@@ -22,7 +22,6 @@ import {
   enforceRules,
   formatDriftMarkdown,
   HARVESTED_TYPES,
-  UNHARVESTED_TYPES,
 } from "../compute-drift"
 import { ALL_COMPONENTS as DECLARED_COMPONENTS } from "../declarations"
 
@@ -52,8 +51,7 @@ async function main() {
 
   // Step 1: Harvest all components
   console.error("📥 Harvesting observed components...")
-  console.error(`   Harvested types: ${HARVESTED_TYPES.join(", ")}`)
-  console.error(`   Unharvested types (codeRef verified): ${UNHARVESTED_TYPES.join(", ")}`)
+  console.error(`   All types harvested: ${HARVESTED_TYPES.join(", ")}`)
   console.error("")
 
   const harvestResult = await harvestAll(options.projectRoot)
@@ -64,8 +62,8 @@ async function main() {
   }
   console.error("")
 
-  // Step 2: Compute drift (with codeRef verification for unharvested types)
-  console.error("📊 Computing drift (+ codeRef verification for unharvested types)...")
+  // Step 2: Compute drift (with codeRef verification for all declared components)
+  console.error("📊 Computing drift (+ codeRef verification for all declared)...")
   const driftResult = computeDrift(
     harvestResult.components,
     DECLARED_COMPONENTS,
@@ -74,27 +72,23 @@ async function main() {
 
   console.error("")
   console.error("   Type Coverage Matrix:")
-  console.error("   ┌──────────────┬───────────┬──────────┬──────────┬────────────┐")
-  console.error("   │ Type         │ Harvested │ Declared │ Observed │ CodeRef OK │")
-  console.error("   ├──────────────┼───────────┼──────────┼──────────┼────────────┤")
+  console.error("   ┌──────────────┬──────────┬──────────┬────────────┬─────────────┐")
+  console.error("   │ Type         │ Declared │ Observed │ CodeRef OK │ CodeRef Bad │")
+  console.error("   ├──────────────┼──────────┼──────────┼────────────┼─────────────┤")
   for (const tc of driftResult.typeCoverage) {
-    const harvested = tc.harvested ? "Yes" : "No"
-    const observed = tc.harvested ? String(tc.observed).padStart(8) : "   -    "
-    const codeRefOk = tc.harvested ? "   -    " : String(tc.codeRefVerified).padStart(8)
     console.error(
-      `   │ ${tc.type.padEnd(12)} │ ${harvested.padStart(9)} │ ${String(tc.declared).padStart(8)} │ ${observed} │ ${codeRefOk}   │`
+      `   │ ${tc.type.padEnd(12)} │ ${String(tc.declared).padStart(8)} │ ${String(tc.observed).padStart(8)} │ ${String(tc.codeRefVerified).padStart(10)} │ ${String(tc.codeRefMissing).padStart(11)} │`
     )
   }
-  console.error("   └──────────────┴───────────┴──────────┴──────────┴────────────┘")
+  console.error("   └──────────────┴──────────┴──────────┴────────────┴─────────────┘")
   console.error("")
 
   console.error("   Summary:")
-  console.error(`   - Observed (Harvested):     ${driftResult.summary.observedHarvested}`)
+  console.error(`   - Observed (Total):         ${driftResult.summary.observedTotal}`)
   console.error(`   - Declared (Total):         ${driftResult.summary.declaredTotal}`)
-  console.error(`   - Declared (Unharvested):   ${driftResult.summary.declaredUnharvested}`)
   console.error(`   - Observed Not Declared:    ${driftResult.summary.observedNotDeclaredCount}`)
   console.error(`   - Declared Not Observed:    ${driftResult.summary.declaredNotObservedCount}`)
-  console.error(`   - CodeRef Missing:          ${driftResult.summary.codeRefMissingCount}`)
+  console.error(`   - CodeRef Invalid:          ${driftResult.summary.codeRefInvalidCount}`)
   console.error(`   - Metadata Gaps:            ${driftResult.summary.metadataGapCount}`)
   console.error("")
 
@@ -127,7 +121,6 @@ async function main() {
             executedAt: new Date().toISOString(),
             durationMs: Date.now() - startTime,
             harvestedTypes: HARVESTED_TYPES,
-            unharvestedTypes: UNHARVESTED_TYPES,
           },
         },
         null,

@@ -6,7 +6,7 @@
  * - OBSERVED_NOT_DECLARED: Component exists in code but not in registry
  * - DECLARED_NOT_OBSERVED: Component is in registry but not found in code
  * - METADATA_GAP: Component is declared but missing required metadata
- * - CODEREF_MISSING: Declared codeRef path does not exist on disk
+ * - CODEREF_INVALID: Declared codeRef path does not exist on disk
  *
  * This is the core of CI enforcement.
  */
@@ -28,10 +28,14 @@ import {
   CRITICAL_JOBS,
   CRITICAL_QUEUES,
 } from "./schema"
+import {
+  isIgnoredComponent,
+  CODEREF_REQUIRED_TYPES,
+  CODEREF_REQUIRED_CRITICALITIES,
+} from "./governance"
 
 /**
- * Types that have full harvesters implemented.
- * All types now have harvesters - codeRef verification is a fallback.
+ * All component types are now harvested.
  */
 export const HARVESTED_TYPES: ComponentType[] = [
   "ROUTE_GROUP",
@@ -44,12 +48,6 @@ export const HARVESTED_TYPES: ComponentType[] = [
   "INTEGRATION",
   "UI",
 ]
-
-/**
- * Types that don't have harvesters yet - require codeRef existence checks.
- * Currently empty - all types are now harvested.
- */
-export const UNHARVESTED_TYPES: ComponentType[] = []
 
 export interface TypeCoverage {
   type: ComponentType
@@ -64,18 +62,17 @@ export interface DriftResult {
   observedNotDeclared: DriftEntry[]
   declaredNotObserved: DriftEntry[]
   metadataGaps: DriftEntry[]
-  codeRefMissing: DriftEntry[]
+  codeRefInvalid: DriftEntry[]
   summary: {
-    /** Components found by harvesters (harvested types only) */
-    observedHarvested: number
+    /** Total components found by harvesters */
+    observedTotal: number
     /** Total declared components in registry */
     declaredTotal: number
-    /** Declared components in unharvested types */
-    declaredUnharvested: number
     observedNotDeclaredCount: number
     declaredNotObservedCount: number
     metadataGapCount: number
-    codeRefMissingCount: number
+    /** Declared components with invalid/missing codeRef paths */
+    codeRefInvalidCount: number
     criticalIssues: number
     highIssues: number
   }
@@ -191,7 +188,7 @@ export function computeDrift(
   const observedNotDeclared: DriftEntry[] = []
   const declaredNotObserved: DriftEntry[] = []
   const metadataGaps: DriftEntry[] = []
-  const codeRefMissing: DriftEntry[] = []
+  const codeRefInvalid: DriftEntry[] = []
 
   // Track type coverage
   const typeStats = new Map<
@@ -208,29 +205,52 @@ export function computeDrift(
     stats.observed++
   }
 
-  // Count declared by type and verify codeRefs for unharvested types
+  // Count declared by type and verify codeRefs for ALL declared components
   for (const decl of declared) {
     const stats = typeStats.get(decl.type)!
     stats.declared++
 
-    // For unharvested types, verify codeRef exists
-    if (UNHARVESTED_TYPES.includes(decl.type) && decl.codeRef) {
+    // Skip ignored components
+    if (isIgnoredComponent(decl.componentId)) {
+      continue
+    }
+
+    // Verify codeRef for all declared components that have one
+    if (decl.codeRef) {
       const exists = verifyCodeRef(projectRoot, decl.codeRef)
       if (exists) {
         stats.codeRefVerified++
       } else {
         stats.codeRefMissing++
-        // Add to codeRefMissing list if CRITICAL or HIGH
-        if (decl.criticality === "CRITICAL" || decl.criticality === "HIGH") {
-          codeRefMissing.push({
+
+        // Check if this criticality requires enforcement
+        const enforcement = CODEREF_REQUIRED_CRITICALITIES[decl.criticality]
+        if (enforcement) {
+          codeRefInvalid.push({
             componentId: decl.componentId,
             type: decl.type,
-            driftType: "DECLARED_NOT_OBSERVED",
+            driftType: "CODEREF_INVALID",
             risk: decl.criticality,
             declaredSource: decl.codeRef,
             reason: `codeRef path does not exist: ${decl.codeRef}`,
           })
         }
+      }
+    } else {
+      // No codeRef provided - check if one is required
+      if (
+        CODEREF_REQUIRED_TYPES.includes(decl.type) &&
+        (decl.criticality === "CRITICAL" || decl.criticality === "HIGH")
+      ) {
+        stats.codeRefMissing++
+        codeRefInvalid.push({
+          componentId: decl.componentId,
+          type: decl.type,
+          driftType: "CODEREF_INVALID",
+          risk: decl.criticality,
+          declaredSource: undefined,
+          reason: "codeRef is required for CRITICAL/HIGH components but not provided",
+        })
       }
     }
   }
@@ -316,7 +336,7 @@ export function computeDrift(
   observedNotDeclared.sort(sortByComponentId)
   declaredNotObserved.sort(sortByComponentId)
   metadataGaps.sort(sortByComponentId)
-  codeRefMissing.sort(sortByComponentId)
+  codeRefInvalid.sort(sortByComponentId)
 
   // Build type coverage matrix
   const typeCoverage: TypeCoverage[] = COMPONENT_TYPES.map((type) => {
@@ -336,31 +356,26 @@ export function computeDrift(
     observedNotDeclared.filter((d) => d.risk === "CRITICAL").length +
     declaredNotObserved.filter((d) => d.risk === "CRITICAL").length +
     metadataGaps.filter((d) => d.risk === "CRITICAL").length +
-    codeRefMissing.filter((d) => d.risk === "CRITICAL").length
+    codeRefInvalid.filter((d) => d.risk === "CRITICAL").length
 
   const highIssues =
     observedNotDeclared.filter((d) => d.risk === "HIGH").length +
     declaredNotObserved.filter((d) => d.risk === "HIGH").length +
     metadataGaps.filter((d) => d.risk === "HIGH").length +
-    codeRefMissing.filter((d) => d.risk === "HIGH").length
-
-  const declaredUnharvested = declared.filter((d) =>
-    UNHARVESTED_TYPES.includes(d.type)
-  ).length
+    codeRefInvalid.filter((d) => d.risk === "HIGH").length
 
   return {
     observedNotDeclared,
     declaredNotObserved,
     metadataGaps,
-    codeRefMissing,
+    codeRefInvalid,
     summary: {
-      observedHarvested: observed.length,
+      observedTotal: observed.length,
       declaredTotal: declared.length,
-      declaredUnharvested,
       observedNotDeclaredCount: observedNotDeclared.length,
       declaredNotObservedCount: declaredNotObserved.length,
       metadataGapCount: metadataGaps.length,
-      codeRefMissingCount: codeRefMissing.length,
+      codeRefInvalidCount: codeRefInvalid.length,
       criticalIssues,
       highIssues,
     },
@@ -401,21 +416,22 @@ export function enforceRules(
     }
   }
 
-  // Check codeRef missing for CRITICAL/HIGH components
-  for (const drift of driftResult.codeRefMissing) {
-    if (drift.risk === "CRITICAL") {
+  // Check codeRef invalid for CRITICAL/HIGH components using governance rules
+  for (const drift of driftResult.codeRefInvalid) {
+    const enforcement = CODEREF_REQUIRED_CRITICALITIES[drift.risk]
+    if (enforcement === "FAIL") {
       failures.push({
         componentId: drift.componentId,
         type: drift.type,
         rule: "CRITICAL components must have valid codeRef",
-        message: `Component ${drift.componentId} has missing codeRef: ${drift.declaredSource}`,
+        message: `Component ${drift.componentId} has invalid/missing codeRef: ${drift.declaredSource || "(not provided)"}`,
       })
-    } else if (drift.risk === "HIGH") {
+    } else if (enforcement === "WARN") {
       warnings.push({
         componentId: drift.componentId,
         type: drift.type,
         rule: "HIGH components should have valid codeRef",
-        message: `Component ${drift.componentId} has missing codeRef: ${drift.declaredSource}`,
+        message: `Component ${drift.componentId} has invalid/missing codeRef: ${drift.declaredSource || "(not provided)"}`,
       })
     }
   }
@@ -492,22 +508,19 @@ export function formatDriftMarkdown(
   lines.push("| Metric | Count | Description |")
   lines.push("|--------|-------|-------------|")
   lines.push(
-    `| Observed (Harvested) | ${driftResult.summary.observedHarvested} | Components found by harvesters |`
+    `| Observed (Total) | ${driftResult.summary.observedTotal} | Components found by harvesters |`
   )
   lines.push(
     `| Declared (Total) | ${driftResult.summary.declaredTotal} | Components in registry |`
   )
   lines.push(
-    `| Declared (Unharvested Types) | ${driftResult.summary.declaredUnharvested} | UI/LIB/STORE/INTEGRATION (codeRef verified) |`
-  )
-  lines.push(
     `| Observed Not Declared | ${driftResult.summary.observedNotDeclaredCount} | Shadow systems |`
   )
   lines.push(
-    `| Declared Not Observed | ${driftResult.summary.declaredNotObservedCount} | Possible rot (harvested types only) |`
+    `| Declared Not Observed | ${driftResult.summary.declaredNotObservedCount} | Possible rot |`
   )
   lines.push(
-    `| CodeRef Missing | ${driftResult.summary.codeRefMissingCount} | Declared paths that don't exist |`
+    `| CodeRef Invalid | ${driftResult.summary.codeRefInvalidCount} | Declared paths that don't exist |`
   )
   lines.push(`| Metadata Gaps | ${driftResult.summary.metadataGapCount} | Missing owner/docs/deps |`)
   lines.push(`| Critical Issues | ${driftResult.summary.criticalIssues} | Requires immediate fix |`)
@@ -517,15 +530,11 @@ export function formatDriftMarkdown(
   // Type Coverage Matrix
   lines.push("## Type Coverage Matrix")
   lines.push("")
-  lines.push("| Type | Harvested | Declared | Observed | CodeRef OK | CodeRef Missing |")
-  lines.push("|------|-----------|----------|----------|------------|-----------------|")
+  lines.push("| Type | Declared | Observed | CodeRef OK | CodeRef Invalid |")
+  lines.push("|------|----------|----------|------------|-----------------|")
   for (const tc of driftResult.typeCoverage) {
-    const harvested = tc.harvested ? "✅ Yes" : "❌ No"
-    const observed = tc.harvested ? String(tc.observed) : "-"
-    const codeRefOk = tc.harvested ? "-" : String(tc.codeRefVerified)
-    const codeRefMissing = tc.harvested ? "-" : String(tc.codeRefMissing)
     lines.push(
-      `| ${tc.type} | ${harvested} | ${tc.declared} | ${observed} | ${codeRefOk} | ${codeRefMissing} |`
+      `| ${tc.type} | ${tc.declared} | ${tc.observed} | ${tc.codeRefVerified} | ${tc.codeRefMissing} |`
     )
   }
   lines.push("")
@@ -560,14 +569,14 @@ export function formatDriftMarkdown(
     }
   }
 
-  // CodeRef Missing (critical)
-  if (driftResult.codeRefMissing.length > 0) {
-    lines.push("## CodeRef Missing (Declared paths don't exist)")
+  // CodeRef Invalid (critical)
+  if (driftResult.codeRefInvalid.length > 0) {
+    lines.push("## CodeRef Invalid (Declared paths don't exist)")
     lines.push("")
-    lines.push("| Component ID | Type | Risk | Missing Path |")
-    lines.push("|--------------|------|------|--------------|")
-    for (const d of driftResult.codeRefMissing) {
-      lines.push(`| ${d.componentId} | ${d.type} | ${d.risk} | ${d.declaredSource} |`)
+    lines.push("| Component ID | Type | Risk | Path | Reason |")
+    lines.push("|--------------|------|------|------|--------|")
+    for (const d of driftResult.codeRefInvalid) {
+      lines.push(`| ${d.componentId} | ${d.type} | ${d.risk} | ${d.declaredSource || "-"} | ${d.reason || ""} |`)
     }
     lines.push("")
   }
@@ -587,8 +596,6 @@ export function formatDriftMarkdown(
   // Declared not observed
   if (driftResult.declaredNotObserved.length > 0) {
     lines.push("## Declared Not Observed (Possible Rot)")
-    lines.push("")
-    lines.push("*Note: Only applies to harvested types (ROUTE_GROUP, JOB, WORKER, QUEUE, MODULE)*")
     lines.push("")
     lines.push("| Component ID | Type | Risk |")
     lines.push("|--------------|------|------|")

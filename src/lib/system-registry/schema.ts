@@ -128,7 +128,7 @@ export interface ObservedComponent {
 export interface DriftEntry {
   componentId: string
   type: ComponentType
-  driftType: "OBSERVED_NOT_DECLARED" | "DECLARED_NOT_OBSERVED" | "METADATA_GAP"
+  driftType: "OBSERVED_NOT_DECLARED" | "DECLARED_NOT_OBSERVED" | "METADATA_GAP" | "CODEREF_INVALID"
   risk: ComponentCriticality
   reason?: string
   observedAt?: string[]
