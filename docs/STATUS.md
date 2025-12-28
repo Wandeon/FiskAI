@@ -214,7 +214,7 @@
 | RTL consolidated architecture       | P1       | ✅ Done | #128  | `docs/01_ARCHITECTURE/REGULATORY_TRUTH_LAYER.md` |
 | Feature Registry status granularity | P2       | ✅ Done | #124  | Status markers `[I]/[P]/[S]/[D]` |
 | API route documentation gaps        | P2       | ✅ Done | #130  | Staff APIs added to staff-portal.md  |
-| Component library inventory         | P3       | Open   | -     | UI component catalog needed          |
+| Component library inventory         | P3       | ✅ Done | #131  | `docs/02_FEATURES/COMPONENT_LIBRARY.md` |
 
 ---
 
@@ -229,6 +229,8 @@
 | 2025-12-28 | Claude Opus 4.5 | AI Assistant           | Architecture doc created     | #127      |
 | 2025-12-28 | Claude Opus 4.5 | RTL Architecture       | Consolidated doc created     | #128      |
 | 2025-12-28 | Claude Opus 4.5 | Cross-references       | DOC-MAP, CLAUDE.md updated   | #129      |
+| 2025-12-28 | Claude Opus 4.5 | Staff API Docs         | API reference added          | #130      |
+| 2025-12-28 | Claude Opus 4.5 | Component Library      | Full inventory created       | #131      |
 
 ---
 
