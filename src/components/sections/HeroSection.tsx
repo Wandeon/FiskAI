@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/primitives/button"
 import { Reveal } from "@/components/motion/Reveal"
 import Link from "next/link"
 
-interface HeroAction {
+export interface HeroAction {
   label: string
   href: string
   variant?: "primary" | "secondary"
 }
 
-interface HeroSectionProps {
+export interface HeroSectionProps {
   /** Optional small label above the title */
   label?: string
   /** Main headline */

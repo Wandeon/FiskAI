@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { type LucideIcon } from "lucide-react"
 
-interface IconBadgeProps {
+export interface IconBadgeProps {
   /** Lucide icon component */
   icon: LucideIcon
   /** Size variant */

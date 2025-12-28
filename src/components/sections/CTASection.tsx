@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/primitives/button"
 import { Reveal } from "@/components/motion/Reveal"
 import Link from "next/link"
 
-interface CTAAction {
+export interface CTAAction {
   label: string
   href: string
   variant?: "primary" | "secondary"
 }
 
-interface CTASectionProps {
+export interface CTASectionProps {
   /** Main headline */
   title: string
   /** Supporting description */
@@ -49,9 +49,7 @@ export function CTASection({
             <div>
               <h2 className="text-display-md text-foreground">{title}</h2>
               {description && (
-                <p className="text-body-lg text-secondary mt-4 max-w-xl">
-                  {description}
-                </p>
+                <p className="text-body-lg text-secondary mt-4 max-w-xl">{description}</p>
               )}
               <div className="flex flex-wrap gap-4 mt-8">
                 {actions.map((action, i) =>

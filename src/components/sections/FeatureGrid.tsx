@@ -6,7 +6,7 @@ import { SectionHeading } from "@/components/patterns/SectionHeading"
 import { FeatureCard } from "@/components/patterns/FeatureCard"
 import { Stagger, StaggerItem } from "@/components/motion/Stagger"
 
-interface FeatureItem {
+export interface FeatureItem {
   icon: LucideIcon
   title: string
   description: string
@@ -14,7 +14,7 @@ interface FeatureItem {
   iconVariant?: "accent" | "success" | "warning" | "danger" | "info"
 }
 
-interface FeatureGridProps {
+export interface FeatureGridProps {
   /** Optional section label */
   label?: string
   /** Section title */

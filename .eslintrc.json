@@ -2,41 +2,54 @@
   "root": true,
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["fisk-design-system", "import"],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    }
+  },
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",
     "import/no-restricted-paths": [
       "error",
       {
+        "basePath": "./src",
         "zones": [
           {
-            "target": "./src/components/ui/**/*",
-            "from": "./src/components/patterns/**/*",
+            "target": "components/ui/**/*",
+            "from": "components/patterns/**/*",
             "message": "Primitives cannot import from patterns. Use tokens or lib/utils only."
           },
           {
-            "target": "./src/components/ui/**/*",
-            "from": "./src/components/sections/**/*",
+            "target": "components/ui/**/*",
+            "from": "components/sections/**/*",
             "message": "Primitives cannot import from sections."
           },
           {
-            "target": "./src/components/ui/**/*",
-            "from": "./src/components/templates/**/*",
+            "target": "components/ui/**/*",
+            "from": "components/templates/**/*",
             "message": "Primitives cannot import from templates."
           },
           {
-            "target": "./src/components/patterns/**/*",
-            "from": "./src/components/sections/**/*",
+            "target": "components/patterns/**/*",
+            "from": "components/sections/**/*",
             "message": "Patterns cannot import from sections."
           },
           {
-            "target": "./src/components/patterns/**/*",
-            "from": "./src/components/templates/**/*",
+            "target": "components/patterns/**/*",
+            "from": "components/templates/**/*",
             "message": "Patterns cannot import from templates."
           },
           {
-            "target": "./src/components/sections/**/*",
-            "from": "./src/components/templates/**/*",
+            "target": "components/sections/**/*",
+            "from": "components/templates/**/*",
             "message": "Sections cannot import from templates."
+          },
+          {
+            "target": "components/**/*",
+            "from": "app/**/*",
+            "message": "Components cannot import from app routes. Move shared code to lib/ or components/."
           }
         ]
       }

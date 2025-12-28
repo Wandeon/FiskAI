@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/primitives/card"
 import { IconBadge } from "./IconBadge"
 import { HoverScale } from "@/components/ui/motion/HoverScale"
 
-interface FeatureCardProps {
+export interface FeatureCardProps {
   /** Lucide icon component */
   icon: LucideIcon
   /** Card title */
