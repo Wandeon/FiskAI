@@ -1,0 +1,70 @@
+name: System Registry Check
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/**'
+      - 'src/lib/**'
+      - 'docker-compose.workers.yml'
+      - 'src/lib/system-registry/**'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/**'
+      - 'src/lib/**'
+      - 'docker-compose.workers.yml'
+      - 'src/lib/system-registry/**'
+
+jobs:
+  registry-check:
+    name: Registry Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run registry check
+        run: npm run registry:check -- --write-report
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: docs/system-registry/drift-report-ci.md
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('docs/system-registry/drift-report-ci.md', 'utf8');
+            } catch (e) {
+              report = 'Failed to read drift report';
+            }
+
+            // Truncate if too long
+            if (report.length > 60000) {
+              report = report.substring(0, 60000) + '\n\n... (truncated)';
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ System Registry Check Failed\n\n<details>\n<summary>Drift Report</summary>\n\n${report}\n\n</details>\n\n**Action Required:** Please declare any new components in \`src/lib/system-registry/declarations.ts\``
+            });
