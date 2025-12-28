@@ -10,3 +10,5 @@ export type {
   AnswerType,
   Jurisdiction,
 } from "./ai-answer-block"
+export { RegulatorySection } from "./RegulatorySection"
+export type { RegulatorySectionProps, ConfidenceLevel } from "./RegulatorySection"
