@@ -386,7 +386,7 @@ export default async function VijestiPage({ searchParams }: PageProps) {
               <h2 className="text-2xl font-bold text-white">Najnovije iz izvora</h2>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
               >
                 Aktiviraj personalizirani digest <ArrowRight className="h-4 w-4" />
               </Link>
@@ -457,7 +457,7 @@ export default async function VijestiPage({ searchParams }: PageProps) {
             <div className="mt-4">
               <Link
                 href="/vijesti"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
               >
                 Sve vijesti <ArrowRight className="h-4 w-4" />
               </Link>
@@ -491,7 +491,7 @@ export default async function VijestiPage({ searchParams }: PageProps) {
             <div className="mt-4">
               <Link
                 href="/alati/kalendar"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
               >
                 Otvori kalendar <ArrowRight className="h-4 w-4" />
               </Link>

@@ -206,7 +206,7 @@ export function POSDCalculatorClient() {
                 ? "border-red-500/50 bg-red-500/10"
                 : deadlineInfo.daysLeft <= 14
                   ? "border-amber-500/50 bg-amber-500/10"
-                  : "border-cyan-500/50 bg-cyan-500/10"
+                  : "border-focus bg-interactive/10"
             )}
           >
             <div className="flex items-center gap-3">
@@ -217,7 +217,7 @@ export function POSDCalculatorClient() {
                     ? "text-red-400"
                     : deadlineInfo.daysLeft <= 14
                       ? "text-amber-400"
-                      : "text-cyan-400"
+                      : "text-primary"
                 )}
               />
               <div>
@@ -240,7 +240,7 @@ export function POSDCalculatorClient() {
                   ? "bg-red-500/20 text-red-300"
                   : deadlineInfo.daysLeft <= 14
                     ? "bg-amber-500/20 text-amber-300"
-                    : "bg-cyan-500/20 text-cyan-300"
+                    : "bg-interactive/20 text-primary"
               )}
             >
               {deadlineInfo.daysLeft} dana
@@ -270,25 +270,25 @@ export function POSDCalculatorClient() {
                     className={cn(
                       "flex flex-col items-center justify-center border-2 border-dashed p-12 transition-colors",
                       isDragging
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-white/20 bg-white/5 hover:border-blue-400 hover:bg-blue-500/5"
+                        ? "border-focus bg-info-bg"
+                        : "border-white/20 bg-white/5 hover:border-focus hover:bg-interactive/5"
                     )}
                   >
                     <div
                       className={cn(
                         "mb-4 flex h-16 w-16 items-center justify-center rounded-full",
-                        isDragging ? "bg-blue-500/20" : "bg-white/10"
+                        isDragging ? "bg-info-bg" : "bg-white/10"
                       )}
                     >
                       <Upload
-                        className={cn("h-8 w-8", isDragging ? "text-blue-400" : "text-white/60")}
+                        className={cn("h-8 w-8", isDragging ? "text-primary" : "text-white/60")}
                       />
                     </div>
                     <p className="mb-2 text-lg font-medium text-white">
                       Povuci i ispusti XML izvod
                     </p>
                     <p className="mb-4 text-sm text-white/60">ili</p>
-                    <label className="cursor-pointer rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+                    <label className="cursor-pointer rounded-lg bg-interactive px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-interactive-hover">
                       Odaberi datoteku
                       <input
                         type="file"
@@ -381,7 +381,7 @@ export function POSDCalculatorClient() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-blue-600" />
+                      <FileText className="h-5 w-5 text-link" />
                       Učitani izvod
                     </span>
                     <button
@@ -450,7 +450,7 @@ export function POSDCalculatorClient() {
                             type="radio"
                             checked={hasSecondPillar}
                             onChange={() => setHasSecondPillar(true)}
-                            className="h-4 w-4 text-blue-600"
+                            className="h-4 w-4 text-link"
                           />
                           <span className="text-sm">Da</span>
                         </label>
@@ -459,7 +459,7 @@ export function POSDCalculatorClient() {
                             type="radio"
                             checked={!hasSecondPillar}
                             onChange={() => setHasSecondPillar(false)}
-                            className="h-4 w-4 text-blue-600"
+                            className="h-4 w-4 text-link"
                           />
                           <span className="text-sm">Ne</span>
                         </label>
@@ -542,7 +542,7 @@ export function POSDCalculatorClient() {
                 <button
                   onClick={handleCalculate}
                   disabled={incomeTransactions.length === 0}
-                  className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-white/10 disabled:cursor-not-allowed"
+                  className="rounded-lg bg-interactive px-6 py-3 font-medium text-white hover:bg-interactive-hover disabled:bg-white/10 disabled:cursor-not-allowed"
                 >
                   Izračunaj PO-SD
                 </button>
@@ -582,12 +582,12 @@ export function POSDCalculatorClient() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-blue-200 bg-blue-50">
+                <Card className="border-info-border bg-info-bg">
                   <CardContent className="pt-6">
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-primary">
                       Normativni rashodi ({normativeExpenseRateLabel})
                     </p>
-                    <p className="text-2xl font-bold text-blue-800">
+                    <p className="text-2xl font-bold text-info-text">
                       {formatCurrency(result.normativeExpenses)}
                     </p>
                   </CardContent>
@@ -733,14 +733,14 @@ export function POSDCalculatorClient() {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+                    <FileSpreadsheet className="h-5 w-5 text-link" />
                     Sljedeći koraci
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-3">
                     <li className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-primary">
                         1
                       </span>
                       <div>
@@ -750,7 +750,7 @@ export function POSDCalculatorClient() {
                             href="https://e-porezna.porezna-uprava.hr"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:underline"
+                            className="text-primary hover:underline"
                           >
                             e-porezna.porezna-uprava.hr
                           </a>
@@ -758,7 +758,7 @@ export function POSDCalculatorClient() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-primary">
                         2
                       </span>
                       <div>
@@ -768,7 +768,7 @@ export function POSDCalculatorClient() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-primary">
                         3
                       </span>
                       <div>
@@ -778,7 +778,7 @@ export function POSDCalculatorClient() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-primary">
                         4
                       </span>
                       <div>
@@ -814,7 +814,7 @@ export function POSDCalculatorClient() {
               {/* Upsell */}
               <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive-hover">
                     <Rocket className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
@@ -826,7 +826,7 @@ export function POSDCalculatorClient() {
                     <div className="mt-4 flex flex-wrap gap-3">
                       <Link
                         href="/register"
-                        className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-cyan-700"
+                        className="inline-flex items-center gap-2 rounded-lg bg-interactive-hover px-6 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover"
                       >
                         Započni besplatno
                         <ArrowRight className="h-4 w-4" />

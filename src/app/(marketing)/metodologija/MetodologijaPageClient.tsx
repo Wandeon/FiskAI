@@ -65,7 +65,7 @@ export function MetodologijaPageClient() {
         </div>
 
         <div className="mt-8">
-          <Link href="/izvori" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+          <Link href="/izvori" className="text-primary hover:text-primary transition-colors">
             Pogledaj sve službene izvore →
           </Link>
         </div>

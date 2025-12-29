@@ -44,9 +44,9 @@ export default async function HowToListingPage() {
             <Link
               key={howto.slug}
               href={`/kako-da/${howto.slug}`}
-              className="group flex flex-col rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all hover:border-cyan-500/30 hover:bg-white/10"
+              className="group flex flex-col rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-all hover:border-info-border hover:bg-white/10"
             >
-              <h2 className="mb-2 text-lg font-semibold text-white group-hover:text-cyan-400">
+              <h2 className="mb-2 text-lg font-semibold text-white group-hover:text-primary">
                 {howto.frontmatter.title}
               </h2>
               <p className="mb-4 flex-1 text-white/60">{howto.frontmatter.description}</p>
@@ -57,7 +57,7 @@ export default async function HowToListingPage() {
                     {howto.frontmatter.totalTime.replace("PT", "").replace("M", " min")}
                   </span>
                 )}
-                <span className="flex items-center gap-1 text-sm font-medium text-cyan-400">
+                <span className="flex items-center gap-1 text-sm font-medium text-primary">
                   Čitaj vodič
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>

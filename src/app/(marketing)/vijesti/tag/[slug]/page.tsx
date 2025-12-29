@@ -132,8 +132,8 @@ export default async function TagPage({ params }: PageProps) {
         </Link>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20">
-            <Tag className="h-6 w-6 text-blue-400" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-info-bg">
+            <Tag className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white md:text-4xl">#{slug}</h1>
@@ -173,7 +173,7 @@ export default async function TagPage({ params }: PageProps) {
                 href={`/vijesti/tag/${tag}`}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   tag === slug
-                    ? "bg-blue-500/30 text-blue-200"
+                    ? "bg-interactive/30 text-blue-200"
                     : "bg-white/10 text-white/70 hover:bg-white/20"
                 }`}
               >

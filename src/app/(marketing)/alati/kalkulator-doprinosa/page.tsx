@@ -84,13 +84,13 @@ export default function ContributionCalculatorPage() {
             <li>
               <Link
                 href="/vodic/pausalni-obrt"
-                className="font-semibold text-cyan-400 hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Paušalni obrt - kompletan vodič
               </Link>
             </li>
             <li>
-              <Link href="/alati/uplatnice" className="font-semibold text-cyan-400 hover:underline">
+              <Link href="/alati/uplatnice" className="font-semibold text-primary hover:underline">
                 Generator uplatnica za doprinose
               </Link>
             </li>
@@ -98,9 +98,9 @@ export default function ContributionCalculatorPage() {
         </div>
 
         {/* FiskAI Upsell */}
-        <div className="mt-8 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-6">
+        <div className="mt-8 rounded-2xl border border-info-border bg-gradient-to-r from-info-bg to-info-bg p-6">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-interactive">
               <Rocket className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
@@ -112,7 +112,7 @@ export default function ContributionCalculatorPage() {
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:from-cyan-400 hover:to-blue-500"
+                  className="inline-flex items-center gap-2 rounded-lg bg-interactive px-6 py-2.5 text-sm font-medium text-white hover:opacity-90"
                 >
                   Započni besplatno
                   <ArrowRight className="h-4 w-4" />

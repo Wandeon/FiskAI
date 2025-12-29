@@ -87,7 +87,7 @@ export default function TaxCalculatorPage() {
             <li>
               <Link
                 href="/vodic/pausalni-obrt"
-                className="font-semibold text-cyan-500 hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Paušalni obrt - kompletan vodič
               </Link>
@@ -95,7 +95,7 @@ export default function TaxCalculatorPage() {
             <li>
               <Link
                 href="/usporedba/pocinjem-solo"
-                className="font-semibold text-cyan-500 hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Usporedba: počinjem solo (paušal vs obrt vs j.d.o.o.)
               </Link>
@@ -104,9 +104,9 @@ export default function TaxCalculatorPage() {
         </div>
 
         {/* Upsell Section */}
-        <section className="mt-8 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-6 backdrop-blur-sm">
+        <section className="mt-8 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 backdrop-blur-sm">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-600">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-interactive-hover">
               <Calculator className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
@@ -117,18 +117,18 @@ export default function TaxCalculatorPage() {
               </p>
               <ul className="mt-3 space-y-1 text-sm text-white/80">
                 <li className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-cyan-400" /> Kvartalni izvještaji
+                  <FileText className="h-4 w-4 text-primary" /> Kvartalni izvještaji
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-cyan-400">✓</span> Automatski izračun po poreznim razredima
+                  <span className="text-primary">✓</span> Automatski izračun po poreznim razredima
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-cyan-400">✓</span> Podsjetnici za uplate
+                  <span className="text-primary">✓</span> Podsjetnici za uplate
                 </li>
               </ul>
               <Link
                 href="/register"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-700"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-interactive-hover px-5 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover"
               >
                 Automatiziraj porez <ArrowRight className="h-4 w-4" />
               </Link>

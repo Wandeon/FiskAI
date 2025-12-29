@@ -59,13 +59,13 @@ function extractStructuredSections(content: string) {
 // TL;DR Section Component
 function TLDRSection({ content }: { content: string }) {
   return (
-    <div className="my-8 rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 p-6 shadow-sm">
+    <div className="my-8 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 shadow-sm">
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
-          <Zap className="h-5 w-5 text-blue-400" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-info-bg">
+          <Zap className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <h2 className="mb-3 text-lg font-semibold text-blue-300">TL;DR — Brzi pregled</h2>
+          <h2 className="mb-3 text-lg font-semibold text-info-text">TL;DR — Brzi pregled</h2>
           <div className="text-sm leading-relaxed text-white/90">
             <NewsMarkdown content={content} />
           </div>
@@ -102,13 +102,13 @@ function ActionItemsSection({ items }: { items: string[] }) {
 // Related Tools Section Component
 function RelatedToolsSection({ tools }: { tools: { title: string; href: string }[] }) {
   return (
-    <div className="my-8 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-6 shadow-sm">
+    <div className="my-8 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 shadow-sm">
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-cyan-500/20">
-          <Wrench className="h-5 w-5 text-cyan-400" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-interactive/20">
+          <Wrench className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <h2 className="mb-4 text-lg font-semibold text-cyan-300">Povezani alati</h2>
+          <h2 className="mb-4 text-lg font-semibold text-primary">Povezani alati</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {tools.map((tool, idx) => (
               <Link
@@ -116,7 +116,7 @@ function RelatedToolsSection({ tools }: { tools: { title: string; href: string }
                 href={tool.href}
                 className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
               >
-                <Wrench className="h-4 w-4 text-cyan-400" />
+                <Wrench className="h-4 w-4 text-primary" />
                 <span>{tool.title}</span>
               </Link>
             ))}
@@ -339,7 +339,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           {post.categoryName && (
             <Link
               href={`/vijesti/kategorija/${post.categorySlug}`}
-              className="mb-4 inline-block rounded-full bg-blue-500/20 px-3 py-1 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-500/30"
+              className="mb-4 inline-block rounded-full bg-info-bg px-3 py-1 text-sm font-medium text-info-text transition-colors hover:bg-interactive/30"
             >
               {post.categoryName}
             </Link>
@@ -392,7 +392,7 @@ export default async function PostDetailPage({ params }: PageProps) {
                 <Link
                   key={tag}
                   href={`/vijesti/tag/${tag}`}
-                  className="rounded-full bg-blue-500/20 px-3 py-1 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-500/30"
+                  className="rounded-full bg-info-bg px-3 py-1 text-sm font-medium text-info-text transition-colors hover:bg-interactive/30"
                 >
                   {tag}
                 </Link>

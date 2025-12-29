@@ -26,14 +26,14 @@ export function ComparisonsExplorer({ comparisons }: { comparisons: Comparison[]
             <HoverScale>
               <Link href={`/usporedba/${comparison.slug}`} className="block">
                 <GlassCard className="group flex flex-col h-full p-5">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10">
-                    <Scale className="h-5 w-5 text-cyan-400" />
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-interactive/10">
+                    <Scale className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-white/90 group-hover:text-cyan-400 transition-colors">
+                  <h3 className="font-semibold text-white/90 group-hover:text-primary transition-colors">
                     {comparison.title}
                   </h3>
                   <p className="mt-1 flex-1 text-sm text-white/70">{comparison.description}</p>
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-cyan-400">
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
                     Pročitaj usporedbu
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </div>

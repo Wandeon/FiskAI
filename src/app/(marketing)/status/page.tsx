@@ -155,13 +155,13 @@ export default async function StatusPage() {
           <div className="mt-4 space-y-4">
             <div>
               <h4 className="font-medium text-white/90">Osnovna provjera zdravlja</h4>
-              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-cyan-400">
+              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-primary">
                 GET /api/health
               </code>
             </div>
             <div>
               <h4 className="font-medium text-white/90">Detaljna provjera zdravlja</h4>
-              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-cyan-400">
+              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-primary">
                 GET /api/health?detailed=true
               </code>
             </div>
@@ -169,7 +169,7 @@ export default async function StatusPage() {
               <h4 className="font-medium text-white/90">
                 Izvoz podataka tvrtke (za administratora)
               </h4>
-              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-cyan-400">
+              <code className="mt-1 block rounded bg-white/5 border border-white/10 p-3 font-mono text-sm text-primary">
                 GET /api/exports/company
               </code>
             </div>

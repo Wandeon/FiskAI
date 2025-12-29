@@ -79,7 +79,7 @@ export default function PDVCalculatorPage() {
           <PDVThresholdCalculator />
         </div>
 
-        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
+        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-primary prose-strong:text-white">
           <h2>Što je PDV prag?</h2>
           <p>
             Od {pdvThresholdYear}. godine, PDV prag u Hrvatskoj iznosi{" "}
@@ -107,9 +107,9 @@ export default function PDVCalculatorPage() {
         </section>
 
         {/* Upsell Section */}
-        <section className="mt-12 rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-6">
+        <section className="mt-12 rounded-xl border border-info-border bg-gradient-to-r from-info-bg to-info-bg p-6">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-500">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-interactive">
               <TrendingUp className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
@@ -120,7 +120,7 @@ export default function PDVCalculatorPage() {
               </p>
               <ul className="mt-3 space-y-1 text-sm text-white/70">
                 <li className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-cyan-400" /> Upozorenje na 80% praga
+                  <Bell className="h-4 w-4 text-primary" /> Upozorenje na 80% praga
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-green-400">✓</span> Projekcija do kraja godine
@@ -131,7 +131,7 @@ export default function PDVCalculatorPage() {
               </ul>
               <Link
                 href="/register"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:from-cyan-600 hover:to-blue-700"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-interactive px-5 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover"
               >
                 Prati prag automatski <ArrowRight className="h-4 w-4" />
               </Link>

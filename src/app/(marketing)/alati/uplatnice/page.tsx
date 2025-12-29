@@ -81,7 +81,7 @@ export default function PaymentSlipsPage() {
           <PaymentSlipGenerator embedded={false} />
         </div>
 
-        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
+        <section className="mt-12 prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-primary prose-strong:text-white">
           <h2>Kako koristiti?</h2>
           <ol>
             <li>Odaberite vrstu uplate (MIO, HZZO, porez...)</li>
@@ -111,31 +111,31 @@ export default function PaymentSlipsPage() {
         </section>
 
         {/* Upsell Section */}
-        <section className="mt-12 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 p-6 backdrop-blur-sm">
+        <section className="mt-12 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 backdrop-blur-sm">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 backdrop-blur-sm">
-              <Save className="h-6 w-6 text-cyan-400" />
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-interactive/20 backdrop-blur-sm">
+              <Save className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-cyan-300">Spremi predloške uplatnica</h3>
-              <p className="mt-1 text-sm text-cyan-200/80">
+              <h3 className="text-lg font-semibold text-primary">Spremi predloške uplatnica</h3>
+              <p className="mt-1 text-sm text-info-text">
                 FiskAI automatski izračunava doprinose i generira uplatnice na temelju vaših
                 prihoda. Više nikad ne morate ručno kopirati IBAN-ove.
               </p>
-              <ul className="mt-3 space-y-1 text-sm text-cyan-200/70">
+              <ul className="mt-3 space-y-1 text-sm text-info-text">
                 <li className="flex items-center gap-2">
-                  <span className="text-cyan-400">✓</span> Automatski izračun MIO/HZZO doprinosa
+                  <span className="text-primary">✓</span> Automatski izračun MIO/HZZO doprinosa
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-cyan-400">✓</span> Podsjetnici prije isteka roka
+                  <span className="text-primary">✓</span> Podsjetnici prije isteka roka
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-cyan-400">✓</span> povijest svih uplata na jednom mjestu
+                  <span className="text-primary">✓</span> povijest svih uplata na jednom mjestu
                 </li>
               </ul>
               <Link
                 href="/register"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-600 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-interactive px-5 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover transition-colors"
               >
                 Započni besplatno <ArrowRight className="h-4 w-4" />
               </Link>

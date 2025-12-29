@@ -12,14 +12,14 @@ function AssistantPageContent() {
   const source = searchParams.get("src") || undefined
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-base via-interactive/30 to-base">
       {/* Animated background effects */}
       <PlexusBackground className="opacity-30" />
 
       {/* Animated glow orbs */}
       <div className="pointer-events-none absolute inset-0">
         <motion.div
-          className="absolute left-[15%] top-[20%] h-[400px] w-[400px] rounded-full bg-blue-500/20 blur-[120px]"
+          className="absolute left-[15%] top-[20%] h-[400px] w-[400px] rounded-full bg-interactive/20 blur-[120px]"
           animate={{
             scale: [1, 1.15, 1],
             opacity: [0.15, 0.25, 0.15],
@@ -31,7 +31,7 @@ function AssistantPageContent() {
           }}
         />
         <motion.div
-          className="absolute right-[10%] top-[30%] h-[350px] w-[350px] rounded-full bg-cyan-500/15 blur-[100px]"
+          className="absolute right-[10%] top-[30%] h-[350px] w-[350px] rounded-full bg-primary/15 blur-[100px]"
           animate={{
             scale: [1.1, 1, 1.1],
             opacity: [0.1, 0.2, 0.1],
@@ -78,7 +78,7 @@ function AssistantPageContent() {
           >
             <span className="block">Regulatorni</span>
             <motion.span
-              className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
+              className="block bg-gradient-to-r from-primary via-interactive to-interactive-hover bg-clip-text text-transparent"
               animate={{
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
               }}
@@ -124,7 +124,7 @@ export default function MarketingAssistantPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
+        <div className="min-h-screen bg-gradient-to-br from-base via-interactive/30 to-base" />
       }
     >
       <AssistantPageContent />

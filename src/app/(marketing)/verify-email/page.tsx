@@ -91,12 +91,12 @@ export default function VerifyEmailPage() {
         <>
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+              <Loader2 className="h-8 w-8 text-link animate-spin" />
             </div>
             <CardTitle className="text-2xl">Potvrda email adrese</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-gray-600">Provjeravamo vaš link...</p>
+            <p className="text-secondary">Provjeravamo vaš link...</p>
           </CardContent>
         </>
       )}
@@ -110,10 +110,10 @@ export default function VerifyEmailPage() {
             <CardTitle className="text-2xl">Email potvrđen!</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               Vaša email adresa je uspješno potvrđena. Možete se sada prijaviti.
             </p>
-            <p className="text-sm text-gray-500">Preusmjeravanje na prijavu...</p>
+            <p className="text-sm text-secondary">Preusmjeravanje na prijavu...</p>
             <Button asChild className="w-full">
               <Link href="/login">Prijavi se</Link>
             </Button>
@@ -130,7 +130,7 @@ export default function VerifyEmailPage() {
             <CardTitle className="text-2xl">Već potvrđeno</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               Vaša email adresa je već potvrđena. Možete se prijaviti.
             </p>
             <Button asChild className="w-full">
@@ -149,10 +149,10 @@ export default function VerifyEmailPage() {
             <CardTitle className="text-2xl">Link je istekao</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               Ovaj link za potvrdu je istekao. Novi kod za potvrdu će biti poslan na vaš email.
             </p>
-            <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 flex items-start gap-2">
+            <div className="rounded-md bg-info-bg p-3 text-sm text-info-text flex items-start gap-2">
               <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p className="text-left">
                 Sada koristimo 6-znamenkaste kodove umjesto linkova za potvrdu. Unesite kod koji ste
@@ -241,7 +241,7 @@ export default function VerifyEmailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               {state === "invalid"
                 ? "Ovaj link za potvrdu nije valjan. Možda je korišten ili je neispravan."
                 : "Došlo je do greške prilikom potvrde. Molimo pokušajte ponovno."}
@@ -262,17 +262,17 @@ export default function VerifyEmailPage() {
         <>
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <Info className="h-8 w-8 text-blue-600" />
+              <Info className="h-8 w-8 text-link" />
             </div>
             <CardTitle className="text-2xl">Koristite 6-znamenkasti kod</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               Email verifikacija sada koristi 6-znamenkaste kodove umjesto linkova.
             </p>
-            <div className="rounded-md bg-blue-50 p-4 text-left space-y-2">
-              <p className="text-sm text-blue-900 font-medium">Kako potvrditi email:</p>
-              <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+            <div className="rounded-md bg-info-bg p-4 text-left space-y-2">
+              <p className="text-sm text-info-text font-medium">Kako potvrditi email:</p>
+              <ol className="text-sm text-info-text list-decimal list-inside space-y-1">
                 <li>Provjerite vaš email sandučić</li>
                 <li>Potražite 6-znamenkasti kod od FiskAI</li>
                 <li>Unesite kod tijekom registracije ili prijave</li>

@@ -32,12 +32,12 @@ export default function PausalniObrtPage() {
       <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         {/* Hero section */}
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400 mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-interactive/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
             <Shield className="h-4 w-4" />
             Posebno prilagođeno za paušalni obrt
           </div>
           <h1 className="text-display text-4xl font-semibold md:text-5xl text-white">
-            Računovodstvo za paušalni obrt koje <span className="text-cyan-400">štedi sati</span>{" "}
+            Računovodstvo za paušalni obrt koje <span className="text-primary">štedi sati</span>{" "}
             mjesečno
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-white/60">
@@ -47,7 +47,7 @@ export default function PausalniObrtPage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Započni besplatno
             </Link>
@@ -61,7 +61,7 @@ export default function PausalniObrtPage() {
         </div>
 
         {/* Why paušalni obrt section */}
-        <div className="mb-16 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-8">
+        <div className="mb-16 rounded-2xl border border-info-border bg-interactive/10 p-8">
           <h2 className="text-2xl font-semibold mb-4 text-white">
             Zašto paušalni obrt voli FiskAI?
           </h2>
@@ -69,7 +69,7 @@ export default function PausalniObrtPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Clock className="h-5 w-5 text-cyan-400" />
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <p className="font-medium text-white">Štedi vrijeme</p>
               </div>
@@ -80,7 +80,7 @@ export default function PausalniObrtPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Calculator className="h-5 w-5 text-cyan-400" />
+                  <Calculator className="h-5 w-5 text-primary" />
                 </div>
                 <p className="font-medium text-white">Manje grešaka</p>
               </div>
@@ -91,7 +91,7 @@ export default function PausalniObrtPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Download className="h-5 w-5 text-cyan-400" />
+                  <Download className="h-5 w-5 text-primary" />
                 </div>
                 <p className="font-medium text-white">Jednostavan izvoz</p>
               </div>
@@ -110,7 +110,7 @@ export default function PausalniObrtPage() {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <FileText className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <FileText className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Izdavanje računa</h3>
                   <p className="text-sm text-white/60 mt-1">Brzo i profesionalno</p>
@@ -138,7 +138,7 @@ export default function PausalniObrtPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <TrendingUp className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Praćenje troškova</h3>
                   <p className="text-sm text-white/60 mt-1">Skeniranje i kategorizacija</p>
@@ -166,7 +166,7 @@ export default function PausalniObrtPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Download className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Download className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Izvoz za knjigovođu</h3>
                   <p className="text-sm text-white/60 mt-1">Bez &quot;donosim fascikl&quot;</p>
@@ -194,7 +194,7 @@ export default function PausalniObrtPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Users className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Users className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Suradnja s knjigovođom</h3>
                   <p className="text-sm text-white/60 mt-1">Dijeljenje bez komplikacija</p>
@@ -239,9 +239,9 @@ export default function PausalniObrtPage() {
           <h2 className="text-3xl font-semibold mb-8 text-center text-white">
             Cijena koja se isplati
           </h2>
-          <div className="mx-auto max-w-md rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/10 to-white/5 p-8 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-info-border bg-gradient-to-b from-info-bg to-info-bg p-8 text-center">
             <div className="mb-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-400">
+              <div className="inline-flex items-center gap-2 rounded-full bg-interactive/10 px-3 py-1 text-sm font-semibold text-primary">
                 Paušalni plan
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function PausalniObrtPage() {
             </ul>
             <Link
               href="/register"
-              className="block w-full rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
+              className="block w-full rounded-md bg-interactive px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
             >
               Započni besplatnu probu
             </Link>
@@ -320,13 +320,13 @@ export default function PausalniObrtPage() {
           <div className="mt-8 pt-6 border-t border-white/10">
             <p className="text-sm text-white">
               Imate još pitanja?{" "}
-              <Link href="/contact" className="font-semibold text-cyan-400 hover:underline">
+              <Link href="/contact" className="font-semibold text-primary hover:underline">
                 Kontaktirajte nas
               </Link>{" "}
               putem emaila{" "}
               <a
                 href={`mailto:${companyInfo.emailContact}`}
-                className="font-semibold text-cyan-400 hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 {companyInfo.emailContact}
               </a>
@@ -343,7 +343,7 @@ export default function PausalniObrtPage() {
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-md bg-interactive px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
           >
             Započni besplatnu 14-dnevnu probu
           </Link>

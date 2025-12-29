@@ -118,7 +118,7 @@ export default function OIBValidatorPage() {
               <button
                 onClick={handleValidate}
                 disabled={oib.length !== 11}
-                className="px-6 py-3 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-white/10"
+                className="px-6 py-3 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-interactive-hover text-white hover:bg-interactive-hover disabled:bg-white/10"
               >
                 Provjeri
               </button>
@@ -194,33 +194,33 @@ export default function OIBValidatorPage() {
           </div>
 
           {/* Upsell Section */}
-          <div className="mt-6 rounded-xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 p-6 backdrop-blur-sm">
+          <div className="mt-6 rounded-xl border border-info-border bg-gradient-to-r from-info-bg to-info-bg p-6 backdrop-blur-sm">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-500/20">
-                <FileText className="h-6 w-6 text-cyan-400" />
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-interactive/20">
+                <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-cyan-300">
+                <h3 className="text-lg font-semibold text-primary">
                   Automatska validacija na računu
                 </h3>
-                <p className="mt-1 text-sm text-cyan-200/80">
+                <p className="mt-1 text-sm text-info-text">
                   FiskAI automatski validira OIB kupca i prodavača kod svakog računa. Nema više
                   grešaka koje vraća Porezna.
                 </p>
-                <ul className="mt-3 space-y-1 text-sm text-cyan-200/70">
+                <ul className="mt-3 space-y-1 text-sm text-info-text">
                   <li className="flex items-center gap-2">
-                    <span className="text-cyan-400">✓</span> Automatska provjera pri unosu
+                    <span className="text-primary">✓</span> Automatska provjera pri unosu
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-cyan-400">✓</span> Upozorenje na neispravan OIB
+                    <span className="text-primary">✓</span> Upozorenje na neispravan OIB
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-cyan-400">✓</span> UBL 2.1 e-računi s validiranim podacima
+                    <span className="text-primary">✓</span> UBL 2.1 e-računi s validiranim podacima
                   </li>
                 </ul>
                 <Link
                   href="/register"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-cyan-600 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-interactive px-5 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover transition-colors"
                 >
                   Isprobaj FiskAI <ArrowRight className="h-4 w-4" />
                 </Link>

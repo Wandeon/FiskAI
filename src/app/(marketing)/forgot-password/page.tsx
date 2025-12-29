@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="text-center">
-              <Link href="/login" className="text-sm text-blue-600 hover:underline">
+              <Link href="/login" className="text-sm text-link hover:underline">
                 Povratak na prijavu
               </Link>
             </div>
@@ -84,12 +84,12 @@ export default function ForgotPasswordPage() {
             </Button>
 
             <div className="text-center space-y-2">
-              <Link href="/login" className="block text-sm text-gray-600 hover:text-gray-900">
+              <Link href="/login" className="block text-sm text-secondary hover:text-foreground">
                 Povratak na prijavu
               </Link>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-secondary">
                 Nemate račun?{" "}
-                <Link href="/register" className="text-blue-600 hover:underline">
+                <Link href="/register" className="text-link hover:underline">
                   Registrirajte se
                 </Link>
               </p>

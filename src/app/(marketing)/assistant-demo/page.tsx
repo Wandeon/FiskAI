@@ -23,12 +23,12 @@ export default function AssistantDemoPage() {
         <p className="text-white/70 mt-1">Test UI components with predefined response scenarios.</p>
       </header>
 
-      <div className="mb-6 p-4 bg-slate-800 rounded-lg">
+      <div className="mb-6 p-4 bg-surface rounded-lg">
         <label className="block text-sm font-medium text-white/80 mb-2">Select Scenario:</label>
         <select
           value={selectedFixture}
           onChange={(e) => setSelectedFixture(e.target.value as FixtureKey)}
-          className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+          className="w-full p-2 rounded bg-surface-1 text-white border border-default"
         >
           {FIXTURE_OPTIONS.map(({ key, label }) => (
             <option key={key} value={key}>
@@ -38,7 +38,7 @@ export default function AssistantDemoPage() {
         </select>
       </div>
 
-      <div className="mb-4 p-3 bg-slate-900/50 rounded text-xs font-mono text-white/60 overflow-auto max-h-48">
+      <div className="mb-4 p-3 bg-base/50 rounded text-xs font-mono text-white/60 overflow-auto max-h-48">
         <pre>{JSON.stringify(fixture, null, 2)}</pre>
       </div>
 

@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           })}
         </p>
 
-        <div className="mt-8 rounded-lg border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-4 text-sm">
+        <div className="mt-8 rounded-lg border border-info-border bg-gradient-to-r from-info-bg to-info-bg p-4 text-sm">
           <p>
             FiskAI d.o.o. (&quot;mi&quot;, &quot;nas&quot;, &quot;FiskAI&quot;) je voditelj obrade
             vaših osobnih podataka. Ova politika privatnosti objašnjava kako prikupljamo, koristimo,
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Kolačići:</strong> funkcionalni kolačići potrebni za rad aplikacije (detalji u{" "}
-            <Link href="/cookies" className="text-cyan-400 hover:underline">
+            <Link href="/cookies" className="text-primary hover:underline">
               politici kolačića
             </Link>
             )
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           <li>AI prijedlozi su uvijek prikazani kao prijedlozi - vi donosite konačnu odluku</li>
           <li>
             Detalji o AI obradi dostupni su u našoj{" "}
-            <Link href="/ai-data-policy" className="text-cyan-400 hover:underline">
+            <Link href="/ai-data-policy" className="text-primary hover:underline">
               AI politici podataka
             </Link>
           </li>
@@ -203,7 +203,7 @@ export default function PrivacyPage() {
         </ul>
         <p className="mt-4 text-sm text-white/60">
           Za ostvarivanje prava kontaktirajte nas na{" "}
-          <a href="mailto:gdpr@fiskai.hr" className="text-cyan-400 hover:underline">
+          <a href="mailto:gdpr@fiskai.hr" className="text-primary hover:underline">
             gdpr@fiskai.hr
           </a>
           . Odgovorit ćemo unutar 30 dana.
@@ -214,7 +214,7 @@ export default function PrivacyPage() {
           Koristimo samo nužne funkcionalne kolačiće potrebne za rad aplikacije (sesija,
           autentikacija). Ne koristimo marketinške ili analitičke kolačiće treće strane. Detalji su
           dostupni u{" "}
-          <Link href="/cookies" className="text-cyan-400 hover:underline">
+          <Link href="/cookies" className="text-primary hover:underline">
             politici kolačića
           </Link>
           .
@@ -235,7 +235,7 @@ export default function PrivacyPage() {
           <p>Voditelj obrade osobnih podataka</p>
           <p className="mt-2">
             Email:{" "}
-            <a href="mailto:gdpr@fiskai.hr" className="text-cyan-400 hover:underline">
+            <a href="mailto:gdpr@fiskai.hr" className="text-primary hover:underline">
               gdpr@fiskai.hr
             </a>
           </p>
@@ -245,7 +245,7 @@ export default function PrivacyPage() {
             osobnih podataka (AZOP):{" "}
             <a
               href="https://azop.hr"
-              className="text-cyan-400 hover:underline"
+              className="text-primary hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -257,23 +257,23 @@ export default function PrivacyPage() {
         <div className="mt-12 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
           <p className="text-sm text-white/60">
             <strong>Povezane politike:</strong>{" "}
-            <Link href="/terms" className="text-cyan-400 hover:underline">
+            <Link href="/terms" className="text-primary hover:underline">
               Uvjeti korištenja
             </Link>{" "}
             •
-            <Link href="/cookies" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/cookies" className="text-primary hover:underline ml-2">
               Politika kolačića
             </Link>{" "}
             •
-            <Link href="/ai-data-policy" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/ai-data-policy" className="text-primary hover:underline ml-2">
               AI politika
             </Link>{" "}
             •
-            <Link href="/dpa" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/dpa" className="text-primary hover:underline ml-2">
               DPA
             </Link>{" "}
             •
-            <Link href="/security" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/security" className="text-primary hover:underline ml-2">
               Sigurnost
             </Link>
           </p>

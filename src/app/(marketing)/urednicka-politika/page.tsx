@@ -65,7 +65,7 @@ export default function UrednickaPoltikaPage() {
           <h2>Prijavite grešku</h2>
           <p>
             Uočili ste netočnost? Javite nam na{" "}
-            <a href="mailto:info@fisk.ai" className="text-cyan-400">
+            <a href="mailto:info@fisk.ai" className="text-primary">
               info@fisk.ai
             </a>{" "}
             ili putem kontakt obrasca.

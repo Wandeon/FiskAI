@@ -120,7 +120,7 @@ export function MigrationPageClient() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-colors hover:from-cyan-400 hover:to-blue-500"
+                    className="inline-flex items-center gap-2 rounded-xl bg-interactive px-8 py-4 text-base font-semibold text-white shadow-lg transition-colors hover:opacity-90"
                   >
                     Započni besplatno
                     <ArrowRight className="h-5 w-5" />
@@ -188,13 +188,13 @@ export function MigrationPageClient() {
                 <StaggerItem key={step.step}>
                   <Card className="relative h-full border-white/10 bg-white/5 backdrop-blur-sm">
                     <div className="absolute -top-3 left-6">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-interactive text-sm font-bold text-white">
                         {step.step}
                       </span>
                     </div>
                     <CardHeader className="pt-8">
                       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
-                        <Icon className="h-6 w-6 text-cyan-400" />
+                        <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-lg text-white">{step.title}</CardTitle>
                     </CardHeader>
@@ -215,7 +215,7 @@ export function MigrationPageClient() {
         <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
           <div className="grid gap-10 md:grid-cols-2 md:items-center">
             <Reveal className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-sm font-medium text-blue-300">
+              <div className="inline-flex items-center gap-2 rounded-full bg-info-bg backdrop-blur-sm px-4 py-2 text-sm font-medium text-info-text">
                 <FileSpreadsheet className="h-4 w-4" />
                 Uvoz podataka
               </div>
@@ -239,9 +239,9 @@ export function MigrationPageClient() {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-blue-500/10 backdrop-blur-sm p-6">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-info-bg backdrop-blur-sm p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-cyan-400" />
+                  <Sparkles className="h-5 w-5 text-primary" />
                   <span className="font-semibold text-white">AI asistent</span>
                 </div>
                 <p className="mb-4 text-sm text-white/60">
@@ -250,7 +250,7 @@ export function MigrationPageClient() {
                   uvoza?&quot;
                 </p>
                 <div className="flex gap-2">
-                  <button className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white">
+                  <button className="rounded-lg bg-interactive px-4 py-2 text-sm font-medium text-white">
                     Da, pregledaj
                   </button>
                   <button className="rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white">
@@ -287,8 +287,8 @@ export function MigrationPageClient() {
                 <StaggerItem key={item.title}>
                   <Card className="h-full border-white/10 bg-white/5 backdrop-blur-sm text-center">
                     <CardContent className="pt-6">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10">
-                        <Icon className="h-6 w-6 text-cyan-400" />
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10">
+                        <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <p className="font-medium text-white">{item.title}</p>
                       <p className="mt-1 text-xs text-white/60">{item.desc}</p>
@@ -349,7 +349,7 @@ export function MigrationPageClient() {
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-semibold text-slate-900 transition-colors hover:bg-white/90"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-white/90"
               >
                 <Zap className="h-5 w-5" />
                 Započni besplatno
