@@ -159,6 +159,7 @@ model Company {
   featureFlagOverrides           FeatureFlagOverride[]
   staffReviews                   StaffReview[]
   adminAlerts                    AdminAlert[]
+  bankImports                    BankImport[]
 }
 
 // Audit trail for module entitlement changes
