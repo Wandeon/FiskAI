@@ -31,10 +31,21 @@ export {
 } from "./mrms-fetcher"
 export type { MRMSNewsItem, MRMSFetchResult } from "./mrms-fetcher"
 
+export {
+  fetchHOKContent,
+  fetchHOKNews,
+  fetchMembershipPage,
+  fetchRegulationsPage,
+  createHOKEvidence,
+  getHOKStatus,
+} from "./hok-fetcher"
+export type { HOKNewsItem, HOKFetchResult } from "./hok-fetcher"
+
 import { createHNBRules } from "./hnb-fetcher"
 import { fetchRecentNNIssues, getLatestIssueNumber, fetchNNIssue } from "./nn-fetcher"
 import { fetchKeyEULegislation, KEY_EU_LEGISLATION } from "./eurlex-fetcher"
 import { fetchMRMSContent, getMRMSStatus } from "./mrms-fetcher"
+import { fetchHOKContent, getHOKStatus } from "./hok-fetcher"
 
 export interface Tier1FetchResult {
   success: boolean
@@ -42,6 +53,7 @@ export interface Tier1FetchResult {
   nn: { evidenceCreated: number; error?: string }
   eurlex: { evidenceCreated: number; error?: string }
   mrms: { evidenceCreated: number; error?: string }
+  hok: { evidenceCreated: number; error?: string }
   durationMs: number
 }
 
@@ -57,6 +69,7 @@ export async function runTier1Fetchers(): Promise<Tier1FetchResult> {
     nn: { evidenceCreated: 0 },
     eurlex: { evidenceCreated: 0 },
     mrms: { evidenceCreated: 0 },
+    hok: { evidenceCreated: 0 },
     durationMs: 0,
   }
 
@@ -122,11 +135,30 @@ export async function runTier1Fetchers(): Promise<Tier1FetchResult> {
     console.error("[tier1-fetchers] MRMS error:", result.mrms.error)
   }
 
+  // 5. HOK (Croatian Chamber of Trades - paušalni obrt regulations)
+  try {
+    console.log("[tier1-fetchers] Fetching HOK content...")
+    const hokResult = await fetchHOKContent()
+    result.hok.evidenceCreated = hokResult.evidenceCreated
+    if (hokResult.error) {
+      result.hok.error = hokResult.error
+    }
+    console.log(`[tier1-fetchers] HOK: ${hokResult.evidenceCreated} evidence records created`)
+  } catch (error) {
+    result.hok.error = error instanceof Error ? error.message : String(error)
+    console.error("[tier1-fetchers] HOK error:", result.hok.error)
+  }
+
   result.durationMs = Date.now() - startTime
-  result.success = !result.hnb.error && !result.nn.error && !result.eurlex.error && !result.mrms.error
+  result.success =
+    !result.hnb.error &&
+    !result.nn.error &&
+    !result.eurlex.error &&
+    !result.mrms.error &&
+    !result.hok.error
 
   console.log(
-    `[tier1-fetchers] Complete in ${result.durationMs}ms: HNB=${result.hnb.ratesCreated}, NN=${result.nn.evidenceCreated}, EUR-Lex=${result.eurlex.evidenceCreated}, MRMS=${result.mrms.evidenceCreated}`
+    `[tier1-fetchers] Complete in ${result.durationMs}ms: HNB=${result.hnb.ratesCreated}, NN=${result.nn.evidenceCreated}, EUR-Lex=${result.eurlex.evidenceCreated}, MRMS=${result.mrms.evidenceCreated}, HOK=${result.hok.evidenceCreated}`
   )
 
   return result
@@ -140,12 +172,14 @@ export async function getTier1Status(): Promise<{
   nn: { available: boolean; latestIssue?: number }
   eurlex: { available: boolean; legislationCount: number }
   mrms: { available: boolean; lastNewsDate?: string }
+  hok: { available: boolean; lastNewsDate?: string }
 }> {
   const status = {
     hnb: { available: false, lastRate: undefined as string | undefined },
     nn: { available: false, latestIssue: undefined as number | undefined },
     eurlex: { available: false, legislationCount: KEY_EU_LEGISLATION.length },
     mrms: { available: false, lastNewsDate: undefined as string | undefined },
+    hok: { available: false, lastNewsDate: undefined as string | undefined },
   }
 
   // Check HNB
@@ -184,6 +218,15 @@ export async function getTier1Status(): Promise<{
     status.mrms.lastNewsDate = mrmsStatus.lastNewsDate
   } catch {
     status.mrms.available = false
+  }
+
+  // Check HOK
+  try {
+    const hokStatus = await getHOKStatus()
+    status.hok.available = hokStatus.available
+    status.hok.lastNewsDate = hokStatus.lastNewsDate
+  } catch {
+    status.hok.available = false
   }
 
   return status
