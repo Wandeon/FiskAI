@@ -525,109 +525,88 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
       {/* Latest News Section */}
       <LatestNewsSection posts={latestNews} />
 
-      {/* Testimonials & Trust Section */}
+      {/* Early Access Program Section */}
       <section className="bg-gradient-to-b from-white to-blue-50">
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <Reveal className="mb-10 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-1.5 text-sm font-medium text-blue-700">
+              <Sparkles className="h-4 w-4" />
+              Program ranog pristupa
+            </div>
             <h2 className="text-display text-3xl font-semibold">
-              Pouzdano od strane obrtnika i knjigovođa
+              Pomozite nam izgraditi najbolji računovodstveni softver
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm text-[var(--muted)]">
-              FiskAI pomaže paušalnim obrtnicima, VAT obrtima i knjigovođama u cijeloj Hrvatskoj.
+              FiskAI je u aktivnom razvoju. Pridružite nam se kao rani korisnik i oblikujte budućnost moderne računovodstvene platforme za Hrvatsku.
             </p>
           </Reveal>
 
           <Stagger className="grid gap-6 md:grid-cols-3">
             {[
               {
-                initials: "MK",
-                name: "Marko K.",
-                role: "Paušalni obrt, IT usluge",
+                icon: CheckCircle2,
+                title: "Utjecaj na razvoj",
                 color: "bg-blue-100 text-blue-700",
-                quote:
-                  "Prije sam trošio 5-6 sati mjesečno na administraciju. Sada mi treba sat vremena za sve. Izvoz za knjigovođu je game-changer.",
+                description:
+                  "Vaš feedback direktno oblikuje prioritete razvoja. Predložite značajke koje vam trebaju.",
               },
               {
-                initials: "AK",
-                name: "Ana K.",
-                role: "Knjigovođa, računovodstveni ured",
+                icon: Zap,
+                title: "Rani pristup novim značajkama",
                 color: "bg-green-100 text-green-700",
-                quote:
-                  "Klijenti mi šalju uredne izvozne pakete umjesto fotografija računa. Smanjuje vrijeme obrade za 70% i eliminira greške pri prepisivanju.",
+                description:
+                  "Budite prvi koji testiraju nove module: e-fakturiranje, fiskalizacija 2.0, AI asistent i više.",
               },
               {
-                initials: "IP",
-                name: "Ivan P.",
-                role: "VAT obrt, građevinarstvo",
+                icon: Shield,
+                title: "Transparentnost i povjerenje",
                 color: "bg-purple-100 text-purple-700",
-                quote:
-                  "AI OCR za skeniranje računa je nevjerojatan. Uštedio mi je 10-15 sati mjesečno na unosu troškova. Priprema za e-račune je plus za budućnost.",
+                description:
+                  "100% GDPR usklađeno, s potpunom kontrolom nad vašim podacima. Izvoz i migracija uvijek dostupni.",
               },
-            ].map((t) => (
-              <StaggerItem key={t.initials}>
-                <div className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition-transform hover:-translate-y-0.5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <div
-                      className={`h-10 w-10 rounded-full flex items-center justify-center font-bold ${t.color}`}
-                    >
-                      {t.initials}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{t.name}</p>
-                      <p className="text-xs text-[var(--muted)]">{t.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-[var(--muted)] italic mb-4">&quot;{t.quote}&quot;</p>
-                  <div className="flex items-center gap-1" aria-label="Ocjena 5 od 5">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <svg
-                        key={i}
-                        className="h-4 w-4 text-yellow-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
+            ].map((item) => {
+              const Icon = item.icon
+              return (
+                <StaggerItem key={item.title}>
+                  <div className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition-transform hover:-translate-y-0.5">
+                    <div className="mb-4 flex items-center gap-2">
+                      <div
+                        className={`h-10 w-10 rounded-full flex items-center justify-center ${item.color}`}
                       >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    </div>
+                    <h3 className="mb-2 font-semibold">{item.title}</h3>
+                    <p className="text-sm text-[var(--muted)]">{item.description}</p>
                   </div>
-                </div>
-              </StaggerItem>
-            ))}
+                </StaggerItem>
+              )
+            })}
           </Stagger>
 
           <div className="mt-10 text-center">
-            <div className="inline-flex flex-wrap items-center justify-center gap-8">
-              <div className="text-center">
-                <CountUp
-                  value={500}
-                  className="text-2xl font-bold text-blue-700"
-                  format={(v) => `${Math.round(v)}+`}
-                />
-                <p className="text-xs text-[var(--muted)]">Izdanih računa mjesečno</p>
+            <div className="mb-8">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+              >
+                Pridružite se beta programu
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </div>
+
+            <div className="inline-flex flex-wrap items-center justify-center gap-8 text-sm text-[var(--muted)]">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Besplatan pristup tijekom beta razdoblja
               </div>
-              <div className="text-center">
-                <CountUp
-                  value={80}
-                  className="text-2xl font-bold text-blue-700"
-                  format={(v) => `${Math.round(v)}%`}
-                />
-                <p className="text-xs text-[var(--muted)]">Manje vremena na administraciju</p>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Bez obveze
               </div>
-              <div className="text-center">
-                <CountUp
-                  value={100}
-                  className="text-2xl font-bold text-blue-700"
-                  format={(v) => `${Math.round(v)}%`}
-                />
-                <p className="text-xs text-[var(--muted)]">GDPR usklađeno</p>
-              </div>
-              <div className="text-center">
-                <CountUp
-                  value={24}
-                  className="text-2xl font-bold text-blue-700"
-                  format={(v) => `${Math.round(v)}h`}
-                />
-                <p className="text-xs text-[var(--muted)]">Vrijeme odgovora podrške</p>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Vaši podaci pod vašom kontrolom
               </div>
             </div>
           </div>
