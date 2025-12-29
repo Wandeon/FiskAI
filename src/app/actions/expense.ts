@@ -7,7 +7,7 @@ import {
   requireCompanyWithPermission,
 } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
-import { Prisma, ExpenseStatus, PaymentMethod } from "@prisma/client"
+import { Prisma, ExpenseStatus, PaymentMethod, Frequency } from "@prisma/client"
 import { z } from "zod"
 
 const Decimal = Prisma.Decimal
@@ -438,5 +438,249 @@ export async function seedDefaultCategories(): Promise<ActionResult> {
   } catch (error) {
     console.error("Failed to seed categories:", error)
     return { success: false, error: "Greška pri kreiranju zadanih kategorija" }
+  }
+}
+
+// Recurring expense actions
+interface CreateRecurringExpenseInput {
+  categoryId: string
+  vendorId?: string
+  description: string
+  netAmount: number
+  vatAmount: number
+  totalAmount: number
+  frequency: Frequency
+  nextDate: Date
+  endDate?: Date
+}
+
+export async function createRecurringExpense(
+  input: CreateRecurringExpenseInput
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async (company) => {
+      // Verify category exists
+      const category = await db.expenseCategory.findFirst({
+        where: {
+          id: input.categoryId,
+          OR: [{ companyId: company.id }, { companyId: null }],
+        },
+      })
+
+      if (!category) {
+        return { success: false, error: "Kategorija nije pronađena" }
+      }
+
+      // Verify vendor if provided
+      if (input.vendorId) {
+        const vendor = await db.contact.findFirst({
+          where: { id: input.vendorId },
+        })
+        if (!vendor) {
+          return { success: false, error: "Dobavljač nije pronađen" }
+        }
+      }
+
+      const recurringExpense = await db.recurringExpense.create({
+        data: {
+          companyId: company.id,
+          categoryId: input.categoryId,
+          vendorId: input.vendorId || null,
+          description: input.description,
+          netAmount: new Decimal(input.netAmount),
+          vatAmount: new Decimal(input.vatAmount),
+          totalAmount: new Decimal(input.totalAmount),
+          frequency: input.frequency,
+          nextDate: input.nextDate,
+          endDate: input.endDate || null,
+          isActive: true,
+        },
+      })
+
+      revalidatePath("/expenses/recurring")
+      return { success: true, data: recurringExpense }
+    })
+  } catch (error) {
+    console.error("Failed to create recurring expense:", error)
+    return { success: false, error: "Greška pri kreiranju ponavljajućeg troška" }
+  }
+}
+
+export async function updateRecurringExpense(
+  id: string,
+  input: Partial<CreateRecurringExpenseInput>
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async () => {
+      const existing = await db.recurringExpense.findFirst({
+        where: { id },
+      })
+
+      if (!existing) {
+        return { success: false, error: "Ponavljajući trošak nije pronađen" }
+      }
+
+      const updateData: Prisma.RecurringExpenseUpdateInput = {}
+
+      if (input.categoryId) updateData.categoryId = input.categoryId
+      if (input.vendorId !== undefined) updateData.vendorId = input.vendorId
+      if (input.description) updateData.description = input.description
+      if (input.netAmount !== undefined) updateData.netAmount = new Decimal(input.netAmount)
+      if (input.vatAmount !== undefined) updateData.vatAmount = new Decimal(input.vatAmount)
+      if (input.totalAmount !== undefined)
+        updateData.totalAmount = new Decimal(input.totalAmount)
+      if (input.frequency) updateData.frequency = input.frequency
+      if (input.nextDate) updateData.nextDate = input.nextDate
+      if (input.endDate !== undefined) updateData.endDate = input.endDate
+
+      const recurringExpense = await db.recurringExpense.update({
+        where: { id },
+        data: updateData,
+      })
+
+      revalidatePath("/expenses/recurring")
+      revalidatePath(`/expenses/recurring/${id}`)
+      return { success: true, data: recurringExpense }
+    })
+  } catch (error) {
+    console.error("Failed to update recurring expense:", error)
+    return { success: false, error: "Greška pri ažuriranju ponavljajućeg troška" }
+  }
+}
+
+export async function deleteRecurringExpense(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithPermission(user.id!, "expense:delete", async () => {
+      const recurringExpense = await db.recurringExpense.findFirst({
+        where: { id },
+      })
+
+      if (!recurringExpense) {
+        return { success: false, error: "Ponavljajući trošak nije pronađen" }
+      }
+
+      await db.recurringExpense.delete({ where: { id } })
+
+      revalidatePath("/expenses/recurring")
+      return { success: true }
+    })
+  } catch (error) {
+    console.error("Failed to delete recurring expense:", error)
+
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return { success: false, error: "Nemate dopuštenje za brisanje ponavljajućih troškova" }
+    }
+
+    return { success: false, error: "Greška pri brisanju ponavljajućeg troška" }
+  }
+}
+
+export async function toggleRecurringExpense(
+  id: string,
+  isActive: boolean
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async () => {
+      const recurringExpense = await db.recurringExpense.findFirst({
+        where: { id },
+      })
+
+      if (!recurringExpense) {
+        return { success: false, error: "Ponavljajući trošak nije pronađen" }
+      }
+
+      await db.recurringExpense.update({
+        where: { id },
+        data: { isActive },
+      })
+
+      revalidatePath("/expenses/recurring")
+      revalidatePath(`/expenses/recurring/${id}`)
+      return { success: true }
+    })
+  } catch (error) {
+    console.error("Failed to toggle recurring expense:", error)
+    return { success: false, error: "Greška pri promjeni statusa ponavljajućeg troška" }
+  }
+}
+
+export async function processRecurringExpenses(): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const now = new Date()
+
+      // Find all active recurring expenses that are due
+      const dueExpenses = await db.recurringExpense.findMany({
+        where: {
+          companyId: company.id,
+          isActive: true,
+          nextDate: { lte: now },
+          OR: [{ endDate: null }, { endDate: { gte: now } }],
+        },
+      })
+
+      let created = 0
+      for (const recurring of dueExpenses) {
+        // Create the expense
+        await db.expense.create({
+          data: {
+            companyId: company.id,
+            categoryId: recurring.categoryId,
+            vendorId: recurring.vendorId,
+            description: recurring.description,
+            date: recurring.nextDate,
+            netAmount: recurring.netAmount,
+            vatAmount: recurring.vatAmount,
+            totalAmount: recurring.totalAmount,
+            vatDeductible: true,
+            currency: "EUR",
+            status: "DRAFT",
+            notes: "Automatski kreiran iz ponavljajućeg troška",
+          },
+        })
+
+        // Calculate next date based on frequency
+        const nextDate = new Date(recurring.nextDate)
+        switch (recurring.frequency) {
+          case "WEEKLY":
+            nextDate.setDate(nextDate.getDate() + 7)
+            break
+          case "MONTHLY":
+            nextDate.setMonth(nextDate.getMonth() + 1)
+            break
+          case "QUARTERLY":
+            nextDate.setMonth(nextDate.getMonth() + 3)
+            break
+          case "YEARLY":
+            nextDate.setFullYear(nextDate.getFullYear() + 1)
+            break
+        }
+
+        // Update recurring expense with next date
+        await db.recurringExpense.update({
+          where: { id: recurring.id },
+          data: { nextDate },
+        })
+
+        created++
+      }
+
+      revalidatePath("/expenses")
+      revalidatePath("/expenses/recurring")
+      return { success: true, data: { created } }
+    })
+  } catch (error) {
+    console.error("Failed to process recurring expenses:", error)
+    return { success: false, error: "Greška pri obradi ponavljajućih troškova" }
   }
 }
