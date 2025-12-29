@@ -748,6 +748,7 @@ model ImportJob {
   @@index([bankAccountId])
   @@index([status])
   @@index([bankAccountId, fileChecksum])
+  @@index([userId])
 }
 
 model Statement {
@@ -998,10 +999,11 @@ model Claim {
   confidence    Float
   category      String?
   factSheet     FactSheet           @relation(fields: [factSheetId], references: [id], onDelete: Cascade)
-  sourceChunk   SourceChunk?        @relation(fields: [sourceChunkId], references: [id])
+  sourceChunk   SourceChunk?        @relation(fields: [sourceChunkId], references: [id], onDelete: SetNull)
   verifications ClaimVerification[]
 
   @@index([factSheetId])
+  @@index([sourceChunkId])
 }
 
 model SourceChunk {
