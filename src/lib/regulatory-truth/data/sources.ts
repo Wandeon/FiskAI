@@ -39,7 +39,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "narodne-novine-pausalni",
     name: "Narodne novine - Zakon o porezu na dohodak",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2016_12_115_2519.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2016/115/2519",
     hierarchy: 2,
     fetchIntervalHours: 168, // Weekly
     priority: "critical",
@@ -223,7 +223,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "narodne-novine-doprinosi",
     name: "Narodne novine - Zakon o doprinosima",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2018_12_106_2088.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2018/106/2088",
     hierarchy: 2, // Zakon
     fetchIntervalHours: 168, // Weekly
     priority: "high",
@@ -245,7 +245,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-pdv",
     name: "Narodne novine - Zakon o porezu na dodanu vrijednost",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_07_73_1715.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2012/73/1715",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "critical",
@@ -254,7 +254,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-fiskalizacija",
     name: "Narodne novine - Zakon o fiskalizaciji u prometu gotovinom",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_12_133_2833.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2012/133/2833",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "high",
@@ -263,7 +263,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-racunovodstvo",
     name: "Narodne novine - Zakon o računovodstvu",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2015_07_78_1493.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2015/78/1493",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "medium",
@@ -272,7 +272,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-obrtu",
     name: "Narodne novine - Zakon o obrtu",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_12_143_3065.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2013/143/3065",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "high",
@@ -281,7 +281,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-opci-porezni-zakon",
     name: "Narodne novine - Opći porezni zakon",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2017_12_115_2629.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2017/115/2629",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "high",
@@ -290,7 +290,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-mirovinsko",
     name: "Narodne novine - Zakon o mirovinskom osiguranju",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2018_12_115_2262.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2018/115/2262",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "high",
@@ -299,7 +299,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-zakon-zdravstveno",
     name: "Narodne novine - Zakon o obveznom zdravstvenom osiguranju",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_06_80_1669.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2013/80/1669",
     hierarchy: 2,
     fetchIntervalHours: 168,
     priority: "high",
@@ -547,7 +547,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-pravilnik-pdv",
     name: "Narodne novine - Pravilnik o PDV-u",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2013_07_79_1633.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2013/79/1633",
     hierarchy: 4,
     fetchIntervalHours: 168,
     priority: "high",
@@ -556,7 +556,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-pravilnik-dohodak",
     name: "Narodne novine - Pravilnik o porezu na dohodak",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2017_01_10_247.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2017/10/247",
     hierarchy: 4,
     fetchIntervalHours: 168,
     priority: "high",
@@ -565,7 +565,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-pravilnik-fiskalizacija",
     name: "Narodne novine - Pravilnik o fiskalizaciji",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2012_12_146_3131.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2012/146/3131",
     hierarchy: 4,
     fetchIntervalHours: 168,
     priority: "high",
@@ -574,7 +574,7 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "nn-pravilnik-doprinosi",
     name: "Narodne novine - Pravilnik o doprinosima",
-    url: "https://narodne-novine.nn.hr/clanci/sluzbeni/2009_01_2_44.html",
+    url: "https://narodne-novine.nn.hr/eli/sluzbeni/2009/2/44",
     hierarchy: 4,
     fetchIntervalHours: 168,
     priority: "high",

@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { hashContent } from "../utils/content-hash"
 import { logAuditEvent } from "../utils/audit-log"
 import { fetchWithRateLimit } from "../utils/rate-limiter"
+import { parseNNUrl, normalizeNNUrl, getNNMetadataUrl } from "../utils/nn-url-converter"
 
 const NN_METADATA_BASE = "https://narodne-novine.nn.hr/article_metadata.aspx"
 const NN_ELI_BASE = "https://narodne-novine.nn.hr/eli"
@@ -151,6 +152,20 @@ export async function fetchNNArticleMetadata(
 }
 
 /**
+ * Fetch JSON-LD metadata from a NN URL (supports both ELI and legacy formats).
+ * This is useful when you have a URL from sources.ts and need to fetch its metadata.
+ */
+export async function fetchNNArticleMetadataFromUrl(url: string): Promise<NNArticleMetadata | null> {
+  const parsed = parseNNUrl(url)
+  if (!parsed) {
+    console.error(`[nn-fetcher] Could not parse NN URL: ${url}`)
+    return null
+  }
+
+  return fetchNNArticleMetadata(parsed.year, parsed.issue, parsed.article, parsed.part)
+}
+
+/**
  * Get article numbers from a specific issue sitemap
  */
 export async function getIssueArticles(year: number, issue: number): Promise<number[]> {
@@ -201,13 +216,16 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
   const rawContent = JSON.stringify(metadata)
   const contentHash = hashContent(rawContent)
 
+  // Normalize URL to ELI format for version-independent identification
+  const normalizedUrl = normalizeNNUrl(metadata.eli)
+
   // Check if we already have this exact data
   const existing = await db.evidence.findFirst({
     where: { contentHash },
   })
 
   if (existing) {
-    console.log(`[nn-fetcher] Skipping ${metadata.eli} - already exists`)
+    console.log(`[nn-fetcher] Skipping ${normalizedUrl} - already exists`)
     return existing.id
   }
 
@@ -228,11 +246,11 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
     })
   }
 
-  // Create Evidence record
+  // Create Evidence record with normalized ELI URL
   const evidence = await db.evidence.create({
     data: {
       sourceId: source.id,
-      url: metadata.eli,
+      url: normalizedUrl,
       rawContent, // Store exact bytes that were hashed
       contentHash,
       contentType: "json-ld",
@@ -255,13 +273,13 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
     metadata: {
       source: "nn-fetcher",
       tier: 1,
-      eli: metadata.eli,
+      eli: normalizedUrl,
       type: metadata.type,
       automatedCreation: true,
     },
   })
 
-  console.log(`[nn-fetcher] Created evidence for ${metadata.eli}`)
+  console.log(`[nn-fetcher] Created evidence for ${normalizedUrl}`)
   return evidence.id
 }
 
