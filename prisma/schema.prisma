@@ -751,6 +751,7 @@ model ImportJob {
   @@index([status])
   @@index([userId])
   @@index([bankAccountId, fileChecksum])
+  @@index([userId])
 }
 
 model Statement {
@@ -1027,6 +1028,7 @@ model Claim {
   verifications ClaimVerification[]
 
   @@index([factSheetId])
+  @@index([sourceChunkId])
 }
 
 model SourceChunk {
