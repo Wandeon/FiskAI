@@ -159,6 +159,7 @@ model Company {
   featureFlagOverrides           FeatureFlagOverride[]
   staffReviews                   StaffReview[]
   adminAlerts                    AdminAlert[]
+  bankImports                    BankImport[]
 }
 
 // Audit trail for module entitlement changes
@@ -747,6 +748,7 @@ model ImportJob {
   @@index([companyId])
   @@index([bankAccountId])
   @@index([status])
+  @@index([userId])
   @@index([bankAccountId, fileChecksum])
 }
 
@@ -1000,7 +1002,7 @@ model Claim {
   confidence    Float
   category      String?
   factSheet     FactSheet           @relation(fields: [factSheetId], references: [id], onDelete: Cascade)
-  sourceChunk   SourceChunk?        @relation(fields: [sourceChunkId], references: [id])
+  sourceChunk   SourceChunk?        @relation(fields: [sourceChunkId], references: [id], onDelete: SetNull)
   verifications ClaimVerification[]
 
   @@index([factSheetId])
@@ -2184,6 +2186,7 @@ model RegulatoryRule {
   @@index([conceptSlug])
   @@index([effectiveFrom])
   @@index([meaningSignature])
+  @@index([conceptId])
 }
 
 // ============================================================================
