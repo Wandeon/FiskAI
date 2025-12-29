@@ -1,10 +1,10 @@
-// src/app/(dashboard)/checklist/ChecklistPageClient.tsx
+// src/app/(app)/checklist/ChecklistPageClient.tsx
 "use client"
 
 import { useState } from "react"
-import { ClipboardList, Filter, CheckCircle2 } from "lucide-react"
+import { ClipboardList, CheckCircle2 } from "lucide-react"
 import { GlassCard } from "@/components/ui/patterns/GlassCard"
-import { ChecklistItem, CompetenceSelector } from "@/components/guidance"
+import { ChecklistItem } from "@/components/guidance"
 import { Button } from "@/components/ui/button"
 import type { ChecklistItem as ChecklistItemType } from "@/lib/guidance/types"
 import type { UserGuidancePreferences } from "@/lib/db/schema/guidance"
@@ -33,7 +33,6 @@ export function ChecklistPageClient({
   const [items, setItems] = useState(initialItems)
   const [stats, setStats] = useState(initialStats)
   const [filter, setFilter] = useState<GuidanceCategory | "all">("all")
-  const [showCompleted, setShowCompleted] = useState(false)
 
   const filteredItems = items.filter((item) => {
     if (filter !== "all" && item.category !== filter) return false
@@ -43,7 +42,6 @@ export function ChecklistPageClient({
   const handleComplete = async (reference: string) => {
     const item = items.find((i) => i.reference === reference)
     if (!item) return
-
     try {
       await fetch("/api/guidance/checklist", {
         method: "POST",
@@ -54,7 +52,6 @@ export function ChecklistPageClient({
           itemReference: reference,
         }),
       })
-
       setItems((prev) => prev.filter((i) => i.reference !== reference))
       setStats((prev) => ({
         ...prev,
@@ -69,7 +66,6 @@ export function ChecklistPageClient({
   const handleDismiss = async (reference: string) => {
     const item = items.find((i) => i.reference === reference)
     if (!item) return
-
     try {
       await fetch("/api/guidance/checklist", {
         method: "POST",
@@ -80,10 +76,34 @@ export function ChecklistPageClient({
           itemReference: reference,
         }),
       })
-
       setItems((prev) => prev.filter((i) => i.reference !== reference))
     } catch (error) {
       console.error("Failed to dismiss item:", error)
+    }
+  }
+
+  const handleSnooze = async (reference: string, until: Date) => {
+    const item = items.find((i) => i.reference === reference)
+    if (!item) return
+    try {
+      await fetch("/api/guidance/checklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "snooze",
+          itemType: item.type,
+          itemReference: reference,
+          snoozeUntil: until.toISOString(),
+        }),
+      })
+      setItems((prev) => prev.filter((i) => i.reference !== reference))
+      setStats((prev) => ({
+        ...prev,
+        total: prev.total - 1,
+        [item.urgency]: (prev[item.urgency as keyof typeof prev] as number) - 1,
+      }))
+    } catch (error) {
+      console.error("Failed to snooze item:", error)
     }
   }
 
@@ -94,18 +114,16 @@ export function ChecklistPageClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
           <ClipboardList className="h-7 w-7 text-cyan-400" />
-          Što moram napraviti?
+          Sto moram napraviti?
         </h1>
         <p className="text-[var(--muted)] mt-1">
-          {companyName} • <span className="capitalize">{currentMonth}</span>
+          {companyName} - <span className="capitalize">{currentMonth}</span>
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <GlassCard hover={false} padding="sm">
           <div className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</div>
@@ -113,7 +131,7 @@ export function ChecklistPageClient({
         </GlassCard>
         <GlassCard hover={false} padding="sm">
           <div className="text-2xl font-bold text-red-400">{stats.critical}</div>
-          <div className="text-sm text-[var(--muted)]">Kritično</div>
+          <div className="text-sm text-[var(--muted)]">Kriticno</div>
         </GlassCard>
         <GlassCard hover={false} padding="sm">
           <div className="text-2xl font-bold text-amber-400">{stats.soon}</div>
@@ -123,11 +141,10 @@ export function ChecklistPageClient({
           <div className="text-2xl font-bold text-emerald-400">
             {initialStats.total - stats.total}
           </div>
-          <div className="text-sm text-[var(--muted)]">Dovršeno</div>
+          <div className="text-sm text-[var(--muted)]">Dovrseno</div>
         </GlassCard>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <Button
           variant={filter === "all" ? "primary" : "secondary"}
@@ -148,16 +165,15 @@ export function ChecklistPageClient({
         ))}
       </div>
 
-      {/* Items */}
       {filteredItems.length === 0 ? (
         <GlassCard hover={false} padding="lg">
           <div className="text-center py-8">
             <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
-            <p className="text-[var(--foreground)] text-lg font-medium">Sve je odrađeno!</p>
+            <p className="text-[var(--foreground)] text-lg font-medium">Sve je obradjeno!</p>
             <p className="text-[var(--muted)] mt-1">
               {filter === "all"
                 ? "Nema zadataka za ovaj mjesec"
-                : `Nema zadataka u kategoriji ${CATEGORY_LABELS[filter]}`}
+                : "Nema zadataka u kategoriji " + CATEGORY_LABELS[filter]}
             </p>
           </div>
         </GlassCard>
@@ -169,6 +185,7 @@ export function ChecklistPageClient({
               item={item}
               onComplete={handleComplete}
               onDismiss={handleDismiss}
+              onSnooze={handleSnooze}
             />
           ))}
         </div>
