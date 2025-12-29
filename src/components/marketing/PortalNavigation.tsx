@@ -125,9 +125,12 @@ const USPOREDBE = [
 ]
 
 const BRZI_PRISTUP = [
+  { href: "/znacajke", title: "Značajke", icon: <Sparkles className="h-4 w-4" /> },
+  { href: "/cijene", title: "Cijene", icon: <Calculator className="h-4 w-4" /> },
+  { href: "/vodici", title: "Vodiči", icon: <BookOpen className="h-4 w-4" /> },
+  { href: "/o-nama", title: "O nama", icon: <Building2 className="h-4 w-4" /> },
+  { href: "/kontakt", title: "Kontakt", icon: <FileText className="h-4 w-4" /> },
   { href: "/vijesti", title: "Vijesti", icon: <Newspaper className="h-4 w-4" /> },
-  { href: "/pricing", title: "Cijene", icon: <Calculator className="h-4 w-4" /> },
-  { href: "/contact", title: "Kontakt", icon: <FileText className="h-4 w-4" /> },
   { href: "/fiskalizacija", title: "Fiskalizacija 2.0", badge: "Novo" },
 ]
 
