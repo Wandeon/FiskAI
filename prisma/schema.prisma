@@ -841,6 +841,8 @@ model SupportTicket {
   @@index([companyId])
   @@index([status])
   @@index([priority])
+  @@index([createdById])
+  @@index([assignedToId])
 }
 
 model SupportTicketMessage {
