@@ -894,6 +894,26 @@ model FiscalCertificate {
   @@index([status])
 }
 
+// Certificate expiry notification tracking with retry support
+model CertificateNotification {
+  id              String                        @id @default(cuid())
+  certificateId   String
+  companyId       String
+  notificationDay Int                           // Days before expiry (30, 14, 7, 1)
+  status          CertificateNotificationStatus @default(PENDING)
+  attemptCount    Int                           @default(0)
+  maxAttempts     Int                           @default(3)
+  nextRetryAt     DateTime?
+  error           String?
+  sentAt          DateTime?
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+
+  @@unique([certificateId, notificationDay])
+  @@index([status, nextRetryAt])
+  @@index([companyId])
+}
+
 model FiscalRequest {
   id             String            @id @default(cuid())
   companyId      String
@@ -1651,6 +1671,13 @@ enum FiscalMessageType {
   RACUN
   STORNO
   PROVJERA
+}
+
+enum CertificateNotificationStatus {
+  PENDING     // Initial state, waiting to send
+  SENT        // Successfully sent
+  FAILED      // All retries exhausted
+  RETRYING    // Failed but will retry
 }
 
 enum ArticleType {

@@ -5,7 +5,18 @@ import {
   shouldSendNotification,
   updateNotificationTracking,
   NOTIFICATION_INTERVALS,
+  type ExpiringCertificate,
 } from "@/lib/compliance/certificate-monitor"
+import { db } from "@/lib/db"
+import { CertificateNotificationStatus } from "@prisma/client"
+
+// Retry configuration
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAYS = [
+  60 * 60 * 1000, // 1 hour
+  3 * 60 * 60 * 1000, // 3 hours
+  6 * 60 * 60 * 1000, // 6 hours
+]
 
 /**
  * Certificate Expiry Check Cron Job
@@ -13,8 +24,10 @@ import {
  * Runs daily to check for expiring FINA certificates and send notifications
  * at standard intervals: 30, 14, 7, and 1 day(s) before expiry.
  *
- * Notifications are tracked to prevent duplicates - only one notification
- * per interval is sent.
+ * Includes retry logic for failed email notifications:
+ * - Failed notifications are tracked in CertificateNotification table
+ * - Retries are attempted with exponential backoff (1h, 3h, 6h)
+ * - After 3 failed attempts, notification is marked as FAILED
  */
 export async function GET(request: Request) {
   // Verify cron secret
@@ -24,28 +37,46 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Find all certificates expiring within 30 days
+    // Track results
+    const results = {
+      newNotificationsSent: [] as Array<{
+        companyId: string
+        daysRemaining: number
+        notificationDay: number
+      }>,
+      retriesSent: [] as Array<{
+        companyId: string
+        notificationDay: number
+        attemptCount: number
+      }>,
+      retriesFailed: [] as Array<{
+        companyId: string
+        notificationDay: number
+        error: string
+        willRetry: boolean
+      }>,
+      skipped: [] as Array<{
+        companyId: string
+        daysRemaining: number
+        reason: string
+      }>,
+      permanentlyFailed: [] as Array<{
+        companyId: string
+        notificationDay: number
+      }>,
+    }
+
+    // Step 1: Retry pending notifications that are due
+    await retryPendingNotifications(results)
+
+    // Step 2: Find certificates expiring within 30 days and send new notifications
     const expiringCerts = await findExpiringCertificates(30)
-
-    // Track notifications sent
-    const notificationsSent: Array<{
-      companyId: string
-      daysRemaining: number
-      notificationDay: number
-    }> = []
-
-    // Track skipped notifications (already sent for this interval)
-    const skipped: Array<{
-      companyId: string
-      daysRemaining: number
-      reason: string
-    }> = []
 
     // Process each certificate
     for (const cert of expiringCerts) {
       // Skip if no valid email
       if (!cert.ownerEmail) {
-        skipped.push({
+        results.skipped.push({
           companyId: cert.companyId,
           daysRemaining: cert.daysRemaining,
           reason: "no_owner_email",
@@ -57,7 +88,7 @@ export async function GET(request: Request) {
       const notificationDay = shouldSendNotification(cert.daysRemaining, cert.lastNotificationDay)
 
       if (notificationDay === null) {
-        skipped.push({
+        results.skipped.push({
           companyId: cert.companyId,
           daysRemaining: cert.daysRemaining,
           reason: `already_notified_at_${cert.lastNotificationDay}_days`,
@@ -65,35 +96,45 @@ export async function GET(request: Request) {
         continue
       }
 
-      try {
-        // Send the notification email
-        await sendCertificateExpiryNotification(cert)
+      // Check if there's already a pending/retrying notification for this interval
+      const existingNotification = await db.certificateNotification.findUnique({
+        where: {
+          certificateId_notificationDay: {
+            certificateId: cert.certificateId,
+            notificationDay,
+          },
+        },
+      })
 
-        // Update tracking to prevent duplicate notifications
-        await updateNotificationTracking(cert.certificateId, notificationDay)
-
-        notificationsSent.push({
+      if (existingNotification) {
+        // Already being handled (pending, retrying, sent, or failed)
+        results.skipped.push({
           companyId: cert.companyId,
           daysRemaining: cert.daysRemaining,
-          notificationDay,
+          reason: `notification_${existingNotification.status.toLowerCase()}_for_${notificationDay}_days`,
         })
-      } catch (emailError) {
-        console.error(`Failed to send notification for ${cert.companyId}:`, emailError)
-        skipped.push({
-          companyId: cert.companyId,
-          daysRemaining: cert.daysRemaining,
-          reason: "email_send_failed",
-        })
+        continue
       }
+
+      // Try to send new notification
+      await sendNewNotification(cert, notificationDay, results)
     }
 
     return NextResponse.json({
       success: true,
       checked: expiringCerts.length,
-      notified: notificationsSent.length,
-      notifications: notificationsSent,
-      skipped: skipped.length,
-      skippedDetails: skipped,
+      newNotificationsSent: results.newNotificationsSent.length,
+      retriesSent: results.retriesSent.length,
+      retriesFailed: results.retriesFailed.length,
+      permanentlyFailed: results.permanentlyFailed.length,
+      skipped: results.skipped.length,
+      details: {
+        newNotifications: results.newNotificationsSent,
+        retries: results.retriesSent,
+        retryFailures: results.retriesFailed,
+        permanentFailures: results.permanentlyFailed,
+        skipped: results.skipped,
+      },
       intervals: NOTIFICATION_INTERVALS,
     })
   } catch (error) {
@@ -105,5 +146,235 @@ export async function GET(request: Request) {
       },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Retry pending notifications that are due for retry
+ */
+async function retryPendingNotifications(results: {
+  retriesSent: Array<{ companyId: string; notificationDay: number; attemptCount: number }>
+  retriesFailed: Array<{
+    companyId: string
+    notificationDay: number
+    error: string
+    willRetry: boolean
+  }>
+  permanentlyFailed: Array<{ companyId: string; notificationDay: number }>
+}) {
+  // Find notifications that are pending retry
+  const pendingNotifications = await db.certificateNotification.findMany({
+    where: {
+      status: CertificateNotificationStatus.RETRYING,
+      nextRetryAt: {
+        lte: new Date(),
+      },
+    },
+  })
+
+  for (const notification of pendingNotifications) {
+    // Get the certificate details for sending
+    const certDetails = await getCertificateDetails(notification.certificateId)
+
+    if (!certDetails) {
+      // Certificate no longer exists, mark as failed
+      await db.certificateNotification.update({
+        where: { id: notification.id },
+        data: {
+          status: CertificateNotificationStatus.FAILED,
+          error: "Certificate no longer exists",
+        },
+      })
+      results.permanentlyFailed.push({
+        companyId: notification.companyId,
+        notificationDay: notification.notificationDay,
+      })
+      continue
+    }
+
+    try {
+      // Attempt to send the notification
+      await sendCertificateExpiryNotification(certDetails)
+
+      // Success - update notification and certificate tracking
+      await db.certificateNotification.update({
+        where: { id: notification.id },
+        data: {
+          status: CertificateNotificationStatus.SENT,
+          sentAt: new Date(),
+          error: null,
+        },
+      })
+
+      await updateNotificationTracking(
+        notification.certificateId,
+        notification.notificationDay as 30 | 14 | 7 | 1
+      )
+
+      results.retriesSent.push({
+        companyId: notification.companyId,
+        notificationDay: notification.notificationDay,
+        attemptCount: notification.attemptCount,
+      })
+    } catch (emailError) {
+      const errorMessage = emailError instanceof Error ? emailError.message : "Unknown error"
+      const newAttemptCount = notification.attemptCount + 1
+
+      if (newAttemptCount >= notification.maxAttempts) {
+        // Max retries reached, mark as permanently failed
+        await db.certificateNotification.update({
+          where: { id: notification.id },
+          data: {
+            status: CertificateNotificationStatus.FAILED,
+            attemptCount: newAttemptCount,
+            error: errorMessage,
+          },
+        })
+
+        console.error(
+          `Certificate notification permanently failed for ${notification.companyId} (${notification.notificationDay} days): ${errorMessage}`
+        )
+
+        results.permanentlyFailed.push({
+          companyId: notification.companyId,
+          notificationDay: notification.notificationDay,
+        })
+      } else {
+        // Schedule next retry with exponential backoff
+        const retryDelay = RETRY_DELAYS[newAttemptCount - 1] || RETRY_DELAYS[RETRY_DELAYS.length - 1]
+        const nextRetryAt = new Date(Date.now() + retryDelay)
+
+        await db.certificateNotification.update({
+          where: { id: notification.id },
+          data: {
+            attemptCount: newAttemptCount,
+            nextRetryAt,
+            error: errorMessage,
+          },
+        })
+
+        console.warn(
+          `Certificate notification retry ${newAttemptCount}/${notification.maxAttempts} failed for ${notification.companyId}: ${errorMessage}. Next retry at ${nextRetryAt.toISOString()}`
+        )
+
+        results.retriesFailed.push({
+          companyId: notification.companyId,
+          notificationDay: notification.notificationDay,
+          error: errorMessage,
+          willRetry: true,
+        })
+      }
+    }
+  }
+}
+
+/**
+ * Send a new notification for a certificate
+ */
+async function sendNewNotification(
+  cert: ExpiringCertificate,
+  notificationDay: 30 | 14 | 7 | 1,
+  results: {
+    newNotificationsSent: Array<{
+      companyId: string
+      daysRemaining: number
+      notificationDay: number
+    }>
+    retriesFailed: Array<{
+      companyId: string
+      notificationDay: number
+      error: string
+      willRetry: boolean
+    }>
+  }
+) {
+  try {
+    // Send the notification email
+    await sendCertificateExpiryNotification(cert)
+
+    // Update tracking to prevent duplicate notifications
+    await updateNotificationTracking(cert.certificateId, notificationDay)
+
+    // Record successful notification
+    await db.certificateNotification.create({
+      data: {
+        certificateId: cert.certificateId,
+        companyId: cert.companyId,
+        notificationDay,
+        status: CertificateNotificationStatus.SENT,
+        attemptCount: 1,
+        maxAttempts: MAX_RETRY_ATTEMPTS,
+        sentAt: new Date(),
+      },
+    })
+
+    results.newNotificationsSent.push({
+      companyId: cert.companyId,
+      daysRemaining: cert.daysRemaining,
+      notificationDay,
+    })
+  } catch (emailError) {
+    const errorMessage = emailError instanceof Error ? emailError.message : "Unknown error"
+
+    console.error(`Failed to send notification for ${cert.companyId}:`, emailError)
+
+    // Create a notification record for retry
+    const retryDelay = RETRY_DELAYS[0] // First retry delay (1 hour)
+    const nextRetryAt = new Date(Date.now() + retryDelay)
+
+    await db.certificateNotification.create({
+      data: {
+        certificateId: cert.certificateId,
+        companyId: cert.companyId,
+        notificationDay,
+        status: CertificateNotificationStatus.RETRYING,
+        attemptCount: 1,
+        maxAttempts: MAX_RETRY_ATTEMPTS,
+        nextRetryAt,
+        error: errorMessage,
+      },
+    })
+
+    results.retriesFailed.push({
+      companyId: cert.companyId,
+      notificationDay,
+      error: errorMessage,
+      willRetry: true,
+    })
+  }
+}
+
+/**
+ * Get certificate details for retry attempts
+ */
+async function getCertificateDetails(certificateId: string): Promise<ExpiringCertificate | null> {
+  const cert = await db.fiscalCertificate.findUnique({
+    where: { id: certificateId },
+    include: {
+      company: {
+        include: {
+          users: {
+            where: { role: "OWNER" },
+            include: { user: true },
+          },
+        },
+      },
+    },
+  })
+
+  if (!cert) return null
+
+  const daysRemaining = Math.ceil(
+    (cert.certNotAfter.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  )
+
+  return {
+    certificateId: cert.id,
+    companyId: cert.companyId,
+    companyName: cert.company.name,
+    ownerEmail: cert.company.users[0]?.user?.email || "",
+    validUntil: cert.certNotAfter,
+    daysRemaining,
+    lastNotificationDay: cert.lastExpiryNotificationDay,
   }
 }
