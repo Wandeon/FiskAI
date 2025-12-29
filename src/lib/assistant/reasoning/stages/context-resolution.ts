@@ -33,7 +33,7 @@ export async function* contextResolutionStage(
   })
 
   // Use existing query interpreter
-  const interpretation = interpretQuery(query, "APP")
+  const interpretation = await interpretQuery(query, "APP")
 
   // Build user context snapshot (frozen at request start)
   const userContextSnapshot: UserContextSnapshot = {

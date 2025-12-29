@@ -23,6 +23,7 @@ import {
   type Interpretation,
 } from "./query-interpreter"
 import { prisma } from "@/lib/prisma"
+import { generateContextualQuestions } from "./contextual-questions"
 
 /**
  * THREE-STAGE FAIL-CLOSED ANSWER BUILDER
@@ -82,7 +83,7 @@ export async function buildAnswer(
   // ============================================
   // STAGE 1: QUERY INTERPRETATION
   // ============================================
-  const interpretation = interpretQuery(query, surface)
+  const interpretation = await interpretQuery(query, surface)
 
   // Store interpretation for debugging (in non-production)
   const debugInfo = {
@@ -443,6 +444,20 @@ export async function buildAnswer(
   // Get obligation badge for UI
   const obligationBadge = getObligationBadge(obligationType)
 
+  // Generate contextual related questions
+  const relatedQuestions = await generateContextualQuestions({
+    userQuery: query,
+    retrievedRules: rules,
+    conceptSlugs,
+    surface,
+    companyProfile: companyId
+      ? {
+          // Would be populated from actual company data
+          // For now, we pass undefined to signal APP surface context
+        }
+      : undefined,
+  })
+
   return {
     ...baseResponse,
     kind: "ANSWER",
@@ -476,7 +491,7 @@ export async function buildAnswer(
           "Neki propisi nisu prikazani jer nedostaju podaci o vašem poslovanju potrebni za evaluaciju.",
       },
     }),
-    relatedQuestions: generateRelatedQuestions(conceptSlugs),
+    relatedQuestions,
     ...(clientContext && { clientContext }),
   }
 }
@@ -616,24 +631,7 @@ function getObligationBadge(obligationType: ObligationType): {
   }
 }
 
-function generateRelatedQuestions(conceptSlugs: string[]): string[] {
-  const questionMap: Record<string, string[]> = {
-    pausalni: ["Koji su uvjeti za paušalni obrt?", "Kada prelazim u redovno oporezivanje?"],
-    pdv: ["Koje su stope PDV-a?", "Kada moram u sustav PDV-a?"],
-    doprinosi: ["Koliki su doprinosi za obrtnike?", "Kada se plaćaju doprinosi?"],
-  }
-
-  const questions: string[] = []
-  for (const slug of conceptSlugs) {
-    for (const [key, qs] of Object.entries(questionMap)) {
-      if (slug.includes(key)) {
-        questions.push(...qs)
-      }
-    }
-  }
-
-  return [...new Set(questions)].slice(0, 4)
-}
+// Removed generateRelatedQuestions - now using generateContextualQuestions from contextual-questions.ts
 
 /**
  * Fetch company data for personalization context.

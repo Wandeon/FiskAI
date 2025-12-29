@@ -23,6 +23,7 @@
 
 import type { Surface, Topic } from "../types"
 import { normalizeDiacritics } from "./text-utils"
+import { generateContextualClarifications } from "./contextual-questions"
 
 // === INTERPRETATION TYPES ===
 
@@ -482,7 +483,7 @@ function detectForeignCountry(query: string): string | undefined {
 
 // === MAIN INTERPRETATION FUNCTION ===
 
-export function interpretQuery(query: string, surface: Surface): Interpretation {
+export async function interpretQuery(query: string, surface: Surface): Promise<Interpretation> {
   const tokens = tokenize(query)
   const normalized = normalizeDiacritics(query).toLowerCase()
   const matchedPatterns: string[] = []
@@ -644,7 +645,8 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
   let suggestedClarifications: string[] | undefined
 
   if (clarificationNeeded && !isNonsense) {
-    suggestedClarifications = generateClarifications(topic, intent, entities)
+    // Use contextual LLM-based clarifications instead of hardcoded ones
+    suggestedClarifications = await generateContextualClarifications(query, topic, entities)
   }
 
   return {
@@ -667,78 +669,7 @@ export function interpretQuery(query: string, surface: Surface): Interpretation 
 }
 
 // === CLARIFICATION GENERATION ===
-
-/**
- * Generate 3-5 clarification chips written as users would naturally ask.
- * These should be complete, natural questions that fill the input field.
- */
-function generateClarifications(topic: Topic, intent: Intent, entities: string[]): string[] {
-  const clarifications: string[] = []
-
-  if (topic === "REGULATORY") {
-    // Entity-specific clarifications (prioritize these)
-    if (entities.includes("PDV")) {
-      clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
-      clarifications.push("Kada moram ući u sustav PDV-a?")
-      clarifications.push("Koji je prag za obvezni ulazak u PDV?")
-    }
-    if (entities.includes("PAUSALNI_OBRT")) {
-      clarifications.push("Koji je godišnji prag za paušalni obrt?")
-      clarifications.push("Koje su prednosti paušalnog oporezivanja?")
-    }
-    if (entities.includes("DOPRINOSI")) {
-      clarifications.push("Koliki su mjesečni doprinosi za obrtnike?")
-      clarifications.push("Kako se obračunavaju doprinosi za paušalce?")
-    }
-    if (entities.includes("FISKALIZACIJA")) {
-      clarifications.push("Kako fiskalizirati račun u Hrvatskoj?")
-      clarifications.push("Što mi treba za fiskalizaciju?")
-    }
-    if (entities.includes("VAT_THRESHOLD")) {
-      clarifications.push("Koji je prag za ulazak u sustav PDV-a?")
-      clarifications.push("Što se događa kad prođem PDV prag?")
-    }
-
-    // If no specific entities matched, provide general regulatory clarifications
-    if (clarifications.length === 0) {
-      clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
-      clarifications.push("Koji je godišnji prag za paušalni obrt?")
-      clarifications.push("Kako fiskalizirati račun?")
-      clarifications.push("Kada moram ući u sustav PDV-a?")
-      clarifications.push("Koliki su doprinosi za obrtnike?")
-    }
-
-    // Intent-specific additions
-    if (intent === "CALCULATE" && clarifications.length < 5) {
-      clarifications.push("Koliko iznosi porez za paušalni obrt?")
-    }
-    if (intent === "DEADLINE" && clarifications.length < 5) {
-      clarifications.push("Do kada moram predati poreznu prijavu?")
-    }
-  } else if (topic === "PRODUCT") {
-    clarifications.push("Koje su cijene FiskAI pretplate?")
-    clarifications.push("Kako se registrirati za FiskAI?")
-    clarifications.push("Koje funkcije nudi FiskAI?")
-  } else if (topic === "SUPPORT") {
-    clarifications.push("Kako prijaviti tehnički problem?")
-    clarifications.push("Gdje mogu dobiti pomoć?")
-  }
-
-  // Ensure we have 3-5 suggestions (minimum 3, maximum 5)
-  while (clarifications.length < 3) {
-    if (!clarifications.includes("Koja je opća stopa PDV-a u Hrvatskoj?")) {
-      clarifications.push("Koja je opća stopa PDV-a u Hrvatskoj?")
-    } else if (!clarifications.includes("Koji je godišnji prag za paušalni obrt?")) {
-      clarifications.push("Koji je godišnji prag za paušalni obrt?")
-    } else {
-      clarifications.push("Kako fiskalizirati račun?")
-    }
-  }
-
-  // Remove duplicates and limit to 5
-  const unique = [...new Set(clarifications)]
-  return unique.slice(0, 5)
-}
+// Removed generateClarifications - now using generateContextualClarifications from contextual-questions.ts
 
 // === VALIDATION HELPERS ===
 
