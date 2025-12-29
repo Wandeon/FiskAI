@@ -6,12 +6,12 @@ A self-enforcing design system with tokenized colors, typography, spacing, and m
 
 ```tsx
 // Import types for type-safe props
-import type { ButtonVariant, StatusVariant } from '@/design-system';
+import type { ButtonVariant, StatusVariant } from "@/design-system"
 
 // Use semantic Tailwind classes
-<div className="bg-surface text-foreground border-border">
+;<div className="bg-surface text-foreground border-border">
   <h1 className="text-heading-xl">Title</h1>
-  <p className="text-body-base text-secondary">Description</p>
+  <p className="text-body-md text-secondary">Description</p>
   <Button variant="primary">Action</Button>
   <Badge variant="success">Status</Badge>
 </div>
@@ -20,6 +20,7 @@ import type { ButtonVariant, StatusVariant } from '@/design-system';
 ## Available Classes
 
 ### Surfaces
+
 - `bg-base` - Page background
 - `bg-surface` - Cards (default)
 - `bg-surface-1` - Nested cards, hover states
@@ -27,6 +28,7 @@ import type { ButtonVariant, StatusVariant } from '@/design-system';
 - `bg-surface-elevated` - Modals
 
 ### Text
+
 - `text-foreground` - Primary text
 - `text-secondary` - Body text
 - `text-tertiary` - Captions
@@ -34,22 +36,26 @@ import type { ButtonVariant, StatusVariant } from '@/design-system';
 - `text-link` - Links
 
 ### Status
+
 - `bg-success-bg`, `text-success-text`, `border-success-border`
 - `bg-warning-bg`, `text-warning-text`, `border-warning-border`
 - `bg-danger-bg`, `text-danger-text`, `border-danger-border`
 - `bg-info-bg`, `text-info-text`, `border-info-border`
 
 ### Typography
-- `text-display-xl`, `text-display-lg`, `text-display-md`
-- `text-heading-xl`, `text-heading-lg`, `text-heading-md`, `text-heading-sm`
-- `text-body-lg`, `text-body-base`, `text-body-sm`, `text-body-xs`
-- `text-label`, `text-caption`, `text-overline`, `text-code`
+- Display: `text-display-xl`, `text-display-lg`, `text-display-md`, `text-display-sm`
+- Headings: `text-heading-xl`, `text-heading-lg`, `text-heading-md`, `text-heading-sm`, `text-heading-xs`
+- Body: `text-body-lg`, `text-body-md`, `text-body-sm`, `text-body-xs`
+- Labels: `text-label-lg`, `text-label-md`, `text-label-sm`
+- Code: `text-code-lg`, `text-code-md`, `text-code-sm`
 
 ### Interactive
+
 - `bg-interactive`, `hover:bg-interactive-hover`
 - `border-border-focus`
 
 ### Charts
+
 - `text-chart-1` through `text-chart-8`
 
 ## Enforcement
@@ -76,5 +82,7 @@ Hardcoded colors are blocked by ESLint:
 - [Design System Docs](./docs/README.md) - Complete documentation index
 - [Color System](./docs/COLOR_SYSTEM.md) - Semantic color tokens
 - [Spacing System](./docs/SPACING_SYSTEM.md) - 4px base unit spacing scale
+- [Typography System](./TYPOGRAPHY.md) - Complete typography documentation
+- [Accessibility](./ACCESSIBILITY.md) - Motion and animation accessibility guidelines
 - [Governance](./TOKENS.md) - Token management rules
 - [Architecture](../../docs/plans/2025-12-27-design-system-architecture.md) - System architecture
