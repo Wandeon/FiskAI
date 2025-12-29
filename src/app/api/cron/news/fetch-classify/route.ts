@@ -22,6 +22,7 @@ import {
 } from "@/lib/news/pipeline"
 import { eq, and, gte, sql } from "drizzle-orm"
 import Parser from "rss-parser"
+import { enqueueArticleJob } from "@/lib/article-agent/queue"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 minutes
@@ -42,6 +43,7 @@ interface FetchClassifyResult {
       highImpact: number
       mediumImpact: number
     }
+    articleJobsQueued: number
   }
   errors: string[]
 }
@@ -112,6 +114,7 @@ export async function GET(request: NextRequest) {
       todayItems: 0,
       classified: { high: 0, medium: 0, low: 0 },
       postsCreated: { highImpact: 0, mediumImpact: 0 },
+      articleJobsQueued: 0,
     },
     errors: [],
   }
@@ -236,6 +239,27 @@ export async function GET(request: NextRequest) {
 
             result.summary.postsCreated.highImpact++
             console.log(`[CRON 1] Created draft post: ${article.title}`)
+
+            // Optionally queue Article Agent job for enhanced fact-checking
+            // Only if ARTICLE_AGENT_ENABLED is set (disabled by default to avoid duplicate processing)
+            if (process.env.ARTICLE_AGENT_ENABLED === "true") {
+              try {
+                const queueResult = await enqueueArticleJob({
+                  type: "NEWS",
+                  sourceUrls: [item.sourceUrl],
+                  topic: item.originalTitle,
+                  triggeredBy: "news-cron",
+                  newsItemId: item.id,
+                })
+                if (queueResult.success) {
+                  result.summary.articleJobsQueued++
+                  console.log(`[CRON 1] Queued Article Agent job: ${queueResult.queueJobId}`)
+                }
+              } catch (articleError) {
+                // Non-blocking - log and continue
+                console.warn(`[CRON 1] Failed to queue Article Agent job:`, articleError)
+              }
+            }
           } catch (error) {
             const errorMsg = `Failed to write article for ${item.id}: ${error instanceof Error ? error.message : String(error)}`
             console.error(`[CRON 1] ${errorMsg}`)
