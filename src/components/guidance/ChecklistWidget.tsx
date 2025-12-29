@@ -45,7 +45,6 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
   const handleComplete = async (reference: string) => {
     const item = items.find((i) => i.reference === reference)
     if (!item) return
-
     try {
       await fetch("/api/guidance/checklist", {
         method: "POST",
@@ -56,7 +55,6 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
           itemReference: reference,
         }),
       })
-
       setItems((prev) => prev.filter((i) => i.reference !== reference))
     } catch (error) {
       console.error("Failed to complete item:", error)
@@ -66,7 +64,6 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
   const handleDismiss = async (reference: string) => {
     const item = items.find((i) => i.reference === reference)
     if (!item) return
-
     try {
       await fetch("/api/guidance/checklist", {
         method: "POST",
@@ -77,10 +74,29 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
           itemReference: reference,
         }),
       })
-
       setItems((prev) => prev.filter((i) => i.reference !== reference))
     } catch (error) {
       console.error("Failed to dismiss item:", error)
+    }
+  }
+
+  const handleSnooze = async (reference: string, until: Date) => {
+    const item = items.find((i) => i.reference === reference)
+    if (!item) return
+    try {
+      await fetch("/api/guidance/checklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "snooze",
+          itemType: item.type,
+          itemReference: reference,
+          snoozeUntil: until.toISOString(),
+        }),
+      })
+      setItems((prev) => prev.filter((i) => i.reference !== reference))
+    } catch (error) {
+      console.error("Failed to snooze item:", error)
     }
   }
 
@@ -94,7 +110,7 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-accent" />
-          <h3 className="font-semibold text-white">Što moram napraviti?</h3>
+          <h3 className="font-semibold text-white">Sto moram napraviti?</h3>
         </div>
         <span className="text-sm text-white/50 capitalize">{currentMonth}</span>
       </div>
@@ -105,7 +121,7 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-white/60">Sve je odrađeno! 🎉</p>
+          <p className="text-white/60">Sve je obradjeno!</p>
           <p className="text-sm text-white/40 mt-1">Nema zadataka za ovaj mjesec</p>
         </div>
       ) : (
@@ -116,6 +132,7 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
               item={item}
               onComplete={handleComplete}
               onDismiss={handleDismiss}
+              onSnooze={handleSnooze}
             />
           ))}
         </div>
@@ -128,7 +145,7 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
             className="flex items-center justify-between text-sm text-accent hover:text-cyan-300 transition-colors"
           >
             <span>
-              Još {stats.total - items.length} zadatak
+              Jos {stats.total - items.length} zadatak
               {stats.total - items.length === 1 ? "" : "a"}
             </span>
             <ChevronRight className="h-4 w-4" />

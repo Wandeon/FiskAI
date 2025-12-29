@@ -3,9 +3,15 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Check, X, Clock, ChevronRight, AlertCircle } from "lucide-react"
+import { Check, X, Clock, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
 import type { ChecklistItem as ChecklistItemType } from "@/lib/guidance/types"
 
 interface ChecklistItemProps {
@@ -45,13 +51,11 @@ function formatDueDate(date: Date): string {
   now.setHours(0, 0, 0, 0)
   const due = new Date(date)
   due.setHours(0, 0, 0, 0)
-
   const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (daysUntil < 0) return `Kasni ${Math.abs(daysUntil)} dana!`
+  if (daysUntil < 0) return "Kasni " + Math.abs(daysUntil) + " dana!"
   if (daysUntil === 0) return "Danas!"
   if (daysUntil === 1) return "Sutra"
-  if (daysUntil <= 7) return `Za ${daysUntil} dana`
+  if (daysUntil <= 7) return "Za " + daysUntil + " dana"
   return due.toLocaleDateString("hr-HR", { day: "numeric", month: "short" })
 }
 
@@ -80,6 +84,15 @@ export function ChecklistItem({
     setIsLoading(false)
   }
 
+  const handleSnooze = async (days: number) => {
+    if (!onSnooze) return
+    setIsLoading(true)
+    const until = new Date()
+    until.setDate(until.getDate() + days)
+    await onSnooze(item.reference, until)
+    setIsLoading(false)
+  }
+
   const content = (
     <div
       className={cn(
@@ -105,7 +118,7 @@ export function ChecklistItem({
           )}
         </div>
 
-        {showActions && (onComplete || onDismiss) && (
+        {showActions && (onComplete || onDismiss || onSnooze) && (
           <div className="flex gap-2 mt-3">
             {onComplete && (
               <Button
@@ -121,6 +134,36 @@ export function ChecklistItem({
                 <Check className="h-3 w-3 mr-1" />
                 Gotovo
               </Button>
+            )}
+            {onSnooze && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={isLoading}
+                    className="h-7 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <Clock className="h-3 w-3 mr-1" />
+                    Odgodi
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleSnooze(1)}>
+                    <Clock className="h-3 w-3 mr-2" />
+                    Odgodi 1 dan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSnooze(3)}>
+                    <Clock className="h-3 w-3 mr-2" />
+                    Odgodi 3 dana
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSnooze(7)}>
+                    <Clock className="h-3 w-3 mr-2" />
+                    Odgodi 1 tjedan
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             {onDismiss && (
               <Button
