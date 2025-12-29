@@ -545,6 +545,7 @@ export async function sendEInvoice(eInvoiceId: string) {
       },
       include: {
         company: true,
+        buyer: true,
       },
     })
 
@@ -553,6 +554,7 @@ export async function sendEInvoice(eInvoiceId: string) {
       const fiscalDecision = await shouldFiscalizeInvoice({
         ...updatedInvoice,
         company,
+        buyer: updatedInvoice.buyer,
       })
 
       if (fiscalDecision.shouldFiscalize) {
