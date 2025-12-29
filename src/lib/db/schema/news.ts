@@ -83,6 +83,9 @@ export const newsPosts = pgTable(
     aiPasses: jsonb("ai_passes").default({}), // stores all 3 passes
     status: varchar("status", { length: 20 }).default("draft").notNull(), // 'draft' | 'reviewing' | 'published'
 
+    // Analytics
+    viewCount: integer("view_count").default(0).notNull(),
+
     // Timestamps
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

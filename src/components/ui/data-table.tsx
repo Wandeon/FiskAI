@@ -4,12 +4,20 @@
 import { ReactNode, useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { useListNavigation } from "@/hooks/use-keyboard-shortcuts"
+import { getSortAriaLabel } from "@/lib/a11y"
 
 export interface Column<T> {
   key: string
   header: string
   cell: (item: T) => ReactNode
   className?: string
+  /** Mark column as sortable for accessibility */
+  sortable?: boolean
+}
+
+export interface SortState {
+  field: string
+  order: "asc" | "desc"
 }
 
 interface DataTableProps<T> {
@@ -19,10 +27,14 @@ interface DataTableProps<T> {
   emptyMessage?: string
   className?: string
   getRowKey: (item: T) => string
-  /** Callback when a row is activated (Enter key or double-click) */
+/** Callback when a row is activated (Enter key or double-click) */
   onRowActivate?: (item: T) => void
   /** Enable keyboard navigation */
   keyboardNavigation?: boolean
+  /** Current sort state for accessibility labels */
+  sort?: SortState
+  /** Callback when sortable header is clicked */
+  onSort?: (field: string) => void
 }
 
 export function DataTable<T>({
@@ -32,8 +44,10 @@ export function DataTable<T>({
   emptyMessage = "Nema podataka",
   className,
   getRowKey,
-  onRowActivate,
+onRowActivate,
   keyboardNavigation = true,
+  sort,
+  onSort,
 }: DataTableProps<T>) {
   const [selectedIndex, setSelectedIndex] = useState(-1)
 
@@ -57,7 +71,11 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-md border border-gray-200 p-8 text-center text-gray-500">
+      <div
+        className="rounded-md border border-gray-200 p-8 text-center text-gray-500"
+        role="status"
+        aria-label={emptyMessage}
+      >
         {emptyMessage}
       </div>
     )
@@ -74,15 +92,43 @@ export function DataTable<T>({
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="border-b bg-gray-50">
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                scope="col"
-                className={cn("px-4 py-3 text-left font-medium text-gray-700", column.className)}
-              >
-                {column.header}
-              </th>
-            ))}
+            {columns.map((column) => {
+              const isSortable = column.sortable && onSort
+              const isSorted = sort?.field === column.key
+              const sortAriaLabel = isSortable
+                ? getSortAriaLabel(column.header, sort, column.key, "hr")
+                : undefined
+
+              return (
+                <th
+                  key={column.key}
+                  scope="col"
+                  className={cn(
+                    "px-4 py-3 text-left font-medium text-gray-700",
+                    isSortable && "cursor-pointer hover:bg-gray-100",
+                    column.className
+                  )}
+                  aria-sort={isSorted ? (sort.order === "asc" ? "ascending" : "descending") : undefined}
+                  onClick={isSortable ? () => onSort(column.key) : undefined}
+                  onKeyDown={isSortable ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onSort(column.key)
+                    }
+                  } : undefined}
+                  tabIndex={isSortable ? 0 : undefined}
+                  role={isSortable ? "button" : undefined}
+                  aria-label={sortAriaLabel}
+                >
+                  {column.header}
+                  {isSorted && (
+                    <span aria-hidden="true" className="ml-1">
+                      {sort.order === "asc" ? "↑" : "↓"}
+                    </span>
+                  )}
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>
