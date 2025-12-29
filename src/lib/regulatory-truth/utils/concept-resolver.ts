@@ -269,6 +269,17 @@ export async function mergePointersToExistingRule(
     return { success: true, addedPointers: 0 }
   }
 
+  // Get existing composerNotes to append, not overwrite
+  const existingRule = await db.regulatoryRule.findUnique({
+    where: { id: existingRuleId },
+    select: { composerNotes: true },
+  })
+
+  const mergeNote = `[AUTO-MERGED] Added ${newIds.length} additional source pointers on ${new Date().toISOString()}`
+  const updatedNotes = existingRule?.composerNotes
+    ? `${existingRule.composerNotes}\n${mergeNote}`
+    : mergeNote
+
   // Add new pointers to existing rule
   await db.regulatoryRule.update({
     where: { id: existingRuleId },
@@ -276,9 +287,7 @@ export async function mergePointersToExistingRule(
       sourcePointers: {
         connect: newIds.map((id) => ({ id })),
       },
-      composerNotes: {
-        set: `[AUTO-MERGED] Added ${newIds.length} additional source pointers on ${new Date().toISOString()}`,
-      },
+      composerNotes: updatedNotes,
     },
   })
 
