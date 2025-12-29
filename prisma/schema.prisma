@@ -1435,6 +1435,14 @@ enum AuditAction {
   // Regulatory Truth Layer - Status Transitions & Pipeline
   RULE_STATUS_CHANGED
   PIPELINE_STAGE_COMPLETE
+
+  // Staff Portal - Client Data Access (GDPR compliance)
+  STAFF_VIEW_CLIENT
+  STAFF_VIEW_INVOICES
+  STAFF_VIEW_DOCUMENTS
+  STAFF_VIEW_REPORTS
+  STAFF_EXPORT_DATA
+  STAFF_MARK_REVIEWED
 }
 
 enum ExpenseStatus {
