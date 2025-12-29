@@ -82,6 +82,12 @@ export default async function VatReportPage({
         </div>
         <div className="flex gap-2">
           <a
+            href={`/api/reports/vat/excel?from=${dateFrom.toISOString().split("T")[0]}&to=${dateTo.toISOString().split("T")[0]}`}
+            download
+          >
+            <Button variant="outline">Preuzmi Excel</Button>
+          </a>
+          <a
             href={`/api/reports/vat/pdf?from=${dateFrom.toISOString().split("T")[0]}&to=${dateTo.toISOString().split("T")[0]}`}
             download
           >
