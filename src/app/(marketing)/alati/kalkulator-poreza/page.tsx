@@ -43,7 +43,7 @@ export default function TaxCalculatorPage() {
     name: "Kalkulator Poreza",
     description:
       `Izračunajte kvartalni i godišnji paušalni porez na temelju očekivanog prihoda. Svi porezni razredi za ${pausalYear}.`,
-    url: "https://fisk.ai/alati/kalkulator-poreza",
+    url: "https://fiskai.hr/alati/kalkulator-poreza",
   })
 
   return (

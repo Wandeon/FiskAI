@@ -79,7 +79,7 @@ export function generateArticleSchema(
     publisher: {
       "@type": "Organization",
       name: "FiskAI",
-      url: "https://fisk.ai",
+      url: "https://fiskai.hr",
     },
   }
 }

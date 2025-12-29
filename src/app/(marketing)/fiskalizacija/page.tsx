@@ -52,8 +52,8 @@ const sources = [
 
 export default function FiskalizacijaHubPage() {
   const breadcrumbs = [
-    { name: "Baza znanja", url: "https://fisk.ai/baza-znanja" },
-    { name: "Fiskalizacija 2.0", url: "https://fisk.ai/fiskalizacija" },
+    { name: "Baza znanja", url: "https://fiskai.hr/baza-znanja" },
+    { name: "Fiskalizacija 2.0", url: "https://fiskai.hr/fiskalizacija" },
   ]
 
   return (

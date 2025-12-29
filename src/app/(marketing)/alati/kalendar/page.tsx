@@ -49,7 +49,7 @@ export default function CalendarPage() {
   const webAppSchema = generateWebApplicationSchema({
     name: "Porezni Kalendar",
     description: `Svi važni porezni rokovi za ${calendarYear}. godinu na jednom mjestu.`,
-    url: "https://fisk.ai/alati/kalendar",
+    url: "https://fiskai.hr/alati/kalendar",
   })
 
   return (

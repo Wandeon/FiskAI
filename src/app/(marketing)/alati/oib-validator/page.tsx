@@ -48,7 +48,7 @@ export default function OIBValidatorPage() {
   const webAppSchema = generateWebApplicationSchema({
     name: "OIB Validator",
     description: "Provjerite valjanost hrvatskog OIB-a (Osobni identifikacijski broj)",
-    url: "https://fisk.ai/alati/oib-validator",
+    url: "https://fiskai.hr/alati/oib-validator",
   })
 
   const handleValidate = () => {

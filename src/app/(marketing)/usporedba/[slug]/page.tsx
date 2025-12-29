@@ -93,10 +93,10 @@ export default async function ComparisonPage({ params, searchParams }: PageProps
     publisher: {
       "@type": "Organization",
       name: "FiskAI",
-      url: baseUrl,
+      url: "https://fiskai.hr",
       logo: {
         "@type": "ImageObject",
-        url: `${baseUrl}/logo.png`,
+        url: "https://fiskai.hr/logo.png",
       },
     },
     datePublished: new Date().toISOString(),

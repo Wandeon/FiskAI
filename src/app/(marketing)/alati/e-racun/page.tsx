@@ -310,7 +310,7 @@ export default function ERacunGeneratorPage() {
     name: "E-Račun Generator",
     description:
       "Generiraj UBL 2.1 XML e-račune spremne za FINA sustav. 2026-ready format za B2B transakcije.",
-    url: "https://fisk.ai/alati/e-racun",
+    url: "https://fiskai.hr/alati/e-racun",
   })
 
   // Form state
