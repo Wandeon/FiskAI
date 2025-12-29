@@ -10,18 +10,46 @@ export function validateIban(iban: string): { valid: boolean; error?: string } {
     return { valid: false, error: "Invalid IBAN format" }
   }
 
-  // Country-specific length check (common countries)
+  // Country-specific length check (all SEPA countries + Switzerland)
   const countryLengths: Record<string, number> = {
-    HR: 21, // Croatia
-    DE: 22, // Germany
+    // SEPA countries
+    AD: 24, // Andorra
     AT: 20, // Austria
-    SI: 19, // Slovenia
-    IT: 27, // Italy
-    FR: 27, // France
-    ES: 24, // Spain
-    NL: 18, // Netherlands
     BE: 16, // Belgium
+    BG: 22, // Bulgaria
     CH: 21, // Switzerland
+    CY: 28, // Cyprus
+    CZ: 24, // Czech Republic
+    DE: 22, // Germany
+    DK: 18, // Denmark
+    EE: 20, // Estonia
+    ES: 24, // Spain
+    FI: 18, // Finland
+    FR: 27, // France
+    GB: 22, // United Kingdom
+    GI: 23, // Gibraltar
+    GR: 27, // Greece
+    HR: 21, // Croatia
+    HU: 28, // Hungary
+    IE: 22, // Ireland
+    IS: 26, // Iceland
+    IT: 27, // Italy
+    LI: 21, // Liechtenstein
+    LT: 20, // Lithuania
+    LU: 20, // Luxembourg
+    LV: 21, // Latvia
+    MC: 27, // Monaco
+    MT: 31, // Malta
+    NL: 18, // Netherlands
+    NO: 15, // Norway
+    PL: 28, // Poland
+    PT: 25, // Portugal
+    RO: 24, // Romania
+    SE: 24, // Sweden
+    SI: 19, // Slovenia
+    SK: 24, // Slovakia
+    SM: 27, // San Marino
+    VA: 22, // Vatican City
   }
 
   const country = cleanIban.slice(0, 2)

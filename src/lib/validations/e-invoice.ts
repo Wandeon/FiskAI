@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { validateIban } from "@/lib/barcode"
 
 export const eInvoiceLineSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -18,7 +19,14 @@ export const eInvoiceSchema = z.object({
   buyerReference: z.string().optional(),
   bankAccount: z
     .string()
-    .regex(/^HR\d{2}\d{17}$/, "Neispravan IBAN")
+    .refine(
+      (iban) => {
+        if (!iban || iban === "") return true
+        const result = validateIban(iban)
+        return result.valid
+      },
+      { message: "Invalid IBAN format or checksum" }
+    )
     .optional()
     .or(z.literal("")),
   includeBarcode: z.boolean().optional(),
