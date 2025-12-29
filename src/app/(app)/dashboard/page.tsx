@@ -1,4 +1,4 @@
-import { requireAuth, getCurrentCompany } from "@/lib/auth-utils"
+import { requireAuth, getCurrentCompany, isOnboardingComplete } from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { Prisma, EInvoiceStatus } from "@prisma/client"
@@ -33,7 +33,9 @@ export default async function DashboardPage() {
   const user = await requireAuth()
   const company = await getCurrentCompany(user.id!)
 
-  if (!company) {
+  // Redirect to onboarding if no company or if onboarding is incomplete
+  // This prevents redirect loop when company exists but has missing required fields
+  if (!company || !isOnboardingComplete(company)) {
     redirect("/onboarding")
   }
 
