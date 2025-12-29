@@ -159,6 +159,7 @@ model Company {
   featureFlagOverrides           FeatureFlagOverride[]
   staffReviews                   StaffReview[]
   adminAlerts                    AdminAlert[]
+  bankImports                    BankImport[]
 }
 
 // Audit trail for module entitlement changes
@@ -716,6 +717,7 @@ model BankImport {
   importedAt       DateTime     @default(now())
   importedBy       String
   bankAccount      BankAccount  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([bankAccountId])
