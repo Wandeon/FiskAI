@@ -211,6 +211,24 @@ const endpoints = [
     scrapeFrequency: "DAILY" as const,
     listingStrategy: "HTML_LIST" as const,
   },
+  {
+    domain: "dzs.hr",
+    path: "/hr/novosti",
+    name: "DZS - Novosti",
+    endpointType: "NEWS_LISTING" as const,
+    priority: "HIGH" as const,
+    scrapeFrequency: "DAILY" as const,
+    listingStrategy: "HTML_LIST" as const,
+  },
+  {
+    domain: "dzs.hr",
+    path: "/hr/publikacije",
+    name: "DZS - Publikacije i statistički podaci",
+    endpointType: "STATISTICS" as const,
+    priority: "HIGH" as const,
+    scrapeFrequency: "DAILY" as const,
+    listingStrategy: "HTML_LIST" as const,
+  },
 
   // Tier 3: MEDIUM (twice weekly)
   {
