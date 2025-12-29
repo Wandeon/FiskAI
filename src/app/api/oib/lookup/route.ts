@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { lookupOib, validateOib } from "@/lib/oib-lookup"
+import { getCurrentUser } from "@/lib/auth-utils"
 
 // Simple in-memory rate limiting
 // In production, consider using Redis or a proper rate limiting service
@@ -44,6 +45,15 @@ setInterval(
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentication check - require logged-in user
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+
     // Get IP for rate limiting
     const ip =
       request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
