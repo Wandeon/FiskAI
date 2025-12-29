@@ -2,7 +2,8 @@ import Link from "next/link"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts } from "@/lib/db/schema/news"
 import { desc, sql } from "drizzle-orm"
-import { Eye, Pencil, Trash2 } from "lucide-react"
+import { Eye, Pencil } from "lucide-react"
+import { DeleteButton } from "./delete-button"
 
 export const dynamic = "force-dynamic"
 
@@ -164,12 +165,7 @@ export default async function AdminNewsPage() {
                         title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
-                      </Link>
-                      <button
-                        className="rounded-lg border border-[var(--border)] p-2 text-red-500 hover:bg-[var(--surface-secondary)]"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
+                      <DeleteButton postId={post.id} postTitle={post.title} />
                       </button>
                     </div>
                   </td>
