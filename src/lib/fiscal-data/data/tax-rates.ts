@@ -171,3 +171,58 @@ export function getCorporateTaxRate(annualRevenue: number): number {
 export function exceedsPausalLimit(annualRevenue: number): boolean {
   return annualRevenue > TAX_RATES.pausal.maxRevenue
 }
+
+/**
+ * Result of prirez-adjusted pausal tax calculation
+ */
+export interface PausalTaxWithPrirezResult {
+  /** Annual tax including prirez */
+  annual: number
+  /** Quarterly tax including prirez */
+  quarterly: number
+  /** Base annual tax (without prirez) */
+  baseAnnual: number
+  /** Base quarterly tax (without prirez) */
+  baseQuarterly: number
+  /** Prirez amount (annual) */
+  prirezAnnual: number
+  /** Prirez amount (quarterly) */
+  prirezQuarterly: number
+}
+
+/**
+ * Calculate pausal tax with prirez (municipal surtax) adjustment
+ *
+ * The tax brackets in TAX_RATES.pausal.brackets contain BASE tax values.
+ * Actual tax payable = baseTax * (1 + prirezRate)
+ *
+ * @param annualRevenue - Annual revenue to determine bracket
+ * @param prirezRate - Municipal surtax rate (e.g., 0.18 for Zagreb 18%)
+ * @returns Object with annual and quarterly tax amounts including prirez
+ *
+ * @example
+ * // Zagreb has 18% prirez
+ * const tax = calculatePausalTaxWithPrirez(25000, 0.18)
+ * console.log(tax.quarterly) // 162.49 (137.7 * 1.18)
+ */
+export function calculatePausalTaxWithPrirez(
+  annualRevenue: number,
+  prirezRate: number = 0
+): PausalTaxWithPrirezResult {
+  const bracket = getPausalTaxBracket(annualRevenue)
+  const multiplier = 1 + prirezRate
+
+  const baseAnnual = bracket.annualTax
+  const baseQuarterly = bracket.quarterlyTax
+  const annual = Math.round(baseAnnual * multiplier * 100) / 100
+  const quarterly = Math.round(baseQuarterly * multiplier * 100) / 100
+
+  return {
+    annual,
+    quarterly,
+    baseAnnual,
+    baseQuarterly,
+    prirezAnnual: Math.round((annual - baseAnnual) * 100) / 100,
+    prirezQuarterly: Math.round((quarterly - baseQuarterly) * 100) / 100,
+  }
+}

@@ -32,7 +32,9 @@ export {
   getPausalTaxBracket,
   getCorporateTaxRate,
   exceedsPausalLimit,
+  calculatePausalTaxWithPrirez,
 } from "./data/tax-rates"
+export type { PausalTaxWithPrirezResult } from "./data/tax-rates"
 
 export {
   THRESHOLDS,
