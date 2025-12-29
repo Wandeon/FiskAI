@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createBankAccount } from "../actions"
 import { useRouter } from "next/navigation"
-import { getBankNameFromIban, isValidCroatianIban, formatIban } from "@/lib/banking/constants"
+import { getBankNameFromIban, isValidIban, formatIban } from "@/lib/banking/constants"
+import { validateIban as fullValidateIban } from "@/lib/barcode"
 
 export function AccountForm() {
   const router = useRouter()
@@ -24,22 +25,25 @@ export function AccountForm() {
       return cleaned
     }
 
-    // Validate Croatian IBAN format and checksum
-    if (!isValidCroatianIban(cleaned)) {
-      setIbanError("IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki")
+    // Validate any European IBAN format and checksum
+    const validation = fullValidateIban(cleaned)
+    if (!validation.valid) {
+      setIbanError(validation.error || "Invalid IBAN format or checksum")
     } else {
       setIbanError(null)
 
-      // Auto-detect bank name from IBAN
-      const detectedBankName = getBankNameFromIban(cleaned)
-      if (detectedBankName) {
-        setBankName(detectedBankName)
-        // Auto-select EUR for Croatian IBANs
-        if (cleaned.startsWith("HR")) {
-          setCurrency("EUR")
+      // Auto-detect bank name from IBAN (only for Croatian IBANs)
+      if (cleaned.startsWith("HR")) {
+        const detectedBankName = getBankNameFromIban(cleaned)
+        if (detectedBankName) {
+          setBankName(detectedBankName)
         }
+        // Auto-select EUR for Croatian IBANs
+        setCurrency("EUR")
       } else {
+        // For non-Croatian IBANs, clear bank name and default to EUR
         setBankName("")
+        setCurrency("EUR")
       }
     }
     return cleaned
@@ -48,18 +52,13 @@ export function AccountForm() {
   function handleIbanChange(e: React.ChangeEvent<HTMLInputElement>) {
     let value = e.target.value.toUpperCase().replace(/\s/g, "")
 
-    // Allow typing but limit to Croatian IBAN format
-    if (value.length > 0 && !value.startsWith("HR")) {
-      value = "HR" + value
+    // Limit to maximum IBAN length (34 characters)
+    if (value.length > 34) {
+      value = value.substring(0, 34)
     }
 
-    // Limit to 21 characters (HR + 19 digits)
-    if (value.length > 21) {
-      value = value.substring(0, 21)
-    }
-
-    // Format for display (add spaces)
-    const formatted = formatIban(value)
+    // Format for display (add spaces every 4 characters)
+    const formatted = value.match(/.{1,4}/g)?.join(" ") || value
 
     setIban(formatted)
     validateIban(value.replace(/\s/g, ""))
@@ -82,8 +81,9 @@ export function AccountForm() {
 
     // Validate IBAN before submit
     const ibanValue = (formData.get("iban") as string).replace(/\s/g, "")
-    if (!isValidCroatianIban(ibanValue)) {
-      setError("IBAN mora biti valjan hrvatski IBAN u formatu HR + 19 znamenki")
+    const validation = fullValidateIban(ibanValue)
+    if (!validation.valid) {
+      setError(validation.error || "Invalid IBAN format or checksum")
       setLoading(false)
       return
     }
@@ -129,16 +129,15 @@ export function AccountForm() {
           <Input
             id="iban"
             name="iban"
-            placeholder="HR1234567890123456789"
+            placeholder="HR1234567890123456789 or DE89370400440532013000"
             value={iban}
             onChange={handleIbanChange}
             required
             disabled={loading}
-            maxLength={21}
             className={ibanError ? "border-red-500" : ""}
           />
           {ibanError && <p className="text-xs text-red-600 mt-1">{ibanError}</p>}
-          <p className="text-xs text-gray-500 mt-1">Format: HR + 19 znamenki</p>
+          <p className="text-xs text-gray-500 mt-1">Accepts all European IBAN formats</p>
         </div>
 
         <div>

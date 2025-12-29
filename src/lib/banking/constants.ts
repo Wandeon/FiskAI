@@ -72,6 +72,7 @@ export function getBankNameFromIban(iban: string): string | null {
  * Validate Croatian IBAN format and checksum
  * @param iban - IBAN to validate
  * @returns true if valid Croatian IBAN
+ * @deprecated Use validateIban from @/lib/barcode instead for all IBAN validation
  */
 export function isValidCroatianIban(iban: string): boolean {
   if (!iban) return false
@@ -108,6 +109,44 @@ export function isValidCroatianIban(iban: string): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Validate any European IBAN format and checksum
+ * @param iban - IBAN to validate
+ * @returns true if valid IBAN (any European country)
+ */
+export function isValidIban(iban: string): boolean {
+  if (!iban) return false
+
+  const cleaned = iban.toUpperCase().replace(/\s/g, "")
+
+  // Basic format check: 2 letters + 2 digits + up to 30 alphanumeric
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/.test(cleaned)) {
+    return false
+  }
+
+  // ISO 13616 mod-97 validation
+  const rearranged = cleaned.slice(4) + cleaned.slice(0, 4)
+
+  // Convert letters to numbers (A=10, B=11, ..., Z=35)
+  let numericString = ""
+  for (const char of rearranged) {
+    if (char >= "A" && char <= "Z") {
+      numericString += (char.charCodeAt(0) - 55).toString()
+    } else {
+      numericString += char
+    }
+  }
+
+  // Calculate mod 97 using chunks (to avoid BigInt issues)
+  let remainder = 0
+  for (let i = 0; i < numericString.length; i += 7) {
+    const chunk = numericString.slice(i, i + 7)
+    remainder = parseInt(remainder.toString() + chunk, 10) % 97
+  }
+
+  return remainder === 1
 }
 
 /**
