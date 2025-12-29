@@ -98,19 +98,17 @@ export default function ContactPage() {
               <h2 className="text-xl font-semibold mb-4">Tvrtka</h2>
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-medium">Naziv:</span> Metrica d.o.o.
+                  <span className="font-medium">Naziv:</span> FiskAI d.o.o.
                 </p>
                 <p>
-                  <span className="font-medium">OIB:</span> 12345678901
-                </p>
-                <p>
-                  <span className="font-medium">IBAN:</span> HR1234567890123456789 (ZABA)
-                </p>
-                <p>
-                  <span className="font-medium">VAT ID:</span> HR12345678901
+                  <span className="font-medium">Sjedište:</span> Zagreb, Hrvatska
                 </p>
                 <p className="text-white/60 mt-2">
                   Registrirana u Sudskom registru Republike Hrvatske
+                </p>
+                <p className="text-xs text-white/40 mt-2">
+                  Službeni registracijski podaci bit će objavljeni nakon završetka procesa registracije
+                  tvrtke.
                 </p>
               </div>
             </div>

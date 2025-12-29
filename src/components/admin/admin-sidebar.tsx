@@ -4,21 +4,22 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  CreditCard,
-  Server,
-  MessageSquare,
-  Settings,
-  FileText,
+  Activity,
   AlertTriangle,
-  Mail,
-  Newspaper,
+  Building2,
   ChevronLeft,
   ChevronRight,
-  Activity,
+  CreditCard,
+  FileText,
+  Flag,
+  LayoutDashboard,
+  Mail,
+  MessageSquare,
+  Newspaper,
   Scale,
+  Server,
+  Settings,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
