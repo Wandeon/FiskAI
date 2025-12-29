@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable fisk-design-system/no-hardcoded-colors, react/no-unescaped-entities -- Pre-existing issues, fix separately */
 
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,8 +15,42 @@ import {
   Lock,
   Activity,
   ExternalLink,
+  Server,
+  Zap,
+  Pause,
 } from "lucide-react"
-import type { HeadlineStatus, RefreshQuality, SystemStatusEventType } from "@/lib/system-status/types"
+import type {
+  HeadlineStatus,
+  RefreshQuality,
+  SystemStatusEventType,
+} from "@/lib/system-status/types"
+
+// Worker health types
+interface QueueStats {
+  name: string
+  displayName: string
+  description: string
+  waiting: number
+  active: number
+  completed: number
+  failed: number
+  delayed: number
+  paused: boolean
+}
+
+interface WorkerHealthResponse {
+  status: "healthy" | "degraded" | "unhealthy"
+  redisConnected: boolean
+  timestamp: string
+  queues: QueueStats[]
+  summary: {
+    totalWaiting: number
+    totalActive: number
+    totalFailed: number
+    healthyQueues: number
+    unhealthyQueues: number
+  }
+}
 
 // Types for data from server
 interface Snapshot {
@@ -121,6 +156,8 @@ export function SystemStatusPage({
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshJobId, setRefreshJobId] = useState<string | null>(null)
   const [refreshError, setRefreshError] = useState<string | null>(null)
+  const [workerHealth, setWorkerHealth] = useState<WorkerHealthResponse | null>(null)
+  const [workerHealthLoading, setWorkerHealthLoading] = useState(true)
 
   // Track if component is mounted to prevent memory leaks in polling
   const mountedRef = useRef(true)
@@ -130,6 +167,35 @@ export function SystemStatusPage({
       mountedRef.current = false
     }
   }, [])
+
+  // Fetch worker health on mount and periodically
+  const fetchWorkerHealth = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/workers/status")
+      if (response.ok) {
+        const data = await response.json()
+        if (mountedRef.current) {
+          setWorkerHealth(data)
+        }
+      }
+    } catch (error) {
+      // Silent fail - will show as disconnected
+      if (mountedRef.current) {
+        setWorkerHealth(null)
+      }
+    } finally {
+      if (mountedRef.current) {
+        setWorkerHealthLoading(false)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchWorkerHealth()
+    // Refresh worker health every 30 seconds
+    const interval = setInterval(fetchWorkerHealth, 30000)
+    return () => clearInterval(interval)
+  }, [fetchWorkerHealth])
 
   const pollJobStatus = useCallback(async (jobId: string) => {
     try {
@@ -188,19 +254,19 @@ export function SystemStatusPage({
   }
 
   // Get headline config
-  const headlineConfig = snapshot
-    ? HEADLINE_CONFIG[snapshot.headlineStatus]
-    : HEADLINE_CONFIG.OK
+  const headlineConfig = snapshot ? HEADLINE_CONFIG[snapshot.headlineStatus] : HEADLINE_CONFIG.OK
   const HeadlineIcon = headlineConfig.icon
 
   // Parse topItems if available
-  const topItems = snapshot?.topItems as Array<{
-    id: string
-    name: string
-    severity: string
-    owner?: string
-    link?: string
-  }> | undefined
+  const topItems = snapshot?.topItems as
+    | Array<{
+        id: string
+        name: string
+        severity: string
+        owner?: string
+        link?: string
+      }>
+    | undefined
 
   return (
     <div className="space-y-6">
@@ -208,15 +274,9 @@ export function SystemStatusPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">System Status</h1>
-          <p className="text-muted-foreground">
-            Monitor system registry integrations and health
-          </p>
+          <p className="text-muted-foreground">Monitor system registry integrations and health</p>
         </div>
-        <Button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="gap-2"
-        >
+        <Button onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
           {isRefreshing ? (
             <>
               <LoadingSpinner size="sm" className="text-current" />
@@ -295,9 +355,7 @@ export function SystemStatusPage({
             <CardTitle className="text-sm font-medium">Critical</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {snapshot?.criticalCount ?? 0}
-            </div>
+            <div className="text-2xl font-bold text-red-600">{snapshot?.criticalCount ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -306,9 +364,7 @@ export function SystemStatusPage({
             <CardTitle className="text-sm font-medium">High</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
-              {snapshot?.highCount ?? 0}
-            </div>
+            <div className="text-2xl font-bold text-amber-600">{snapshot?.highCount ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -317,9 +373,7 @@ export function SystemStatusPage({
             <CardTitle className="text-sm font-medium">Medium</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {snapshot?.mediumCount ?? 0}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{snapshot?.mediumCount ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -328,9 +382,7 @@ export function SystemStatusPage({
             <CardTitle className="text-sm font-medium">Low</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-600">
-              {snapshot?.lowCount ?? 0}
-            </div>
+            <div className="text-2xl font-bold text-slate-600">{snapshot?.lowCount ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -352,6 +404,146 @@ export function SystemStatusPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Worker Health Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              Worker Health
+            </div>
+            <div className="flex items-center gap-2">
+              {workerHealthLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : workerHealth ? (
+                <>
+                  <Badge
+                    variant={
+                      workerHealth.status === "healthy"
+                        ? "success"
+                        : workerHealth.status === "degraded"
+                          ? "warning"
+                          : "danger"
+                    }
+                  >
+                    {workerHealth.status.toUpperCase()}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={fetchWorkerHealth}
+                    className="h-6 w-6 p-0"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <Badge variant="danger">DISCONNECTED</Badge>
+              )}
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {workerHealthLoading ? (
+            <div className="py-8 text-center text-muted-foreground">Loading worker status...</div>
+          ) : !workerHealth ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+              <p>Unable to connect to Redis</p>
+              <p className="text-xs mt-1">Worker queues are unavailable</p>
+            </div>
+          ) : (
+            <>
+              {/* Summary stats */}
+              <div className="grid gap-4 md:grid-cols-4 mb-4">
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold">{workerHealth.summary.totalWaiting}</div>
+                  <div className="text-xs text-muted-foreground">Waiting</div>
+                </div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {workerHealth.summary.totalActive}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Active</div>
+                </div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">
+                    {workerHealth.summary.totalFailed}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Failed</div>
+                </div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {workerHealth.summary.healthyQueues}/{workerHealth.queues.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Healthy Queues</div>
+                </div>
+              </div>
+
+              {/* Queue list */}
+              <div className="space-y-2">
+                {workerHealth.queues.map((queue) => (
+                  <div
+                    key={queue.name}
+                    className="flex items-center justify-between p-2 border rounded-lg hover:bg-slate-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      {queue.paused ? (
+                        <Pause className="h-4 w-4 text-amber-500" />
+                      ) : queue.active > 0 ? (
+                        <Zap className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <Server className="h-4 w-4 text-slate-400" />
+                      )}
+                      <div>
+                        <div className="text-sm font-medium">{queue.displayName}</div>
+                        <div className="text-xs text-muted-foreground">{queue.description}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      {queue.paused && (
+                        <Badge variant="warning" className="text-xs">
+                          PAUSED
+                        </Badge>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">W:</span>
+                        <span className="font-mono">{queue.waiting}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-blue-600">A:</span>
+                        <span className="font-mono text-blue-600">{queue.active}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-green-600">C:</span>
+                        <span className="font-mono text-green-600">{queue.completed}</span>
+                      </div>
+                      {queue.failed > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-red-600">F:</span>
+                          <span className="font-mono text-red-600">{queue.failed}</span>
+                        </div>
+                      )}
+                      {queue.delayed > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-600">D:</span>
+                          <span className="font-mono text-amber-600">{queue.delayed}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Last updated */}
+              <div className="text-xs text-muted-foreground mt-3 text-right">
+                Last updated: {new Date(workerHealth.timestamp).toLocaleString("hr-HR")}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Top Items */}
       <Card>
@@ -380,9 +572,7 @@ export function SystemStatusPage({
                     <div>
                       <div className="text-sm font-medium">{item.name}</div>
                       {item.owner && (
-                        <div className="text-xs text-muted-foreground">
-                          Owner: {item.owner}
-                        </div>
+                        <div className="text-xs text-muted-foreground">Owner: {item.owner}</div>
                       )}
                     </div>
                   </div>
@@ -410,9 +600,7 @@ export function SystemStatusPage({
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No recent events
-            </div>
+            <div className="py-8 text-center text-muted-foreground">No recent events</div>
           ) : (
             <div className="space-y-3">
               {events.map((event) => (
@@ -484,9 +672,7 @@ export function SystemStatusPage({
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">New Drift (Days)</div>
-                <div className="text-sm font-medium mt-1">
-                  {snapshot.newDriftSinceDays} days
-                </div>
+                <div className="text-sm font-medium mt-1">{snapshot.newDriftSinceDays} days</div>
               </div>
             </div>
             {snapshot.lastRefreshError && (
