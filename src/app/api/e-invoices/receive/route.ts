@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { IncomingInvoice } from "@/lib/e-invoice/types"
 import { logger } from "@/lib/logger"
+import { oibOptionalSchema } from "@/lib/validations/oib"
 
 const incomingInvoiceSchema = z.object({
   invoiceNumber: z.string(),
@@ -15,7 +16,7 @@ const incomingInvoiceSchema = z.object({
   currency: z.string().default("EUR"),
   buyer: z.object({
     name: z.string(),
-    oib: z.string().optional(),
+    oib: oibOptionalSchema,
     address: z.string().optional(),
     city: z.string().optional(),
     postalCode: z.string().optional(),
@@ -23,7 +24,7 @@ const incomingInvoiceSchema = z.object({
   }),
   seller: z.object({
     name: z.string(),
-    oib: z.string().optional(),
+    oib: oibOptionalSchema,
     address: z.string().optional(),
     city: z.string().optional(),
     postalCode: z.string().optional(),
