@@ -126,7 +126,7 @@ export default function PausalniObrtPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  <span>Praćenje plaćenih/neprlaćenih računa</span>
+                  <span>Praćenje plaćenih/neplaćenih računa</span>
                 </li>
               </ul>
             </div>
