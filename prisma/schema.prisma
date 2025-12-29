@@ -3571,3 +3571,27 @@ enum WebhookEventStatus {
   DUPLICATE
   FILTERED
 }
+
+
+// Dead Letter Queue for cron job failures
+model CronJobError {
+  id           String    @id @default(cuid())
+  jobName      String
+  entityId     String?
+  entityType   String?
+  errorMessage String    @db.Text
+  errorCode    String?
+  attemptCount Int       @default(1)
+  metadata     Json?
+  resolvedAt   DateTime?
+  resolvedBy   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([jobName, entityId])
+  @@index([jobName])
+  @@index([entityId])
+  @@index([resolvedAt])
+  @@index([createdAt])
+}
+
