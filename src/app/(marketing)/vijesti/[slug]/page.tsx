@@ -16,6 +16,7 @@ import { format } from "date-fns"
 import { hr } from "date-fns/locale"
 import Link from "next/link"
 import { ExternalLink, Calendar, CheckCircle2, Wrench, Zap, AlertCircle, Tag } from "lucide-react"
+import { SocialShare } from "@/components/news/SocialShare"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://fiskai.hr"
 
@@ -372,6 +373,15 @@ export default async function PostDetailPage({ params }: PageProps) {
                     : "Nizak utjecaj"}
               </span>
             )}
+          </div>
+
+          {/* Social Share Buttons */}
+          <div className="mb-8">
+            <SocialShare
+              url={articleUrl}
+              title={post.title}
+              description={post.excerpt || undefined}
+            />
           </div>
 
           {/* Tags */}
