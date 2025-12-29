@@ -11,9 +11,11 @@ import { CommandPalette } from "@/components/ui/command-palette"
 import { Logo } from "@/components/ui/Logo"
 
 const NAV_LINKS = [
-  { href: "/alati", label: "Alati" },
-  { href: "/vijesti", label: "Vijesti" },
-  { href: "/pricing", label: "Cijene" },
+  { href: "/znacajke", label: "Značajke" },
+  { href: "/cijene", label: "Cijene" },
+  { href: "/vodici", label: "Vodiči" },
+  { href: "/o-nama", label: "O nama" },
+  { href: "/kontakt", label: "Kontakt" },
 ]
 
 interface MarketingHeaderProps {
