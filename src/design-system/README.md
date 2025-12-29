@@ -73,5 +73,8 @@ Hardcoded colors are blocked by ESLint:
 
 ## Documentation
 
-- [Architecture](../../docs/plans/2025-12-27-design-system-architecture.md)
-- [Governance](./TOKENS.md)
+- [Design System Docs](./docs/README.md) - Complete documentation index
+- [Color System](./docs/COLOR_SYSTEM.md) - Semantic color tokens
+- [Spacing System](./docs/SPACING_SYSTEM.md) - 4px base unit spacing scale
+- [Governance](./TOKENS.md) - Token management rules
+- [Architecture](../../docs/plans/2025-12-27-design-system-architecture.md) - System architecture
