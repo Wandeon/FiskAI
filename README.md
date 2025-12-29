@@ -56,6 +56,19 @@ FiskAI is a cloud-based, modular accounting solution designed for Croatian compa
 - [Fiskalizacija 2.0](docs/research/fiskalizacija-2.md) - Croatian fiscalization
 - [E-Invoice Providers](docs/research/e-invoice-providers.md) - Provider analysis
 
+## Browser Support
+
+The application supports the following browsers:
+
+| Browser | Minimum Version |
+| ------- | --------------- |
+| Chrome  | Last 2 versions |
+| Firefox | Last 2 versions |
+| Safari  | Last 2 versions |
+| Edge    | Last 2 versions |
+
+We target browsers with >0.5% global usage, excluding Opera Mini and discontinued browsers. See `browserslist` in `package.json` for the exact configuration.
+
 ## Tech Stack
 
 | Layer    | Technology                    |
