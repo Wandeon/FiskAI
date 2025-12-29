@@ -54,6 +54,8 @@ export const navigation: NavSection[] = [
           { name: "Svi dokumenti", href: "/documents" },
           { name: "E-Računi", href: "/documents?category=e-invoice" },
           { name: "Bankovni izvodi", href: "/documents?category=bank-statement" },
+          { name: "Troškovi", href: "/documents?category=expense" },
+          { name: "Ponavljajući troškovi", href: "/expenses/recurring" },
         ],
       },
       { name: "Banka", href: "/banking", icon: Building2, module: "banking" },

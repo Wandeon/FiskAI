@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, FileText, Mail, Building2, Receipt } from "lucide-react"
+import { ChevronDown, FileText, Mail, Building2, Receipt, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useElementStatus } from "@/lib/visibility"
 import type { ElementId } from "@/lib/visibility"
@@ -35,6 +35,13 @@ const DOCUMENT_OPTIONS = [
     href: "/expenses/new",
     icon: Receipt,
     description: "Evidentiraj trošak",
+    elementId: "action:create-expense" as ElementId,
+  },
+  {
+    label: "Ponavljajući trošak",
+    href: "/expenses/recurring/new",
+    icon: RefreshCw,
+    description: "Automatski ponavljajući trošak",
     elementId: "action:create-expense" as ElementId,
   },
 ]
