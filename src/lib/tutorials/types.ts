@@ -30,6 +30,10 @@ export interface TutorialContext {
   hasKprEntry: boolean
   hasPosdDraft: boolean
   hasCalendarReminder: boolean
+  // Extended context for DOO/JDOO tracks
+  hasVatSetup?: boolean
+  hasExpenseEntry?: boolean
+  hasBankConnection?: boolean
 }
 
 export interface TutorialProgress {
