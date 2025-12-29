@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { AlertCircle, Home, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import * as Sentry from "@sentry/nextjs"
 
 interface ErrorDisplayProps {
   error: Error & { digest?: string }
@@ -20,12 +21,23 @@ export function ErrorDisplay({
   message = "Nažalost, došlo je do neočekivane greške. Molimo pokušajte ponovno.",
 }: ErrorDisplayProps) {
   useEffect(() => {
+    // Capture error to Sentry for monitoring
+    Sentry.captureException(error, {
+      tags: {
+        boundary: "route-error",
+        errorTitle: title,
+      },
+      extra: {
+        digest: error.digest,
+      },
+    })
+
     // Log error to console in development
     if (process.env.NODE_ENV === "development") {
       console.error("Error boundary caught:", error)
       console.error("Stack trace:", error.stack)
     }
-  }, [error])
+  }, [error, title])
 
   const isDevelopment = process.env.NODE_ENV === "development"
 
