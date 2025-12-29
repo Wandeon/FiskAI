@@ -40,7 +40,7 @@ export default function PDVCalculatorPage() {
     name: "PDV Kalkulator",
     description:
       `Izračunajte koliko ste blizu PDV praga od ${pdvThresholdLabel} i što se mijenja kada ga prijeđete.`,
-    url: "https://fisk.ai/alati/pdv-kalkulator",
+    url: "https://fiskai.hr/alati/pdv-kalkulator",
   })
 
   return (

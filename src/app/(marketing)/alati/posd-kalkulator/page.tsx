@@ -27,7 +27,7 @@ export default function POSDCalculatorPage() {
     name: "PO-SD Kalkulator",
     description:
       "Besplatni PO-SD kalkulator za paušalne obrtnike. Učitaj XML izvod iz banke i automatski izračunaj primitke po kvartalima.",
-    url: "https://fisk.ai/alati/posd-kalkulator",
+    url: "https://fiskai.hr/alati/posd-kalkulator",
   })
 
   return (

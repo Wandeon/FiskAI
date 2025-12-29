@@ -144,10 +144,10 @@ export default async function GuidePage({ params }: Props) {
     publisher: {
       "@type": "Organization",
       name: "FiskAI",
-      url: baseUrl,
+      url: "https://fiskai.hr",
       logo: {
         "@type": "ImageObject",
-        url: `${baseUrl}/logo.png`,
+        url: "https://fiskai.hr/logo.png",
       },
     },
     ...(guide.frontmatter.lastUpdated && {

@@ -34,7 +34,7 @@ export function generateWebApplicationSchema({
     provider: {
       "@type": "Organization",
       name: "FiskAI",
-      url: "https://fisk.ai",
+      url: "https://fiskai.hr",
     },
   }
 }

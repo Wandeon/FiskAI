@@ -41,7 +41,7 @@ export default function ContributionCalculatorPage() {
     name: "Kalkulator Doprinosa",
     description:
       `Izračunajte mjesečne doprinose za MIO I, MIO II i HZZO za paušalne obrtnike u ${contributionsYear}. godini.`,
-    url: "https://fisk.ai/alati/kalkulator-doprinosa",
+    url: "https://fiskai.hr/alati/kalkulator-doprinosa",
   })
 
   return (

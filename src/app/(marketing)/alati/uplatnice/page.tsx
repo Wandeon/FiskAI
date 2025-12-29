@@ -43,7 +43,7 @@ export default function PaymentSlipsPage() {
   const webAppSchema = generateWebApplicationSchema({
     name: "Generator Uplatnica",
     description: "Generirajte Hub3 uplatnice za plaćanje doprinosa, poreza i prireza.",
-    url: "https://fisk.ai/alati/uplatnice",
+    url: "https://fiskai.hr/alati/uplatnice",
   })
 
   return (
