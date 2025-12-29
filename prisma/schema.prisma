@@ -155,6 +155,7 @@ model Company {
   entitlementHistory             EntitlementHistory[]
   featureFlagOverrides           FeatureFlagOverride[]
   staffReviews                   StaffReview[]
+  adminAlerts                    AdminAlert[]
 }
 
 // Audit trail for module entitlement changes
@@ -2740,6 +2741,46 @@ model WatchdogAlert {
   @@index([type])
   @@index([occurredAt])
   @@index([resolvedAt])
+}
+
+// =============================================================================
+// ADMIN ALERTS - Platform monitoring and alert management
+// =============================================================================
+
+enum AdminAlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  DISMISSED
+  RESOLVED
+}
+
+model AdminAlert {
+  id           String           @id @default(cuid())
+  type         String // onboarding-stuck, approaching-limit, critical-limit, cert-expiring, cert-expired, inactive, support-ticket
+  level        String // critical, warning, info
+  companyId    String
+  status       AdminAlertStatus @default(ACTIVE)
+  title        String
+  description  String           @db.Text
+  autoAction   String?
+  metadata     Json? // Store additional context (e.g., revenue, days remaining)
+  createdAt    DateTime         @default(now())
+  acknowledgedAt DateTime?
+  acknowledgedBy String? // User ID who acknowledged
+  dismissedAt    DateTime?
+  dismissedBy    String? // User ID who dismissed
+  resolvedAt     DateTime?
+  resolvedBy     String? // User ID who resolved
+  snoozedUntil   DateTime? // For snooze functionality
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, type])
+  @@index([companyId])
+  @@index([type])
+  @@index([level])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model WatchdogAudit {
