@@ -25,7 +25,6 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
-
       // Check invoice limit
       const canCreate = await canCreateInvoice(company.id)
       if (!canCreate) {
@@ -149,7 +148,9 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           id: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
           totalAmount: Number(invoice.totalAmount),
+          issueDate: invoice.issueDate.toISOString(),
         },
+        issuerOib: company.oib,
         jir: fiscalResult.jir,
         zki: fiscalResult.zki,
         pdfUrl: `/api/invoices/${invoice.id}/pdf`,
