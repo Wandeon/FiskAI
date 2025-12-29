@@ -13,6 +13,7 @@ import {
 import { WorkflowScroller } from "@/components/marketing/WorkflowScroller"
 import { FaqAccordion } from "@/components/marketing/FaqAccordion"
 import { SectionBackground } from "@/components/ui/patterns/SectionBackground"
+import { companyInfo, getPhoneLink } from "@/config/company"
 
 export const metadata: Metadata = {
   title: "FiskAI — Za paušalni obrt",
@@ -141,7 +142,7 @@ export default function PausalniObrtPage() {
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  <span>AI OCR skeniranje računa (fotografija → podaci)</span>
+                  <span>AI OCR skeniranje računa (fotografija - podaci)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -221,7 +222,7 @@ export default function PausalniObrtPage() {
           <div className="mb-6 text-center">
             <h2 className="text-2xl font-semibold text-white">Vaš mjesečni radni tok s FiskAI</h2>
             <p className="mx-auto mt-2 max-w-2xl text-sm text-white/60">
-              Umjesto “skupljam papire cijeli mjesec”, imate jasan proces i uredne podatke — bez
+              Umjesto "skupljam papire cijeli mjesec", imate jasan proces i uredne podatke — bez
               ručnog prepisivanja.
             </p>
           </div>
@@ -245,7 +246,7 @@ export default function PausalniObrtPage() {
                 <span className="text-white/60 ml-2">/ mjesečno</span>
               </div>
               <p className="text-sm text-white/60 mt-2">
-                Bez ugovorne obveze • Možete otkazati bilo kada
+                Bez ugovorne obveze - Možete otkazati bilo kada
               </p>
             </div>
             <ul className="space-y-3 text-sm text-left mb-8 text-white">
@@ -277,7 +278,7 @@ export default function PausalniObrtPage() {
               Započni besplatnu probu
             </Link>
             <p className="text-xs text-white/60 mt-3">
-              Nema kreditne kartice potrebne • Nakon 14 dana automatski prelazi u plaćeni plan
+              Nema kreditne kartice potrebne - Nakon 14 dana automatski prelazi u plaćeni plan
             </p>
           </div>
         </div>
@@ -318,8 +319,11 @@ export default function PausalniObrtPage() {
                 Kontaktirajte nas
               </Link>{" "}
               ili pozovite na{" "}
-              <a href="tel:+38512345678" className="font-semibold text-cyan-400 hover:underline">
-                +385 1 234 5678
+              <a
+                href={getPhoneLink(companyInfo.phone)}
+                className="font-semibold text-cyan-400 hover:underline"
+              >
+                {companyInfo.phone}
               </a>
             </p>
           </div>
@@ -339,7 +343,7 @@ export default function PausalniObrtPage() {
             Započni besplatnu 14-dnevnu probu
           </Link>
           <p className="text-xs text-white/60 mt-3">
-            Nema kreditne kartice potrebne • Možete otkazati bilo kada
+            Nema kreditne kartice potrebne - Možete otkazati bilo kada
           </p>
         </div>
       </div>
