@@ -3,13 +3,22 @@ import { getCurrentUser } from '@/lib/auth-utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { Building2, AlertCircle, ChevronRight } from 'lucide-react'
+import { ClientsSearch } from './clients-search'
 
-async function getAssignedClients(userId: string) {
+async function getAssignedClients(userId: string, searchQuery?: string) {
   const assignments = await db.staffAssignment.findMany({
-    where: { staffId: userId },
+    where: {
+      staffId: userId,
+      ...(searchQuery && {
+        OR: [
+          { company: { name: { contains: searchQuery, mode: 'insensitive' } } },
+          { company: { oib: { contains: searchQuery } } },
+          { notes: { contains: searchQuery, mode: 'insensitive' } },
+        ],
+      }),
+    },
     include: {
       company: {
         include: {
@@ -41,11 +50,15 @@ async function getAssignedClients(userId: string) {
   }))
 }
 
-export async function ClientsList() {
+interface ClientsListProps {
+  searchQuery?: string
+}
+
+export async function ClientsList({ searchQuery }: ClientsListProps) {
   const user = await getCurrentUser()
   if (!user) return null
 
-  const clients = await getAssignedClients(user.id)
+  const clients = await getAssignedClients(user.id, searchQuery)
 
   return (
     <div className="space-y-6">
@@ -53,24 +66,32 @@ export async function ClientsList() {
         <div>
           <h1 className="text-2xl font-bold">Clients</h1>
           <p className="text-muted-foreground">
-            {clients.length} assigned client{clients.length !== 1 ? 's' : ''}
+            {clients.length} {searchQuery ? 'matching' : 'assigned'} client{clients.length !== 1 ? 's' : ''}
+            {searchQuery && ` for "${searchQuery}"`}
           </p>
         </div>
-        <Input
-          type="search"
-          placeholder="Search clients..."
-          className="w-64"
-        />
+        <ClientsSearch />
       </div>
 
       {clients.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No clients assigned yet</p>
-            <p className="text-sm text-muted-foreground">
-              Contact your admin to get client assignments
-            </p>
+            {searchQuery ? (
+              <>
+                <p className="text-muted-foreground">No clients match your search</p>
+                <p className="text-sm text-muted-foreground">
+                  Try a different search term
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">No clients assigned yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Contact your admin to get client assignments
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (

@@ -4,10 +4,16 @@ import { ClientsList } from "@/components/staff/clients-list"
 
 export const dynamic = "force-dynamic"
 
-export default function ClientsPage() {
+interface PageProps {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function ClientsPage({ searchParams }: PageProps) {
+  const { q: searchQuery } = await searchParams
+
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <ClientsList />
+      <ClientsList searchQuery={searchQuery} />
     </Suspense>
   )
 }
