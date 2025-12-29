@@ -30,16 +30,18 @@ export async function createSyntheticConflict(): Promise<string | null> {
     }
 
     // Create two synthetic source pointers with conflicting values
+    // Use "rokovi" domain which is a valid domain in DomainSchema
     const pointer1 = await db.sourcePointer.create({
       data: {
         id: createId(),
         evidenceId: evidenceRecords[0].id,
-        domain: "heartbeat",
+        domain: "rokovi", // Use valid domain instead of "heartbeat"
         valueType: "text",
         extractedValue: "100",
-        displayValue: "100",
+        displayValue: "100 [HEARTBEAT TEST]",
         exactQuote: "[SYNTHETIC HEARTBEAT TEST - VALUE A]",
         confidence: 0.95,
+        extractionNotes: "SYNTHETIC_HEARTBEAT_TEST",
       },
     })
 
@@ -47,12 +49,13 @@ export async function createSyntheticConflict(): Promise<string | null> {
       data: {
         id: createId(),
         evidenceId: evidenceRecords[1].id,
-        domain: "heartbeat",
+        domain: "rokovi", // Use valid domain instead of "heartbeat"
         valueType: "text",
         extractedValue: "200",
-        displayValue: "200",
+        displayValue: "200 [HEARTBEAT TEST]",
         exactQuote: "[SYNTHETIC HEARTBEAT TEST - VALUE B]",
         confidence: 0.95,
+        extractionNotes: "SYNTHETIC_HEARTBEAT_TEST",
       },
     })
 
@@ -149,11 +152,10 @@ export async function cleanupOldHeartbeatConflicts(): Promise<number> {
     return 0
   }
 
-  // Delete associated source pointers first
+  // Delete associated source pointers first (identified by extractionNotes)
   await db.sourcePointer.deleteMany({
     where: {
-      domain: "heartbeat",
-      valueType: "text",
+      extractionNotes: "SYNTHETIC_HEARTBEAT_TEST",
       createdAt: { lt: cutoff },
     },
   })

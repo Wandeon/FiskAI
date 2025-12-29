@@ -240,18 +240,12 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
     },
   })
 
-  // Create SourcePointer with metadata summary
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "legal-metadata",
-      valueType: "text",
-      extractedValue: metadata.type,
-      displayValue: `${metadata.type}: ${metadata.title.substring(0, 50)}...`,
-      exactQuote: metadata.title,
-      confidence: 1.0, // Tier 1: 100% confidence
-    },
-  })
+  // SKIP: Legal metadata is not part of the core tax domains (pausalni, pdv, etc.)
+  // Metadata should be stored in Evidence fields, not as SourcePointers
+  // This prevents domain leakage into the regulatory database
+  console.log(
+    `[nn-fetcher] Skipping SourcePointer creation for legal-metadata - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({

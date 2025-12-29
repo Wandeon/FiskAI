@@ -28,31 +28,32 @@ export const KEY_EU_LEGISLATION = [
   {
     celex: "32006L0112",
     title: "VAT Directive (Council Directive 2006/112/EC)",
-    domain: "vat",
+    domain: "pdv", // Map vat -> pdv (Croatian for VAT)
     effectiveFrom: "2007-01-01",
   },
   {
     celex: "32010L0045",
     title: "VAT Invoicing Directive (Council Directive 2010/45/EU)",
-    domain: "invoicing",
+    domain: "fiskalizacija", // Map invoicing -> fiskalizacija
     effectiveFrom: "2013-01-01",
   },
   {
     celex: "32014R0910",
     title: "eIDAS Regulation",
-    domain: "e-invoicing",
+    domain: "fiskalizacija", // Map e-invoicing -> fiskalizacija
     effectiveFrom: "2016-07-01",
   },
-  {
-    celex: "32019L1023",
-    title: "Restructuring and Insolvency Directive",
-    domain: "insolvency",
-    effectiveFrom: "2022-07-17",
-  },
+  // REMOVED: Insolvency directive - not part of core tax domains
+  // {
+  //   celex: "32019L1023",
+  //   title: "Restructuring and Insolvency Directive",
+  //   domain: "insolvency",
+  //   effectiveFrom: "2022-07-17",
+  // },
   {
     celex: "32014L0055",
     title: "Electronic Invoicing in Public Procurement Directive",
-    domain: "e-invoicing",
+    domain: "fiskalizacija", // Map e-invoicing -> fiskalizacija
     effectiveFrom: "2018-04-18",
   },
 ] as const

@@ -148,21 +148,15 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
       const quoteStart = rawContent.indexOf(exactQuote)
       const quoteEnd = quoteStart !== -1 ? quoteStart + exactQuote.length : undefined
 
-      const sourcePointer = await db.sourcePointer.create({
-        data: {
-          evidenceId: evidence.id,
-          domain: "exchange-rate",
-          valueType: "decimal",
-          extractedValue: rate.srednji_tecaj,
-          displayValue: `${rate.srednji_tecaj} ${rate.valuta}/EUR`,
-          exactQuote,
-          confidence: 1.0, // Tier 1: 100% confidence
-          // Set offsets at creation time for Tier 1 structured data
-          startOffset: quoteStart !== -1 ? quoteStart : null,
-          endOffset: quoteEnd,
-          matchType: quoteStart !== -1 ? "EXACT" : "NOT_FOUND",
-        },
-      })
+      // SKIP: Exchange rates are not part of the core tax domains (pausalni, pdv, etc.)
+      // They should be handled through a dedicated exchange rate service, not the RTL pipeline
+      // This prevents domain leakage into the regulatory database
+      console.log(
+        `[hnb-fetcher] Skipping SourcePointer creation for ${rate.valuta} - exchange rates not in DomainSchema`
+      )
+
+      // Note: We still create the Evidence and RegulatoryRule, but skip SourcePointer
+      // to prevent non-standard domain leakage. The rule can reference the evidence directly.
 
       // Find or create Concept
       const concept = await db.concept.upsert({
@@ -212,9 +206,7 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
           confidence: 1.0,
           // DRAFT status - pipeline will approve and publish
           status: "DRAFT",
-          sourcePointers: {
-            connect: [{ id: sourcePointer.id }],
-          },
+          // Note: No sourcePointers connected since we skip creating them for exchange rates
         },
       })
 

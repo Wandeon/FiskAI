@@ -152,18 +152,12 @@ export async function createMRMSEvidence(newsItem: MRMSNewsItem): Promise<string
     },
   })
 
-  // Create SourcePointer with metadata summary
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "labor-law",
-      valueType: "text",
-      extractedValue: newsItem.title,
-      displayValue: `${newsItem.publishedDate}: ${newsItem.title.substring(0, 60)}...`,
-      exactQuote: newsItem.title,
-      confidence: 1.0, // Tier 1: 100% confidence
-    },
-  })
+  // SKIP: Labor law is not part of the core tax domains (pausalni, pdv, etc.)
+  // This prevents domain leakage into the regulatory database
+  // Labor law content should be handled separately if needed
+  console.log(
+    `[mrms-fetcher] Skipping SourcePointer creation for labor-law - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({
@@ -229,18 +223,12 @@ export async function createMinimumWageEvidence(content: string): Promise<string
     },
   })
 
-  // Create SourcePointer
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "minimum-wage",
-      valueType: "text",
-      extractedValue: "minimum-wage-page",
-      displayValue: "MRMS Minimum Wage Page",
-      exactQuote: "Minimalna plaća",
-      confidence: 1.0,
-    },
-  })
+  // SKIP: Minimum wage is not part of the core tax domains (pausalni, pdv, etc.)
+  // This prevents domain leakage into the regulatory database
+  // Minimum wage content should be handled separately if needed
+  console.log(
+    `[mrms-fetcher] Skipping SourcePointer creation for minimum-wage - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({
