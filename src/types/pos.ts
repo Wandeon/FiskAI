@@ -1,5 +1,4 @@
 // src/types/pos.ts
-import { PaymentMethod } from "@prisma/client"
 
 export interface PosLineItem {
   productId?: string // From product grid (optional)
@@ -22,7 +21,9 @@ export interface ProcessPosSaleResult {
     id: string
     invoiceNumber: string
     totalAmount: number
+    issueDate: string // ISO string
   }
+  issuerOib?: string
   jir?: string
   zki?: string
   pdfUrl?: string
