@@ -46,7 +46,7 @@ export function AlertBanner({ type, title, description, action, className }: Ale
 
   return (
     <div className={cn("flex items-center gap-4 rounded-card border p-4", s.bg, className)}>
-      <Icon className={cn("h-5 w-5 flex-shrink-0", s.iconColor)} />
+      <Icon className={cn("h-5 w-5 flex-shrink-0", s.iconColor)} aria-hidden="true" />
       <div className="flex-1 min-w-0">
         <p className={cn("font-medium", s.title)}>{title}</p>
         {description && <p className={cn("text-sm mt-0.5", s.desc)}>{description}</p>}
