@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CategoryForm } from "./category-form"
+import { CategoryItem } from "./category-item"
 import { SeedButton } from "./seed-button"
 
 export default async function ExpenseCategoriesPage() {
@@ -51,33 +52,14 @@ export default async function ExpenseCategoriesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Vaše kategorije</CardTitle>
+            <CardDescription>
+              Možete uređivati i brisati vaše kategorije (sistemske kategorije se ne mogu mijenjati)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {companyCategories.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm bg-[var(--surface)] px-2 py-0.5 rounded border">
-                      {cat.code}
-                    </span>
-                    <span>{cat.name}</span>
-                    <span className="text-xs text-gray-500">({cat._count.expenses} troškova)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {cat.vatDeductibleDefault ? (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                        PDV priznati
-                      </span>
-                    ) : (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                        PDV nepriznati
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <CategoryItem key={cat.id} category={cat} />
               ))}
             </div>
           </CardContent>
