@@ -12,8 +12,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsItems, newsPosts, newsPostSources } from "@/lib/db/schema"
-import { needsRewrite, reviewArticle, type ReviewFeedback } from "@/lib/news/pipeline"
-import { eq } from "drizzle-orm"
+import {
+  needsRewrite,
+  reviewArticle,
+  recordNewsPostError,
+  MAX_PROCESSING_ATTEMPTS,
+  type ReviewFeedback,
+} from "@/lib/news/pipeline"
+import { eq, and, lt, sql } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 minutes
@@ -22,9 +28,11 @@ interface ReviewResult {
   success: boolean
   summary: {
     totalDrafts: number
+    retryPosts: number
     reviewed: number
     averageScore: number
     needsRewrite: number
+    failedPosts: number
   }
   reviews: Array<{
     postId: string
@@ -45,9 +53,11 @@ export async function GET(request: NextRequest) {
     success: false,
     summary: {
       totalDrafts: 0,
+      retryPosts: 0,
       reviewed: 0,
       averageScore: 0,
       needsRewrite: 0,
+      failedPosts: 0,
     },
     reviews: [],
     errors: [],
@@ -63,13 +73,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // 2. Get all news_posts with status='draft'
+    // 2. Get all news_posts with status='draft' (including retry-eligible posts)
     console.log("[CRON 2] Fetching draft posts...")
 
-    const draftPosts = await drizzleDb.select().from(newsPosts).where(eq(newsPosts.status, "draft"))
+    // Get new draft posts
+    const newDraftPosts = await drizzleDb
+      .select()
+      .from(newsPosts)
+      .where(
+        and(
+          eq(newsPosts.status, "draft"),
+          sql`${newsPosts.processingAttempts} = 0 OR ${newsPosts.processingAttempts} IS NULL`
+        )
+      )
 
-    result.summary.totalDrafts = draftPosts.length
-    console.log(`[CRON 2] Found ${draftPosts.length} draft posts to review`)
+    // Get posts that failed but are eligible for retry
+    const retryPosts = await drizzleDb
+      .select()
+      .from(newsPosts)
+      .where(
+        and(
+          eq(newsPosts.status, "draft"),
+          lt(newsPosts.processingAttempts, MAX_PROCESSING_ATTEMPTS),
+          sql`${newsPosts.processingAttempts} > 0`
+        )
+      )
+
+    // Combine both sets
+    const postsMap = new Map<string, typeof newDraftPosts[0]>()
+    for (const post of newDraftPosts) {
+      postsMap.set(post.id, post)
+    }
+    for (const post of retryPosts) {
+      postsMap.set(post.id, post)
+    }
+    const draftPosts = Array.from(postsMap.values())
+
+    result.summary.totalDrafts = newDraftPosts.length
+    result.summary.retryPosts = retryPosts.length
+    console.log(`[CRON 2] Found ${newDraftPosts.length} new drafts + ${retryPosts.length} retry posts to review`)
 
     if (draftPosts.length === 0) {
       result.success = true
@@ -159,6 +201,19 @@ export async function GET(request: NextRequest) {
         const errorMsg = `Failed to review post ${post.id} (${post.title}): ${error instanceof Error ? error.message : String(error)}`
         console.error(`[CRON 2] ${errorMsg}`)
         result.errors.push(errorMsg)
+
+        // Record the error for retry tracking
+        try {
+          const { shouldRetry, attempts } = await recordNewsPostError(post.id, error instanceof Error ? error : String(error))
+          if (shouldRetry) {
+            console.log(`[CRON 2] Post ${post.id} will be retried (attempt ${attempts}/${MAX_PROCESSING_ATTEMPTS})`)
+          } else {
+            console.log(`[CRON 2] Post ${post.id} moved to dead-letter queue after ${attempts} attempts`)
+            result.summary.failedPosts++
+          }
+        } catch (recordError) {
+          console.error(`[CRON 2] Failed to record error for post ${post.id}:`, recordError)
+        }
       }
     }
 

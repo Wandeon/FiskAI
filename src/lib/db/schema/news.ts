@@ -81,7 +81,12 @@ export const newsPosts = pgTable(
 
     // AI Processing
     aiPasses: jsonb("ai_passes").default({}), // stores all 3 passes
-    status: varchar("status", { length: 20 }).default("draft").notNull(), // 'draft' | 'reviewing' | 'published'
+    status: varchar("status", { length: 20 }).default("draft").notNull(), // 'draft' | 'reviewing' | 'published' | 'failed'
+
+    // Error recovery tracking
+    processingAttempts: integer("processing_attempts").default(0).notNull(),
+    lastError: text("last_error"),
+    lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
 
     // Analytics
     viewCount: integer("view_count").default(0).notNull(),
@@ -146,6 +151,11 @@ export const newsItems = pgTable(
     // Metadata
     status: varchar("status", { length: 20 }).default("pending").notNull(),
     processedAt: timestamp("processed_at", { withTimezone: true }),
+
+    // Error recovery tracking
+    processingAttempts: integer("processing_attempts").default(0).notNull(),
+    lastError: text("last_error"),
+    lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
