@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { notFound, redirect } from "next/navigation"
+import { redirect } from "next/navigation"
+import { headers } from "next/headers"
+import { logStaffAccess, getRequestMetadata } from "@/lib/staff-audit"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -86,6 +88,19 @@ export default async function ClientEInvoicesPage({ params }: PageProps) {
   }
 
   const invoices = await getClientInvoices(clientId)
+
+  // Log staff access to invoices (GDPR compliance)
+  const reqHeaders = await headers()
+  const { ipAddress, userAgent } = getRequestMetadata(reqHeaders)
+  logStaffAccess({
+    staffUserId: session.user.id,
+    clientCompanyId: clientId,
+    action: "STAFF_VIEW_INVOICES",
+    resourceType: "EInvoice",
+    metadata: { invoiceCount: invoices.length },
+    ipAddress,
+    userAgent,
+  })
 
   // Calculate stats
   const stats = {
