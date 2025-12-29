@@ -159,3 +159,26 @@ export const ISODateSchema = z
 export const ISOTimestampSchema = z.string().datetime()
 
 export const URLSchema = z.string().url()
+
+// =============================================================================
+// DOMAIN VALIDATION
+// =============================================================================
+
+/**
+ * Validate that a domain is one of the standard domains defined in DomainSchema.
+ * This prevents domain leakage where non-standard domains end up in the database.
+ *
+ * @param domain - The domain string to validate
+ * @returns true if the domain is valid, false otherwise
+ */
+export function isValidDomain(domain: string): boolean {
+  const validDomains = DomainSchema.options
+  return validDomains.includes(domain as any)
+}
+
+/**
+ * Get list of all valid domains
+ */
+export function getValidDomains(): readonly string[] {
+  return DomainSchema.options
+}

@@ -15,6 +15,7 @@ import { getExtractableContent } from "../utils/content-provider"
 import { isBlockedDomain } from "../utils/concept-resolver"
 import { generateCoverageReport, saveCoverageReport } from "../quality/coverage-report"
 import { normalizeQuotes } from "../utils/quote-normalizer"
+import { isValidDomain } from "../schemas/common"
 
 // =============================================================================
 // EXTRACTOR AGENT
@@ -179,6 +180,30 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
   const rejectedExtractions: Array<{ extraction: any; errors: string[] }> = []
 
   for (const extraction of result.output.extractions) {
+    // GUARD: Validate domain is in the standard DomainSchema
+    // This prevents domain leakage from LLM hallucinations
+    if (!isValidDomain(extraction.domain)) {
+      rejectedExtractions.push({
+        extraction,
+        errors: [`Invalid domain: '${extraction.domain}' is not in DomainSchema`],
+      })
+      console.warn(
+        `[extractor] Rejected extraction for invalid domain '${extraction.domain}' - not in DomainSchema`
+      )
+
+      // Store in dead-letter table for analysis
+      await db.extractionRejected.create({
+        data: {
+          evidenceId: evidence.id,
+          rejectionType: "INVALID_DOMAIN",
+          rawOutput: extraction as any,
+          errorDetails: `Domain '${extraction.domain}' is not in DomainSchema. Valid domains: pausalni, pdv, porez_dohodak, doprinosi, fiskalizacija, rokovi, obrasci`,
+        },
+      })
+
+      continue
+    }
+
     // For JSON content, fix the quote to be a verbatim JSON fragment
     if (evidence.contentType === "json" || isJsonContent(content)) {
       const jsonQuote = extractQuoteFromJson(content, String(extraction.extracted_value))

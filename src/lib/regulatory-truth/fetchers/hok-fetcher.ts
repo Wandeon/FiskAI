@@ -190,18 +190,12 @@ export async function createHOKEvidence(newsItem: HOKNewsItem): Promise<string |
     },
   })
 
-  // Create SourcePointer with metadata summary
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "trade-regulations",
-      valueType: "text",
-      extractedValue: newsItem.title,
-      displayValue: `${newsItem.publishedDate}: ${newsItem.title.substring(0, 60)}...`,
-      exactQuote: newsItem.title,
-      confidence: 1.0, // Tier 1: 100% confidence
-    },
-  })
+  // SKIP: Trade regulations are not part of the core tax domains (pausalni, pdv, etc.)
+  // This prevents domain leakage into the regulatory database
+  // Trade regulation content should be handled separately if needed
+  console.log(
+    `[hok-fetcher] Skipping SourcePointer creation for trade-regulations - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({
@@ -267,18 +261,12 @@ export async function createMembershipEvidence(content: string): Promise<string 
     },
   })
 
-  // Create SourcePointer
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "membership-fees",
-      valueType: "text",
-      extractedValue: "hok-membership-page",
-      displayValue: "HOK Membership Fee Page",
-      exactQuote: "Članarina obrtnika",
-      confidence: 1.0,
-    },
-  })
+  // SKIP: Membership fees are not part of the core tax domains (pausalni, pdv, etc.)
+  // This prevents domain leakage into the regulatory database
+  // Membership fee content should be handled separately if needed
+  console.log(
+    `[hok-fetcher] Skipping SourcePointer creation for membership-fees - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({
@@ -343,18 +331,12 @@ export async function createRegulationsEvidence(content: string): Promise<string
     },
   })
 
-  // Create SourcePointer
-  await db.sourcePointer.create({
-    data: {
-      evidenceId: evidence.id,
-      domain: "trade-regulations",
-      valueType: "text",
-      extractedValue: "hok-regulations-page",
-      displayValue: "HOK Trade Regulations and Obligations",
-      exactQuote: "Poslovne knjige i obveze obrtnika",
-      confidence: 1.0,
-    },
-  })
+  // SKIP: Trade regulations are not part of the core tax domains (pausalni, pdv, etc.)
+  // This prevents domain leakage into the regulatory database
+  // Trade regulation content should be handled separately if needed
+  console.log(
+    `[hok-fetcher] Skipping SourcePointer creation for trade-regulations (page) - not in DomainSchema`
+  )
 
   // Log audit event
   await logAuditEvent({
