@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache"
 import type { LegalForm } from "@/lib/capabilities"
 import type { CompetenceLevel } from "@/lib/visibility/rules"
 import { DEFAULT_ENTITLEMENTS, getEntitlementsForLegalForm } from "@/lib/modules/definitions"
+import { oibSchema } from "@/lib/validations/oib"
 
 // Onboarding data schema matching what the wizard collects
 export interface OnboardingData {
@@ -101,7 +102,7 @@ export async function getOnboardingData(): Promise<OnboardingData | null> {
 
 const saveOnboardingSchema = z.object({
   name: z.string().min(1),
-  oib: z.string().regex(/^\d{11}$/),
+  oib: oibSchema,
   legalForm: z.enum(["OBRT_PAUSAL", "OBRT_REAL", "OBRT_VAT", "JDOO", "DOO"]),
   competence: z.enum(["beginner", "average", "pro"]).optional(),
   address: z.string().min(1),
@@ -116,7 +117,7 @@ const saveOnboardingSchema = z.object({
 
 const minimalCompanySchema = z.object({
   name: z.string().min(1),
-  oib: z.string().regex(/^\d{11}$/),
+  oib: oibSchema,
   legalForm: z.enum(["OBRT_PAUSAL", "OBRT_REAL", "OBRT_VAT", "JDOO", "DOO"]),
 })
 
