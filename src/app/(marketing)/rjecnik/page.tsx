@@ -42,7 +42,7 @@ export default async function GlossaryPage() {
         </nav>
 
         <header className="mb-10 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-400 backdrop-blur-sm border border-cyan-400/20">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-interactive/10 px-4 py-2 text-sm font-medium text-primary backdrop-blur-sm border border-focus">
             <BookOpen className="h-4 w-4" />
             {terms.length} pojmova
           </div>
@@ -58,7 +58,7 @@ export default async function GlossaryPage() {
             <a
               key={letter}
               href={`#${letter}`}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 font-semibold text-white hover:bg-cyan-400/10 hover:text-cyan-400 hover:border-cyan-400/20"
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 font-semibold text-white hover:bg-interactive/10 hover:text-primary hover:border-focus"
             >
               {letter}
             </a>
@@ -75,17 +75,17 @@ export default async function GlossaryPage() {
                   <Link
                     key={term.slug}
                     href={`/rjecnik/${term.slug}`}
-                    className="group flex items-center justify-between rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all hover:border-cyan-400/20 hover:bg-white/10"
+                    className="group flex items-center justify-between rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition-all hover:border-focus hover:bg-white/10"
                   >
                     <div>
-                      <h3 className="font-semibold text-white group-hover:text-cyan-400">
+                      <h3 className="font-semibold text-white group-hover:text-primary">
                         {term.frontmatter.term}
                       </h3>
                       <p className="mt-1 text-sm text-white/60 line-clamp-1">
                         {term.frontmatter.shortDefinition}
                       </p>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-white/40 transition-transform group-hover:translate-x-1 group-hover:text-cyan-400" />
+                    <ArrowRight className="h-4 w-4 text-white/40 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                   </Link>
                 ))}
               </div>

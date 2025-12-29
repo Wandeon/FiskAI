@@ -26,7 +26,7 @@ export default function TermsPage() {
           })}
         </p>
 
-        <div className="mt-8 rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-4 text-sm">
+        <div className="mt-8 rounded-lg border border-info-border bg-interactive/10 p-4 text-sm">
           <p>
             Korištenjem usluge FiskAI prihvaćate ove uvjete korištenja. Molimo pažljivo pročitajte
             prije registracije. Ako se ne slažete s uvjetima, ne smijete koristiti uslugu.
@@ -87,7 +87,7 @@ export default function TermsPage() {
           </li>
           <li>
             <strong>Cijene:</strong> aktualne cijene prikazane su na{" "}
-            <Link href="/pricing" className="text-cyan-400 hover:underline">
+            <Link href="/pricing" className="text-primary hover:underline">
               stranici cijena
             </Link>
           </li>
@@ -163,7 +163,7 @@ export default function TermsPage() {
           <li>U slučaju nedostupnosti, prioritet je sigurnost i integritet podataka</li>
           <li>
             Status sustava dostupan na{" "}
-            <Link href="/status" className="text-cyan-400 hover:underline">
+            <Link href="/status" className="text-primary hover:underline">
               /status
             </Link>
           </li>
@@ -217,13 +217,13 @@ export default function TermsPage() {
           </p>
           <p>
             Email:{" "}
-            <a href="mailto:info@fiskai.hr" className="text-cyan-400 hover:underline">
+            <a href="mailto:info@fiskai.hr" className="text-primary hover:underline">
               info@fiskai.hr
             </a>
           </p>
           <p>
             Podrška:{" "}
-            <a href="mailto:podrska@fiskai.hr" className="text-cyan-400 hover:underline">
+            <a href="mailto:podrska@fiskai.hr" className="text-primary hover:underline">
               podrska@fiskai.hr
             </a>
           </p>
@@ -233,23 +233,23 @@ export default function TermsPage() {
         <div className="mt-12 rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-4">
           <p className="text-sm text-white/60">
             <strong>Povezane politike:</strong>{" "}
-            <Link href="/privacy" className="text-cyan-400 hover:underline">
+            <Link href="/privacy" className="text-primary hover:underline">
               Politika privatnosti
             </Link>{" "}
             •
-            <Link href="/cookies" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/cookies" className="text-primary hover:underline ml-2">
               Politika kolačića
             </Link>{" "}
             •
-            <Link href="/ai-data-policy" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/ai-data-policy" className="text-primary hover:underline ml-2">
               AI politika
             </Link>{" "}
             •
-            <Link href="/dpa" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/dpa" className="text-primary hover:underline ml-2">
               DPA
             </Link>{" "}
             •
-            <Link href="/security" className="text-cyan-400 hover:underline ml-2">
+            <Link href="/security" className="text-primary hover:underline ml-2">
               Sigurnost
             </Link>
           </p>

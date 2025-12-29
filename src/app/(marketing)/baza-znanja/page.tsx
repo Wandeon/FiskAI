@@ -25,7 +25,7 @@ export default async function KnowledgeBasePage() {
     <SectionBackground variant="mesh">
       <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         <header className="text-center">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-interactive/10 px-4 py-2 text-sm font-semibold text-primary">
             <Sparkles className="h-4 w-4" />
             Centar znanja
           </div>
@@ -44,7 +44,7 @@ export default async function KnowledgeBasePage() {
               <GlassCard className="h-full p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-base font-semibold">
-                    <Sparkles className="h-5 w-5 text-cyan-400" />
+                    <Sparkles className="h-5 w-5 text-primary" />
                     Čarobnjak
                   </div>
                   <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5" />
@@ -61,7 +61,7 @@ export default async function KnowledgeBasePage() {
               <GlassCard className="h-full p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-base font-semibold">
-                    <BookOpen className="h-5 w-5 text-cyan-400" />
+                    <BookOpen className="h-5 w-5 text-primary" />
                     Vodiči
                   </div>
                   <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5" />
@@ -78,7 +78,7 @@ export default async function KnowledgeBasePage() {
               <GlassCard className="h-full p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-base font-semibold">
-                    <GitCompare className="h-5 w-5 text-cyan-400" />
+                    <GitCompare className="h-5 w-5 text-primary" />
                     Usporedbe
                   </div>
                   <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5" />
@@ -95,7 +95,7 @@ export default async function KnowledgeBasePage() {
               <GlassCard className="h-full p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-base font-semibold">
-                    <Calculator className="h-5 w-5 text-cyan-400" />
+                    <Calculator className="h-5 w-5 text-primary" />
                     Alati
                   </div>
                   <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5" />
@@ -117,7 +117,7 @@ export default async function KnowledgeBasePage() {
                   Brza odluka uz tablice i kalkulator troškova.
                 </p>
               </div>
-              <Link href="/usporedba/pocinjem-solo" className="text-sm font-semibold text-cyan-400">
+              <Link href="/usporedba/pocinjem-solo" className="text-sm font-semibold text-primary">
                 Otvori sve usporedbe →
               </Link>
             </div>
@@ -134,7 +134,7 @@ export default async function KnowledgeBasePage() {
                       <p className="mt-3 text-sm text-white/60">
                         {comparison.frontmatter.description}
                       </p>
-                      <span className="mt-3 block text-xs font-semibold text-cyan-400 group-hover:underline">
+                      <span className="mt-3 block text-xs font-semibold text-primary group-hover:underline">
                         Otvori →
                       </span>
                     </GlassCard>
@@ -154,7 +154,7 @@ export default async function KnowledgeBasePage() {
                   Kompletni vodiči po obliku poslovanja (s hrvatskim terminima).
                 </p>
               </div>
-              <Link href="/vodic" className="text-sm font-semibold text-cyan-400">
+              <Link href="/vodic" className="text-sm font-semibold text-primary">
                 Pregledaj vodiče →
               </Link>
             </div>
@@ -165,7 +165,7 @@ export default async function KnowledgeBasePage() {
                     <GlassCard className="h-full p-6">
                       <h3 className="text-base font-semibold">{guide.frontmatter.title}</h3>
                       <p className="mt-3 text-sm text-white/60">{guide.frontmatter.description}</p>
-                      <span className="mt-3 block text-xs font-semibold text-cyan-400 group-hover:underline">
+                      <span className="mt-3 block text-xs font-semibold text-primary group-hover:underline">
                         Otvori →
                       </span>
                     </GlassCard>

@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="mt-4 text-center">
-            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            <Link href="/forgot-password" className="text-sm text-link hover:underline">
               Zatraži novo resetiranje
             </Link>
           </div>
@@ -128,7 +128,7 @@ export default function ResetPasswordPage() {
           </Button>
 
           <div className="text-center">
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/login" className="text-sm text-secondary hover:text-foreground">
               Povratak na prijavu
             </Link>
           </div>

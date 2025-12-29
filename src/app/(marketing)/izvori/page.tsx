@@ -97,7 +97,7 @@ export default function IzvoriPage() {
                   >
                     <div className="mb-2 flex items-start justify-between">
                       <h3 className="font-semibold text-white">{source.name}</h3>
-                      <ExternalLink className="h-4 w-4 text-white/40 group-hover:text-cyan-400" />
+                      <ExternalLink className="h-4 w-4 text-white/40 group-hover:text-primary" />
                     </div>
                     <p className="text-sm text-white/60">{source.description}</p>
                     <p className="mt-2 text-xs text-white/40">{new URL(source.url).hostname}</p>
@@ -112,7 +112,7 @@ export default function IzvoriPage() {
           <p className="text-sm text-white/60">
             Automatizirano pratimo RSS feedove ključnih izvora. Svaka promjena propisa okida pregled
             relevantnog sadržaja. Pogledajte našu{" "}
-            <a href="/urednicka-politika" className="text-cyan-400 hover:underline">
+            <a href="/urednicka-politika" className="text-primary hover:underline">
               uredničku politiku
             </a>
             .

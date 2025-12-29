@@ -29,13 +29,13 @@ export default function AccountantsPage() {
       <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         {/* Hero section */}
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400 mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-interactive/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
             <Users className="h-4 w-4" />
             Posebno prilagođeno za knjigovođe
           </div>
           <h1 className="text-display text-4xl font-semibold md:text-5xl text-white">
             Suradnja s klijentima bez{" "}
-            <span className="text-cyan-400">&quot;donosim fascikl&quot;</span>
+            <span className="text-primary">&quot;donosim fascikl&quot;</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-white/60">
             Vaši klijenti šalju uredne izvozne pakete, vi dobivate točne podatke i smanjujete
@@ -44,7 +44,7 @@ export default function AccountantsPage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Registrirajte se za besplatni pristup
             </Link>
@@ -58,7 +58,7 @@ export default function AccountantsPage() {
         </div>
 
         {/* Value proposition */}
-        <div className="mb-16 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-8">
+        <div className="mb-16 rounded-2xl border border-info-border bg-interactive/10 p-8">
           <h2 className="text-2xl font-semibold mb-6 text-center text-white">
             Zašto knjigovođe biraju FiskAI?
           </h2>
@@ -66,7 +66,7 @@ export default function AccountantsPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Clock className="h-5 w-5 text-cyan-400" />
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">70% manje vremena obrade</p>
@@ -77,7 +77,7 @@ export default function AccountantsPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Shield className="h-5 w-5 text-cyan-400" />
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Točni i verificirani podaci</p>
@@ -90,7 +90,7 @@ export default function AccountantsPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <TrendingUp className="h-5 w-5 text-cyan-400" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Klijenti ostaju vjerni</p>
@@ -111,7 +111,7 @@ export default function AccountantsPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Download className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Download className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Uredni izvozi</h3>
                   <p className="text-sm text-white/60 mt-1">
@@ -141,7 +141,7 @@ export default function AccountantsPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Users className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Users className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Pristup klijentima</h3>
                   <p className="text-sm text-white/60 mt-1">Direktan pregled i komunikacija</p>
@@ -169,7 +169,7 @@ export default function AccountantsPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <BarChart className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <BarChart className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Izvještaji i analize</h3>
                   <p className="text-sm text-white/60 mt-1">Sve informacije za reviziju</p>
@@ -197,7 +197,7 @@ export default function AccountantsPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Shield className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Shield className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Sigurnost i kontrola</h3>
                   <p className="text-sm text-white/60 mt-1">GDPR i profesionalni standardi</p>
@@ -225,7 +225,7 @@ export default function AccountantsPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <FileText className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <FileText className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">E-računi i fiskalizacija</h3>
                   <p className="text-sm text-white/60 mt-1">Priprema za buduće zahtjeve</p>
@@ -253,7 +253,7 @@ export default function AccountantsPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <TrendingUp className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Efikasnost ureda</h3>
                   <p className="text-sm text-white/60 mt-1">Skaliranje bez zapošljavanja</p>
@@ -286,9 +286,9 @@ export default function AccountantsPage() {
           <h2 className="text-3xl font-semibold mb-8 text-center text-white">
             Besplatno za knjigovođe
           </h2>
-          <div className="mx-auto max-w-md rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/10 to-white/5 p-8 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-info-border bg-gradient-to-b from-info-bg to-info-bg p-8 text-center">
             <div className="mb-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-1 text-sm font-semibold text-white">
+              <div className="inline-flex items-center gap-2 rounded-full bg-interactive px-3 py-1 text-sm font-semibold text-white">
                 Knjigovođa plan
               </div>
             </div>
@@ -325,7 +325,7 @@ export default function AccountantsPage() {
             </ul>
             <Link
               href="/register"
-              className="block w-full rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
+              className="block w-full rounded-md bg-interactive px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
             >
               Registrirajte se kao knjigovođa
             </Link>
@@ -342,28 +342,28 @@ export default function AccountantsPage() {
           </h2>
           <div className="grid gap-6 md:grid-cols-4">
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 1
               </div>
               <p className="font-medium text-white">Registracija</p>
               <p className="text-xs text-white/60 mt-1">Besplatni račun za knjigovođe</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 2
               </div>
               <p className="font-medium text-white">Poziv klijenata</p>
               <p className="text-xs text-white/60 mt-1">Šaljete pozivnicu iz aplikacije</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 3
               </div>
               <p className="font-medium text-white">Klijent koristi FiskAI</p>
               <p className="text-xs text-white/60 mt-1">Izdaje račune, skenira troškove</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 4
               </div>
               <p className="font-medium text-white">Vi dobivate izvoz</p>
@@ -381,7 +381,7 @@ export default function AccountantsPage() {
             <div>
               <div className="mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 font-bold">
+                  <div className="h-12 w-12 rounded-full bg-interactive/10 flex items-center justify-center text-primary font-bold">
                     AK
                   </div>
                   <div>
@@ -448,7 +448,7 @@ export default function AccountantsPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Besplatna registracija za knjigovođe
             </Link>

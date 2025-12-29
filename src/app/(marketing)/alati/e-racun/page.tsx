@@ -495,7 +495,7 @@ export default function ERacunGeneratorPage() {
         <div className="mx-auto max-w-6xl">
           {/* Header with 2026 urgency */}
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-interactive to-interactive">
               <FileText className="h-8 w-8 text-white" />
             </div>
             <h1 className="mb-3 text-3xl font-bold text-white">2026-Ready E-Račun Generator</h1>
@@ -723,7 +723,7 @@ export default function ERacunGeneratorPage() {
                   <h2 className="font-semibold text-white">Stavke računa</h2>
                   <button
                     onClick={addLine}
-                    className="flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-xs font-medium text-white hover:bg-cyan-700"
+                    className="flex items-center gap-1 rounded bg-interactive-hover px-2 py-1 text-xs font-medium text-white hover:bg-interactive-hover"
                   >
                     <Plus className="h-3 w-3" /> Dodaj
                   </button>
@@ -805,7 +805,7 @@ export default function ERacunGeneratorPage() {
               {/* Generate Button */}
               <button
                 onClick={handleGenerate}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-cyan-700"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-interactive-hover px-6 py-3 font-semibold text-white transition-colors hover:bg-interactive-hover"
               >
                 <FileCode className="h-5 w-5" />
                 Generiraj UBL 2.1 XML
@@ -883,7 +883,7 @@ export default function ERacunGeneratorPage() {
               {/* Upsell */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
                 <div className="flex items-start gap-3">
-                  <Rocket className="mt-0.5 h-5 w-5 flex-shrink-0 text-cyan-400" />
+                  <Rocket className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
                   <div>
                     <p className="mb-2 font-bold text-white">Želiš automatski slati e-račune?</p>
                     <p className="mb-3 text-sm text-white/70">
@@ -892,7 +892,7 @@ export default function ERacunGeneratorPage() {
                     </p>
                     <a
                       href="/register"
-                      className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700"
+                      className="inline-flex items-center gap-2 rounded-lg bg-interactive-hover px-4 py-2 text-sm font-semibold text-white hover:bg-interactive-hover"
                     >
                       Započni besplatno <span>→</span>
                     </a>

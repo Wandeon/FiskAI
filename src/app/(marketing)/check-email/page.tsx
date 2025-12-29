@@ -47,14 +47,14 @@ export default function CheckEmailPage() {
     <Card className="max-w-md mx-auto">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-          <Mail className="h-8 w-8 text-blue-600" />
+          <Mail className="h-8 w-8 text-link" />
         </div>
         <CardTitle className="text-2xl">Provjerite svoj email</CardTitle>
       </CardHeader>
       <CardContent className="text-center space-y-4">
-        <p className="text-gray-600">Poslali smo vam 6-znamenkasti kod za potvrdu na:</p>
+        <p className="text-secondary">Poslali smo vam 6-znamenkasti kod za potvrdu na:</p>
         <p className="font-medium text-lg break-all">{email}</p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-secondary">
           Unesite kod u obrascu za registraciju kako biste potvrdili svoju adresu i aktivirali račun.
         </p>
 
@@ -96,9 +96,9 @@ export default function CheckEmailPage() {
           )}
         </Button>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-secondary">
           Pogrešan email?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-link hover:underline">
             Registrirajte se ponovno
           </Link>
         </p>

@@ -22,7 +22,7 @@ const SUBDOMAIN_INFO = {
     title: 'Client Dashboard',
     description: 'Access your business dashboard',
     icon: Building2,
-    color: 'text-blue-500',
+    color: 'text-primary',
   },
   staff: {
     title: 'Staff Portal',
@@ -71,8 +71,8 @@ export default async function SelectRolePage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name || user.email}</h1>
-          <p className="text-gray-600 mt-2">Select which portal you'd like to access</p>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name || user.email}</h1>
+          <p className="text-secondary mt-2">Select which portal you'd like to access</p>
         </div>
 
         <div className="grid gap-4">
@@ -93,14 +93,14 @@ export default async function SelectRolePage() {
 
             return (
               <a key={subdomain} href={href}>
-                <Card className="hover:bg-white/80 transition-colors cursor-pointer border-gray-200 bg-white">
+                <Card className="hover:bg-white/80 transition-colors cursor-pointer border-default bg-white">
                   <CardContent className="flex items-center gap-4 p-6">
-                    <div className={`h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center ${info.color}`}>
+                    <div className={`h-12 w-12 rounded-full bg-surface-1 flex items-center justify-center ${info.color}`}>
                       <Icon className="h-6 w-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-gray-900">{info.title}</CardTitle>
-                      <CardDescription className="text-gray-600">{info.description}</CardDescription>
+                      <CardTitle className="text-lg text-foreground">{info.title}</CardTitle>
+                      <CardDescription className="text-secondary">{info.description}</CardDescription>
                     </div>
                   </CardContent>
                 </Card>

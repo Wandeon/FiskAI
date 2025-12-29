@@ -29,12 +29,12 @@ export default function DooPage() {
       <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         {/* Hero section */}
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400 mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-interactive/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
             <Building2 className="h-4 w-4" />
             Posebno prilagođeno za d.o.o.
           </div>
           <h1 className="text-display text-4xl font-semibold md:text-5xl text-white">
-            Potpuna računovodstvena platforma za vaš <span className="text-cyan-400">d.o.o.</span>
+            Potpuna računovodstvena platforma za vaš <span className="text-primary">d.o.o.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-white/60">
             Od izdavanja računa i PDV obrade do kompletnog knjigovodstva i pripreme za reviziju —
@@ -43,7 +43,7 @@ export default function DooPage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Započni besplatnu probu
             </Link>
@@ -57,7 +57,7 @@ export default function DooPage() {
         </div>
 
         {/* Key differentiators */}
-        <div className="mb-16 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-8">
+        <div className="mb-16 rounded-2xl border border-info-border bg-interactive/10 p-8">
           <h2 className="text-2xl font-semibold mb-6 text-center text-white">
             Zašto d.o.o. tvrtke biraju FiskAI?
           </h2>
@@ -65,7 +65,7 @@ export default function DooPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Calculator className="h-5 w-5 text-cyan-400" />
+                  <Calculator className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">PDV obrada i JOPPD</p>
@@ -78,7 +78,7 @@ export default function DooPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <FileText className="h-5 w-5 text-cyan-400" />
+                  <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">E-računi i fiskalizacija</p>
@@ -91,7 +91,7 @@ export default function DooPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <BarChart className="h-5 w-5 text-cyan-400" />
+                  <BarChart className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Financijski izvještaji</p>
@@ -104,7 +104,7 @@ export default function DooPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/10 p-2">
-                  <Users className="h-5 w-5 text-cyan-400" />
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Timski pristup</p>
@@ -125,7 +125,7 @@ export default function DooPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <FileText className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <FileText className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Računi & E-računi</h3>
                   <p className="text-sm text-white/60 mt-1">Profesionalno izdavanje</p>
@@ -153,7 +153,7 @@ export default function DooPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Calculator className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Calculator className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">PDV obrada</h3>
                   <p className="text-sm text-white/60 mt-1">Puna zakonska usklađenost</p>
@@ -181,7 +181,7 @@ export default function DooPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <BarChart className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <BarChart className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Knjigovodstvo</h3>
                   <p className="text-sm text-white/60 mt-1">Dvostruko knjigovodstvo</p>
@@ -209,7 +209,7 @@ export default function DooPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <TrendingUp className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <TrendingUp className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Troškovi & Skeniranje</h3>
                   <p className="text-sm text-white/60 mt-1">AI OCR automatski unos</p>
@@ -237,7 +237,7 @@ export default function DooPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Users className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Users className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Tim & Kontrole</h3>
                   <p className="text-sm text-white/60 mt-1">Višekorisnički pristup</p>
@@ -265,7 +265,7 @@ export default function DooPage() {
 
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
-                <Shield className="h-6 w-6 text-cyan-400 flex-shrink-0" />
+                <Shield className="h-6 w-6 text-primary flex-shrink-0" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Sigurnost & Izvoz</h3>
                   <p className="text-sm text-white/60 mt-1">GDPR i kontrola</p>
@@ -301,7 +301,7 @@ export default function DooPage() {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8">
               <div className="mb-4">
-                <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-400">
+                <div className="inline-flex items-center gap-2 rounded-full bg-interactive/10 px-3 py-1 text-sm font-semibold text-primary">
                   D.O.O. Standard
                 </div>
               </div>
@@ -336,15 +336,15 @@ export default function DooPage() {
               </ul>
               <Link
                 href="/register"
-                className="block w-full rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
+                className="block w-full rounded-md bg-interactive px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
               >
                 Započni besplatnu probu
               </Link>
             </div>
 
-            <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/10 to-white/5 p-8 shadow-lg">
+            <div className="rounded-2xl border border-info-border bg-gradient-to-b from-info-bg to-info-bg p-8 shadow-lg">
               <div className="mb-4">
-                <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-1 text-sm font-semibold text-white">
+                <div className="inline-flex items-center gap-2 rounded-full bg-interactive px-3 py-1 text-sm font-semibold text-white">
                   D.O.O. Enterprise
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default function DooPage() {
               </ul>
               <Link
                 href="/contact"
-                className="block w-full rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
+                className="block w-full rounded-md bg-interactive px-6 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
               >
                 Kontaktirajte prodaju
               </Link>
@@ -398,7 +398,7 @@ export default function DooPage() {
           </h2>
           <div className="grid gap-6 md:grid-cols-4">
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 1
               </div>
               <p className="font-medium text-white">Onboarding</p>
@@ -407,21 +407,21 @@ export default function DooPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 2
               </div>
               <p className="font-medium text-white">Migracija</p>
               <p className="text-xs text-white/60 mt-1">Import postojećih podataka (CSV/Excel)</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 3
               </div>
               <p className="font-medium text-white">Obuka</p>
               <p className="text-xs text-white/60 mt-1">Timsko osposobljavanje (2h)</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-lg">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-interactive/10 text-primary font-bold text-lg">
                 4
               </div>
               <p className="font-medium text-white">Pokretanje</p>
@@ -461,7 +461,7 @@ export default function DooPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-8 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Započni besplatnu 30-dnevnu probu
             </Link>

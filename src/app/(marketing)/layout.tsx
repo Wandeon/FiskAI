@@ -35,7 +35,7 @@ export default async function MarketingLayout({
       <div className="pb-16">{children}</div>
       <ComplianceProgressBar />
 
-      <footer className="border-t border-white/10 bg-slate-950">
+      <footer className="border-t border-white/10 bg-base">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-2 lg:grid-cols-6 md:px-6">
           <div className="space-y-3 lg:col-span-2">
             <div>
@@ -51,7 +51,7 @@ export default async function MarketingLayout({
                 <p>{companyInfo.city}, {companyInfo.country}</p>
                 <p>
                   Email:{" "}
-                  <a href={`mailto:${companyInfo.emailContact}`} className="text-cyan-400 hover:underline">
+                  <a href={`mailto:${companyInfo.emailContact}`} className="text-link hover:underline">
                     {companyInfo.emailContact}
                   </a>
                 </p>

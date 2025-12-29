@@ -41,7 +41,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <Shield className="h-6 w-6 text-cyan-400" />
+                  <Shield className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Sigurnosni principi</h2>
@@ -85,7 +85,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <Database className="h-6 w-6 text-cyan-400" />
+                  <Database className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Rezidencija i pohrana podataka</h2>
@@ -135,7 +135,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <Clock className="h-6 w-6 text-cyan-400" />
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Dostupnost i uptime</h2>
@@ -162,12 +162,12 @@ export default function SecurityPage() {
                 <div>
                   <p className="font-medium">Status stranica</p>
                   <div className="flex items-center gap-3 mt-2">
-                    <a href="/status" className="text-cyan-400 hover:underline text-sm font-medium">
+                    <a href="/status" className="text-primary hover:underline text-sm font-medium">
                       Status sustava
                     </a>
                     <a
                       href="/api/health"
-                      className="text-cyan-400 hover:underline text-sm font-medium"
+                      className="text-primary hover:underline text-sm font-medium"
                     >
                       /api/health
                     </a>
@@ -181,7 +181,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <Download className="h-6 w-6 text-cyan-400" />
+                  <Download className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Prava korisnika i izvoz podataka</h2>
@@ -215,7 +215,7 @@ export default function SecurityPage() {
                   <p className="font-medium">Zahtjevi za podacima</p>
                   <p className="text-white/60">
                     Slanje zahtjeva na:{" "}
-                    <a href="mailto:gdpr@fiskai.hr" className="text-cyan-400 hover:underline">
+                    <a href="mailto:gdpr@fiskai.hr" className="text-primary hover:underline">
                       gdpr@fiskai.hr
                     </a>
                   </p>
@@ -229,7 +229,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <AlertTriangle className="h-6 w-6 text-cyan-400" />
+                  <AlertTriangle className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Incidenti i sigurnosni program</h2>
@@ -261,7 +261,7 @@ export default function SecurityPage() {
                   <p className="font-medium">Prijava sigurnosnih propusta</p>
                   <p className="text-white/60">
                     Email:{" "}
-                    <a href="mailto:security@fiskai.hr" className="text-cyan-400 hover:underline">
+                    <a href="mailto:security@fiskai.hr" className="text-primary hover:underline">
                       security@fiskai.hr
                     </a>
                   </p>
@@ -281,7 +281,7 @@ export default function SecurityPage() {
             <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="mt-1">
-                  <Globe className="h-6 w-6 text-cyan-400" />
+                  <Globe className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">Privatnost i AI politika</h2>
@@ -312,16 +312,16 @@ export default function SecurityPage() {
                 <div>
                   <p className="font-medium">Povezane politike</p>
                   <div className="flex flex-col gap-2 mt-2">
-                    <Link href="/privacy" className="text-cyan-400 hover:underline text-sm">
+                    <Link href="/privacy" className="text-primary hover:underline text-sm">
                       Politika privatnosti
                     </Link>
-                    <Link href="/ai-data-policy" className="text-cyan-400 hover:underline text-sm">
+                    <Link href="/ai-data-policy" className="text-primary hover:underline text-sm">
                       AI politika podataka
                     </Link>
-                    <Link href="/dpa" className="text-cyan-400 hover:underline text-sm">
+                    <Link href="/dpa" className="text-primary hover:underline text-sm">
                       DPA (Obrada podataka)
                     </Link>
-                    <Link href="/cookies" className="text-cyan-400 hover:underline text-sm">
+                    <Link href="/cookies" className="text-primary hover:underline text-sm">
                       Politika kolačića
                     </Link>
                   </div>
@@ -331,9 +331,9 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        <div className="mt-12 rounded-lg border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-6">
+        <div className="mt-12 rounded-lg border border-info-border bg-gradient-to-r from-info-bg to-info-bg p-6">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-cyan-400" />
+            <Shield className="h-5 w-5 text-primary" />
             Certifikati i usklađenost (u izradi)
           </h3>
           <div className="grid gap-4 md:grid-cols-3 text-sm">
@@ -358,7 +358,7 @@ export default function SecurityPage() {
               year: "numeric",
             })}
             . Za pitanja o sigurnosti kontaktirajte{" "}
-            <a href="mailto:security@fiskai.hr" className="text-cyan-400 hover:underline">
+            <a href="mailto:security@fiskai.hr" className="text-primary hover:underline">
               security@fiskai.hr
             </a>
             .

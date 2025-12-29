@@ -97,8 +97,8 @@ export default function ToolsIndexPage() {
             <Link key={tool.slug} href={`/alati/${tool.slug}`} className="group">
               <HoverScale>
                 <GlassCard className="h-full cursor-pointer">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10">
-                    <tool.icon className="h-6 w-6 text-cyan-500" />
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-interactive/10">
+                    <tool.icon className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-semibold text-white">{tool.title}</h3>
@@ -112,16 +112,16 @@ export default function ToolsIndexPage() {
         </div>
 
         <div className="mt-10">
-          <GlassCard className="border-cyan-500/30 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 p-6">
+          <GlassCard className="border-info-border bg-info-bg p-6">
             <p className="text-sm text-white/90">
               Trebate širu sliku (paušal vs obrt vs d.o.o.)?{" "}
-              <Link href="/wizard" className="font-semibold text-cyan-400 hover:text-cyan-300">
+              <Link href="/wizard" className="font-semibold text-link hover:underline">
                 Pokrenite čarobnjak
               </Link>{" "}
               ili otvorite{" "}
               <Link
                 href="/usporedba/pocinjem-solo"
-                className="font-semibold text-cyan-400 hover:text-cyan-300"
+                className="font-semibold text-link hover:underline"
               >
                 usporedbe
               </Link>

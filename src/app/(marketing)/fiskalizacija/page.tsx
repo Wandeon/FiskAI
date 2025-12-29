@@ -96,7 +96,7 @@ export default function FiskalizacijaHubPage() {
                   key={i}
                   className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 text-center"
                 >
-                  <Calendar className="mx-auto mb-2 h-6 w-6 text-cyan-400" />
+                  <Calendar className="mx-auto mb-2 h-6 w-6 text-primary" />
                   <p className="font-bold text-white/90">{item.date}</p>
                   <p className="mt-1 text-sm text-white/60">{item.event}</p>
                 </div>
@@ -118,29 +118,29 @@ export default function FiskalizacijaHubPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <Link
                 href="/kako-da/registrirati-informacijskog-posrednika"
-                className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 hover:border-cyan-500/20 hover:bg-cyan-500/10 hover:shadow-md"
+                className="group flex items-center justify-between rounded-xl border border-default bg-white/5 backdrop-blur-sm p-5 hover:border-focus hover:bg-interactive/10 hover:shadow-md"
               >
                 <div>
-                  <h3 className="font-semibold text-white/90 group-hover:text-cyan-400">
+                  <h3 className="font-semibold text-white/90 group-hover:text-primary">
                     Kako registrirati informacijskog posrednika
                   </h3>
                   <p className="mt-1 text-sm text-white/50">
                     Korak po korak vodič za FiskAplikacija
                   </p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-cyan-400" />
+                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-primary" />
               </Link>
               <Link
                 href="/kako-da/registrirati-informacijskog-posrednika"
-                className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 hover:border-cyan-500/20 hover:bg-cyan-500/10 hover:shadow-md"
+                className="group flex items-center justify-between rounded-xl border border-default bg-white/5 backdrop-blur-sm p-5 hover:border-focus hover:bg-interactive/10 hover:shadow-md"
               >
                 <div>
-                  <h3 className="font-semibold text-white/90 group-hover:text-cyan-400">
+                  <h3 className="font-semibold text-white/90 group-hover:text-primary">
                     Kako izdati prvi fiskalizirani račun
                   </h3>
                   <p className="mt-1 text-sm text-white/50">Od certifikata do JIR-a</p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-cyan-400" />
+                <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-primary" />
               </Link>
             </div>
           </section>
@@ -152,8 +152,8 @@ export default function FiskalizacijaHubPage() {
           <Sources sources={sources} lastUpdated="2025-12-16" reviewer="Porezni savjetnik" />
 
           {/* CTA */}
-          <div className="mt-12 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-sm p-8 text-center">
-            <FileCheck className="mx-auto mb-4 h-12 w-12 text-cyan-400" />
+          <div className="mt-12 rounded-2xl border border-info-border bg-info-bg backdrop-blur-sm p-8 text-center">
+            <FileCheck className="mx-auto mb-4 h-12 w-12 text-primary" />
             <h2 className="text-2xl font-bold text-white/90">Spremni za Fiskalizaciju 2.0?</h2>
             <p className="mx-auto mt-2 max-w-lg text-white/60">
               FiskAI automatski generira e-račune u UBL formatu, fiskalizira ih i šalje putem PEPPOL
@@ -162,7 +162,7 @@ export default function FiskalizacijaHubPage() {
             <div className="mt-6 flex justify-center gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 font-medium text-white hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-lg bg-interactive hover:bg-interactive-hover px-6 py-3 font-medium text-white"
               >
                 Započni besplatno
                 <ArrowRight className="h-4 w-4" />

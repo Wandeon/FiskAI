@@ -193,7 +193,7 @@ export default async function GuidePage({ params }: Props) {
                 }
                 bluf={guide.frontmatter.description}
               >
-                <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white">
+                <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-primary prose-strong:text-white">
                   <MDXRemote source={guide.content} components={mdxComponents} />
                 </article>
               </AIAnswerBlock>

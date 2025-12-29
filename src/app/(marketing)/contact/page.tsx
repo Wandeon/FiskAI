@@ -49,7 +49,7 @@ export default function ContactPage() {
                     <p className="font-medium">Email</p>
                     <a
                       href={`mailto:${companyInfo.emailContact}`}
-                      className="text-sm text-cyan-400 hover:underline block"
+                      className="text-sm text-link hover:underline block"
                     >
                       {companyInfo.emailContact}
                     </a>
@@ -64,7 +64,7 @@ export default function ContactPage() {
                     <p className="font-medium">Telefon</p>
                     <a
                       href={getPhoneLink(companyInfo.phone)}
-                      className="text-sm text-cyan-400 hover:underline block"
+                      className="text-sm text-link hover:underline block"
                     >
                       {companyInfo.phone}
                     </a>
@@ -79,7 +79,7 @@ export default function ContactPage() {
                     <p className="font-medium">Podrška</p>
                     <a
                       href={`mailto:${companyInfo.emailSupport}`}
-                      className="text-sm text-cyan-400 hover:underline block"
+                      className="text-sm text-link hover:underline block"
                     >
                       {companyInfo.emailSupport}
                     </a>
@@ -99,7 +99,7 @@ export default function ContactPage() {
                       Hitni slučajevi:{" "}
                       <a
                         href={getPhoneLink(companyInfo.phoneEmergency)}
-                        className="text-cyan-400 hover:underline"
+                        className="text-link hover:underline"
                       >
                         {companyInfo.phoneEmergency}
                       </a>
@@ -155,7 +155,7 @@ export default function ContactPage() {
                 </Link>
                 <Link
                   href="/register"
-                  className="flex-1 rounded-md bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:opacity-90"
+                  className="flex-1 rounded-md bg-interactive hover:bg-interactive-hover px-4 py-2 text-center text-sm font-semibold text-white"
                 >
                   Besplatna registracija
                 </Link>
@@ -164,7 +164,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div className="mt-12 rounded-lg border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-6">
+        <div className="mt-12 rounded-lg border border-focus bg-info-bg p-6">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <Phone className="h-5 w-5 text-red-700" />
             Hitna podrška

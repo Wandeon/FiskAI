@@ -74,7 +74,7 @@ export default async function GlossaryTermPage({ params }: Props) {
 
           <Link
             href="/rjecnik"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-cyan-400 hover:underline"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-primary hover:underline"
           >
             <ArrowLeft className="h-4 w-4" />
             Svi pojmovi

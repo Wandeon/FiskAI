@@ -72,7 +72,7 @@ export default async function HowToPage({ params }: Props) {
 
           <Link
             href="/kako-da"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-primary hover:text-primary transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Svi vodiči
@@ -107,7 +107,7 @@ export default async function HowToPage({ params }: Props) {
             lastUpdated={frontmatter.lastUpdated || new Date().toISOString().split("T")[0]}
             bluf={frontmatter.description}
           >
-            <article className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-cyan-400 prose-strong:text-white prose-code:text-cyan-300 prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10">
+            <article className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-primary prose-strong:text-white prose-code:text-primary prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10">
               <MDXRemote source={content} components={mdxComponents} />
             </article>
           </AIAnswerBlock>

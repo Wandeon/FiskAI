@@ -209,7 +209,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         <div className="mb-8 flex flex-wrap gap-2">
           <Link
             href={`/vijesti/kategorija/${category.slug}`}
-            className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-600"
+            className="rounded-lg bg-interactive px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-interactive-hover"
           >
             Sve
           </Link>
@@ -241,7 +241,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               className={cn(
                 "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                 sibling.id === category.id
-                  ? "bg-cyan-500 text-white"
+                  ? "bg-interactive text-white"
                   : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
               )}
             >
@@ -257,7 +257,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           <p className="text-lg text-white/60">Nema vijesti u ovoj kategoriji.</p>
           <Link
             href="/vijesti"
-            className="mt-4 inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
+            className="mt-4 inline-flex items-center gap-2 text-primary hover:text-info-text"
           >
             Povratak na sve vijesti
             <ChevronRight className="h-4 w-4" />
@@ -300,7 +300,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                     href={`/vijesti/kategorija/${slug}?page=${pageNum}`}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                       pageNum === page
-                        ? "bg-blue-500 text-white"
+                        ? "bg-interactive text-white"
                         : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
                     }`}
                   >
