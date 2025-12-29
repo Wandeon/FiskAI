@@ -54,3 +54,22 @@ export const AnalyticsEvents = {
   SETTINGS_UPDATED: "settings_updated",
   EINVOICE_PROVIDER_CONFIGURED: "einvoice_provider_configured",
 } as const
+
+// Re-export feature analytics for convenience
+export {
+  trackFeatureUsage,
+  trackFeatureEvent,
+  trackFeatureConversion,
+  trackFeatureMetric,
+  trackFeatureError,
+  startFeatureSession,
+  endFeatureSession,
+  setFeatureContext,
+  getFeatureContext,
+  clearFeatureContext,
+  trackExperimentEnrollment,
+  trackExperimentExposure,
+  FeatureEvents,
+  type FeatureContext,
+  type FeatureUsageEvent,
+} from "@/lib/feature-analytics"

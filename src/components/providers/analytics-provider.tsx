@@ -5,8 +5,20 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { initAnalytics, trackPageView } from "@/lib/analytics"
 import { reportWebVitals } from "@/lib/web-vitals"
 import { registerServiceWorker } from "@/lib/register-sw"
+import {
+  setFeatureContext,
+  clearFeatureContext,
+  trackFeatureAdoptionSummary,
+  type FeatureContext,
+} from "@/lib/feature-analytics"
 
-export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+interface AnalyticsProviderProps {
+  children: React.ReactNode
+  /** Feature context from authenticated user's company */
+  featureContext?: FeatureContext
+}
+
+export function AnalyticsProvider({ children, featureContext }: AnalyticsProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const webVitalsReported = useRef(false)
@@ -16,6 +28,26 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     // Register service worker for offline support
     registerServiceWorker()
   }, [])
+
+  // Set feature context when provided (after authentication)
+  useEffect(() => {
+    if (featureContext) {
+      setFeatureContext(featureContext)
+    }
+
+    // Cleanup on unmount or context change
+    return () => {
+      // Track adoption summary before clearing
+      trackFeatureAdoptionSummary()
+    }
+  }, [featureContext])
+
+  // Clear feature context on logout (when featureContext becomes undefined)
+  useEffect(() => {
+    if (!featureContext) {
+      clearFeatureContext()
+    }
+  }, [featureContext])
 
   useEffect(() => {
     // Report CWV once per session with initial pathname
