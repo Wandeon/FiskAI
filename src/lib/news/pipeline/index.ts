@@ -30,6 +30,24 @@ export {
   type DigestSection,
 } from "./digest-assembler"
 
+// Error Recovery
+export {
+  withRetry,
+  recordNewsItemError,
+  recordNewsPostError,
+  getFailedNewsItems,
+  getFailedNewsPosts,
+  resetNewsItemForReprocessing,
+  resetNewsPostForReprocessing,
+  getRetryableNewsItems,
+  getPipelineHealthStats,
+  calculateBackoffDelay,
+  MAX_PROCESSING_ATTEMPTS,
+  DEAD_LETTER_STATUS,
+  PipelineRetryExhaustedError,
+  type RetryConfig,
+} from "./error-recovery"
+
 /**
  * Full pipeline orchestration example:
  *
