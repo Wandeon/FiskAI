@@ -19,10 +19,12 @@ import {
   rewriteArticle,
   needsRewrite,
   assembleDigest,
+  recordNewsPostError,
+  MAX_PROCESSING_ATTEMPTS,
   type ReviewFeedback,
   type RewriteResult,
 } from "@/lib/news/pipeline"
-import { eq, and, isNull } from "drizzle-orm"
+import { eq, and, isNull, lt, sql } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 minutes
@@ -31,10 +33,12 @@ interface PublishResult {
   success: boolean
   summary: {
     totalReviewing: number
+    retryPosts: number
     rewritten: number
     published: number
     digestCreated: boolean
     digestItemCount: number
+    failedPosts: number
   }
   published: Array<{
     postId: string
@@ -94,10 +98,12 @@ export async function GET(request: NextRequest) {
     success: false,
     summary: {
       totalReviewing: 0,
+      retryPosts: 0,
       rewritten: 0,
       published: 0,
       digestCreated: false,
       digestItemCount: 0,
+      failedPosts: 0,
     },
     published: [],
     errors: [],
@@ -113,16 +119,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // 2. Get all news_posts with status='reviewing'
+    // 2. Get all news_posts with status='reviewing' (including retry-eligible posts)
     console.log("[CRON 3] Fetching posts under review...")
 
-    const reviewingPosts = await drizzleDb
+    // Get new reviewing posts
+    const newReviewingPosts = await drizzleDb
       .select()
       .from(newsPosts)
-      .where(eq(newsPosts.status, "reviewing"))
+      .where(
+        and(
+          eq(newsPosts.status, "reviewing"),
+          sql`${newsPosts.processingAttempts} = 0 OR ${newsPosts.processingAttempts} IS NULL`
+        )
+      )
 
-    result.summary.totalReviewing = reviewingPosts.length
-    console.log(`[CRON 3] Found ${reviewingPosts.length} posts to publish`)
+    // Get posts that failed during publish but are eligible for retry
+    const retryPosts = await drizzleDb
+      .select()
+      .from(newsPosts)
+      .where(
+        and(
+          eq(newsPosts.status, "reviewing"),
+          lt(newsPosts.processingAttempts, MAX_PROCESSING_ATTEMPTS),
+          sql`${newsPosts.processingAttempts} > 0`
+        )
+      )
+
+    // Combine both sets
+    const postsMap = new Map<string, typeof newReviewingPosts[0]>()
+    for (const post of newReviewingPosts) {
+      postsMap.set(post.id, post)
+    }
+    for (const post of retryPosts) {
+      postsMap.set(post.id, post)
+    }
+    const reviewingPosts = Array.from(postsMap.values())
+
+    result.summary.totalReviewing = newReviewingPosts.length
+    result.summary.retryPosts = retryPosts.length
+    console.log(`[CRON 3] Found ${newReviewingPosts.length} new posts + ${retryPosts.length} retry posts to publish`)
 
     // 3. Process each post
     for (const post of reviewingPosts) {
@@ -233,6 +268,19 @@ export async function GET(request: NextRequest) {
         const errorMsg = `Failed to publish post ${post.id} (${post.title}): ${error instanceof Error ? error.message : String(error)}`
         console.error(`[CRON 3] ${errorMsg}`)
         result.errors.push(errorMsg)
+
+        // Record the error for retry tracking
+        try {
+          const { shouldRetry, attempts } = await recordNewsPostError(post.id, error instanceof Error ? error : String(error))
+          if (shouldRetry) {
+            console.log(`[CRON 3] Post ${post.id} will be retried (attempt ${attempts}/${MAX_PROCESSING_ATTEMPTS})`)
+          } else {
+            console.log(`[CRON 3] Post ${post.id} moved to dead-letter queue after ${attempts} attempts`)
+            result.summary.failedPosts++
+          }
+        } catch (recordError) {
+          console.error(`[CRON 3] Failed to record error for post ${post.id}:`, recordError)
+        }
       }
     }
 

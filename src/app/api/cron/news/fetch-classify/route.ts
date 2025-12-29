@@ -17,10 +17,12 @@ import { fetchAllNews } from "@/lib/news/fetcher"
 import {
   classifyNewsItem,
   writeArticle,
+  recordNewsItemError,
+  MAX_PROCESSING_ATTEMPTS,
   type ClassificationResult,
   type ArticleContent,
 } from "@/lib/news/pipeline"
-import { eq, and, gte, sql } from "drizzle-orm"
+import { eq, and, gte, lt, sql } from "drizzle-orm"
 import Parser from "rss-parser"
 import { enqueueArticleJob } from "@/lib/article-agent/queue"
 
@@ -34,6 +36,7 @@ interface FetchClassifyResult {
     inserted: number
     skipped: number
     todayItems: number
+    retryItems: number
     classified: {
       high: number
       medium: number
@@ -44,6 +47,7 @@ interface FetchClassifyResult {
       mediumImpact: number
     }
     articleJobsQueued: number
+    failedItems: number
   }
   errors: string[]
 }
@@ -112,9 +116,11 @@ export async function GET(request: NextRequest) {
       inserted: 0,
       skipped: 0,
       todayItems: 0,
+      retryItems: 0,
       classified: { high: 0, medium: 0, low: 0 },
       postsCreated: { highImpact: 0, mediumImpact: 0 },
       articleJobsQueued: 0,
+      failedItems: 0,
     },
     errors: [],
   }
@@ -141,10 +147,12 @@ export async function GET(request: NextRequest) {
     console.log(`[CRON 1] Fetch complete: ${fetchResult.totalInserted} new items`)
 
     // 3. Filter items from today only (published_at >= today 00:00)
+    // Also include items that failed previously but are eligible for retry
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
 
-    const todayItems = await drizzleDb
+    // Get new items from today
+    const newTodayItems = await drizzleDb
       .select()
       .from(newsItems)
       .where(
@@ -155,8 +163,31 @@ export async function GET(request: NextRequest) {
         )
       )
 
-    result.summary.todayItems = todayItems.length
-    console.log(`[CRON 1] Processing ${todayItems.length} items from today...`)
+    // Get items that failed but are eligible for retry (under max attempts)
+    const retryItems = await drizzleDb
+      .select()
+      .from(newsItems)
+      .where(
+        and(
+          eq(newsItems.status, "pending"),
+          lt(newsItems.processingAttempts, MAX_PROCESSING_ATTEMPTS),
+          sql`${newsItems.processingAttempts} > 0` // Has been attempted before
+        )
+      )
+
+    // Combine both sets (avoid duplicates by using a Map)
+    const itemsMap = new Map<string, typeof newTodayItems[0]>()
+    for (const item of newTodayItems) {
+      itemsMap.set(item.id, item)
+    }
+    for (const item of retryItems) {
+      itemsMap.set(item.id, item)
+    }
+    const todayItems = Array.from(itemsMap.values())
+
+    result.summary.todayItems = newTodayItems.length
+    result.summary.retryItems = retryItems.length
+    console.log(`[CRON 1] Processing ${newTodayItems.length} new items + ${retryItems.length} retry items...`)
 
     if (todayItems.length === 0) {
       result.success = true
@@ -309,6 +340,19 @@ export async function GET(request: NextRequest) {
         const errorMsg = `Failed to process item ${item.id}: ${error instanceof Error ? error.message : String(error)}`
         console.error(`[CRON 1] ${errorMsg}`)
         result.errors.push(errorMsg)
+
+        // Record the error for retry tracking
+        try {
+          const { shouldRetry, attempts } = await recordNewsItemError(item.id, error instanceof Error ? error : String(error))
+          if (shouldRetry) {
+            console.log(`[CRON 1] Item ${item.id} will be retried (attempt ${attempts}/${MAX_PROCESSING_ATTEMPTS})`)
+          } else {
+            console.log(`[CRON 1] Item ${item.id} moved to dead-letter queue after ${attempts} attempts`)
+            result.summary.failedItems++
+          }
+        } catch (recordError) {
+          console.error(`[CRON 1] Failed to record error for item ${item.id}:`, recordError)
+        }
       }
     }
 
