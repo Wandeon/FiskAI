@@ -4,6 +4,36 @@ import { redirect } from "next/navigation"
 import type { User, Company } from "@prisma/client"
 import { requirePermission, type Permission } from "@/lib/rbac"
 
+/**
+ * Check if a company has completed the minimum required onboarding fields.
+ * A company is considered to have completed onboarding if it has:
+ * - Basic info (name, OIB, legalForm) - required
+ * - Email address - required for dashboard access
+ *
+ * Address is optional but recommended. Without email, users should be
+ * redirected back to onboarding to complete the flow.
+ */
+export function isOnboardingComplete(company: {
+  name: string | null
+  oib: string | null
+  legalForm: string | null
+  email: string | null
+}): boolean {
+  // Step 1: Basic info must be complete
+  const hasBasicInfo = !!(
+    company.name?.trim() &&
+    company.oib?.match(/^\d{11}$/) &&
+    company.legalForm
+  )
+
+  if (!hasBasicInfo) return false
+
+  // Step 4: Email is required for dashboard access
+  const hasEmail = !!company.email?.includes("@")
+
+  return hasEmail
+}
+
 export async function getCurrentUser() {
   const session = await auth()
   return session?.user
@@ -137,6 +167,11 @@ export async function requireCompany(userId: string) {
   if (!company) {
     redirect("/onboarding")
   }
+  // Check if onboarding is complete - redirect back if company exists but is incomplete
+  // This prevents a redirect loop where dashboard shows incomplete state
+  if (!isOnboardingComplete(company)) {
+    redirect("/onboarding")
+  }
   return company
 }
 
@@ -149,7 +184,7 @@ export async function requireCompany(userId: string) {
  * 3. Wraps the callback in runWithTenant() for automatic tenant isolation
  *
  * Usage:
- * ```typescript
+ * \`\`\`typescript
  * export async function myAction() {
  *   return requireCompanyWithContext(userId, async (company, user) => {
  *     // All db operations here automatically filtered by companyId
@@ -157,7 +192,7 @@ export async function requireCompany(userId: string) {
  *     return { success: true, data: contacts }
  *   })
  * }
- * ```
+ * \`\`\`
  *
  * @param userId - The user ID to authenticate
  * @param fn - Callback function that receives company and user, returns Promise<T>
@@ -190,7 +225,7 @@ export async function requireCompanyWithContext<T>(
  * 4. Wraps the callback in runWithTenant() for automatic tenant isolation
  *
  * Usage:
- * ```typescript
+ * \`\`\`typescript
  * export async function deleteInvoice(id: string) {
  *   return requireCompanyWithPermission(userId, 'invoice:delete', async (company, user) => {
  *     // User has permission, proceed with deletion
@@ -198,7 +233,7 @@ export async function requireCompanyWithContext<T>(
  *     return { success: true }
  *   })
  * }
- * ```
+ * \`\`\`
  *
  * @param userId - The user ID to authenticate
  * @param permission - The permission required to execute the callback
