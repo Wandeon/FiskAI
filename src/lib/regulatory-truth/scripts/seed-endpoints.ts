@@ -119,6 +119,15 @@ const endpoints = [
     scrapeFrequency: "EVERY_RUN" as const,
     listingStrategy: "PAGINATION" as const,
   },
+  {
+    domain: "mrosp.gov.hr",
+    path: "/vijesti/8",
+    name: "MRMS - Vijesti",
+    endpointType: "NEWS_LISTING" as const,
+    priority: "CRITICAL" as const,
+    scrapeFrequency: "EVERY_RUN" as const,
+    listingStrategy: "PAGINATION" as const,
+  },
 
   // Tier 2: HIGH (daily)
   {
