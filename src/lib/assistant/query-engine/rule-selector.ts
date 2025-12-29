@@ -48,6 +48,19 @@ export interface RuleCandidate {
       }
     }
   }[]
+  /** Rule authority level alias for answer synthesizer and reasoning pipeline */
+  authority?: string
+  /** Croatian body text for answer synthesis */
+  bodyHr?: string
+  /** Primary evidence reference for reasoning pipeline */
+  evidence?: {
+    id: string
+    url: string
+    sourceType?: string
+    fetchedAt?: Date | null
+  }
+  /** Primary evidence ID for reasoning pipeline */
+  evidenceId?: string
 }
 
 export interface RuleSelectionContext {
