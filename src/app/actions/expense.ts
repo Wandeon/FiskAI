@@ -312,6 +312,60 @@ export async function createExpenseCategory(input: {
   }
 }
 
+export async function updateExpenseCategory(
+  id: string,
+  input: {
+    name?: string
+    code?: string
+    vatDeductibleDefault?: boolean
+  }
+): Promise<ActionResult> {
+  try {
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const category = await db.expenseCategory.findFirst({
+        where: { id },
+      })
+
+      if (!category) {
+        return { success: false, error: "Kategorija nije pronađena" }
+      }
+
+      // System categories (companyId: null) cannot be edited
+      if (category.companyId === null) {
+        return { success: false, error: "Nije moguće uređivati sistemske kategorije" }
+      }
+
+      // Check if code is being changed and if it conflicts
+      if (input.code && input.code !== category.code) {
+        const existing = await db.expenseCategory.findUnique({
+          where: { companyId_code: { companyId: company.id, code: input.code } },
+        })
+
+        if (existing) {
+          return { success: false, error: `Kategorija s kodom ${input.code} već postoji` }
+        }
+      }
+
+      const updated = await db.expenseCategory.update({
+        where: { id },
+        data: {
+          name: input.name,
+          code: input.code?.toUpperCase(),
+          vatDeductibleDefault: input.vatDeductibleDefault,
+        },
+      })
+
+      revalidatePath("/expenses/categories")
+      return { success: true, data: updated }
+    })
+  } catch (error) {
+    console.error("Failed to update category:", error)
+    return { success: false, error: "Greška pri ažuriranju kategorije" }
+  }
+}
+
 export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   try {
     const user = await requireAuth()
@@ -323,6 +377,11 @@ export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
 
       if (!category) {
         return { success: false, error: "Kategorija nije pronađena" }
+      }
+
+      // System categories (companyId: null) cannot be deleted
+      if (category.companyId === null) {
+        return { success: false, error: "Nije moguće obrisati sistemske kategorije" }
       }
 
       // Check if category has expenses
