@@ -94,45 +94,57 @@ export function ContactForm() {
         )}
       </div>
 
-      <div>
-        <label htmlFor="businessType" className="block text-sm font-medium mb-1">
+      <div role="group" aria-labelledby="businessType-label">
+        <label id="businessType-label" htmlFor="businessType" className="block text-sm font-medium mb-1">
           Tip poslovanja *
         </label>
         <select
           id="businessType"
           name="businessType"
           required
+          aria-required="true"
+          aria-describedby="businessType-desc"
+          aria-label="Odaberite tip poslovanja"
           disabled={isSubmitting}
           className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Odaberite...</option>
+          <option value="" disabled>-- Odaberite tip poslovanja --</option>
           <option value="pausalni-obrt">Paušalni obrt</option>
           <option value="vat-obrt">VAT obrt</option>
           <option value="doo">d.o.o.</option>
           <option value="accountant">Knjigovođa/računovoda</option>
         </select>
+        <span id="businessType-desc" className="sr-only">
+          Odaberite vrstu vašeg poslovanja kako bismo vam mogli ponuditi odgovarajući demo
+        </span>
         {fieldErrors.businessType && (
           <p className="mt-1 text-xs text-danger-text">{fieldErrors.businessType[0]}</p>
         )}
       </div>
 
-      <div>
-        <label htmlFor="invoiceVolume" className="block text-sm font-medium mb-1">
+      <div role="group" aria-labelledby="invoiceVolume-label">
+        <label id="invoiceVolume-label" htmlFor="invoiceVolume" className="block text-sm font-medium mb-1">
           Broj računa mjesečno *
         </label>
         <select
           id="invoiceVolume"
           name="invoiceVolume"
           required
+          aria-required="true"
+          aria-describedby="invoiceVolume-desc"
+          aria-label="Odaberite broj računa mjesečno"
           disabled={isSubmitting}
           className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Odaberite...</option>
+          <option value="" disabled>-- Odaberite broj računa --</option>
           <option value="1-10">1-10</option>
           <option value="11-50">11-50</option>
           <option value="51-200">51-200</option>
           <option value="200+">200+</option>
         </select>
+        <span id="invoiceVolume-desc" className="sr-only">
+          Odaberite koliko računa mjesečno izdajete kako bismo vam preporučili odgovarajući plan
+        </span>
         {fieldErrors.invoiceVolume && (
           <p className="mt-1 text-xs text-danger-text">{fieldErrors.invoiceVolume[0]}</p>
         )}
