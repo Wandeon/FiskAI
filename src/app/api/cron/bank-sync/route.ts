@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getProvider } from "@/lib/bank-sync/providers"
 import { processTransactionsWithDedup } from "@/lib/bank-sync/dedup"
+import { recordCronError } from "@/lib/cron-dlq"
 
 export async function POST(request: Request) {
   // Verify cron secret
@@ -88,6 +89,20 @@ export async function POST(request: Request) {
         })
       } catch (error) {
         console.error(`[bank-sync] Error syncing account ${account.id}:`, error)
+
+        // Record to dead letter queue for visibility
+        await recordCronError({
+          jobName: "bank-sync",
+          entityId: account.id,
+          entityType: "BankAccount",
+          error: error instanceof Error ? error : new Error(String(error)),
+          metadata: {
+            companyId: account.companyId,
+            syncProvider: account.syncProvider,
+            lastSyncAt: account.lastSyncAt?.toISOString(),
+          },
+        })
+
         results.push({
           accountId: account.id,
           status: "error",
@@ -102,6 +117,14 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("[bank-sync] Cron error:", error)
+
+    // Record global cron error to DLQ
+    await recordCronError({
+      jobName: "bank-sync",
+      error: error instanceof Error ? error : new Error(String(error)),
+      errorCode: "CRON_GLOBAL_ERROR",
+    })
+
     return NextResponse.json({ error: "Sync failed" }, { status: 500 })
   }
 }
