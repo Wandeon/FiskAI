@@ -494,11 +494,20 @@ export const REGULATORY_SOURCES: SourceDefinition[] = [
   {
     slug: "dzs-place",
     name: "DZS - Prosječne plaće",
-    url: "https://dzs.gov.hr/",
+    url: "https://dzs.hr/hr/statistika/trziste-rada",
     hierarchy: 5,
     fetchIntervalHours: 168,
     priority: "medium",
     domains: ["doprinosi"],
+  },
+  {
+    slug: "dzs-publikacije",
+    name: "DZS - Statistički podaci i publikacije",
+    url: "https://dzs.hr/hr/publikacije",
+    hierarchy: 5,
+    fetchIntervalHours: 168,
+    priority: "medium",
+    domains: ["doprinosi", "pausalni"],
   },
 
   // ==========================================================================
