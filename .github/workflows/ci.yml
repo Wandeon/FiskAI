@@ -42,8 +42,9 @@ jobs:
   typecheck:
     name: TypeScript Check
     runs-on: ubuntu-latest
-    # Non-blocking: tracks TS debt without blocking deployments
-    # See docs/06_ROADMAP/typescript-debt.md for tracking
+    # TypeScript errors are tracked but currently non-blocking due to existing debt
+    # Target: Reduce to 0 errors per docs/06_ROADMAP/typescript-debt.md
+    # Once at 0, remove continue-on-error and add to build needs (issue #319)
     continue-on-error: true
     steps:
       - name: Checkout repository
@@ -62,28 +63,43 @@ jobs:
         run: npx prisma generate
 
       - name: Type check
-        run: npx tsc --noEmit 2>&1 | tee typescript-errors.log || true
+        id: typecheck
+        run: |
+          npx tsc --noEmit 2>&1 | tee typescript-errors.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit 0  # Always succeed to allow summary generation
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: Count TypeScript errors
+      - name: Count and report TypeScript errors
         run: |
           ERROR_COUNT=$(grep -c "error TS" typescript-errors.log || echo "0")
           echo "## TypeScript Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "See docs/06_ROADMAP/typescript-debt.md for tracking and fix plan." >> $GITHUB_STEP_SUMMARY
+
           if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::TypeScript check found $ERROR_COUNT errors - see docs/06_ROADMAP/typescript-debt.md"
             echo "### Top errors by category:" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             grep "error TS" typescript-errors.log | sed 's/.*error /error /' | sort | uniq -c | sort -rn | head -10 >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Action Required**: Fix TypeScript errors per [typescript-debt.md](docs/06_ROADMAP/typescript-debt.md)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No TypeScript errors found!" >> $GITHUB_STEP_SUMMARY
           fi
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+
+          # Fail the step if there are errors (job continues due to continue-on-error)
+          if [ "${{ steps.typecheck.outputs.exit_code }}" != "0" ]; then
+            exit 1
+          fi
 
   security:
     name: Security Audit
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # CRITICAL: Security audit must block deployments
+    # Removed continue-on-error per issue #324
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -182,7 +198,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     # Build is the deploy blocker - catches actual compilation errors
-    needs: [lint, test, test-integration]
+    # Added security as dependency per issue #324
+    needs: [lint, test, test-integration, security]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
