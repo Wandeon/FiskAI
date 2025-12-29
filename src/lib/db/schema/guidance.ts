@@ -1,6 +1,13 @@
 import { pgTable, uuid, varchar, boolean, timestamp, index, text } from "drizzle-orm/pg-core"
 
-// Note: userId and companyId use text() because Prisma User/Company models use CUIDs, not UUIDs
+// Reference tables for foreign key constraints (Prisma-managed tables with CUID primary keys)
+export const user = pgTable("User", {
+  id: text("id").primaryKey(),
+})
+
+export const company = pgTable("Company", {
+  id: text("id").primaryKey(),
+})
 
 // Competence levels
 export const COMPETENCE_LEVELS = {
@@ -32,7 +39,9 @@ export const userGuidancePreferences = pgTable(
   "user_guidance_preferences",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
 
     // Competence levels per category (beginner, average, pro)
     levelFakturiranje: varchar("level_fakturiranje", { length: 20 }).default("beginner").notNull(),
@@ -76,8 +85,12 @@ export const checklistInteractions = pgTable(
   "checklist_interactions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id").notNull(),
-    companyId: text("company_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => company.id, { onDelete: "cascade" }),
 
     // Item identification
     itemType: varchar("item_type", { length: 50 }).notNull(),
