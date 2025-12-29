@@ -12,6 +12,18 @@ interface RateLimitRecord {
 // Redis key prefix for rate limiting
 const RATE_LIMIT_PREFIX = "rate-limit:"
 
+// In-memory fallback for rate limiting when Redis is unavailable
+const inMemoryFallback = new Map<string, RateLimitRecord>()
+
+// Critical limit types that should fail closed (deny requests) when Redis is unavailable
+// These are security-sensitive operations where failing open would create vulnerabilities
+const CRITICAL_LIMIT_TYPES: (keyof typeof RATE_LIMITS)[] = [
+  "LOGIN",
+  "PASSWORD_RESET",
+  "OTP_SEND",
+  "OTP_VERIFY",
+]
+
 export const RATE_LIMITS = {
   LOGIN: {
     attempts: 5, // 5 attempts
@@ -53,12 +65,65 @@ function getKey(identifier: string, limitType: string): string {
 }
 
 /**
+ * In-memory rate limit check used as fallback when Redis is unavailable
+ * This provides degraded but still functional rate limiting for a single instance
+ */
+function checkRateLimitInMemory(
+  identifier: string,
+  limitType: keyof typeof RATE_LIMITS
+): { allowed: boolean; resetAt?: number; blockedUntil?: number; error?: string } {
+  const now = Date.now()
+  const limit = RATE_LIMITS[limitType]
+  const key = getKey(identifier, limitType)
+  const record = inMemoryFallback.get(key)
+
+  if (!record) {
+    inMemoryFallback.set(key, {
+      count: 1,
+      resetAt: now + limit.window,
+    })
+    return { allowed: true, resetAt: now + limit.window }
+  }
+
+  if (record.blockedUntil && record.blockedUntil > now) {
+    return { allowed: false, resetAt: record.resetAt, blockedUntil: record.blockedUntil }
+  }
+
+  if (record.resetAt < now) {
+    inMemoryFallback.set(key, { count: 1, resetAt: now + limit.window })
+    return { allowed: true, resetAt: now + limit.window }
+  }
+
+  if (record.count >= limit.attempts) {
+    inMemoryFallback.set(key, {
+      count: record.count + 1,
+      resetAt: record.resetAt,
+      blockedUntil: now + limit.blockDuration,
+    })
+    return { allowed: false, resetAt: record.resetAt, blockedUntil: now + limit.blockDuration }
+  }
+
+  inMemoryFallback.set(key, { ...record, count: record.count + 1 })
+  return { allowed: true, resetAt: record.resetAt }
+}
+
+/**
  * Check if an identifier has exceeded rate limits (async Redis-based)
+ *
+ * Security behavior on Redis failure:
+ * - For critical limit types (LOGIN, PASSWORD_RESET, OTP_SEND, OTP_VERIFY): falls back to in-memory rate limiting
+ * - For non-critical limit types: falls back to in-memory rate limiting
+ * - Use failClosed=true to override and deny all requests on Redis failure
+ *
+ * @param identifier - Unique identifier for the rate limit (e.g., IP address, user ID)
+ * @param limitType - Type of rate limit to check
+ * @param failClosed - If true, deny requests when Redis is unavailable instead of using in-memory fallback
  */
 export async function checkRateLimit(
   identifier: string,
-  limitType: keyof typeof RATE_LIMITS = "API_CALLS"
-): Promise<{ allowed: boolean; resetAt?: number; blockedUntil?: number }> {
+  limitType: keyof typeof RATE_LIMITS = "API_CALLS",
+  failClosed: boolean = false
+): Promise<{ allowed: boolean; resetAt?: number; blockedUntil?: number; error?: string }> {
   const now = Date.now()
   const limit = RATE_LIMITS[limitType]
   const key = getKey(identifier, limitType)
@@ -129,9 +194,30 @@ export async function checkRateLimit(
 
     return { allowed: true, resetAt: record.resetAt }
   } catch (error) {
-    // If Redis is unavailable, fail open but log the error
-    console.error("[rate-limit] Redis error, allowing request:", error)
-    return { allowed: true }
+    // Redis is unavailable - determine fallback behavior
+    console.error("[rate-limit] Redis error:", error)
+
+    // If explicitly requested to fail closed, deny the request
+    if (failClosed) {
+      console.warn("[rate-limit] Failing closed as requested - denying request")
+      return { allowed: false, error: "service_unavailable" }
+    }
+
+    // For critical limit types, use in-memory fallback to maintain rate limiting
+    // This provides degraded but still functional protection
+    if (CRITICAL_LIMIT_TYPES.includes(limitType)) {
+      console.warn(
+        `[rate-limit] Redis unavailable for critical limit type ${limitType}, using in-memory fallback`
+      )
+      return checkRateLimitInMemory(identifier, limitType)
+    }
+
+    // For non-critical limit types, also use in-memory fallback
+    // This maintains rate limiting even without Redis
+    console.warn(
+      `[rate-limit] Redis unavailable for ${limitType}, using in-memory fallback`
+    )
+    return checkRateLimitInMemory(identifier, limitType)
   }
 }
 
@@ -140,8 +226,6 @@ export async function checkRateLimit(
  * Uses in-memory fallback when Redis is not immediately available
  * NOTE: This will not work across instances - use async checkRateLimit where possible
  */
-const inMemoryFallback = new Map<string, RateLimitRecord>()
-
 export function checkRateLimitSync(
   identifier: string,
   limitType: keyof typeof RATE_LIMITS = "API_CALLS"
