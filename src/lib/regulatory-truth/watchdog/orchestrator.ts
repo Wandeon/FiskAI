@@ -220,17 +220,23 @@ async function runProcessPhase(): Promise<PhaseResult> {
       where: {
         rules: { none: {} },
       },
+      select: {
+        id: true,
+        domain: true,
+        extractedValue: true,
+        valueType: true,
+      },
     })
 
     if (ungroupedPointers.length > 0) {
       const grouped = groupSourcePointersByDomain(ungroupedPointers)
-      for (const [domain, pointerIds] of Object.entries(grouped)) {
+      for (const [groupKey, pointerIds] of Object.entries(grouped)) {
         try {
           await runComposer(pointerIds)
           itemsProcessed++
         } catch (error) {
           itemsFailed++
-          console.error(`[watchdog] Compose failed for ${domain}:`, error)
+          console.error(`[watchdog] Compose failed for ${groupKey}:`, error)
         }
       }
     }

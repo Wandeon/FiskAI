@@ -452,21 +452,55 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
 }
 
 /**
- * Group source pointers by domain for coherent rule creation
+ * Group source pointers by domain AND value for coherent rule creation.
+ * This prevents mixing pointers for different concepts which leads to:
+ * - Conflict detection failures
+ * - LLM composition failures
+ * - Orphaned pointers
  */
 export function groupSourcePointersByDomain(
-  sourcePointers: Array<{ id: string; domain: string }>
+  sourcePointers: Array<{ id: string; domain: string; extractedValue?: string; valueType?: string }>
 ): Record<string, string[]> {
   const grouped: Record<string, string[]> = {}
 
   for (const sp of sourcePointers) {
-    if (!grouped[sp.domain]) {
-      grouped[sp.domain] = []
+    // Create a composite key: domain + normalized value + valueType
+    // This ensures pointers with same concept/value are grouped together
+    const normalizedValue = sp.extractedValue?.trim().toLowerCase() || "unknown"
+    const valueType = sp.valueType || "text"
+    const groupKey = `${sp.domain}::${valueType}::${normalizedValue}`
+
+    if (!grouped[groupKey]) {
+      grouped[groupKey] = []
     }
-    grouped[sp.domain].push(sp.id)
+    grouped[groupKey].push(sp.id)
   }
 
   return grouped
+}
+
+/**
+ * Mark orphaned pointers for manual review or retry.
+ * This handles pointers that failed composition due to conflicts or validation errors.
+ */
+export async function markOrphanedPointersForReview(
+  pointerIds: string[],
+  reason: string
+): Promise<void> {
+  if (pointerIds.length === 0) return
+
+  // Add extractionNotes to indicate why composition failed
+  const timestamp = new Date().toISOString()
+  await db.sourcePointer.updateMany({
+    where: { id: { in: pointerIds } },
+    data: {
+      extractionNotes: `[COMPOSITION_FAILED @ ${timestamp}] ${reason}. Needs manual review or retry.`,
+    },
+  })
+
+  console.log(
+    `[composer] Marked ${pointerIds.length} orphaned pointers for review: ${reason}`
+  )
 }
 
 /**
@@ -488,6 +522,8 @@ export async function runComposerBatch(): Promise<{
     select: {
       id: true,
       domain: true,
+      extractedValue: true,
+      valueType: true,
     },
   })
 
@@ -521,12 +557,15 @@ export async function runComposerBatch(): Promise<{
     if (softFailResult.success && softFailResult.data?.success && softFailResult.data.ruleId) {
       success++
       totalRules++
-      console.log(`[composer] ✓ Created rule: ${softFailResult.data.ruleId}`)
+      console.log(`[composer] ✓ Created/merged rule: ${softFailResult.data.ruleId}`)
     } else {
       failed++
       const errorMsg = softFailResult.error || softFailResult.data?.error || "Unknown error"
       errors.push(`${domain}: ${errorMsg}`)
       console.log(`[composer] ✗ ${domain}: ${errorMsg}`)
+
+      // Mark these pointers for manual review since composition failed
+      await markOrphanedPointersForReview(pointerIds, errorMsg)
     }
 
     // Rate limiting - wait 3 seconds between compositions
