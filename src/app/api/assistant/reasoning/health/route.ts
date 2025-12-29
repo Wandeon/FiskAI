@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getMetrics } from "@/lib/assistant/reasoning/metrics"
 import { getReasoningMode } from "@/lib/assistant/reasoning/feature-flags"
+import { getEmbeddingStats } from "@/lib/regulatory-truth/services/embedding-service"
 
 interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy"
@@ -12,6 +13,11 @@ interface HealthStatus {
     recentTraces: number
     errorRate: number
     avgDurationMs: number
+  }
+  embeddings?: {
+    totalChunks: number
+    rulesWithEmbeddings: number
+    publishedRulesWithoutEmbeddings: number
   }
   metrics: ReturnType<ReturnType<typeof getMetrics>["getStats"]> | null
   timestamp: string
@@ -53,6 +59,15 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
     databaseOk = false
   }
 
+  // Get embedding stats
+  let embeddingStats
+  try {
+    embeddingStats = await getEmbeddingStats()
+  } catch {
+    // Embeddings are non-critical, don't fail health check
+    embeddingStats = undefined
+  }
+
   // Determine status
   let status: "healthy" | "degraded" | "unhealthy" = "healthy"
   if (!databaseOk) {
@@ -70,6 +85,7 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
       errorRate,
       avgDurationMs: Math.round(avgDurationMs),
     },
+    embeddings: embeddingStats,
     metrics: mode !== "off" ? metrics.getStats() : null,
     timestamp: new Date().toISOString(),
   })

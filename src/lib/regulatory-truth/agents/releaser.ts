@@ -391,6 +391,35 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
   }
 
   // ==========================================================================
+  // Trigger Embedding Generation (non-blocking)
+  // ==========================================================================
+  // Queue embedding generation for each published rule.
+  // This is async and non-blocking - failures are logged but don't fail the release.
+
+  try {
+    // Dynamic import to avoid circular dependency
+    const { embeddingQueue } = await import("../workers/queues")
+
+    for (const ruleId of approvedRuleIds) {
+      await embeddingQueue.add(
+        "generate-embedding",
+        {
+          ruleId,
+          runId: release.id,
+        },
+        {
+          priority: 5, // Medium priority
+          removeOnComplete: true,
+        }
+      )
+    }
+    console.log(`[releaser] Queued ${approvedRuleIds.length} embedding generation jobs`)
+  } catch (error) {
+    // Log but don't fail release - embeddings are non-critical
+    console.error("[releaser] Failed to queue embedding jobs:", error)
+  }
+
+  // ==========================================================================
   // Emit Content Sync Events (non-blocking)
   // ==========================================================================
   // Emit a ContentSyncEvent for each published rule to trigger MDX guide updates.

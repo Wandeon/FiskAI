@@ -47,6 +47,10 @@ export const articleQueue = createQueue("article", { max: 2, duration: 60000 })
 // Rate limited to avoid overwhelming the system during batch operations
 export const backupQueue = createQueue("backup", { max: 2, duration: 60000 })
 
+// Embedding queue - generates embeddings for published rules
+// Higher rate limit since embeddings are lightweight
+export const embeddingQueue = createQueue("embedding", { max: 10, duration: 60000 })
+
 // Control queues
 export const scheduledQueue = createQueue("scheduled")
 export const deadletterQueue = createQueue("deadletter")
@@ -76,6 +80,7 @@ export const allQueues = {
   contentSync: contentSyncQueue,
   article: articleQueue,
   backup: backupQueue,
+  embedding: embeddingQueue,
   scheduled: scheduledQueue,
   deadletter: deadletterQueue,
   "system-status": systemStatusQueue,
