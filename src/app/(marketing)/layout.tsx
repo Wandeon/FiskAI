@@ -45,20 +45,12 @@ export default async function MarketingLayout({
             <div className="space-y-2">
               <p className="text-xs font-medium text-white/50">PODUZEĆE I KONTAKT</p>
               <div className="space-y-1 text-sm text-white/70">
-                <p className="font-medium text-white">Metrica d.o.o.</p>
-                <p>Radnička cesta 80, 10000 Zagreb</p>
-                <p>OIB: 12345678901</p>
-                <p>IBAN: HR1234567890123456789 (ZABA)</p>
+                <p className="font-medium text-white">FiskAI d.o.o.</p>
+                <p>Zagreb, Hrvatska</p>
                 <p>
                   Email:{" "}
-                  <a href="mailto:kontakt@fiskai.hr" className="text-cyan-400 hover:underline">
-                    kontakt@fiskai.hr
-                  </a>
-                </p>
-                <p>
-                  Tel:{" "}
-                  <a href="tel:+38512345678" className="text-cyan-400 hover:underline">
-                    +385 1 234 5678
+                  <a href="mailto:info@fiskai.hr" className="text-cyan-400 hover:underline">
+                    info@fiskai.hr
                   </a>
                 </p>
               </div>
@@ -95,7 +87,7 @@ export default async function MarketingLayout({
             <div className="pt-4">
               <p className="text-xs font-medium text-white/50">PODRŠKA</p>
               <p className="text-xs text-white/60 mt-1">
-                Odgovor unutar 24h radnim danima. Hitni slučajevi: +385 1 234 5679
+                Odgovor unutar 24h radnim danima putem emaila.
               </p>
             </div>
           </div>
@@ -103,7 +95,7 @@ export default async function MarketingLayout({
         <div className="mx-auto max-w-6xl border-t border-white/10 px-4 py-4 md:px-6">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-xs text-white/60">
-              © {new Date().getFullYear()} Metrica d.o.o. (FiskAI). Sva prava pridržana.
+              © {new Date().getFullYear()} FiskAI d.o.o. Sva prava pridržana.
             </p>
             <div className="flex items-center gap-6">
               <a href="/status" className="text-xs text-white/60 hover:text-white">

@@ -7,44 +7,137 @@ import {
   Calendar,
   MessageSquare,
   FileText,
-  TrendingUp
+  Receipt,
 } from 'lucide-react'
 
 async function getStaffStats(userId: string) {
-  const [assignedClients, pendingTickets, upcomingDeadlines] = await Promise.all([
+  // Get assigned company IDs
+  const assignments = await db.staffAssignment.findMany({
+    where: { staffId: userId },
+    select: { companyId: true },
+  })
+  const companyIds = assignments.map(a => a.companyId)
+
+  if (companyIds.length === 0) {
+    return {
+      assignedClients: 0,
+      pendingTickets: 0,
+      upcomingDeadlines: 0,
+      itemsNeedAttention: 0,
+    }
+  }
+
+  // Calculate deadline window (next 7 days)
+  const now = new Date()
+  const nextWeek = new Date()
+  nextWeek.setDate(nextWeek.getDate() + 7)
+
+  const [assignedClients, pendingTickets, upcomingDeadlines, draftInvoices, pendingExpenses] = await Promise.all([
     db.staffAssignment.count({ where: { staffId: userId } }),
     db.supportTicket.count({
       where: {
-        category: 'ACCOUNTING',
+        companyId: { in: companyIds },
         status: { not: 'CLOSED' }
       }
     }),
-    // TODO: Implement deadline tracking
-    Promise.resolve(0),
+    db.eInvoice.count({
+      where: {
+        companyId: { in: companyIds },
+        dueDate: { gte: now, lte: nextWeek },
+        status: { notIn: ['SENT', 'ARCHIVED'] },
+      },
+    }),
+    db.eInvoice.count({
+      where: { companyId: { in: companyIds }, status: 'DRAFT' },
+    }),
+    db.expense.count({
+      where: { companyId: { in: companyIds }, status: 'PENDING' },
+    }),
   ])
 
   return {
     assignedClients,
     pendingTickets,
     upcomingDeadlines,
+    itemsNeedAttention: draftInvoices + pendingExpenses + pendingTickets,
   }
 }
 
-async function getRecentActivity(userId: string) {
+interface Activity {
+  id: string
+  companyName: string
+  companyId: string
+  action: string
+  type: 'assignment' | 'invoice' | 'expense' | 'ticket'
+  date: Date
+  amount?: number
+}
+
+async function getRecentActivity(userId: string): Promise<Activity[]> {
   const assignments = await db.staffAssignment.findMany({
     where: { staffId: userId },
     include: { company: true },
-    take: 5,
     orderBy: { assignedAt: 'desc' },
   })
 
-  // TODO: Fetch recent activity across assigned companies
-  return assignments.map(a => ({
-    id: a.id,
-    companyName: a.company.name,
-    action: 'Assigned',
-    date: a.assignedAt,
-  }))
+  const companyIds = assignments.map(a => a.companyId)
+  const companyMap = new Map(assignments.map(a => [a.companyId, a.company.name]))
+
+  if (companyIds.length === 0) return []
+
+  const [recentInvoices, recentExpenses, recentTickets] = await Promise.all([
+    db.eInvoice.findMany({
+      where: { companyId: { in: companyIds } },
+      select: { id: true, companyId: true, invoiceNumber: true, status: true, totalAmount: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+    db.expense.findMany({
+      where: { companyId: { in: companyIds } },
+      select: { id: true, companyId: true, description: true, status: true, totalAmount: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+    db.supportTicket.findMany({
+      where: { companyId: { in: companyIds } },
+      select: { id: true, companyId: true, title: true, status: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+  ])
+
+  const activities: Activity[] = [
+    ...assignments.slice(0, 3).map(a => ({
+      id: `assign-${a.id}`, companyName: a.company.name, companyId: a.companyId,
+      action: 'Assigned to client', type: 'assignment' as const, date: a.assignedAt,
+    })),
+    ...recentInvoices.map(inv => ({
+      id: `inv-${inv.id}`, companyName: companyMap.get(inv.companyId) || 'Unknown', companyId: inv.companyId,
+      action: `Invoice ${inv.invoiceNumber} - ${inv.status}`, type: 'invoice' as const,
+      date: inv.createdAt, amount: Number(inv.totalAmount),
+    })),
+    ...recentExpenses.map(exp => ({
+      id: `exp-${exp.id}`, companyName: companyMap.get(exp.companyId) || 'Unknown', companyId: exp.companyId,
+      action: `Expense: ${exp.description.slice(0, 30)} - ${exp.status}`, type: 'expense' as const,
+      date: exp.createdAt, amount: Number(exp.totalAmount),
+    })),
+    ...recentTickets.map(ticket => ({
+      id: `ticket-${ticket.id}`, companyName: companyMap.get(ticket.companyId) || 'Unknown', companyId: ticket.companyId,
+      action: `Ticket: ${ticket.title.slice(0, 30)} - ${ticket.status}`, type: 'ticket' as const, date: ticket.createdAt,
+    })),
+  ]
+
+  activities.sort((a, b) => b.date.getTime() - a.date.getTime())
+  return activities.slice(0, 10)
+}
+
+function getActivityIcon(type: string) {
+  switch (type) {
+    case 'invoice': return <FileText className="h-4 w-4 text-primary" />
+    case 'expense': return <Receipt className="h-4 w-4 text-warning" />
+    case 'ticket': return <MessageSquare className="h-4 w-4 text-accent" />
+    default: return <Users className="h-4 w-4 text-success" />
+  }
 }
 
 export async function StaffDashboard() {
@@ -116,7 +209,7 @@ export async function StaffDashboard() {
             <div className="space-y-4">
               {recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-center gap-4">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  {getActivityIcon(activity.type)}
                   <div className="flex-1">
                     <p className="text-sm font-medium">{activity.companyName}</p>
                     <p className="text-xs text-muted-foreground">{activity.action}</p>
