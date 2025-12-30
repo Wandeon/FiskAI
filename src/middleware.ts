@@ -189,6 +189,10 @@ export async function middleware(request: NextRequest) {
     response.headers.set("x-route-group", routeGroup)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
 
+    // Apply CSP with nonce
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
+    response.headers.set("x-nonce", nonce)
+
     logger.info(
       {
         requestId,
@@ -209,6 +213,10 @@ export async function middleware(request: NextRequest) {
   response.headers.set("x-subdomain", subdomain)
   response.headers.set("x-route-group", routeGroup)
   response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+
+  // Apply CSP with nonce
+  response.headers.set("Content-Security-Policy", generateCSP(nonce))
+  response.headers.set("x-nonce", nonce)
 
   logger.info(
     {

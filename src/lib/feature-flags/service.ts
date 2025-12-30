@@ -49,19 +49,22 @@ export function invalidateCache(): void {
 /**
  * Get all feature flags with their overrides (cached)
  */
-export async function getAllFlags(): Promise<FeatureFlagWithOverrides[]> {
-  if (isCacheValid()) {
+export async function getAllFlags(includeDeleted = false): Promise<FeatureFlagWithOverrides[]> {
+  if (isCacheValid() && !includeDeleted) {
     return cache!.flags
   }
 
   const flags = await prisma.featureFlag.findMany({
+    where: includeDeleted ? {} : { status: { not: "DELETED" } },
     include: {
       overrides: true,
     },
     orderBy: { key: "asc" },
   })
 
-  cache = { flags, timestamp: Date.now() }
+  if (!includeDeleted) {
+    cache = { flags, timestamp: Date.now() }
+  }
   return flags
 }
 
@@ -352,23 +355,61 @@ export async function updateFlag(
 /**
  * Delete a feature flag (hard delete)
  */
-export async function deleteFlag(id: string, userId: string): Promise<void> {
+export async function deleteFlag(id: string, userId: string, reason?: string): Promise<void> {
   const previous = await prisma.featureFlag.findUnique({ where: { id } })
   if (!previous) throw new Error("Feature flag not found")
 
-  // Log before deletion
-  await prisma.featureFlagAuditLog.create({
+  await prisma.featureFlag.update({
+    where: { id },
     data: {
-      flagId: id,
-      action: "ARCHIVED",
-      userId,
-      previousValue: previous as unknown as object,
-      reason: "Flag deleted",
+      status: "DELETED",
+      deletedAt: new Date(),
+      deletedBy: userId,
+      updatedBy: userId,
     },
   })
 
-  await prisma.featureFlag.delete({ where: { id } })
+  await prisma.featureFlagAuditLog.create({
+    data: {
+      flagId: id,
+      action: "DELETED",
+      userId,
+      previousValue: previous as unknown as object,
+      reason: reason || "Flag soft-deleted",
+    },
+  })
+
   invalidateCache()
+}
+
+export async function restoreFlag(id: string, userId: string, reason?: string): Promise<FeatureFlag> {
+  const previous = await prisma.featureFlag.findUnique({ where: { id } })
+  if (!previous) throw new Error("Feature flag not found")
+  if (previous.status !== "DELETED") throw new Error("Flag is not deleted")
+
+  const flag = await prisma.featureFlag.update({
+    where: { id },
+    data: {
+      status: "INACTIVE",
+      deletedAt: null,
+      deletedBy: null,
+      updatedBy: userId,
+    },
+  })
+
+  await prisma.featureFlagAuditLog.create({
+    data: {
+      flagId: id,
+      action: "RESTORED",
+      userId,
+      previousValue: previous as unknown as object,
+      newValue: flag as unknown as object,
+      reason: reason || "Flag restored from deletion",
+    },
+  })
+
+  invalidateCache()
+  return flag
 }
 
 // =============================================================================
