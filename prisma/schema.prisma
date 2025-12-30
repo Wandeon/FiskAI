@@ -187,6 +187,7 @@ model ChartOfAccounts {
   trialBalances TrialBalance[]
   debitRules    PostingRule[]      @relation("DebitPostingRules")
   creditRules   PostingRule[]      @relation("CreditPostingRules")
+  vatRules      PostingRule[]      @relation("VatPostingRules")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -286,6 +287,7 @@ model PostingRule {
   eventType       OperationalEventType
   debitAccountId  String
   creditAccountId String
+  vatAccountId    String?              // New field for Tax account (e.g. Output/Input VAT)
   description     String?
   isActive        Boolean              @default(true)
   createdAt       DateTime             @default(now())
@@ -293,6 +295,7 @@ model PostingRule {
   company         Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   debitAccount    ChartOfAccounts      @relation("DebitPostingRules", fields: [debitAccountId], references: [id], onDelete: Restrict)
   creditAccount   ChartOfAccounts      @relation("CreditPostingRules", fields: [creditAccountId], references: [id], onDelete: Restrict)
+  vatAccount      ChartOfAccounts?     @relation("VatPostingRules", fields: [vatAccountId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, sourceType, eventType])
   @@index([companyId])
