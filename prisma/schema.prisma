@@ -1375,6 +1375,17 @@ model FiscalRequest {
   lockedBy       String?
   jir            String?
   zki            String?
+  certificateSubject   String?
+  certificateSerial    String?
+  certificateNotBefore DateTime?
+  certificateNotAfter  DateTime?
+  certificateSha256    String?
+  certificateProvider  String?
+  certificateOib       String?
+  qrInvoiceNumber      String?
+  qrIssuerOib          String?
+  qrIssueDate          DateTime?
+  qrAmount             Decimal?         @db.Decimal(10, 2)
   errorCode      String?
   errorMessage   String?
   lastHttpStatus Int?
@@ -1386,11 +1397,35 @@ model FiscalRequest {
   certificate    FiscalCertificate @relation(fields: [certificateId], references: [id], onDelete: Restrict)
   company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoice        EInvoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  responses      FiscalResponse[]
 
   @@unique([companyId, invoiceId, messageType])
   @@index([status, nextRetryAt])
   @@index([companyId])
   @@index([invoiceId])
+}
+
+model FiscalResponse {
+  id                String               @id @default(cuid())
+  requestId         String
+  status            FiscalResponseStatus
+  attemptNumber     Int
+  jir               String?
+  zki               String?
+  responseXml       String?
+  errorCode         String?
+  errorMessage      String?
+  httpStatus        Int?
+  qrJir             String?
+  qrZki             String?
+  qrVerificationUrl String?
+  qrDateTime        DateTime?
+  qrAmount          Decimal?             @db.Decimal(10, 2)
+  createdAt         DateTime             @default(now())
+  request           FiscalRequest         @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([status])
 }
 
 model AIFeedback {
@@ -2195,6 +2230,11 @@ enum FiscalMessageType {
   RACUN
   STORNO
   PROVJERA
+}
+
+enum FiscalResponseStatus {
+  SUCCESS
+  FAILED
 }
 
 enum CertificateNotificationStatus {
