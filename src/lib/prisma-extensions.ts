@@ -410,6 +410,10 @@ const TENANT_MODELS = [
   "Dependent",
   "Allowance",
   "PensionPillar",
+  "Warehouse",
+  "StockItem",
+  "StockMovement",
+  "ValuationSnapshot",
   // Note: CompanyUser intentionally NOT included - it's filtered by userId, not companyId
   // Including it breaks getCurrentCompany() which queries CompanyUser before tenant context exists
 ] as const
@@ -932,6 +936,144 @@ function getDecimalValue(value: unknown): Prisma.Decimal | null {
 function assertAmountNonNegative(amount: Prisma.Decimal) {
   if (amount.lessThan(0)) {
     throw new CashAmountNegativeError()
+  }
+}
+
+export class StockValuationMethodMismatchError extends Error {
+  constructor(companyId: string, method: string) {
+    super(`Stock valuation method mismatch for company ${companyId}: ${method}`)
+    this.name = "StockValuationMethodMismatchError"
+  }
+}
+
+export class StockValuationMethodChangeError extends Error {
+  constructor(companyId: string) {
+    super(
+      `Stock valuation method cannot be changed for company ${companyId} once stock activity exists.`
+    )
+    this.name = "StockValuationMethodChangeError"
+  }
+}
+
+export class StockMovementReconciliationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "StockMovementReconciliationError"
+  }
+}
+
+function assertStockMovementQuantity(movementType: string, quantity: Prisma.Decimal | null): void {
+  if (!quantity) return
+  if (quantity.isZero()) {
+    throw new StockMovementReconciliationError("Stock movement quantity cannot be zero.")
+  }
+  if ((movementType === "PRIMKA" || movementType === "IZDATNICA") && quantity.lte(0)) {
+    throw new StockMovementReconciliationError(
+      `Stock movement ${movementType} requires a positive quantity.`
+    )
+  }
+}
+
+async function assertStockItemRelations(
+  prismaBase: PrismaClient,
+  data: Record<string, unknown>
+): Promise<void> {
+  const companyId = data.companyId as string | undefined
+  const warehouseId = data.warehouseId as string | undefined
+  const productId = data.productId as string | undefined
+  if (!companyId || !warehouseId || !productId) return
+
+  const [warehouse, product] = await Promise.all([
+    prismaBase.warehouse.findUnique({ where: { id: warehouseId }, select: { companyId: true } }),
+    prismaBase.product.findUnique({ where: { id: productId }, select: { companyId: true } }),
+  ])
+
+  if (!warehouse || warehouse.companyId !== companyId) {
+    throw new StockMovementReconciliationError("Warehouse does not belong to company.")
+  }
+
+  if (!product || product.companyId !== companyId) {
+    throw new StockMovementReconciliationError("Product does not belong to company.")
+  }
+}
+
+async function assertStockMovementRelations(
+  prismaBase: PrismaClient,
+  data: Record<string, unknown>
+): Promise<void> {
+  const companyId = (data.companyId as string | undefined) ?? getTenantContext()?.companyId
+  const warehouseId = data.warehouseId as string | undefined
+  const productId = data.productId as string | undefined
+  const stockItemId = data.stockItemId as string | undefined
+
+  if (!companyId) return
+
+  if (warehouseId) {
+    const warehouse = await prismaBase.warehouse.findUnique({
+      where: { id: warehouseId },
+      select: { companyId: true },
+    })
+    if (!warehouse || warehouse.companyId !== companyId) {
+      throw new StockMovementReconciliationError("Warehouse does not belong to company.")
+    }
+  }
+
+  if (productId) {
+    const product = await prismaBase.product.findUnique({
+      where: { id: productId },
+      select: { companyId: true },
+    })
+    if (!product || product.companyId !== companyId) {
+      throw new StockMovementReconciliationError("Product does not belong to company.")
+    }
+  }
+
+  if (stockItemId) {
+    const stockItem = await prismaBase.stockItem.findUnique({
+      where: { id: stockItemId },
+      select: { companyId: true, warehouseId: true, productId: true },
+    })
+
+    if (!stockItem || stockItem.companyId !== companyId) {
+      throw new StockMovementReconciliationError("Stock item does not belong to company.")
+    }
+
+    if (warehouseId && stockItem.warehouseId !== warehouseId) {
+      throw new StockMovementReconciliationError("Stock item does not match warehouse.")
+    }
+
+    if (productId && stockItem.productId !== productId) {
+      throw new StockMovementReconciliationError("Stock item does not match product.")
+    }
+  }
+}
+
+async function assertStockValuationMethod(
+  prismaBase: PrismaClient,
+  companyId: string,
+  valuationMethod: string
+): Promise<void> {
+  const company = await prismaBase.company.findUnique({
+    where: { id: companyId },
+    select: { stockValuationMethod: true },
+  })
+
+  if (company && company.stockValuationMethod !== valuationMethod) {
+    throw new StockValuationMethodMismatchError(companyId, valuationMethod)
+  }
+}
+
+async function assertStockValuationMethodChange(
+  prismaBase: PrismaClient,
+  companyId: string
+): Promise<void> {
+  const [activityCount, snapshotCount] = await Promise.all([
+    prismaBase.stockMovement.count({ where: { companyId } }),
+    prismaBase.valuationSnapshot.count({ where: { companyId } }),
+  ])
+
+  if (activityCount > 0 || snapshotCount > 0) {
+    throw new StockValuationMethodChangeError(companyId)
   }
 }
 
@@ -1477,6 +1619,30 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
+          if (model === "StockItem" && args.data && typeof args.data === "object") {
+            await assertStockItemRelations(prismaBase, args.data as Record<string, unknown>)
+          }
+
+          if (model === "StockMovement" && args.data && typeof args.data === "object") {
+            const data = args.data as Record<string, unknown>
+            const movementType = data.movementType as string | undefined
+            const quantity = getDecimalValue(data.quantity)
+            if (movementType) {
+              assertStockMovementQuantity(movementType, quantity)
+            }
+            await assertStockMovementRelations(prismaBase, data)
+          }
+
+          if (model === "ValuationSnapshot" && args.data && typeof args.data === "object") {
+            const data = args.data as Record<string, unknown>
+            const companyId =
+              (data.companyId as string | undefined) ?? getTenantContext()?.companyId
+            const valuationMethod = data.valuationMethod as string | undefined
+            if (companyId && valuationMethod) {
+              await assertStockValuationMethod(prismaBase, companyId, valuationMethod)
+            }
+          }
+
           const result = await query(args)
 
           // Audit logging for create operations
@@ -1568,6 +1734,64 @@ export function withTenantIsolation(prisma: PrismaClient) {
               prismaBase,
               args.where as Prisma.AttachmentWhereUniqueInput
             )
+          }
+
+          if (model === "Company" && args.data && typeof args.data === "object") {
+            const data = args.data as Record<string, unknown>
+            if ("stockValuationMethod" in data && data.stockValuationMethod) {
+              const existing = await prismaBase.company.findUnique({
+                where: args.where as Prisma.CompanyWhereUniqueInput,
+                select: { id: true, stockValuationMethod: true },
+              })
+              const nextMethod = data.stockValuationMethod as string
+              if (existing && existing.stockValuationMethod !== nextMethod) {
+                await assertStockValuationMethodChange(prismaBase, existing.id)
+              }
+            }
+          }
+
+          if (model === "StockItem" && args.data && typeof args.data === "object") {
+            const existing = await prismaBase.stockItem.findUnique({
+              where: args.where as Prisma.StockItemWhereUniqueInput,
+              select: { companyId: true, warehouseId: true, productId: true },
+            })
+            if (!existing) {
+              throw new StockMovementReconciliationError("Stock item not found.")
+            }
+            const next = { ...existing, ...(args.data as Record<string, unknown>) }
+            await assertStockItemRelations(prismaBase, next)
+          }
+
+          if (model === "StockMovement" && args.data && typeof args.data === "object") {
+            const existing = await prismaBase.stockMovement.findUnique({
+              where: args.where as Prisma.StockMovementWhereUniqueInput,
+              select: {
+                companyId: true,
+                warehouseId: true,
+                productId: true,
+                stockItemId: true,
+                movementType: true,
+                quantity: true,
+              },
+            })
+            if (!existing) {
+              throw new StockMovementReconciliationError("Stock movement not found.")
+            }
+            const next = { ...existing, ...(args.data as Record<string, unknown>) }
+            const movementType = next.movementType as string
+            const quantity = getDecimalValue(next.quantity)
+            assertStockMovementQuantity(movementType, quantity)
+            await assertStockMovementRelations(prismaBase, next)
+          }
+
+          if (model === "ValuationSnapshot" && args.data && typeof args.data === "object") {
+            const data = args.data as Record<string, unknown>
+            const companyId =
+              (data.companyId as string | undefined) ?? getTenantContext()?.companyId
+            const valuationMethod = data.valuationMethod as string | undefined
+            if (companyId && valuationMethod) {
+              await assertStockValuationMethod(prismaBase, companyId, valuationMethod)
+            }
           }
 
           // REGULATORY RULE STATUS TRANSITIONS: enforce allowed transitions (hard backstop)

@@ -179,6 +179,134 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       expenseId: expense.id,
       invoiceNumber: invoice?.number || "N/A",
     })
+  } else if (job.documentType === "PRIMKA" || job.documentType === "IZDATNICA") {
+    const source = body && Array.isArray(body.items) ? body : (job.extractedData ?? {})
+    const { warehouseId, items, referenceNumber, movementDate } = source as {
+      warehouseId?: string
+      items?: Array<{ productId: string; quantity: number | string; unitCost?: number | string }>
+      referenceNumber?: string
+      movementDate?: string
+    }
+
+    if (!warehouseId) {
+      return NextResponse.json({ error: "Warehouse is required" }, { status: 400 })
+    }
+
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: "Stock items are required" }, { status: 400 })
+    }
+
+    const warehouse = await db.warehouse.findFirst({
+      where: { id: warehouseId, companyId: company.id },
+    })
+
+    if (!warehouse) {
+      return NextResponse.json({ error: "Warehouse not found" }, { status: 404 })
+    }
+
+    const companyRecord = await db.company.findUnique({
+      where: { id: company.id },
+      select: { stockValuationMethod: true },
+    })
+
+    const valuationMethod = companyRecord?.stockValuationMethod ?? "WEIGHTED_AVERAGE"
+    const movementTimestamp = movementDate ? new Date(movementDate) : new Date()
+    if (Number.isNaN(movementTimestamp.getTime())) {
+      return NextResponse.json({ error: "Invalid movement date" }, { status: 400 })
+    }
+    const movementType = job.documentType
+
+    await db.$transaction(async (tx) => {
+      for (const item of items) {
+        if (!item.productId) {
+          throw new Error("Product is required for stock movement")
+        }
+
+        const quantity = new Prisma.Decimal(item.quantity ?? 0)
+        if (quantity.lte(0)) {
+          throw new Error("Quantity must be greater than 0")
+        }
+
+        const product = await tx.product.findFirst({
+          where: { id: item.productId, companyId: company.id },
+        })
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.productId}`)
+        }
+
+        const stockItem = await tx.stockItem.upsert({
+          where: {
+            warehouseId_productId: {
+              warehouseId,
+              productId: item.productId,
+            },
+          },
+          create: {
+            companyId: company.id,
+            warehouseId,
+            productId: item.productId,
+            quantityOnHand: new Prisma.Decimal(0),
+          },
+          update: {},
+        })
+
+        const delta = movementType === "PRIMKA" ? quantity : quantity.mul(-1)
+        const nextQuantity = new Prisma.Decimal(stockItem.quantityOnHand).add(delta)
+
+        if (nextQuantity.lt(0)) {
+          throw new Error(`Insufficient stock for product ${product.name}`)
+        }
+
+        const unitCost = item.unitCost !== undefined ? new Prisma.Decimal(item.unitCost) : null
+        let nextAverageCost = stockItem.averageCost
+
+        if (valuationMethod === "WEIGHTED_AVERAGE" && unitCost && delta.gt(0)) {
+          const currentQty = new Prisma.Decimal(stockItem.quantityOnHand)
+          const currentValue = stockItem.averageCost
+            ? currentQty.mul(stockItem.averageCost)
+            : new Prisma.Decimal(0)
+          const incomingValue = quantity.mul(unitCost)
+          const totalQty = currentQty.add(quantity)
+          nextAverageCost = totalQty.eq(0)
+            ? unitCost
+            : currentValue.add(incomingValue).div(totalQty)
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            companyId: company.id,
+            warehouseId,
+            productId: item.productId,
+            stockItemId: stockItem.id,
+            movementType,
+            quantity,
+            unitCost,
+            movementDate: movementTimestamp,
+            referenceNumber: referenceNumber || job.originalName,
+          },
+        })
+
+        await tx.stockItem.update({
+          where: { id: stockItem.id },
+          data: {
+            quantityOnHand: nextQuantity,
+            averageCost: nextAverageCost,
+            lastMovementAt: movementTimestamp,
+          },
+        })
+      }
+    })
+
+    await db.importJob.update({
+      where: { id },
+      data: { status: "CONFIRMED" },
+    })
+
+    return NextResponse.json({
+      success: true,
+      movementCount: items.length,
+    })
   }
 
   // Unknown document type

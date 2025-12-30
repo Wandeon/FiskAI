@@ -2837,6 +2837,8 @@ enum DocumentType {
   BANK_STATEMENT
   INVOICE
   EXPENSE
+  PRIMKA
+  IZDATNICA
 }
 
 enum StockMovementType {
