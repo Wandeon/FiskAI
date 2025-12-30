@@ -3270,7 +3270,6 @@ enum FeatureFlagStatus {
   DELETED
   DELETED
 }
-  DELETED
 
 model FeatureFlag {
   id          String            @id @default(cuid())

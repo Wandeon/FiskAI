@@ -5,6 +5,7 @@ import { notificationPreference } from "@/lib/db/schema/pausalni"
 import { eq } from "drizzle-orm"
 import { withApiLogging } from "@/lib/api-logging"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export const GET = withApiLogging(async (request: NextRequest) => {
   try {
@@ -40,8 +41,7 @@ export const GET = withApiLogging(async (request: NextRequest) => {
       },
     })
   } catch (error) {
-    console.error("Error fetching notification preferences:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })
 
@@ -97,7 +97,6 @@ export const PUT = withApiLogging(async (request: NextRequest) => {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error updating notification preferences:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })
