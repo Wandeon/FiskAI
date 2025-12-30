@@ -218,6 +218,7 @@ export const gocardlessProvider: BankSyncProvider = {
         reference: txn.transactionId,
         counterpartyName: isCredit ? txn.debtorName : txn.creditorName,
         counterpartyIban: isCredit ? txn.debtorAccount?.iban : txn.creditorAccount?.iban,
+        currency: txn.transactionAmount.currency,
       }
     })
   },
