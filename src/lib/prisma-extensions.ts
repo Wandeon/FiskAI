@@ -146,12 +146,19 @@ const EXPENSE_EVENT_STATUSES = new Set(["PENDING", "PAID"])
 
 type OperationalEventInput = {
   companyId: string
-  sourceType: "INVOICE" | "EXPENSE" | "BANK_TRANSACTION"
+  sourceType: "INVOICE" | "EXPENSE" | "BANK_TRANSACTION" | "PAYROLL" | "ASSET" | "INVENTORY"
   eventType:
     | "INVOICE_ISSUED"
     | "EXPENSE_RECORDED"
     | "BANK_TRANSACTION_INCOMING"
     | "BANK_TRANSACTION_OUTGOING"
+    | "PAYROLL_POSTED"
+    | "ASSET_ACQUIRED"
+    | "ASSET_DEPRECIATION"
+    | "ASSET_DISPOSED"
+    | "INVENTORY_RECEIPT"
+    | "INVENTORY_ISSUE"
+    | "INVENTORY_ADJUSTMENT"
   sourceId: string
   entryDate: Date
   payload?: Prisma.InputJsonValue
@@ -225,6 +232,88 @@ function buildTransactionEvent(record: {
     sourceId: record.id,
     entryDate: record.date,
     payload: { direction: record.direction },
+  }
+}
+
+function buildPayrollEvent(record: {
+  id: string
+  companyId: string
+  payoutDate: Date
+  status?: string | null
+}): OperationalEventInput | null {
+  if (record.status && record.status !== "LOCKED") return null
+  return {
+    companyId: record.companyId,
+    sourceType: "PAYROLL",
+    eventType: "PAYROLL_POSTED",
+    sourceId: record.id,
+    entryDate: record.payoutDate,
+    payload: { status: record.status ?? "LOCKED" },
+  }
+}
+
+function buildAssetAcquisitionEvent(record: {
+  id: string
+  companyId: string
+  acquisitionDate: Date
+}): OperationalEventInput {
+  return {
+    companyId: record.companyId,
+    sourceType: "ASSET",
+    eventType: "ASSET_ACQUIRED",
+    sourceId: record.id,
+    entryDate: record.acquisitionDate,
+  }
+}
+
+function buildAssetDepreciationEvent(record: {
+  id: string
+  companyId: string
+  periodEnd: Date
+}): OperationalEventInput {
+  return {
+    companyId: record.companyId,
+    sourceType: "ASSET",
+    eventType: "ASSET_DEPRECIATION",
+    sourceId: record.id,
+    entryDate: record.periodEnd,
+  }
+}
+
+function buildAssetDisposalEvent(record: {
+  id: string
+  companyId: string
+  disposalDate: Date
+}): OperationalEventInput {
+  return {
+    companyId: record.companyId,
+    sourceType: "ASSET",
+    eventType: "ASSET_DISPOSED",
+    sourceId: record.id,
+    entryDate: record.disposalDate,
+  }
+}
+
+function buildInventoryEvent(record: {
+  id: string
+  companyId: string
+  movementType: string
+  movementDate: Date
+}): OperationalEventInput {
+  const eventType =
+    record.movementType === "PRIMKA"
+      ? "INVENTORY_RECEIPT"
+      : record.movementType === "IZDATNICA"
+        ? "INVENTORY_ISSUE"
+        : "INVENTORY_ADJUSTMENT"
+
+  return {
+    companyId: record.companyId,
+    sourceType: "INVENTORY",
+    eventType,
+    sourceId: record.id,
+    entryDate: record.movementDate,
+    payload: { movementType: record.movementType },
   }
 }
 
@@ -1529,6 +1618,39 @@ export function withTenantIsolation(prisma: PrismaClient) {
             await upsertOperationalEvent(prismaBase, event)
           }
 
+          if (model === "FixedAsset" && result && typeof result === "object") {
+            const event = buildAssetAcquisitionEvent(
+              result as { id: string; companyId: string; acquisitionDate: Date }
+            )
+            await upsertOperationalEvent(prismaBase, event)
+          }
+
+          if (model === "DepreciationEntry" && result && typeof result === "object") {
+            const event = buildAssetDepreciationEvent(
+              result as { id: string; companyId: string; periodEnd: Date }
+            )
+            await upsertOperationalEvent(prismaBase, event)
+          }
+
+          if (model === "DisposalEvent" && result && typeof result === "object") {
+            const event = buildAssetDisposalEvent(
+              result as { id: string; companyId: string; disposalDate: Date }
+            )
+            await upsertOperationalEvent(prismaBase, event)
+          }
+
+          if (model === "StockMovement" && result && typeof result === "object") {
+            const event = buildInventoryEvent(
+              result as {
+                id: string
+                companyId: string
+                movementType: string
+                movementDate: Date
+              }
+            )
+            await upsertOperationalEvent(prismaBase, event)
+          }
+
           return result
         },
         async update({ model, args, query }) {
@@ -1696,11 +1818,24 @@ export function withTenantIsolation(prisma: PrismaClient) {
             const newStatus = getRequestedPayoutStatus(args.data)
             const existing = await prismaBase.payout.findUnique({
               where: args.where as Prisma.PayoutWhereUniqueInput,
-              select: { status: true },
+              select: { id: true, status: true, companyId: true, payoutDate: true },
             })
 
             if (!existing) {
               throw new PayoutStatusTransitionError("Cannot transition payout: payout not found.")
+            }
+
+            const nextStatus = newStatus ?? existing.status
+            if (nextStatus && nextStatus !== existing.status) {
+              const event = buildPayrollEvent({
+                id: existing.id,
+                companyId: existing.companyId,
+                payoutDate: existing.payoutDate,
+                status: nextStatus,
+              })
+              if (event) {
+                operationalEvent = event
+              }
             }
 
             if (!newStatus || newStatus === existing.status) {
