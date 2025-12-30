@@ -208,7 +208,7 @@ export function POSDCalculatorClient() {
               deadlineInfo.daysLeft <= 7
                 ? "border-danger-border/50 bg-danger-bg0/10"
                 : deadlineInfo.daysLeft <= 14
-                  ? "border-amber-500/50 bg-amber-500/10"
+                  ? "border-warning/50 bg-warning-bg0/10"
                   : "border-focus bg-interactive/10"
             )}
           >
@@ -219,7 +219,7 @@ export function POSDCalculatorClient() {
                   deadlineInfo.daysLeft <= 7
                     ? "text-danger-text"
                     : deadlineInfo.daysLeft <= 14
-                      ? "text-amber-400"
+                      ? "text-warning"
                       : "text-primary"
                 )}
               />
@@ -242,7 +242,7 @@ export function POSDCalculatorClient() {
                 deadlineInfo.daysLeft <= 7
                   ? "bg-danger-bg0/20 text-red-300"
                   : deadlineInfo.daysLeft <= 14
-                    ? "bg-amber-500/20 text-amber-300"
+                    ? "bg-warning-bg0/20 text-amber-300"
                     : "bg-interactive/20 text-primary"
               )}
             >
@@ -311,7 +311,7 @@ export function POSDCalculatorClient() {
                       <p className="text-sm">{error}</p>
                       <button
                         onClick={() => setError(null)}
-                        className="ml-auto text-red-500 hover:text-danger-text"
+                        className="ml-auto text-danger hover:text-danger-text"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -582,10 +582,10 @@ export function POSDCalculatorClient() {
                   {result.warnings.map((warning, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"
+                      className="flex items-start gap-3 rounded-xl border border-warning-border bg-warning-bg p-4"
                     >
-                      <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-                      <p className="text-sm text-amber-800">{warning}</p>
+                      <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-text" />
+                      <p className="text-sm text-warning-text">{warning}</p>
                     </div>
                   ))}
                 </div>
@@ -596,7 +596,7 @@ export function POSDCalculatorClient() {
                 <Card className="border-success-border bg-success-bg">
                   <CardContent className="pt-6">
                     <p className="text-sm text-success-text">Ukupni primitci</p>
-                    <p className="text-2xl font-bold text-green-800">
+                    <p className="text-2xl font-bold text-success-text">
                       {formatCurrency(result.totalIncome)}
                     </p>
                   </CardContent>
@@ -614,15 +614,15 @@ export function POSDCalculatorClient() {
                 <Card className="border-purple-200 bg-purple-50">
                   <CardContent className="pt-6">
                     <p className="text-sm text-chart-2">Porezna osnovica</p>
-                    <p className="text-2xl font-bold text-purple-800">
+                    <p className="text-2xl font-bold text-chart-1">
                       {formatCurrency(result.taxBase)}
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-amber-200 bg-amber-50">
+                <Card className="border-warning-border bg-warning-bg">
                   <CardContent className="pt-6">
-                    <p className="text-sm text-amber-700">Porez + prirez</p>
-                    <p className="text-2xl font-bold text-amber-800">
+                    <p className="text-sm text-warning-text">Porez + prirez</p>
+                    <p className="text-2xl font-bold text-warning-text">
                       {formatCurrency(result.totalTax)}
                     </p>
                   </CardContent>
@@ -726,20 +726,20 @@ export function POSDCalculatorClient() {
 
               {/* VAT Warning */}
               {result.isNearVATThreshold && (
-                <Card className="mb-6 border-amber-200 bg-amber-50">
+                <Card className="mb-6 border-warning-border bg-warning-bg">
                   <CardContent className="flex items-start gap-3 pt-6">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-text" />
                     <div>
-                      <p className="font-medium text-amber-800">
+                      <p className="font-medium text-warning-text">
                         Blizu PDV praga ({result.vatThresholdPercentage.toFixed(1)}% od{" "}
                         {vatThresholdLabel})
                       </p>
-                      <p className="mt-1 text-sm text-amber-700">
+                      <p className="mt-1 text-sm text-warning-text">
                         Pratite prihode pažljivo. Ako prijeđete prag, morate se registrirati za PDV.
                       </p>
                       <Link
                         href="/alati/pdv-kalkulator"
-                        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-800 underline"
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-warning-text underline"
                       >
                         Otvori PDV kalkulator
                       </Link>

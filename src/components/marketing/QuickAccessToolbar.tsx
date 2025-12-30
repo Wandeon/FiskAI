@@ -42,7 +42,7 @@ const tools: ToolCard[] = [
     subtitle: "Kalkulator",
     description: "Provjeri 60.000€ limit",
     href: "/alati/pdv-kalkulator",
-    color: "text-amber-400",
+    color: "text-warning",
     bgGlow: "group-hover:shadow-amber-500/20",
   },
   {

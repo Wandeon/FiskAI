@@ -47,14 +47,14 @@ const REFUSAL_CONFIG: Record<
   UNRESOLVED_CONFLICT: {
     title: "Proturječne informacije",
     icon: <AlertTriangle className="w-5 h-5" />,
-    lightBg: "bg-amber-50 dark:bg-amber-950/20",
-    darkBg: "bg-amber-900/20 border-amber-500/30",
+    lightBg: "bg-warning-bg dark:bg-amber-950/20",
+    darkBg: "bg-amber-900/20 border-warning/30",
   },
   NEEDS_CLARIFICATION: {
     title: "Molimo pojasnite pitanje",
     icon: <MessageCircle className="w-5 h-5" />,
     lightBg: "bg-info-bg dark:bg-blue-950/20",
-    darkBg: "bg-cyan-900/20 border-cyan-500/30",
+    darkBg: "bg-cyan-900/20 border-interactive/30",
   },
   UNSUPPORTED_JURISDICTION: {
     title: "Nepodržana jurisdikcija",

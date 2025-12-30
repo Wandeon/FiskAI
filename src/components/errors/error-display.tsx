@@ -70,7 +70,7 @@ export function ErrorDisplay({
             {error.stack && (
               <div className="mt-3">
                 <p className="mb-1 text-xs font-semibold text-foreground">Stack Trace:</p>
-                <pre className="max-h-48 overflow-auto rounded bg-gray-900 p-3 text-xs text-gray-100">
+                <pre className="max-h-48 overflow-auto rounded bg-base p-3 text-xs text-foreground">
                   {error.stack}
                 </pre>
               </div>

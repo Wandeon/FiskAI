@@ -82,7 +82,7 @@ export default async function AgingReportPage() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-sm text-secondary">31-60 dana</p>
-            <p className="text-xl font-bold text-orange-600">{formatCurrency(totals.days60)}</p>
+            <p className="text-xl font-bold text-warning-text">{formatCurrency(totals.days60)}</p>
             <p className="text-xs text-muted">{aging.days60.length} računa</p>
           </CardContent>
         </Card>

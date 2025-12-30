@@ -134,11 +134,11 @@ export function ChecklistPageClient({
           <div className="text-sm text-[var(--muted)]">Kritično</div>
         </GlassCard>
         <GlassCard hover={false} padding="sm">
-          <div className="text-2xl font-bold text-amber-400">{stats.soon}</div>
+          <div className="text-2xl font-bold text-warning">{stats.soon}</div>
           <div className="text-sm text-[var(--muted)]">Uskoro</div>
         </GlassCard>
         <GlassCard hover={false} padding="sm">
-          <div className="text-2xl font-bold text-emerald-400">
+          <div className="text-2xl font-bold text-success">
             {initialStats.total - stats.total}
           </div>
           <div className="text-sm text-[var(--muted)]">Dovršeno</div>
@@ -168,7 +168,7 @@ export function ChecklistPageClient({
       {filteredItems.length === 0 ? (
         <GlassCard hover={false} padding="lg">
           <div className="text-center py-8">
-            <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
+            <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
             <p className="text-[var(--foreground)] text-lg font-medium">Sve je obrađeno!</p>
             <p className="text-[var(--muted)] mt-1">
               {filter === "all"

@@ -65,7 +65,7 @@ export function ToolUpsellCard({
 
   // Default - full card
   return (
-    <div className="my-8 overflow-hidden rounded-xl border border-info-border bg-gradient-to-br from-interactive to-indigo-700 shadow-lg">
+    <div className="my-8 overflow-hidden rounded-xl border border-info-border bg-gradient-to-br from-interactive to-chart-1 shadow-lg">
       <div className="p-6 text-white">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface/20">
@@ -73,10 +73,10 @@ export function ToolUpsellCard({
           </div>
           <div>
             <h3 className="text-lg font-bold">{title}</h3>
-            <p className="text-sm text-blue-100">Besplatna proba • Bez kreditne kartice</p>
+            <p className="text-sm text-info">Besplatna proba • Bez kreditne kartice</p>
           </div>
         </div>
-        <p className="mb-4 text-blue-100">{description}</p>
+        <p className="mb-4 text-info">{description}</p>
         <ul className="mb-6 space-y-2">
           {features.map((feature, i) => (
             <li key={i} className="flex items-center gap-2 text-sm">

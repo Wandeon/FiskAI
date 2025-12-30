@@ -18,8 +18,8 @@ const levelIcons = {
 }
 
 const levelColors = {
-  beginner: "text-emerald-400",
-  average: "text-amber-400",
+  beginner: "text-success",
+  average: "text-warning",
   pro: "text-accent",
 }
 

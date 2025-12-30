@@ -45,14 +45,16 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
   return (
     <div>
       {/* COCKPIT HERO SECTION */}
-      <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-base via-surface-elevated to-base">
+      {/* @design-override: Hero uses hardcoded dark gradient for consistent cockpit aesthetic */}
+      <section className="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
         {/* Animated background effects */}
         <PlexusBackground className="opacity-40" />
 
         {/* Multiple glow orbs for cockpit effect */}
+        {/* @design-override: Decorative orbs use vibrant raw colors for visual impact */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
-            className="absolute left-[10%] top-[20%] h-[500px] w-[500px] rounded-full bg-interactive/20 blur-[120px]"
+            className="absolute left-[10%] top-[20%] h-[500px] w-[500px] rounded-full bg-blue-500/20 blur-[120px]"
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.2, 0.3, 0.2],
@@ -64,7 +66,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
             }}
           />
           <motion.div
-            className="absolute right-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-chart-1/15 blur-[100px]"
+            className="absolute right-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-indigo-500/15 blur-[100px]"
             animate={{
               scale: [1.2, 1, 1.2],
               opacity: [0.15, 0.25, 0.15],
@@ -76,7 +78,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
             }}
           />
           <motion.div
-            className="absolute bottom-[10%] left-[30%] h-[300px] w-[300px] rounded-full bg-accent/10 blur-[80px]"
+            className="absolute bottom-[10%] left-[30%] h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-[80px]"
             animate={{
               x: [0, 50, 0],
               opacity: [0.1, 0.2, 0.1],
@@ -105,8 +107,9 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
             <Stagger className="space-y-8">
               {/* Tech credibility badge */}
               <StaggerItem>
+                {/* @design-override: Badge on dark hero uses cyan for visibility */}
                 <motion.div
-                  className="inline-flex items-center gap-2 rounded-full border border-accent-light/30 bg-accent/10 px-4 py-2 text-sm font-medium text-accent-light backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 backdrop-blur-sm"
                   whileHover={{ scale: 1.02, borderColor: "rgba(34, 211, 238, 0.5)" }}
                 >
                   <Zap className="h-4 w-4" />
@@ -115,11 +118,12 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
               </StaggerItem>
 
               {/* Main headline - REBELLIOUS */}
+              {/* @design-override: Hero text uses white for dark background contrast */}
               <StaggerItem>
-                <h1 className="text-4xl font-bold leading-tight text-foreground md:text-5xl lg:text-6xl">
+                <h1 className="text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
                   <span className="block">Dok drugi kompliciraju,</span>
                   <motion.span
-                    className="block bg-gradient-to-r from-info-text via-interactive to-accent bg-clip-text text-transparent"
+                    className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
                     animate={{
                       backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                     }}
@@ -137,9 +141,9 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
 
               {/* Subheadline */}
               <StaggerItem>
-                <p className="max-w-xl text-lg text-muted md:text-xl">
+                <p className="max-w-xl text-lg text-white/70 md:text-xl">
                   U svijetu loših softvera i komplicirane birokracije, FiskAI donosi mir.
-                  <span className="text-foreground">
+                  <span className="text-white/90">
                     {" "}
                     Bez &quot;donosim fascikl&quot;. Bez mailova knjigovođi.
                   </span>
@@ -147,12 +151,13 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
               </StaggerItem>
 
               {/* CTAs */}
+              {/* @design-override: Hero CTAs use vibrant cyan/blue for dark background */}
               <StaggerItem>
                 <div className="flex flex-wrap gap-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       href="/register"
-                      className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent to-interactive px-8 py-3.5 text-base font-semibold text-foreground shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:shadow-accent/30"
+                      className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
                     >
                       Započni besplatno
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -161,7 +166,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       href="/contact"
-                      className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-border bg-surface/5 px-8 py-3.5 text-base font-semibold text-foreground backdrop-blur-sm transition-all hover:bg-surface/10 hover:border-border"
+                      className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:border-white/30"
                     >
                       Zatraži demo
                     </Link>
@@ -169,7 +174,7 @@ export function MarketingHomeClient({ latestNews }: MarketingHomeClientProps) {
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       href="/alati"
-                      className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-accent-light/30 bg-accent/10 px-6 py-3.5 text-base font-semibold text-cyan-200 backdrop-blur-sm transition-all hover:bg-accent/15 hover:border-accent-light/50"
+                      className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-6 py-3.5 text-base font-semibold text-cyan-200 backdrop-blur-sm transition-all hover:bg-cyan-500/15 hover:border-cyan-400/50"
                     >
                       Istraži alate
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />

@@ -88,7 +88,7 @@ export const AssistantInput = forwardRef<AssistantInputHandle, AssistantInputPro
           isDark
             ? [
                 "bg-surface/60 backdrop-blur-xl",
-                "border border-cyan-500/30",
+                "border border-interactive/30",
                 "shadow-[0_0_30px_rgba(6,182,212,0.15)]",
                 isFocused && [
                   "border-accent-light/60",

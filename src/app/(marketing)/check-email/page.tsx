@@ -58,8 +58,8 @@ export default function CheckEmailPage() {
           Unesite kod u obrascu za registraciju kako biste potvrdili svoju adresu i aktivirali račun.
         </p>
 
-        <div className="rounded-md bg-amber-50 border border-amber-200 p-4 text-left">
-          <p className="text-sm text-amber-800">
+        <div className="rounded-md bg-warning-bg border border-warning-border p-4 text-left">
+          <p className="text-sm text-warning-text">
             <strong>Ne vidite email?</strong>
             <br />
             Provjerite spam/neželjenu poštu. Kod vrijedi 10 minuta.

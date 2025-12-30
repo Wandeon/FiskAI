@@ -512,7 +512,7 @@ export default function ERacunGeneratorPage() {
                 <p className="mb-1 font-bold text-red-900">
                   Od 1. siječnja 2026. e-računi su OBVEZNI za B2B transakcije
                 </p>
-                <p className="text-red-800">
+                <p className="text-danger-text">
                   PDF računi više neće biti prihvaćeni. Ovaj alat generira pravilan UBL 2.1 XML
                   format koji će zahtijevati FINA.{" "}
                   <a href="/register" className="font-medium underline">
@@ -746,7 +746,7 @@ export default function ERacunGeneratorPage() {
                         {lines.length > 1 && (
                           <button
                             onClick={() => removeLine(index)}
-                            className="ml-2 p-1 text-red-500 hover:text-danger-text"
+                            className="ml-2 p-1 text-danger hover:text-danger-text"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -873,7 +873,7 @@ export default function ERacunGeneratorPage() {
                     </div>
                   </div>
                   <div className="p-4">
-                    <pre className="max-h-96 overflow-auto rounded bg-gray-900 p-4 text-xs text-success-text">
+                    <pre className="max-h-96 overflow-auto rounded bg-base p-4 text-xs text-success-text">
                       <code>{xmlOutput}</code>
                     </pre>
                   </div>

@@ -305,7 +305,7 @@ export function MigrationPageClient() {
       <SectionBackground variant="dark">
         <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
           <Reveal className="mb-10 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-500/10 backdrop-blur-sm px-4 py-2 text-sm font-medium text-amber-300">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-warning-bg0/10 backdrop-blur-sm px-4 py-2 text-sm font-medium text-amber-300">
               <HelpCircle className="h-4 w-4" />
               Česta pitanja
             </div>

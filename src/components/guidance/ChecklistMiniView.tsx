@@ -57,7 +57,7 @@ export function ChecklistMiniView({ collapsed = false, className }: ChecklistMin
         className={cn(
           "relative flex items-center justify-center rounded-xl p-2 transition-colors",
           "hover:bg-surface/5",
-          pending > 0 ? "text-amber-400" : "text-emerald-400",
+          pending > 0 ? "text-warning" : "text-success",
           className
         )}
         title={`${pending} zadataka`}
@@ -106,7 +106,7 @@ export function ChecklistMiniView({ collapsed = false, className }: ChecklistMin
             <span
               className={cn(
                 "font-medium",
-                progress === 100 ? "text-emerald-400" : "text-[var(--foreground)]"
+                progress === 100 ? "text-success" : "text-[var(--foreground)]"
               )}
             >
               {progress}%
@@ -118,13 +118,13 @@ export function ChecklistMiniView({ collapsed = false, className }: ChecklistMin
             <div className="mt-2 flex gap-2">
               {stats.critical > 0 && (
                 <span className="inline-flex items-center gap-1 text-xs text-danger-text">
-                  <Circle className="h-2 w-2 fill-red-400" />
+                  <Circle className="h-2 w-2 fill-danger" />
                   {stats.critical} hitno
                 </span>
               )}
               {stats.soon > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs text-amber-400">
-                  <Circle className="h-2 w-2 fill-amber-400" />
+                <span className="inline-flex items-center gap-1 text-xs text-warning">
+                  <Circle className="h-2 w-2 fill-warning" />
                   {stats.soon} uskoro
                 </span>
               )}

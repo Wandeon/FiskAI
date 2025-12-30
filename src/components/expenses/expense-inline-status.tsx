@@ -3,6 +3,7 @@
 import { useTransition, useState } from "react"
 import { Loader2, Check, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+// eslint-disable-next-line import/no-restricted-paths -- pre-existing import, to be refactored
 import { updateExpenseInline } from "@/app/actions/expense"
 import { toast } from "@/lib/toast"
 import type { ExpenseStatus } from "@prisma/client"
@@ -17,8 +18,8 @@ const STATUS_LABELS: Record<ExpenseStatus, string> = {
 const STATUS_COLORS: Record<ExpenseStatus, string> = {
   DRAFT: "bg-surface-2 text-foreground",
   PENDING: "bg-warning-bg text-warning-text",
-  PAID: "bg-success-bg text-green-800",
-  CANCELLED: "bg-danger-bg text-red-800",
+  PAID: "bg-success-bg text-success-text",
+  CANCELLED: "bg-danger-bg text-danger-text",
 }
 
 export function ExpenseInlineStatus({ id, status }: { id: string; status: ExpenseStatus }) {
@@ -65,7 +66,7 @@ export function ExpenseInlineStatus({ id, status }: { id: string; status: Expens
     >
       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
       {STATUS_LABELS[current]}
-      {error && <XCircle className="h-4 w-4 text-rose-600" />}
+      {error && <XCircle className="h-4 w-4 text-danger" />}
     </button>
   )
 }

@@ -51,7 +51,7 @@ export function GuideUpsellSection({
         <ul className="mb-4 space-y-2">
           {features.slice(0, 3).map((feature, i) => (
             <li key={i} className="flex items-center gap-2 text-sm text-white/90">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
               {feature}
             </li>
           ))}
@@ -68,7 +68,7 @@ export function GuideUpsellSection({
 
   // Default: bottom CTA section
   return (
-    <div className="not-prose my-12 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-8 text-white shadow-xl">
+    <div className="not-prose my-12 rounded-2xl bg-gradient-to-br from-base to-surface-elevated p-8 text-white shadow-xl">
       <div className="mx-auto max-w-2xl text-center">
         <h3 className="mb-3 text-2xl font-bold">{title}</h3>
         <p className="mb-6 text-muted">{description}</p>

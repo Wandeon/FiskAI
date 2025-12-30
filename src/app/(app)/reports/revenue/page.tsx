@@ -179,9 +179,9 @@ export default async function RevenueByCustomerPage({
                       <td className="py-3 text-right font-mono font-medium">{formatCurrency(cust.totalAmount)}</td>
                       <td className="py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className="w-16 bg-surface-2 rounded-full h-2">
                             <div
-                              className="bg-green-600 h-2 rounded-full"
+                              className="bg-success h-2 rounded-full"
                               style={{ width: `${formatPercent(cust.totalAmount)}%` }}
                             />
                           </div>

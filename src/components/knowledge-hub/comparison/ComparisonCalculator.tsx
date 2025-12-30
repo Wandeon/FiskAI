@@ -213,7 +213,7 @@ export function ComparisonCalculator({
                 >
                   {r.label}
                   {r.isRecommended && (
-                    <span className="block text-xs text-emerald-400">✓ Preporučeno</span>
+                    <span className="block text-xs text-success">✓ Preporučeno</span>
                   )}
                 </th>
               ))}
@@ -290,7 +290,7 @@ export function ComparisonCalculator({
                 </td>
               ))}
             </tr>
-            <tr className="font-semibold text-emerald-400">
+            <tr className="font-semibold text-success">
               <td className="p-2">NETO OSTATAK</td>
               {results.map((r) => (
                 <td
@@ -357,7 +357,7 @@ export function ComparisonCalculator({
                   <AnimatedAmount value={r.total} />
                 </span>
               </div>
-              <div className="flex justify-between items-center min-h-[44px] py-2 bg-chart-4/20 -mx-4 px-4 -mb-4 rounded-b font-semibold text-emerald-400">
+              <div className="flex justify-between items-center min-h-[44px] py-2 bg-chart-4/20 -mx-4 px-4 -mb-4 rounded-b font-semibold text-success">
                 <span>NETO OSTATAK</span>
                 <span>
                   <AnimatedAmount value={r.netIncome} />

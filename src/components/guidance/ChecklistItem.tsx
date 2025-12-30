@@ -31,8 +31,8 @@ const urgencyStyles = {
   },
   soon: {
     icon: "🟡",
-    bg: "bg-warning/10 border-amber-500/20",
-    text: "text-amber-400",
+    bg: "bg-warning/10 border-warning/20",
+    text: "text-warning",
   },
   upcoming: {
     icon: "🔵",

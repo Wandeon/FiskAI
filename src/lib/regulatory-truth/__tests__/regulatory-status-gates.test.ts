@@ -4,7 +4,7 @@
 //
 // FIXME(2024-12-29): The simulated validateTransition() function in this test file
 // does NOT match the actual implementation in prisma-extensions.ts. Specifically:
-// - Test allows DRAFT -> APPROVED with bypassApproval (line 37)
+// - Test allows DRAFT → APPROVED with bypassApproval (line 37)
 // - Actual implementation BLOCKS this transition (prisma-extensions.ts lines 323-333)
 // - Test should be updated to match actual behavior including systemAction support
 // See: prisma-extensions.ts validateStatusTransitionInternal()

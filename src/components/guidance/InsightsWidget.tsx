@@ -30,8 +30,8 @@ const typeIcons = {
 
 const typeColors = {
   invoice_reminder: "text-link bg-chart-1/10",
-  expense_pattern: "text-amber-400 bg-amber-400/10",
-  revenue_trend: "text-emerald-400 bg-chart-4/10",
+  expense_pattern: "text-warning bg-amber-400/10",
+  revenue_trend: "text-success bg-chart-4/10",
   compliance_risk: "text-danger-text bg-red-400/10",
 }
 
@@ -60,7 +60,7 @@ export function InsightsWidget({ className }: InsightsWidgetProps) {
     return (
       <div className={cn("rounded-2xl surface-glass p-4", className)}>
         <div className="flex items-center gap-2 mb-4">
-          <Lightbulb className="h-5 w-5 text-amber-400" />
+          <Lightbulb className="h-5 w-5 text-warning" />
           <span className="font-semibold text-white">Uvidi</span>
         </div>
         <div className="space-y-3">
@@ -76,7 +76,7 @@ export function InsightsWidget({ className }: InsightsWidgetProps) {
     return (
       <div className={cn("rounded-2xl surface-glass p-4", className)}>
         <div className="flex items-center gap-2 mb-4">
-          <Lightbulb className="h-5 w-5 text-amber-400" />
+          <Lightbulb className="h-5 w-5 text-warning" />
           <span className="font-semibold text-white">Uvidi</span>
         </div>
         <p className="text-sm text-white/60">
@@ -90,7 +90,7 @@ export function InsightsWidget({ className }: InsightsWidgetProps) {
     <div className={cn("rounded-2xl surface-glass p-4", className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-amber-400" />
+          <Lightbulb className="h-5 w-5 text-warning" />
           <span className="font-semibold text-white">Pametni uvidi</span>
         </div>
         <span className="text-xs text-white/40 bg-surface/5 px-2 py-0.5 rounded-full">AI</span>

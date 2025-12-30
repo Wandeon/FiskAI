@@ -93,11 +93,11 @@ export default async function ClientOverviewPage({ params }: PageProps) {
  {(openTickets > 0 || pendingReview > 0) && (
  <div className="space-y-3">
  {openTickets > 0 && (
- <Card className="border-orange-200 bg-warning-bg">
+ <Card className="border-warning-border bg-warning-bg">
  <CardContent className="flex items-center gap-4 py-4">
  <AlertCircle className="h-5 w-5 text-warning-text" />
  <div>
- <p className="font-medium text-orange-900">
+ <p className="font-medium text-warning-text">
  {openTickets} open support {openTickets === 1 ? "ticket" : "tickets"}
  </p>
  <p className="text-sm text-warning-text">

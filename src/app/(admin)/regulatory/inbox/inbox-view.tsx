@@ -104,8 +104,8 @@ export function InboxView({ rules, total, page, pageSize, userId }: InboxViewPro
  }
 
  const riskTierColors = {
- T0: "bg-danger-bg text-red-800 border-danger-border",
- T1: "bg-orange-100 text-orange-800 border-orange-200",
+ T0: "bg-danger-bg text-danger-text border-danger-border",
+ T1: "bg-warning-bg text-warning-text border-warning-border",
  T2: "bg-warning-bg text-warning-text border-warning-border",
  T3: "bg-info-bg text-info-text border-info-border",
  }

@@ -134,7 +134,7 @@ export function MarketingFeaturesClient() {
                     <Landmark className="h-5 w-5 text-accent-light" />
                     E-računi i fiskalizacija 2.0
                   </div>
-                  <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-400">
+                  <span className="rounded-full bg-warning-bg0/10 border border-warning/20 px-3 py-1 text-xs font-semibold text-warning">
                     Dolazi uskoro
                   </span>
                 </div>

@@ -10,7 +10,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/law/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-chart-2/10", "text-purple-800")
+    expect(badge).toHaveClass("bg-chart-2/10", "text-chart-1")
   })
 
   it("renders REGULATION badge with correct styling", () => {
@@ -26,7 +26,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/guidance/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-success-bg", "text-green-800")
+    expect(badge).toHaveClass("bg-success-bg", "text-success-text")
   })
 
   it("renders PRACTICE badge with correct styling", () => {

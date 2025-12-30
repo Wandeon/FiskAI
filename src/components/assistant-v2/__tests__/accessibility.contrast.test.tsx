@@ -22,7 +22,7 @@ describe("Color Contrast - Badge Components", () => {
       const badge = container.firstChild as HTMLElement
 
       expect(badge.className).toContain("bg-success-bg")
-      expect(badge.className).toContain("text-green-800")
+      expect(badge.className).toContain("text-success-text")
       // green-800 on green-100 = ~7.5:1 ratio (passes)
     })
 
@@ -40,7 +40,7 @@ describe("Color Contrast - Badge Components", () => {
       const badge = container.firstChild as HTMLElement
 
       expect(badge.className).toContain("bg-danger-bg")
-      expect(badge.className).toContain("text-red-800")
+      expect(badge.className).toContain("text-danger-text")
       // red-800 on red-100 = ~6.5:1 ratio (passes)
     })
   })
@@ -51,7 +51,7 @@ describe("Color Contrast - Badge Components", () => {
       const badge = container.firstChild as HTMLElement
 
       expect(badge.className).toContain("bg-chart-2/10")
-      expect(badge.className).toContain("text-purple-800")
+      expect(badge.className).toContain("text-chart-1")
     })
 
     it("REGULATION uses blue-100/blue-800 (passes 4.5:1)", () => {
@@ -67,7 +67,7 @@ describe("Color Contrast - Badge Components", () => {
       const badge = container.firstChild as HTMLElement
 
       expect(badge.className).toContain("bg-success-bg")
-      expect(badge.className).toContain("text-green-800")
+      expect(badge.className).toContain("text-success-text")
     })
 
     it("PRACTICE uses gray-100/gray-800 (passes 4.5:1)", () => {

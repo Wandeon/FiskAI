@@ -179,7 +179,7 @@ export default async function ExpensesByCategoryPage({
                       <td className="py-3 text-right font-mono font-medium">{formatCurrency(cat.totalAmount)}</td>
                       <td className="py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className="w-16 bg-surface-2 rounded-full h-2">
                             <div
                               className="bg-interactive h-2 rounded-full"
                               style={{ width: `${formatPercent(cat.totalAmount)}%` }}

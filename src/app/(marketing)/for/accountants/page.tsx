@@ -121,19 +121,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>CSV/Excel izvozi s prilozima</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>PDF kopije svih računa</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Filtriranje po mjesecu/kvartalu</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Automatizirano slanje na email</span>
                 </li>
               </ul>
@@ -149,19 +149,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Besplatni pristup za knjigovođe</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Pregled svih klijenata na jednom mjestu</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Komunikacija kroz platformu</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Obavijesti o promjenama</span>
                 </li>
               </ul>
@@ -177,19 +177,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Kumulativni pregled po klijentima</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Provjera kompletnosti podataka</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Audit trag svih promjena</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Alarmi za nedostajuće podatke</span>
                 </li>
               </ul>
@@ -205,19 +205,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Multi-tenant izolacija podataka</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Usklađeno s računovodstvenim standardima</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Arhiviranje 11+ godina</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Pristupi po &quot;least privilege&quot; principu</span>
                 </li>
               </ul>
@@ -233,19 +233,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Podrška za e-račune (EN 16931)</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Fiskalizacija 2.0 integracija</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>XML export za poreznu upravu</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Provjera usklađenosti računa</span>
                 </li>
               </ul>
@@ -261,19 +261,19 @@ export default function AccountantsPage() {
               </div>
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Obrada više klijenata istovremeno</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Automatizirani workflow-ovi</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>Integracije s vašim sustavima</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-success" />
                   <span>API za vlastite aplikacije</span>
                 </li>
               </ul>
@@ -303,23 +303,23 @@ export default function AccountantsPage() {
             </div>
             <ul className="space-y-3 text-sm text-left mb-8 text-white">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>Neograničen broj klijenata</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>Pristup svim izvozima i izvještajima</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>Komunikacija s klijentima</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>Kumulativni pregledi</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>Dedicated account manager za uredove</span>
               </li>
             </ul>

@@ -53,7 +53,7 @@ export function PersonalizedSection() {
           </div>
         </div>
         {zaposlenje === "da" && (
-          <div className="mt-4 flex gap-3 rounded border border-yellow-500/20 bg-warning/10 p-3 text-sm text-white/90">
+          <div className="mt-4 flex gap-3 rounded border border-warning/20 bg-warning/10 p-3 text-sm text-white/90">
             <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-warning/20 text-warning-text">
               <Lightbulb className="h-4 w-4" />
             </span>

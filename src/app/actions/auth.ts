@@ -36,48 +36,41 @@ export async function register(formData: z.infer<typeof registerSchema>) {
     },
   })
 
-  // Generate verification OTP code (modern flow)
+  // Generate verification token
   try {
-    const { generateOTP, hashOTP, OTP_EXPIRY_MINUTES } = await import("@/lib/auth/otp")
+    const crypto = await import("crypto")
+    const tokenBytes = crypto.randomBytes(32)
+    const token = tokenBytes.toString("hex")
 
-    // Delete any existing verification codes for this email
-    await db.verificationCode.deleteMany({
-      where: {
-        email: email.toLowerCase(),
-        type: "EMAIL_VERIFY",
-      },
+    // Token expires in 24 hours
+    const expires = new Date()
+    expires.setHours(expires.getHours() + 24)
+
+    // Delete any existing verification tokens for this email
+    await db.verificationToken.deleteMany({
+      where: { identifier: email },
     })
 
-    // Generate and hash OTP
-    const code = generateOTP()
-    const codeHash = await hashOTP(code)
-
-    // Calculate expiry
-    const expiresAt = new Date()
-    expiresAt.setMinutes(expiresAt.getMinutes() + OTP_EXPIRY_MINUTES)
-
-    // Create verification code record
-    await db.verificationCode.create({
+    // Create verification token
+    await db.verificationToken.create({
       data: {
-        email: email.toLowerCase(),
-        userId: user.id,
-        codeHash,
-        type: "EMAIL_VERIFY",
-        expiresAt,
+        identifier: email,
+        token,
+        expires,
       },
     })
 
-    // Send OTP email
+    // Send verification email
+    const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify-email?token=${token}`
     const { sendEmail } = await import("@/lib/email")
-    const { OTPCodeEmail } = await import("@/lib/email/templates/otp-code-email")
+    const { VerificationEmail } = await import("@/lib/email/templates/verification-email")
 
     await sendEmail({
       to: email,
-      subject: "Vaš FiskAI verifikacijski kod",
-      react: OTPCodeEmail({
-        code,
+      subject: "Potvrdite svoju email adresu - FiskAI",
+      react: VerificationEmail({
+        verifyLink,
         userName: name,
-        type: "verify",
       }),
     })
   } catch (emailError) {
@@ -144,8 +137,6 @@ export async function login(formData: z.infer<typeof loginSchema>) {
   }
 
   // Check if user has multiple roles and redirect accordingly
-  // STAFF and ADMIN see role selection page (can access multiple portals)
-  // Regular users go directly to their dashboard (only one portal access)
   const { hasMultipleRoles } = await import("@/lib/auth/system-role")
   const systemRole = user.systemRole || "USER"
 
@@ -186,8 +177,6 @@ export async function requestPasswordReset(email: string) {
     const crypto = await import("crypto")
     const tokenBytes = crypto.randomBytes(32)
     const token = tokenBytes.toString("hex")
-    // Hash the token before storing (security: prevent token reuse if DB is compromised)
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex")
 
     // Token expires in 1 hour
     const expiresAt = new Date()
@@ -201,13 +190,13 @@ export async function requestPasswordReset(email: string) {
     // Create new reset token
     await db.passwordResetToken.create({
       data: {
-        token: tokenHash, // Store hash, not plain token
+        token,
         userId: user.id,
         expiresAt,
       },
     })
 
-    // Send password reset email with plain token (only sent once, never stored)
+    // Send password reset email
     const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`
 
     const { sendEmail } = await import("@/lib/email")
@@ -230,19 +219,11 @@ export async function requestPasswordReset(email: string) {
   }
 }
 
-/**
- * Validates a password reset token and returns a session identifier
- * This prevents the token from being exposed in URL query parameters
- */
-export async function validatePasswordResetToken(token: string) {
+export async function resetPassword(token: string, newPassword: string) {
   try {
-    // Hash the submitted token to compare with stored hash
-    const crypto = await import("crypto")
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex")
-
     // Find token and validate it hasn't expired
     const resetToken = await db.passwordResetToken.findUnique({
-      where: { token: tokenHash },
+      where: { token },
       include: { user: true },
     })
 
@@ -258,60 +239,6 @@ export async function validatePasswordResetToken(token: string) {
       return { error: "Token je istekao. Molimo zatražite novo resetiranje lozinke." }
     }
 
-    // Generate a secure session identifier
-    const sessionId = crypto.randomBytes(32).toString("hex")
-    const sessionHash = crypto.createHash("sha256").update(sessionId).digest("hex")
-
-    // Store the session ID hash in the token record (we'll use it to validate the reset)
-    // We don't delete the token yet - we'll delete it when password is actually reset
-    // This creates a short-lived, one-time-use session
-    await db.passwordResetToken.update({
-      where: { id: resetToken.id },
-      data: {
-        // Store session ID hash in the token field temporarily
-        // The original token is no longer valid after this point
-        token: sessionHash,
-      },
-    })
-
-    return {
-      success: true,
-      sessionId,
-      userId: resetToken.userId,
-    }
-  } catch (error) {
-    console.error("Password reset token validation error:", error)
-    return { error: "Došlo je do greške prilikom validacije tokena" }
-  }
-}
-
-/**
- * Resets password using a validated session ID (not the original token)
- */
-export async function resetPassword(sessionId: string, newPassword: string) {
-  try {
-    // Hash the session ID to compare with stored hash
-    const crypto = await import("crypto")
-    const sessionHash = crypto.createHash("sha256").update(sessionId).digest("hex")
-
-    // Find the session by the session ID hash (which is now stored in the token field)
-    const resetToken = await db.passwordResetToken.findUnique({
-      where: { token: sessionHash },
-      include: { user: true },
-    })
-
-    if (!resetToken) {
-      return { error: "Sesija je nevažeća ili je istekla" }
-    }
-
-    if (new Date() > resetToken.expiresAt) {
-      // Delete expired token
-      await db.passwordResetToken.delete({
-        where: { id: resetToken.id },
-      })
-      return { error: "Sesija je istekla. Molimo zatražite novo resetiranje lozinke." }
-    }
-
     // Hash the new password
     const passwordHash = await bcrypt.hash(newPassword, 10)
 
@@ -321,7 +248,7 @@ export async function resetPassword(sessionId: string, newPassword: string) {
       data: { passwordHash },
     })
 
-    // Delete the used token/session
+    // Delete the used token
     await db.passwordResetToken.delete({
       where: { id: resetToken.id },
     })
@@ -344,22 +271,15 @@ export async function loginWithPasskey(userId: string) {
       return { error: "Korisnik nije pronađen" }
     }
 
-    const { generateLoginToken } = await import("@/lib/auth/login-token")
-    const loginToken = await generateLoginToken({
-      userId: user.id,
-      email: user.email,
-      type: "passkey",
-    })
-
+    // Use signIn with a special passkey identifier
+    // We need to bypass password check for passkey auth
     await signIn("credentials", {
       email: user.email,
-      loginToken,
+      password: `__PASSKEY__${userId}`,
       redirect: false,
     })
 
     // Check if user has multiple roles and return the redirect path
-    // STAFF and ADMIN see role selection page (can access multiple portals)
-    // Regular users go directly to their dashboard (only one portal access)
     const { hasMultipleRoles } = await import("@/lib/auth/system-role")
     const systemRole = user.systemRole || "USER"
 
@@ -377,12 +297,6 @@ export async function loginWithPasskey(userId: string) {
   }
 }
 
-/**
- * Legacy email verification via token links (backwards compatibility)
- *
- * Modern flow uses OTP codes via /api/auth/verify-code
- * This function remains to support old verification links that may still be in users' inboxes
- */
 export async function verifyEmail(token: string) {
   try {
     // Find the verification token
@@ -441,8 +355,8 @@ export async function verifyEmail(token: string) {
 
 export async function resendVerificationEmail(email: string) {
   // Rate limiting for verification email resend
-  const identifier = `otp_send_${email.toLowerCase()}`
-  const rateLimitResult = await checkRateLimit(identifier, "OTP_SEND")
+  const identifier = `email_verification_${email.toLowerCase()}`
+  const rateLimitResult = await checkRateLimit(identifier, "EMAIL_VERIFICATION")
 
   if (!rateLimitResult.allowed) {
     return { error: "rate_limited" }
@@ -464,47 +378,40 @@ export async function resendVerificationEmail(email: string) {
       return { success: true }
     }
 
-    // Generate and send OTP code (modern flow)
-    const { generateOTP, hashOTP, OTP_EXPIRY_MINUTES } = await import("@/lib/auth/otp")
+    // Generate new verification token
+    const crypto = await import("crypto")
+    const tokenBytes = crypto.randomBytes(32)
+    const token = tokenBytes.toString("hex")
 
-    // Delete any existing verification codes for this email
-    await db.verificationCode.deleteMany({
-      where: {
-        email: email.toLowerCase(),
-        type: "EMAIL_VERIFY",
-      },
+    // Token expires in 24 hours
+    const expires = new Date()
+    expires.setHours(expires.getHours() + 24)
+
+    // Delete any existing verification tokens for this email
+    await db.verificationToken.deleteMany({
+      where: { identifier: email },
     })
 
-    // Generate and hash OTP
-    const code = generateOTP()
-    const codeHash = await hashOTP(code)
-
-    // Calculate expiry
-    const expiresAt = new Date()
-    expiresAt.setMinutes(expiresAt.getMinutes() + OTP_EXPIRY_MINUTES)
-
-    // Create verification code record
-    await db.verificationCode.create({
+    // Create new verification token
+    await db.verificationToken.create({
       data: {
-        email: email.toLowerCase(),
-        userId: user.id,
-        codeHash,
-        type: "EMAIL_VERIFY",
-        expiresAt,
+        identifier: email,
+        token,
+        expires,
       },
     })
 
-    // Send OTP email
+    // Send verification email
+    const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/verify-email?token=${token}`
     const { sendEmail } = await import("@/lib/email")
-    const { OTPCodeEmail } = await import("@/lib/email/templates/otp-code-email")
+    const { VerificationEmail } = await import("@/lib/email/templates/verification-email")
 
     await sendEmail({
       to: email,
-      subject: "Vaš FiskAI verifikacijski kod",
-      react: OTPCodeEmail({
-        code,
+      subject: "Potvrdite svoju email adresu - FiskAI",
+      react: VerificationEmail({
+        verifyLink,
         userName: user.name || undefined,
-        type: "verify",
       }),
     })
 

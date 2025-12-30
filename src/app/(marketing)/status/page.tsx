@@ -75,7 +75,7 @@ export default async function StatusPage() {
                 health.status === "healthy"
                   ? "bg-success-bg0/10 border-success-border/20 text-success-text"
                   : health.status === "degraded"
-                    ? "bg-warning-bg0/10 border-yellow-500/20 text-warning-text"
+                    ? "bg-warning-bg0/10 border-warning/20 text-warning-text"
                     : "bg-danger-bg0/10 border-danger-border/20 text-danger-text"
               }`}
             >

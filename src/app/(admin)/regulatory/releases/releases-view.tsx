@@ -19,7 +19,7 @@ interface ReleasesViewProps {
 
 export function ReleasesView({ releases }: ReleasesViewProps) {
  const releaseTypeColors = {
- major: "bg-danger-bg text-red-800 border-danger-border",
+ major: "bg-danger-bg text-danger-text border-danger-border",
  minor: "bg-warning-bg text-warning-text border-warning-border",
  patch: "bg-info-bg text-info-text border-info-border",
  }

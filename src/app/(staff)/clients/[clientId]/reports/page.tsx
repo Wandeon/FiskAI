@@ -228,7 +228,7 @@ export default async function ClientReportsPage({ params }: PageProps) {
  <Card
  className={
  ytdRevenue > 50000
- ? "border-orange-200 bg-warning-bg"
+ ? "border-warning-border bg-warning-bg"
  : ytdRevenue > 40000
  ? "border-warning-border bg-warning-bg"
  : "border-success-border bg-success-bg"

@@ -169,7 +169,7 @@ export default async function AccountantDashboardPage() {
                   vatThresholdProgress.status === "EXCEEDED"
                     ? "bg-danger-bg0"
                     : vatThresholdProgress.status === "WARNING"
-                      ? "bg-amber-500"
+                      ? "bg-warning-bg0"
                       : "bg-interactive"
                 }`}
                 style={{ width: `${Math.min(vatThresholdProgress.percentage, 100)}%` }}
@@ -294,7 +294,7 @@ export default async function AccountantDashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-chart-2/10 p-2">
-                    <Mail className="h-4 w-4 text-purple-600" />
+                    <Mail className="h-4 w-4 text-chart-1" />
                   </div>
                   <div>
                     <p className="font-medium">Kartice računovodstva</p>
@@ -308,8 +308,8 @@ export default async function AccountantDashboardPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-amber-100 p-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <div className="rounded-full bg-warning-bg p-2">
+                    <AlertTriangle className="h-4 w-4 text-warning-text" />
                   </div>
                   <div>
                     <p className="font-medium">Podsjetnici</p>
@@ -440,7 +440,7 @@ export default async function AccountantDashboardPage() {
           <Card className="hover:bg-muted/50 transition-colors">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-purple-600" />
+                <Shield className="h-5 w-5 text-chart-1" />
                 Sigurnost
               </CardTitle>
             </CardHeader>

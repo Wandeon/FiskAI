@@ -80,15 +80,15 @@ function ActionItemsSection({ items }: { items: string[] }) {
   return (
     <div className="my-8 rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-green-500/10 p-6 shadow-sm">
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-success-bg0/20">
+          <CheckCircle2 className="h-5 w-5 text-success" />
         </div>
         <div className="flex-1">
           <h2 className="mb-4 text-lg font-semibold text-emerald-300">Što napraviti</h2>
           <ul className="space-y-2">
             {items.map((item, idx) => (
               <li key={idx} className="flex items-start gap-3 text-sm text-white/90">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
                 <span>{item}</span>
               </li>
             ))}

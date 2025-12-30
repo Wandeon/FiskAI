@@ -89,7 +89,7 @@ export default async function HowToPage({ params }: Props) {
           </header>
 
           {frontmatter.prerequisites && frontmatter.prerequisites.length > 0 && (
-            <div className="mb-8 rounded-xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-sm p-5">
+            <div className="mb-8 rounded-xl border border-warning/30 bg-warning-bg0/10 backdrop-blur-sm p-5">
               <h2 className="mb-2 font-semibold text-amber-300">Prije nego počnete</h2>
               <ul className="list-inside list-disc space-y-1 text-amber-200/80">
                 {frontmatter.prerequisites.map((item, i) => (

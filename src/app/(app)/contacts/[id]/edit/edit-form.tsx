@@ -166,7 +166,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
               <option value="SUPPLIER">Dobavljač</option>
               <option value="BOTH">Kupac i dobavljač</option>
             </select>
-            {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+            {errors.type && <p className="text-sm text-danger">{errors.type.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -282,7 +282,7 @@ export function EditContactForm({ contact }: EditContactFormProps) {
               Standardni rok plaćanja za ovog kupca (koristi se za izračun dospijeća).
             </p>
             {errors.paymentTermsDays && (
-              <p className="text-sm text-red-500">{errors.paymentTermsDays.message}</p>
+              <p className="text-sm text-danger">{errors.paymentTermsDays.message}</p>
             )}
           </div>
 

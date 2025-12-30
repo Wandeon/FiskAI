@@ -56,7 +56,7 @@ export function NextSteps({ tools, comparisons, className }: NextStepsProps) {
                 <Link
                   key={index}
                   href={tool.href}
-                  className="group rounded-lg border border-white/10 bg-surface/5 p-4 transition-all hover:border-cyan-500/30 hover:bg-chart-7/5"
+                  className="group rounded-lg border border-white/10 bg-surface/5 p-4 transition-all hover:border-interactive/30 hover:bg-chart-7/5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -85,7 +85,7 @@ export function NextSteps({ tools, comparisons, className }: NextStepsProps) {
                 <Link
                   key={index}
                   href={comparison.href}
-                  className="group rounded-lg border border-white/10 bg-surface/5 p-4 transition-all hover:border-cyan-500/30 hover:bg-chart-7/5"
+                  className="group rounded-lg border border-white/10 bg-surface/5 p-4 transition-all hover:border-interactive/30 hover:bg-chart-7/5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>

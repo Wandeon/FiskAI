@@ -60,7 +60,7 @@ export function SourceCard({ source, variant, className, theme = "light" }: Sour
             className={cn(
               "text-xs px-2 py-0.5 rounded",
               isDark
-                ? "bg-amber-900/30 text-amber-400 border border-amber-500/30"
+                ? "bg-amber-900/30 text-warning border border-warning/30"
                 : "bg-warning-bg text-warning-text"
             )}
           >
@@ -74,7 +74,7 @@ export function SourceCard({ source, variant, className, theme = "light" }: Sour
         <blockquote
           className={cn(
             "mt-3 pl-3 border-l-2 text-sm italic",
-            isDark ? "border-cyan-500/30 text-muted" : "border-muted text-muted-foreground"
+            isDark ? "border-interactive/30 text-muted" : "border-muted text-muted-foreground"
           )}
         >
           &ldquo;{quote}&rdquo;

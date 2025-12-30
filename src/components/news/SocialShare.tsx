@@ -94,7 +94,7 @@ export function SocialShare({ url, title, description }: SocialShareProps) {
           title={copied ? "Link kopiran!" : "Kopiraj link"}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-emerald-400" />
+            <Check className="h-4 w-4 text-success" />
           ) : (
             <Link2 className="h-4 w-4 text-white/70 hover:text-white" />
           )}

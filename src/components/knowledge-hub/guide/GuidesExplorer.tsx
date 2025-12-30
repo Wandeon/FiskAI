@@ -153,7 +153,7 @@ export function GuidesExplorer({ guides }: { guides: GuideListItem[] }) {
               className={cn(
                 "rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
                 group === filter.id
-                  ? "border-cyan-500/30 bg-chart-7/10 text-accent"
+                  ? "border-interactive/30 bg-chart-7/10 text-accent"
                   : "border-white/10 bg-surface/5 text-white/60 hover:bg-surface/10"
               )}
             >

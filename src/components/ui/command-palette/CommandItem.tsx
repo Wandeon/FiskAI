@@ -93,11 +93,11 @@ export const CommandItem = forwardRef<HTMLButtonElement, CommandItemProps>(
               entry.type === "action"
                 ? "bg-accent/20 text-accent-light"
                 : entry.type === "tool"
-                  ? "bg-emerald-500/20 text-emerald-400"
+                  ? "bg-success-bg0/20 text-success"
                   : entry.type === "guide"
                     ? "bg-violet-500/20 text-violet-400"
                     : entry.type === "comparison"
-                      ? "bg-amber-500/20 text-amber-400"
+                      ? "bg-warning-bg0/20 text-warning"
                       : "bg-surface/10 text-white/60"
             )}
           >

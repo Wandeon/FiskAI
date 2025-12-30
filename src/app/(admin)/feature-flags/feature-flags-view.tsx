@@ -434,7 +434,7 @@ export function FeatureFlagsView({ initialFlags, initialStats }: FeatureFlagsVie
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-border-default">
             {filteredFlags.map((flag) => (
               <tr key={flag.id} className="hover:bg-surface-1">
                 <td className="px-4 py-4">

@@ -124,8 +124,8 @@ export function ConflictsView({ conflicts, total, page, pageSize, userId }: Conf
  }
 
  const statusColors = {
- OPEN: "bg-danger-bg text-red-800",
- RESOLVED: "bg-success-bg text-green-800",
+ OPEN: "bg-danger-bg text-danger-text",
+ RESOLVED: "bg-success-bg text-success-text",
  ESCALATED: "bg-warning-bg text-warning-text",
  }
 

@@ -305,7 +305,7 @@ export function PaymentSlipGenerator({ embedded = true }: Props) {
         </div>
 
         {barcodeError && (
-          <div className="mt-4 rounded-lg border border-rose-400/30 bg-chart-8/10 p-3 text-sm text-rose-300">
+          <div className="mt-4 rounded-lg border border-danger/30 bg-chart-8/10 p-3 text-sm text-danger">
             {barcodeError}
           </div>
         )}
@@ -349,7 +349,7 @@ export function PaymentSlipGenerator({ embedded = true }: Props) {
             <a
               href={barcodeDataUrl}
               download={`hub3-${selectedPayment}-${oib}.png`}
-              className="inline-flex items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 min-h-[44px] md:min-h-0"
+              className="inline-flex items-center justify-center rounded-md bg-interactive px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 min-h-[44px] md:min-h-0"
             >
               Preuzmi PNG
             </a>

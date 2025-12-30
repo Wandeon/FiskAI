@@ -74,7 +74,7 @@ const typeConfig = {
   fixed: {
     icon: Wrench,
     label: "Ispravak",
-    className: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    className: "bg-warning-bg0/10 text-warning-text border-warning/20",
   },
 }
 

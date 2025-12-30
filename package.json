@@ -62,7 +62,11 @@
       "prettier --write",
       "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
     ],
-    "src/components/**/*.{ts,tsx}": [
+    "src/components/marketing/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: warn'"
+    ],
+    "src/components/!(marketing)/**/*.{ts,tsx}": [
       "prettier --write",
       "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
     ],

@@ -36,7 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
   gray: "bg-surface-2 text-foreground",
   blue: "bg-info-bg text-link",
   green: "bg-success-bg text-success-text",
-  amber: "bg-amber-100 text-amber-700",
+  amber: "bg-warning-bg text-warning-text",
   red: "bg-danger-bg text-danger-text",
 }
 

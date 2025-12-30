@@ -48,7 +48,7 @@ export function InsightsCard({
       title: "Iskoristite FiskAI asistenta",
       description:
         "Pitajte asistenta da pronađe račune u nacrtu, kreira draft e-računa iz ponude ili pripremi podsjetnik za kupca.",
-      icon: <Sparkles className="h-4 w-4 text-purple-600" />,
+      icon: <Sparkles className="h-4 w-4 text-chart-1" />,
     },
   ]
 

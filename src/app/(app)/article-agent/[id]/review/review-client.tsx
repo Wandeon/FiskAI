@@ -176,7 +176,7 @@ function ParagraphCard({
     : confidence >= 0.8
       ? "border-success-border bg-success-bg/50"
       : confidence >= 0.5
-        ? "border-yellow-500 bg-warning-bg/50"
+        ? "border-warning bg-warning-bg/50"
         : "border-danger-border bg-danger-bg/50"
 
   return (

@@ -247,7 +247,7 @@ export async function StaffCalendar() {
  daysLeft <= 3
  ? 'bg-danger/10 border border-danger-border/20'
  : daysLeft <= 7
- ? 'bg-warning/10 border border-amber-500/20'
+ ? 'bg-warning/10 border border-warning/20'
  : 'bg-muted/30'
  }`}
  >

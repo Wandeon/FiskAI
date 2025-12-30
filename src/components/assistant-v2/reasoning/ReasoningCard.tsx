@@ -164,9 +164,9 @@ function ConfidenceDetails({ data }: { data: unknown }) {
         <span
           className={cn(
             "px-2 py-1 rounded text-xs font-medium",
-            confData?.label === "HIGH" && "bg-success-bg text-green-800",
+            confData?.label === "HIGH" && "bg-success-bg text-success-text",
             confData?.label === "MEDIUM" && "bg-warning-bg text-warning-text",
-            confData?.label === "LOW" && "bg-danger-bg text-red-800"
+            confData?.label === "LOW" && "bg-danger-bg text-danger-text"
           )}
         >
           {confData?.label || "N/A"}

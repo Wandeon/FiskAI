@@ -77,11 +77,11 @@ export function RecommendationCard({
       <div className="space-y-3">
         {bestFor && bestFor.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-emerald-400 mb-1">Najbolje za:</h4>
+            <h4 className="text-sm font-medium text-success mb-1">Najbolje za:</h4>
             <ul className="text-sm text-white/70 space-y-1">
               {bestFor.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">✓</span>
+                  <span className="text-success mt-0.5">✓</span>
                   {item}
                 </li>
               ))}
@@ -91,11 +91,11 @@ export function RecommendationCard({
 
         {notSuitableFor && notSuitableFor.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-rose-400 mb-1">Nije idealno za:</h4>
+            <h4 className="text-sm font-medium text-danger mb-1">Nije idealno za:</h4>
             <ul className="text-sm text-white/70 space-y-1">
               {notSuitableFor.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-rose-400 mt-0.5">✗</span>
+                  <span className="text-danger mt-0.5">✗</span>
                   {item}
                 </li>
               ))}

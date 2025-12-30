@@ -19,9 +19,9 @@ const calloutStyles: Record<
 > = {
   warning: {
     bg: "bg-warning/10",
-    border: "border-amber-500/20",
+    border: "border-warning/20",
     iconBg: "bg-warning/20",
-    iconColor: "text-amber-400",
+    iconColor: "text-warning",
     icon: AlertTriangle,
   },
   info: {
@@ -35,7 +35,7 @@ const calloutStyles: Record<
     bg: "bg-chart-4/10",
     border: "border-emerald-500/20",
     iconBg: "bg-chart-4/20",
-    iconColor: "text-emerald-400",
+    iconColor: "text-success",
     icon: PiggyBank,
   },
 }

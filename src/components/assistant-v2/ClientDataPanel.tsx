@@ -138,7 +138,7 @@ export function ClientDataPanel({
               <div
                 className={cn(
                   "p-3 rounded-lg border",
-                  isDark ? "bg-accent/10 border-cyan-500/30" : "bg-primary/5 border-primary/20"
+                  isDark ? "bg-accent/10 border-interactive/30" : "bg-primary/5 border-primary/20"
                 )}
               >
                 <p className={cn("text-xs", isDark ? "text-muted" : "text-muted-foreground")}>
@@ -207,21 +207,21 @@ export function ClientDataPanel({
               <div
                 className={cn(
                   "p-3 rounded-lg border",
-                  isDark ? "bg-amber-900/20 border-amber-500/30" : "bg-warning-bg border-warning-border"
+                  isDark ? "bg-amber-900/20 border-warning/30" : "bg-warning-bg border-warning-border"
                 )}
               >
                 <div className="flex items-start gap-2">
                   <AlertCircle
                     className={cn(
                       "w-4 h-4 mt-0.5 shrink-0",
-                      isDark ? "text-amber-400" : "text-warning-text"
+                      isDark ? "text-warning" : "text-warning-text"
                     )}
                   />
                   <div className="flex-1">
                     <p
                       className={cn(
                         "text-sm font-medium",
-                        isDark ? "text-amber-300" : "text-warning-text"
+                        isDark ? "text-warning-text" : "text-warning-text"
                       )}
                     >
                       Missing data
@@ -232,7 +232,7 @@ export function ClientDataPanel({
                           key={i}
                           className={cn(
                             "text-xs",
-                            isDark ? "text-amber-400/80" : "text-warning-text"
+                            isDark ? "text-warning/80" : "text-warning-text"
                           )}
                         >
                           <strong>{item.label}</strong>
@@ -249,7 +249,7 @@ export function ClientDataPanel({
                         className={cn(
                           "mt-2 text-xs px-3 py-1.5 rounded transition-colors",
                           isDark
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
+                            ? "bg-warning-bg0/20 text-warning-text border border-warning/30 hover:bg-warning-bg0/30"
                             : "bg-yellow-600 text-white hover:bg-yellow-700"
                         )}
                       >

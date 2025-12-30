@@ -73,7 +73,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 const priorityColors: Record<string, string> = {
  LOW: 'bg-surface-1 text-secondary',
  NORMAL: 'bg-info-bg text-info-icon',
- HIGH: 'bg-orange-100 text-warning-text',
+ HIGH: 'bg-warning-bg text-warning-text',
  URGENT: 'bg-danger-bg text-danger-icon',
 }
 

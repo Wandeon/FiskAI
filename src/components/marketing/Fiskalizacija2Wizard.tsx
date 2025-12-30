@@ -515,7 +515,7 @@ function Fiskalizacija2FullResults({
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl bg-success-bg p-5">
-          <h3 className="mb-3 flex items-center gap-2 font-semibold text-green-800">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold text-success-text">
             <CheckCircle2 className="h-5 w-5" />
             Što ostaje isto
           </h3>
@@ -529,15 +529,15 @@ function Fiskalizacija2FullResults({
           </ul>
         </div>
 
-        <div className="rounded-xl bg-amber-50 p-5">
-          <h3 className="mb-3 flex items-center gap-2 font-semibold text-amber-800">
+        <div className="rounded-xl bg-warning-bg p-5">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold text-warning-text">
             <AlertTriangle className="h-5 w-5" />
             Što se mijenja
           </h3>
           <ul className="space-y-2">
             {result.changes.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-amber-700">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <li key={i} className="flex items-start gap-2 text-sm text-warning-text">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-warning-bg0" />
                 {item}
               </li>
             ))}
@@ -565,8 +565,8 @@ function Fiskalizacija2FullResults({
         </ul>
       </div>
 
-      <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
-        <h3 className="mb-4 flex items-center gap-2 font-semibold text-blue-900">
+      <div className="rounded-xl border border-info-border bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-info-text">
           <Rocket className="h-5 w-5" />
           Kako FiskAI pomaže
         </h3>

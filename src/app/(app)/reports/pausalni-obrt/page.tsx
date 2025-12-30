@@ -272,7 +272,7 @@ export default async function PausalniObrtReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
+            <div className="text-2xl font-bold text-warning-text">
               {formatCurrency(Number(annualSummary._sum.vatAmount || 0), "EUR")}
             </div>
             <p className="text-xs text-muted-foreground">Obveza prema Poreznoj upravi</p>
@@ -360,7 +360,7 @@ export default async function PausalniObrtReportsPage() {
               <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-chart-2/10 p-2">
-                    <Scale className="h-4 w-4 text-purple-600" />
+                    <Scale className="h-4 w-4 text-chart-1" />
                   </div>
                   <div>
                     <p className="font-medium">PDS Prijava</p>
@@ -392,8 +392,8 @@ export default async function PausalniObrtReportsPage() {
               {expenseBreakdown.map((category) => (
                 <div key={category.categoryId!} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-amber-100 p-2">
-                      <Receipt className="h-4 w-4 text-amber-600" />
+                    <div className="rounded-full bg-warning-bg p-2">
+                      <Receipt className="h-4 w-4 text-warning-text" />
                     </div>
                     <div>
                       <p className="font-medium">{category.categoryId || "Ostalo"}</p>
@@ -479,7 +479,7 @@ export default async function PausalniObrtReportsPage() {
                     Number(annualSummary._sum.totalAmount || 0) / 40000 >= 1
                       ? "bg-danger-bg0"
                       : Number(annualSummary._sum.totalAmount || 0) / 40000 >= 0.85
-                        ? "bg-amber-500"
+                        ? "bg-warning-bg0"
                         : "bg-interactive"
                   }`}
                   style={{

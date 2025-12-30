@@ -187,7 +187,7 @@ export default async function KprPage({ searchParams }: { searchParams?: Promise
               className={`space-y-2 rounded-lg border px-3 py-2 ${
                 summary.netIncome >= 0
                   ? "border-info-border bg-info-bg"
-                  : "border-orange-200 bg-orange-50"
+                  : "border-warning-border bg-orange-50"
               }`}
             >
               <p

@@ -10,11 +10,11 @@ const STATUS_COLORS: Record<string, string> = {
   SYNTHESIZING: "bg-info-bg text-info-text",
   PLANNING: "bg-info-bg text-info-text",
   DRAFTING: "bg-warning-bg text-warning-text",
-  VERIFYING: "bg-chart-2/10 text-purple-800",
-  NEEDS_REVIEW: "bg-orange-100 text-orange-800",
-  APPROVED: "bg-success-bg text-green-800",
-  PUBLISHED: "bg-success-bg text-green-800",
-  REJECTED: "bg-danger-bg text-red-800",
+  VERIFYING: "bg-chart-2/10 text-chart-1",
+  NEEDS_REVIEW: "bg-warning-bg text-warning-text",
+  APPROVED: "bg-success-bg text-success-text",
+  PUBLISHED: "bg-success-bg text-success-text",
+  REJECTED: "bg-danger-bg text-danger-text",
 }
 
 export default async function ArticleAgentPage() {

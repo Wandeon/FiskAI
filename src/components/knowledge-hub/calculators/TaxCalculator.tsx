@@ -37,7 +37,7 @@ export function TaxCalculator({ embedded = true }: Props) {
           step={100}
           value={revenue}
           onChange={(e) => setRevenue(Number(e.target.value))}
-          className="w-full accent-cyan-400"
+          className="w-full accent-interactive"
         />
         <div className="flex items-center gap-3">
           <Input
@@ -97,11 +97,11 @@ export function TaxCalculator({ embedded = true }: Props) {
       </div>
 
       {revenue >= THRESHOLDS.pausalni.value * 0.9 && (
-        <div className="rounded-xl border border-amber-500/30 bg-warning/10 p-3 text-sm text-amber-300">
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-warning-text">
           Blizu ste limita {formatEUR(THRESHOLDS.pausalni.value)}. Ako očekujete rast, otvorite{" "}
           <Link
             href="/usporedba/preko-praga"
-            className="font-semibold underline underline-offset-4 text-amber-200"
+            className="font-semibold underline underline-offset-4 text-warning"
           >
             što kada prijeđem prag
           </Link>

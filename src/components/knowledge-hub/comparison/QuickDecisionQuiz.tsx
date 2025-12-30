@@ -158,7 +158,7 @@ export function QuickDecisionQuiz({
                   {winner.link && (
                     <a
                       href={winner.link}
-                      className="mb-4 inline-block rounded-lg bg-chart-7 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-600"
+                      className="mb-4 inline-block rounded-lg bg-chart-7 px-4 py-2 text-sm font-medium text-white hover:bg-interactive"
                     >
                       Saznaj više o {winner.title}
                     </a>

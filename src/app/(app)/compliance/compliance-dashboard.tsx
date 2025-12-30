@@ -87,14 +87,14 @@ export function ComplianceDashboard({ data, company }: ComplianceDashboardProps)
     switch (certificateStatus.status) {
       case "active":
         return (
-          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          <Badge className="bg-success-bg text-success-text border-success-border">
             <CheckCircle className="h-3 w-3 mr-1" />
             Aktivan
           </Badge>
         )
       case "expiring":
         return (
-          <Badge className="bg-amber-50 text-amber-700 border-amber-200">
+          <Badge className="bg-warning-bg text-warning-text border-warning-border">
             <Clock className="h-3 w-3 mr-1" />
             Ističe uskoro
           </Badge>
@@ -151,18 +151,18 @@ export function ComplianceDashboard({ data, company }: ComplianceDashboardProps)
 
   const reportStatusStyles: Record<string, string> = {
     DRAFT: "bg-surface-1 text-foreground border-default",
-    READY_FOR_REVIEW: "bg-amber-50 text-amber-700 border-amber-200",
-    APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    SUBMITTED: "bg-info-bg text-link border-blue-200",
+    READY_FOR_REVIEW: "bg-warning-bg text-warning-text border-warning-border",
+    APPROVED: "bg-success-bg text-success-text border-success-border",
+    SUBMITTED: "bg-info-bg text-link border-info-border",
     REJECTED: "bg-danger-bg text-danger-text border-danger-border",
   }
 
   const periodStatusStyles: Record<string, string> = {
-    OPEN: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    SOFT_CLOSE: "bg-amber-50 text-amber-700 border-amber-200",
+    OPEN: "bg-success-bg text-success-text border-success-border",
+    SOFT_CLOSE: "bg-warning-bg text-warning-text border-warning-border",
     CLOSED: "bg-surface-2 text-secondary border-default",
     LOCKED: "bg-danger-bg text-danger-text border-danger-border",
-    FUTURE: "bg-info-bg text-link border-blue-200",
+    FUTURE: "bg-info-bg text-link border-info-border",
   }
 
   const handleReportAction = async (statusId: string, action: "request" | "approve" | "reject") => {
@@ -371,7 +371,7 @@ export function ComplianceDashboard({ data, company }: ComplianceDashboardProps)
                 >
                   <div
                     className={`rounded-full p-1 ${
-                      item.completed ? "bg-emerald-50 text-emerald-600" : "bg-surface-1 text-muted"
+                      item.completed ? "bg-success-bg text-success-text" : "bg-surface-1 text-muted"
                     }`}
                   >
                     {item.completed ? (
@@ -396,7 +396,7 @@ export function ComplianceDashboard({ data, company }: ComplianceDashboardProps)
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-link mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-blue-900">Važni datumi</p>
+                    <p className="text-sm font-semibold text-info-text">Važni datumi</p>
                     <ul className="mt-2 space-y-1 text-xs text-info-text">
                       <li>
                         • <strong>1. siječnja 2026.</strong> - Obveza e-računa (B2B)
@@ -410,14 +410,14 @@ export function ComplianceDashboard({ data, company }: ComplianceDashboardProps)
               </div>
 
               {company.fiscalEnabled && (
-                <div className="rounded-xl bg-emerald-50 p-4">
+                <div className="rounded-xl bg-success-bg p-4">
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-600 mt-0.5" />
+                    <CheckCircle className="h-4 w-4 text-success-text mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-emerald-900">
+                      <p className="text-sm font-semibold text-success-text">
                         Fiskalizacija aktivna
                       </p>
-                      <p className="text-xs text-emerald-800 mt-1">
+                      <p className="text-xs text-success-text mt-1">
                         Vaša tvrtka koristi{" "}
                         <strong>
                           {company.fiscalEnvironment === "PROD" ? "produkcijsko" : "sandbox"}

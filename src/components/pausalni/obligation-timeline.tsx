@@ -158,7 +158,7 @@ export function ObligationTimeline({ companyId }: Props) {
             </CardContent>
           </Card>
 
-          <Card className="border-amber-500/50">
+          <Card className="border-warning/50">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>

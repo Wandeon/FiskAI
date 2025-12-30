@@ -207,7 +207,7 @@ export function EuTransactionReview({ companyId }: Props) {
 
     if (result.valid) {
       return (
-        <Badge variant="default" className="bg-green-600 gap-1">
+        <Badge variant="default" className="bg-success gap-1">
           <ShieldCheck className="h-3 w-3" />
           VIES potvrđen
         </Badge>
@@ -255,7 +255,7 @@ export function EuTransactionReview({ companyId }: Props) {
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="border border-amber-500/30 bg-warning/5 rounded-lg p-4 space-y-4"
+                  className="border border-warning/30 bg-warning/5 rounded-lg p-4 space-y-4"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-4">
@@ -285,7 +285,7 @@ export function EuTransactionReview({ companyId }: Props) {
                     </div>
                   </div>
 
-                  <div className="border-t border-amber-500/20 pt-4 space-y-4">
+                  <div className="border-t border-warning/20 pt-4 space-y-4">
                     <p className="text-sm font-medium">Je li ovo transakcija s EU dobavljačem?</p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -387,10 +387,10 @@ export function EuTransactionReview({ companyId }: Props) {
                     </div>
 
                     {selectedTypes[tx.id] === TRANSACTION_TYPES.GOODS && (
-                      <div className="bg-info-bg dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <div className="bg-info-bg dark:bg-info-bg/30 border border-info-border dark:border-info-border rounded-lg p-3">
                         <div className="flex gap-2">
                           <Package className="h-4 w-4 text-link dark:text-link mt-0.5 shrink-0" />
-                          <div className="text-sm text-info-text dark:text-blue-200">
+                          <div className="text-sm text-info-text dark:text-info">
                             <p className="font-medium">Transakcija robom</p>
                             <p className="text-xs mt-1">
                               Ova transakcija će se pratiti za Intrastat izvještavanje. Ako godišnji
@@ -419,7 +419,7 @@ export function EuTransactionReview({ companyId }: Props) {
                         variant="default"
                         onClick={() => handleConfirm(tx.id)}
                         disabled={processingId === tx.id || !selectedCountries[tx.id]}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-success hover:bg-green-700"
                       >
                         {processingId === tx.id ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -9,7 +9,7 @@ describe("ConfidenceBadge", () => {
 
     const badge = screen.getByText(/high confidence/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-success-bg", "text-green-800")
+    expect(badge).toHaveClass("bg-success-bg", "text-success-text")
   })
 
   it("renders MEDIUM confidence with yellow styling", () => {
@@ -25,7 +25,7 @@ describe("ConfidenceBadge", () => {
 
     const badge = screen.getByText(/low confidence/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-danger-bg", "text-red-800")
+    expect(badge).toHaveClass("bg-danger-bg", "text-danger-text")
   })
 
   it("shows score percentage when provided", () => {

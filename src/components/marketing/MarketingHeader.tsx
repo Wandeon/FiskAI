@@ -43,11 +43,12 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
 
   return (
     <>
+      {/* @design-override: Marketing header always uses dark colors for cockpit aesthetic */}
       <motion.header
         className={cn(
           "fixed left-0 right-0 top-0 z-30 transition-all duration-300",
           isScrolled
-            ? "border-b border-white/10 bg-base/85 shadow-lg shadow-black/20 backdrop-blur-xl backdrop-saturate-150"
+            ? "border-b border-white/10 bg-slate-950/85 shadow-lg shadow-black/20 backdrop-blur-xl backdrop-saturate-150"
             : "border-b border-white/5 bg-transparent"
         )}
         initial={{ y: -100 }}
@@ -88,9 +89,9 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
                       )}
                     />
 
-                    {/* Animated underline */}
+                    {/* Animated underline - @design-override: dark header cyan colors */}
                     <motion.span
-                      className="absolute bottom-1 left-4 right-4 h-px bg-gradient-to-r from-accent-light to-focus"
+                      className="absolute bottom-1 left-4 right-4 h-px bg-gradient-to-r from-cyan-400 to-blue-400"
                       initial={false}
                       animate={{
                         scaleX: isActive ? 1 : 0,
@@ -110,10 +111,10 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
               {/* Search - CommandPalette */}
               <CommandPalette />
 
-              {/* Istraži button - Desktop */}
+              {/* Istraži button - Desktop - @design-override: Dark header button uses hardcoded values */}
               <motion.button
                 onClick={() => setPortalOpen(true)}
-                className="group relative hidden items-center gap-2 rounded-lg border border-white/20 bg-surface/5 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:border-transparent hover:bg-surface/10 md:inline-flex"
+                className="group relative hidden items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white/90 transition-all hover:border-transparent hover:bg-white/10 md:inline-flex"
                 animate={{
                   boxShadow: [
                     "0 0 0 0 rgba(34, 211, 238, 0)",
@@ -138,26 +139,27 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
                       ease: "linear",
                     }}
                   />
-                  <span className="absolute inset-px rounded-[7px] bg-base/90" />
+                  <span className="absolute inset-px rounded-[7px] bg-slate-950/90" />
                 </span>
 
-                {/* Glow on hover */}
-                <span className="absolute -inset-1 -z-20 rounded-xl bg-gradient-to-r from-accent/40 via-interactive/40 to-chart-1/40 opacity-0 blur-md transition-opacity group-hover:opacity-100" />
+                {/* Glow on hover - @design-override */}
+                <span className="absolute -inset-1 -z-20 rounded-xl bg-gradient-to-r from-cyan-500/40 via-blue-500/40 to-indigo-500/40 opacity-0 blur-md transition-opacity group-hover:opacity-100" />
 
                 <Grid3X3 className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
                 <span>Istraži</span>
               </motion.button>
 
-              {/* Mobile menu button */}
+              {/* Mobile menu button - @design-override: dark header */}
               <button
                 onClick={() => setPortalOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-surface/5 text-white/90 transition-colors hover:bg-surface/10 md:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white/90 transition-colors hover:bg-white/10 md:hidden"
                 aria-label="Otvori navigaciju"
               >
                 <Grid3X3 className="h-5 w-5" />
               </button>
 
               {/* Primary CTA - changes based on login state */}
+              {/* @design-override: Header CTAs use vibrant colors for visibility */}
               {isLoggedIn ? (
                 <a
                   href="https://app.fiskai.hr/dashboard"
@@ -185,7 +187,7 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
               ) : (
                 <Link
                   href="/register"
-                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-accent to-interactive px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
                 >
                   <span className="hidden sm:inline">Započni</span>
                   <span className="sm:hidden">Start</span>
@@ -204,7 +206,7 @@ export function MarketingHeader({ isLoggedIn = false }: MarketingHeaderProps) {
                   />
 
                   {/* Glow on hover */}
-                  <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-accent-light to-interactive opacity-0 blur-md transition-opacity group-hover:opacity-50" />
+                  <span className="absolute inset-0 -z-10 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 blur-md transition-opacity group-hover:opacity-50" />
                 </Link>
               )}
             </div>
