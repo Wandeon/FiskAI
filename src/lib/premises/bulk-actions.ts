@@ -296,50 +296,62 @@ export async function bulkTogglePremisesStatus(
  * Creates multiple devices with sequential codes starting from provided startCode
  */
 export async function bulkAssignDevices(
-  companyId: string,
+  _companyId: string,
   premisesId: string,
   count: number,
   namePrefix: string,
   startCode: number = 1
 ): Promise<ActionResult> {
   try {
-    // Get existing device codes for this premises
-    const existingDevices = await db.paymentDevice.findMany({
-      where: { businessPremisesId: premisesId },
-      select: { code: true },
-    })
-    const existingCodes = new Set(existingDevices.map((d) => d.code))
+    const user = await requireAuth()
 
-    const created: number[] = []
-    let currentCode = startCode
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const premises = await db.businessPremises.findFirst({
+        where: { id: premisesId, companyId: company.id },
+      })
 
-    for (let i = 0; i < count; i++) {
-      // Find next available code
-      while (existingCodes.has(currentCode)) {
+      if (!premises) {
+        return { success: false, error: "Poslovni prostor nije pronađen" }
+      }
+
+      // Get existing device codes for this premises
+      const existingDevices = await db.paymentDevice.findMany({
+        where: { businessPremisesId: premisesId },
+        select: { code: true },
+      })
+      const existingCodes = new Set(existingDevices.map((d) => d.code))
+
+      const created: number[] = []
+      let currentCode = startCode
+
+      for (let i = 0; i < count; i++) {
+        // Find next available code
+        while (existingCodes.has(currentCode)) {
+          currentCode++
+        }
+
+        await db.paymentDevice.create({
+          data: {
+            companyId: company.id,
+            businessPremisesId: premisesId,
+            code: currentCode,
+            name: `${namePrefix} ${currentCode}`,
+            isDefault: existingDevices.length === 0 && i === 0, // First device is default if no devices exist
+            isActive: true,
+          },
+        })
+
+        created.push(currentCode)
+        existingCodes.add(currentCode)
         currentCode++
       }
 
-      await db.paymentDevice.create({
-        data: {
-          companyId,
-          businessPremisesId: premisesId,
-          code: currentCode,
-          name: `${namePrefix} ${currentCode}`,
-          isDefault: existingDevices.length === 0 && i === 0, // First device is default if no devices exist
-          isActive: true,
-        },
-      })
-
-      created.push(currentCode)
-      existingCodes.add(currentCode)
-      currentCode++
-    }
-
-    revalidatePath("/settings/premises")
-    return {
-      success: true,
-      data: { created: created.length, codes: created },
-    }
+      revalidatePath("/settings/premises")
+      return {
+        success: true,
+        data: { created: created.length, codes: created },
+      }
+    })
   } catch (error) {
     console.error("Failed to bulk assign devices:", error)
     return { success: false, error: "Greska pri stvaranju naplatnih uredaja" }
