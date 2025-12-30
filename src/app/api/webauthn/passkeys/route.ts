@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { apiError } from "@/lib/api-error"
 
 export async function GET() {
   try {
@@ -26,7 +27,10 @@ export async function GET() {
 
     return NextResponse.json({ passkeys })
   } catch (error) {
-    console.error("Get passkeys error:", error)
-    return NextResponse.json({ error: "Failed to get passkeys" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to get passkeys",
+    })
   }
 }

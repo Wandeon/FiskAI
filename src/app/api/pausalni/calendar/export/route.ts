@@ -6,6 +6,7 @@ import { eq, and, gte, lte } from "drizzle-orm"
 import { generateObligationsICS, generateICSFilename } from "@/lib/pausalni/calendar/ics-generator"
 import { withApiLogging } from "@/lib/api-logging"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export const GET = withApiLogging(async (request: NextRequest) => {
   try {
@@ -62,7 +63,6 @@ export const GET = withApiLogging(async (request: NextRequest) => {
     })
 
     if (!result.success || !result.icsContent) {
-      console.error("Failed to generate ICS:", result.error)
       return NextResponse.json(
         { error: result.error || "Failed to generate calendar" },
         { status: 500 }
@@ -82,7 +82,6 @@ export const GET = withApiLogging(async (request: NextRequest) => {
       },
     })
   } catch (error) {
-    console.error("Error generating calendar export:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })

@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email"
 import { getWeeklyAIQualityDigest } from "@/lib/ai/feedback-analytics"
 import AIQualityDigest from "@/emails/ai-quality-digest"
 import React from "react"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization")
@@ -39,6 +40,6 @@ export async function GET(request: Request) {
       digest: { globalAccuracy: digestData.globalStats.accuracy },
     })
   } catch (error) {
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 })
+    return apiError(error)
   }
 }

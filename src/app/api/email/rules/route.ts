@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export async function GET() {
   try {
@@ -23,8 +24,11 @@ export async function GET() {
 
     return NextResponse.json({ rules })
   } catch (error) {
-    console.error("[email/rules] GET error:", error)
-    return NextResponse.json({ error: "Failed to fetch rules" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch rules",
+    })
   }
 }
 
@@ -71,7 +75,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ rule })
   } catch (error) {
-    console.error("[email/rules] POST error:", error)
-    return NextResponse.json({ error: "Failed to create rule" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to create rule",
+    })
   }
 }

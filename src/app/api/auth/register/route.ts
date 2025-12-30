@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
+import { apiError } from "@/lib/api-error"
 
 const schema = z.object({
   email: z.string().email(),
@@ -50,7 +51,10 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Nevažeći podaci" }, { status: 400 })
     }
-    console.error("Register error:", error)
-    return NextResponse.json({ error: "Greška pri registraciji" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Greška pri registraciji",
+    })
   }
 }

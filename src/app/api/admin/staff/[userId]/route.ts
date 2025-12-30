@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
 import RoleChangeNotification from "@/emails/role-change-notification"
+import { apiError } from "@/lib/api-error"
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   const user = await getCurrentUser()
@@ -60,8 +61,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         timestamp: new Date().toISOString(),
       })
     } catch (auditError) {
-      console.error("[AUDIT] Failed to log role change:", auditError)
-    }
+      }
 
     try {
       await sendEmail({
@@ -78,13 +78,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         }),
       })
     } catch (emailError) {
-      console.error("Failed to send role change notification email:", emailError)
-    }
+      }
 
     return NextResponse.json({ success: true, user: updatedUser, message: "Staff member removed and notification email sent." })
   } catch (error) {
-    console.error("Error removing staff member:", error)
-    return NextResponse.json({ error: "Failed to remove staff member" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to remove staff member",
+    })
   }
 }
 
@@ -108,7 +110,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ user: staffUser })
   } catch (error) {
-    console.error("Error fetching staff member:", error)
-    return NextResponse.json({ error: "Failed to fetch staff member" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch staff member",
+    })
   }
 }

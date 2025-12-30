@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsItems } from "@/lib/db/schema/news"
 import { eq, desc, and, sql } from "drizzle-orm"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 
@@ -52,7 +53,6 @@ export async function GET(request: NextRequest) {
       count,
     })
   } catch (error) {
-    console.error("Error fetching news:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

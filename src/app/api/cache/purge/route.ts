@@ -1,5 +1,6 @@
 // src/app/api/cache/purge/route.ts
 import { NextRequest, NextResponse } from "next/server"
+import { apiError } from "@/lib/api-error"
 
 const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN
 const CF_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID
@@ -51,8 +52,11 @@ export async function POST(request: NextRequest) {
 
   // Check Cloudflare configuration
   if (!CF_API_TOKEN || !CF_ZONE_ID) {
-    console.error("[cache/purge] Cloudflare configuration missing")
-    return NextResponse.json({ error: "Cloudflare configuration missing" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Cloudflare configuration missing",
+    })
   }
 
   try {
@@ -71,12 +75,14 @@ export async function POST(request: NextRequest) {
     const result = await response.json()
 
     if (!response.ok) {
-      console.error("[cache/purge] Cloudflare API error:", result)
-    }
+      }
 
     return NextResponse.json(result, { status: response.ok ? 200 : 500 })
   } catch (error) {
-    console.error("[cache/purge] Error calling Cloudflare API:", error)
-    return NextResponse.json({ error: "Failed to purge cache" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to purge cache",
+    })
   }
 }

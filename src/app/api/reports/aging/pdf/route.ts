@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { AgingPdfDocument } from "@/lib/reports/aging-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,7 +61,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Aging PDF export error:", error)
-    return NextResponse.json({ error: "Neuspješan izvoz starost potraživanja PDF-a" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "AGING_PDF_EXPORT_FAILED",
+      message: "Neuspješan izvoz starost potraživanja PDF-a",
+    })
   }
 }

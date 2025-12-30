@@ -7,6 +7,7 @@ import { processTransactionsWithDedup } from "@/lib/bank-sync/dedup"
 import { recordCronError } from "@/lib/cron-dlq"
 import { createCronLogger } from "@/lib/logging/cron-logger"
 import type { BankAccount, BankConnection } from "@prisma/client"
+import { apiError } from "@/lib/api-error"
 
 // Process accounts in batches to prevent connection pool exhaustion
 const BATCH_SIZE = 10
@@ -131,7 +132,11 @@ async function handleBankSync(request: Request) {
       errorCode: "CRON_GLOBAL_ERROR",
     })
 
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Sync failed",
+    })
   }
 }
 

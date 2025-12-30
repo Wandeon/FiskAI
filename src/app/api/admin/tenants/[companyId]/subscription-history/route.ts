@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { apiError } from "@/lib/api-error"
 
 type RouteContext = {
   params: Promise<{ companyId: string }>
@@ -101,7 +102,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
       })),
     })
   } catch (error) {
-    console.error("Failed to fetch subscription history:", error)
-    return NextResponse.json({ error: "Failed to fetch subscription history" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch subscription history",
+    })
   }
 }

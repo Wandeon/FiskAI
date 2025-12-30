@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { ProfitLossPdfDocument } from "@/lib/reports/profit-loss-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -71,7 +72,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Profit/Loss PDF export error:", error)
-    return NextResponse.json({ error: "Neuspješan izvoz dobit/gubitak PDF-a" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan izvoz dobit/gubitak PDF-a",
+    })
   }
 }

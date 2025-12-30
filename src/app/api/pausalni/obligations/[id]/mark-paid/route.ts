@@ -5,6 +5,7 @@ import { paymentObligation, OBLIGATION_STATUS } from "@/lib/db/schema/pausalni"
 import { eq, and } from "drizzle-orm"
 import { withApiLogging } from "@/lib/api-logging"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export const POST = withApiLogging(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -45,8 +46,7 @@ export const POST = withApiLogging(
 
       return NextResponse.json({ obligation: updated[0] })
     } catch (error) {
-      console.error("Error marking obligation as paid:", error)
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+      return apiError(error)
     }
   }
 )

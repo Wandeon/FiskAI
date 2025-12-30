@@ -6,6 +6,7 @@ import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { generateObligations, updateObligationStatuses } from "@/lib/pausalni/obligation-generator"
 import { withApiLogging } from "@/lib/api-logging"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export const GET = withApiLogging(async (request: NextRequest) => {
   try {
@@ -83,8 +84,7 @@ export const GET = withApiLogging(async (request: NextRequest) => {
 
     return NextResponse.json({ obligations, summary })
   } catch (error) {
-    console.error("Error fetching obligations:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })
 
@@ -117,7 +117,6 @@ export const POST = withApiLogging(async (request: NextRequest) => {
       count: obligations.length,
     })
   } catch (error) {
-    console.error("Error generating obligations:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })

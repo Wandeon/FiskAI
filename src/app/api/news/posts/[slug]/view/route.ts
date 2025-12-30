@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts } from "@/lib/db/schema/news"
 import { eq, sql } from "drizzle-orm"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/news/posts/[slug]/view
@@ -25,7 +26,10 @@ export async function POST(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Failed to increment view count:", error)
-    return NextResponse.json({ error: "Failed to track view" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to track view",
+    })
   }
 }

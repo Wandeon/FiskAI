@@ -6,6 +6,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 import { calculateVatThresholdProgress } from "@/lib/reports/kpr-generator"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: Request) {
   try {
@@ -118,7 +119,11 @@ export async function GET(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to generate VAT threshold report")
 
-    return NextResponse.json({ error: "Failed to generate VAT threshold report" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to generate VAT threshold report",
+    })
   }
 }
 
@@ -155,6 +160,10 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to process VAT threshold action")
 
-    return NextResponse.json({ error: "Failed to process action" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to process action",
+    })
   }
 }

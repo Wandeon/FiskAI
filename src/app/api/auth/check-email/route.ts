@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { z } from "zod"
+import { apiError } from "@/lib/api-error"
 
 const schema = z.object({
   email: z.string().email(),
@@ -36,7 +37,6 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 })
     }
-    console.error("Check email error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

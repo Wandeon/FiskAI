@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsCategories } from "@/lib/db/schema/news"
 import { eq, and, lte } from "drizzle-orm"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 
@@ -58,7 +59,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ post: result[0] })
   } catch (error) {
-    console.error("Error fetching post:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { newsCategories } from "@/lib/db/schema/news"
 import { asc, isNull, eq } from "drizzle-orm"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 
@@ -57,7 +58,6 @@ export async function GET() {
       flat: allCategories,
     })
   } catch (error) {
-    console.error("Error fetching categories:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

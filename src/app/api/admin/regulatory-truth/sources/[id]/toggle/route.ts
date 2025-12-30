@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/admin/regulatory-truth/sources/[id]/toggle
@@ -35,7 +36,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       source: updatedSource,
     })
   } catch (error) {
-    console.error("[toggle] Error toggling source:", error)
-    return NextResponse.json({ error: "Failed to toggle source" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to toggle source",
+    })
   }
 }

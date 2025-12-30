@@ -3,6 +3,7 @@ import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
+import { apiError } from "@/lib/api-error"
 
 const rowSchema = z.object({
   type: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
@@ -96,7 +97,10 @@ export async function POST(request: Request) {
     revalidatePath("/contacts")
     return NextResponse.json({ success: true, created: rows.length })
   } catch (error) {
-    console.error("Import failed", error)
-    return NextResponse.json({ error: "Greska pri uvozu" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Greska pri uvozu",
+    })
   }
 }

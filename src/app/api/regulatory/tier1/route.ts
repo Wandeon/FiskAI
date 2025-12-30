@@ -6,6 +6,7 @@ import { runTier1Fetchers, getTier1Status } from "@/lib/regulatory-truth/fetcher
 import { createHNBRules } from "@/lib/regulatory-truth/fetchers/hnb-fetcher"
 import { fetchNNIssue, getLatestIssueNumber } from "@/lib/regulatory-truth/fetchers/nn-fetcher"
 import { fetchKeyEULegislation } from "@/lib/regulatory-truth/fetchers/eurlex-fetcher"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/regulatory/tier1
@@ -40,8 +41,11 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error("[api/regulatory/tier1] GET Error:", error)
-    return NextResponse.json({ error: "Failed to get Tier 1 status" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to get Tier 1 status",
+    })
   }
 }
 
@@ -111,7 +115,10 @@ export async function POST(request: NextRequest) {
       result,
     })
   } catch (error) {
-    console.error("[api/regulatory/tier1] POST Error:", error)
-    return NextResponse.json({ error: "Failed to run Tier 1 fetchers" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to run Tier 1 fetchers",
+    })
   }
 }

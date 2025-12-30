@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { FiscalRequest } from "@prisma/client"
 import { executeFiscalRequest } from "@/lib/fiscal/fiscal-pipeline"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -57,8 +58,11 @@ export async function GET(request: Request) {
       results,
     })
   } catch (error) {
-    console.error("[fiscal-processor] error:", error)
-    return NextResponse.json({ error: "Processing failed" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Processing failed",
+    })
   }
 }
 

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
+import { apiError } from "@/lib/api-error"
 
 interface SupportDashboardData {
   totalTickets: number
@@ -113,7 +114,10 @@ export async function GET() {
 
     return NextResponse.json(dashboardData)
   } catch (error) {
-    console.error("Admin support dashboard error:", error)
-    return NextResponse.json({ error: "Failed to fetch support dashboard data" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch support dashboard data",
+    })
   }
 }

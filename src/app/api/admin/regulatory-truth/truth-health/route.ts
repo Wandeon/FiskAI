@@ -7,6 +7,7 @@ import {
   runConsolidatorHealthCheck,
 } from "@/lib/regulatory-truth/utils/truth-health"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/admin/regulatory-truth/truth-health
@@ -41,8 +42,11 @@ export async function GET(req: NextRequest) {
       history: includeHistory ? history : undefined,
     })
   } catch (error) {
-    console.error("[truth-health] Error:", error)
-    return NextResponse.json({ error: "Failed to get truth health metrics" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to get truth health metrics",
+    })
   }
 }
 
@@ -81,7 +85,10 @@ export async function POST(req: NextRequest) {
       alerts: snapshot.alerts,
     })
   } catch (error) {
-    console.error("[truth-health] Error:", error)
-    return NextResponse.json({ error: "Failed to run truth health check" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to run truth health check",
+    })
   }
 }

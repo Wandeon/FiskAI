@@ -30,6 +30,7 @@ export const pausalniProfile = pgTable(
     companyId: text("company_id")
       .notNull()
       .references(() => company.id, { onDelete: "cascade" }),
+    registrationDate: date("registration_date"), // Business registration date (obrt osnovan)
     hasPdvId: boolean("has_pdv_id").default(false),
     pdvId: varchar("pdv_id", { length: 20 }), // HR12345678901 format
     pdvIdSince: date("pdv_id_since"),

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { generateWebAuthnRegistrationOptions } from "@/lib/webauthn"
+import { apiError } from "@/lib/api-error"
 
 export async function POST() {
   try {
@@ -35,7 +36,10 @@ export async function POST() {
 
     return NextResponse.json(options)
   } catch (error) {
-    console.error("WebAuthn registration start error:", error)
-    return NextResponse.json({ error: "Failed to generate registration options" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to generate registration options",
+    })
   }
 }

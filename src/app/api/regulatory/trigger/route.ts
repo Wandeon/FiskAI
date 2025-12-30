@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { scheduledQueue } from "@/lib/regulatory-truth/workers/queues"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
@@ -28,7 +29,10 @@ export async function POST(req: NextRequest) {
       message: `Pipeline triggered for phases: ${phases.join(", ")}`,
     })
   } catch (error) {
-    console.error("[trigger] Error:", error)
-    return NextResponse.json({ error: "Failed to queue pipeline run" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to queue pipeline run",
+    })
   }
 }

@@ -533,6 +533,7 @@ export async function createRecurringExpense(
           vatAmount: new Decimal(input.vatAmount),
           vatRate: new Decimal(input.vatRate),
           totalAmount: new Decimal(input.totalAmount),
+          vatDeductible: input.vatDeductible ?? null,
           frequency: input.frequency,
           nextDate: input.nextDate,
           endDate: input.endDate || null,
@@ -583,8 +584,10 @@ export async function updateRecurringExpense(
       if (input.description) updateData.description = input.description
       if (input.netAmount !== undefined) updateData.netAmount = new Decimal(input.netAmount)
       if (input.vatAmount !== undefined) updateData.vatAmount = new Decimal(input.vatAmount)
+      if (input.vatRate !== undefined) updateData.vatRate = new Decimal(input.vatRate)
       if (input.totalAmount !== undefined)
         updateData.totalAmount = new Decimal(input.totalAmount)
+      if (input.vatDeductible !== undefined) updateData.vatDeductible = input.vatDeductible
       if (input.frequency) updateData.frequency = input.frequency
       if (input.nextDate) updateData.nextDate = input.nextDate
       if (input.endDate !== undefined) updateData.endDate = input.endDate
@@ -679,10 +682,16 @@ export async function processRecurringExpenses(): Promise<ActionResult> {
           nextDate: { lte: now },
           OR: [{ endDate: null }, { endDate: { gte: now } }],
         },
+        include: {
+          category: true,
+        },
       })
 
       let created = 0
       for (const recurring of dueExpenses) {
+        // Determine vatDeductible: use recurring expense value if set, otherwise use category default
+        const vatDeductible = recurring.vatDeductible ?? recurring.category.vatDeductibleDefault ?? true
+
         // Create the expense
         await db.expense.create({
           data: {
@@ -694,7 +703,7 @@ export async function processRecurringExpenses(): Promise<ActionResult> {
             netAmount: recurring.netAmount,
             vatAmount: recurring.vatAmount,
             totalAmount: recurring.totalAmount,
-            vatDeductible: true,
+            vatDeductible,
             vatRate: recurring.vatRate,
             currency: "EUR",
             status: "DRAFT",

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +45,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[bank/disconnect] error:", error)
-    return NextResponse.json({ error: "Disconnect failed" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Disconnect failed",
+    })
   }
 }

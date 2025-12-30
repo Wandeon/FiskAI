@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: Request) {
   const user = await getCurrentUser()
@@ -67,8 +68,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ tickets })
   } catch (error) {
-    console.error("Admin support tickets error:", error)
-    return NextResponse.json({ error: "Failed to fetch support tickets" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch support tickets",
+    })
   }
 }
 
@@ -121,7 +125,10 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Admin bulk action error:", error)
-    return NextResponse.json({ error: "Failed to execute bulk action" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to execute bulk action",
+    })
   }
 }

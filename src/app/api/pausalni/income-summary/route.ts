@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,7 +69,6 @@ export async function GET(request: NextRequest) {
       hasData: invoices.length > 0,
     })
   } catch (error) {
-    console.error("Error fetching income summary:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

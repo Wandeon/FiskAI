@@ -3,6 +3,7 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsPostSources, newsItems } from "@/lib/db/schema/news"
 import { eq } from "drizzle-orm"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Check admin auth
@@ -35,8 +36,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       sourceItems: sources.map((s) => s.newsItem),
     })
   } catch (error) {
-    console.error("Error fetching post:", error)
-    return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch post",
+    })
   }
 }
 
@@ -85,8 +89,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ post: updated[0] })
   } catch (error) {
-    console.error("Error updating post:", error)
-    return NextResponse.json({ error: "Failed to update post" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to update post",
+    })
   }
 }
 
@@ -112,7 +119,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting post:", error)
-    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to delete post",
+    })
   }
 }

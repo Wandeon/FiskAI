@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { getSentinelHealth } from "@/lib/regulatory-truth/utils/rate-limiter"
 import { db } from "@/lib/db"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/admin/sentinel/health
@@ -170,7 +171,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error("[sentinel-health] Error fetching Sentinel health:", error)
-    return NextResponse.json({ error: "Failed to fetch Sentinel health status" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch Sentinel health status",
+    })
   }
 }

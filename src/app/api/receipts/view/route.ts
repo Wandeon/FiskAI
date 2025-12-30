@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { requireCompany } from "@/lib/auth-utils"
 import { downloadFromR2, verifyTenantSignature } from "@/lib/r2-client"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,6 +69,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     logger.error({ error }, "Receipt download failed")
-    return NextResponse.json({ error: "Failed to retrieve receipt" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to retrieve receipt",
+    })
   }
 }

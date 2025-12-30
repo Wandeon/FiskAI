@@ -4,6 +4,7 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { euTransaction, euVendor } from "@/lib/db/schema/pausalni"
 import { eq, and } from "drizzle-orm"
 import { TRANSACTION_TYPES } from "@/lib/pausalni/constants"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/pausalni/eu-transactions/[id]/confirm
@@ -102,7 +103,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       transaction: updated[0],
     })
   } catch (error) {
-    console.error("Error confirming EU transaction:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

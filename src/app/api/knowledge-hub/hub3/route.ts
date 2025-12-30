@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { generateHub3DataUrl } from "@/lib/knowledge-hub/hub3"
 import { PAYMENT_IBANS, PAYMENT_MODEL } from "@/lib/knowledge-hub/constants"
+import { apiError } from "@/lib/api-error"
 
 export const runtime = "nodejs"
 
@@ -120,7 +121,10 @@ export async function POST(request: Request) {
       amount,
     })
   } catch (error) {
-    console.error("Hub3 generation error:", error)
-    return NextResponse.json({ error: "Greška prilikom generiranja barkoda." }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Greška prilikom generiranja barkoda.",
+    })
   }
 }

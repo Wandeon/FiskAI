@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { getCoverageSummary } from "@/lib/regulatory-truth/quality"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/admin/regulatory-truth/coverage
@@ -77,7 +78,6 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    console.error("[coverage] Error fetching coverage data:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

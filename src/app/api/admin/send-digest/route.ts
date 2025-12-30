@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/auth-utils"
 import { formatDigestEmail } from "@/lib/admin/weekly-digest"
 import { Resend } from "resend"
+import { apiError } from "@/lib/api-error"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -29,7 +30,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Failed to send digest:", error)
-    return NextResponse.json({ error: "Failed to send digest" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to send digest",
+    })
   }
 }

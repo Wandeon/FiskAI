@@ -7,6 +7,7 @@ import { updateObligationStatuses } from "@/lib/pausalni/obligation-generator"
 import { OBLIGATION_LABELS, CROATIAN_MONTHS_GENITIVE } from "@/lib/pausalni/constants"
 import { eq, or, and, lte } from "drizzle-orm"
 import { Resend } from "resend"
+import { apiError } from "@/lib/api-error"
 
 // Vercel cron or external cron calls this endpoint
 export async function GET(request: Request) {
@@ -18,7 +19,11 @@ export async function GET(request: Request) {
 
   // Initialize Resend inside handler to avoid build-time errors
   if (!process.env.RESEND_API_KEY) {
-    return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "RESEND_API_KEY not configured",
+    })
   }
   const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -96,8 +101,7 @@ export async function GET(request: Request) {
           obligationsSent: obligations.length,
         })
       } catch (emailError) {
-        console.error(`Failed to send email to ${owner.user.email}:`, emailError)
-      }
+        }
     }
 
     return NextResponse.json({
@@ -106,8 +110,11 @@ export async function GET(request: Request) {
       results,
     })
   } catch (error) {
-    console.error("Deadline reminder cron error:", error)
-    return NextResponse.json({ error: "Internal error" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Internal error",
+    })
   }
 }
 

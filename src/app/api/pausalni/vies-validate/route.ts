@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { validateVatId, validateVatIdFormat } from "@/lib/pausalni/vies-validation"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/pausalni/vies-validate
@@ -51,7 +52,6 @@ export async function POST(request: NextRequest) {
       error: result.errorMessage,
     })
   } catch (error) {
-    console.error("Error validating VAT ID:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

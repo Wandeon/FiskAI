@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { SupportTicketStatus } from "@prisma/client"
+import { apiError } from "@/lib/api-error"
 
 export async function GET() {
   try {
@@ -64,7 +65,10 @@ export async function GET() {
       companyId: company.id,
     })
   } catch (error) {
-    console.error("Support summary error:", error)
-    return NextResponse.json({ error: "Failed to load summary" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to load summary",
+    })
   }
 }

@@ -7,6 +7,8 @@ import { db } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { EInvoiceStatus } from "@prisma/client"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
+import { validateTransition } from "@/lib/invoice-status-validation"
 
 const acceptInvoiceSchema = z.object({
   accept: z.boolean(), // true to accept, false to reject
@@ -49,7 +51,11 @@ export async function GET(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to fetch inbox e-invoices")
 
-    return NextResponse.json({ error: "Failed to fetch inbox e-invoices" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch inbox e-invoices",
+    })
   }
 }
 
@@ -139,7 +145,11 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to process inbox e-invoice")
 
-    return NextResponse.json({ error: "Failed to process inbox e-invoice" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to process inbox e-invoice",
+    })
   }
 }
 
@@ -218,6 +228,10 @@ export async function PATCH(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to archive/unarchive e-invoice")
 
-    return NextResponse.json({ error: "Failed to archive/unarchive e-invoice" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to archive/unarchive e-invoice",
+    })
   }
 }

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { getAllPatternInsights } from "@/lib/guidance/patterns"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 
@@ -26,7 +27,6 @@ export async function GET() {
 
     return NextResponse.json({ insights })
   } catch (error) {
-    console.error("Error fetching insights:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

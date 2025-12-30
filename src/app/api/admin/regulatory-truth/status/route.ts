@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/admin/regulatory-truth/status
@@ -246,7 +247,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error("[status] Error fetching pipeline status:", error)
-    return NextResponse.json({ error: "Failed to fetch pipeline status" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch pipeline status",
+    })
   }
 }

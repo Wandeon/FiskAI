@@ -5,6 +5,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getFiscalProvider, calculateZKI, validateZKIInput } from "@/lib/e-invoice"
 import type { FiscalInvoice, PaymentMethodCode } from "@/lib/e-invoice"
 import { revalidatePath } from "next/cache"
+import { validateTransition } from "@/lib/invoice-status-validation"
 
 /**
  * Fiscalize an invoice with Croatian Tax Authority (CIS)
@@ -40,6 +41,12 @@ export async function fiscalizeInvoice(invoiceId: string) {
     // Check if already fiscalized
     if (invoice.status === "FISCALIZED" || invoice.jir) {
       return { success: false, error: "Račun je već fiskaliziran" }
+    }
+
+    // Validate status transition
+    const transitionValidation = validateTransition(invoice.status, "FISCALIZED")
+    if (!transitionValidation.valid) {
+      return { success: false, error: transitionValidation.error }
     }
 
     // Check if invoice has required data
@@ -282,6 +289,12 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
 
     if (!invoice.jir) {
       return { success: false, error: "Račun nije fiskaliziran" }
+    }
+
+    // Validate status transition
+    const transitionValidation = validateTransition(invoice.status, "REJECTED")
+    if (!transitionValidation.valid) {
+      return { success: false, error: transitionValidation.error }
     }
 
     const provider = getFiscalProvider()

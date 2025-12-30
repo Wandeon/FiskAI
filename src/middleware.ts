@@ -17,10 +17,32 @@ import {
 } from "@/lib/ai-crawler"
 import { generateCSP } from "@/lib/middleware/csp"
 
-// Routes to skip (API, static assets, etc.)
+// Public API routes that don't require authentication
+// All other API routes will require a valid session token
+const PUBLIC_API_ROUTES = [
+  "/api/health", // Health checks (load balancers)
+  "/api/health/ready", // Readiness probes
+  "/api/health/content-pipelines", // Pipeline health checks
+  "/api/status", // System status (monitoring)
+  "/api/auth/", // NextAuth authentication
+  "/api/cron/", // Cron jobs (protected by CRON_SECRET)
+  "/api/webhooks/", // Webhooks (protected by signature verification)
+  "/api/billing/webhook", // Stripe webhook (protected by signature)
+  "/api/e-invoices/receive", // E-invoice webhook (external system)
+  "/api/bank/callback", // Bank callback (external system)
+  "/api/email/callback", // Email callback (external system)
+  "/api/newsletter/unsubscribe", // Newsletter unsubscribe (public action)
+  "/api/sandbox/", // Sandbox endpoints (for testing)
+]
+
+// Check if an API route is public
+function isPublicApiRoute(pathname: string): boolean {
+  return PUBLIC_API_ROUTES.some((route) => pathname.startsWith(route))
+}
+
+// Routes to skip (static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
   return (
-    pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon") ||
     /\.(svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)

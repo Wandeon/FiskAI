@@ -11,6 +11,7 @@ import {
 } from "@/lib/reports/accountant-export"
 import JSZip from "jszip"
 import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
+import { logStaffAccess, getRequestMetadata } from "@/lib/staff-audit"
 
 const querySchema = z.object({
   clientIds: z.string(), // comma-separated list of client IDs
@@ -83,6 +84,26 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       )
     }
+
+    // Log bulk export access for audit trail
+    const { ipAddress, userAgent } = getRequestMetadata(request.headers)
+    await logStaffAccess({
+      staffUserId: user.id,
+      clientCompanyId: clientIds.join(","),
+      action: "STAFF_EXPORT_DATA",
+      resourceType: "BulkExport",
+      metadata: {
+        clientCount: clientIds.length,
+        exportType: parsed.data.exportType,
+        format: parsed.data.format,
+        dateRange: {
+          from: parsed.data.from,
+          to: parsed.data.to
+        },
+      },
+      ipAddress,
+      userAgent,
+    })
 
     const fromDate = parseDate(parsed.data.from)
     const toDate = parseDate(parsed.data.to)

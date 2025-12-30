@@ -3,6 +3,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { vatToExcel } from "@/lib/reports/vat-excel"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -91,7 +92,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("VAT Excel export error:", error)
-    return NextResponse.json({ error: "Neuspješan PDV Excel izvoz" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan PDV Excel izvoz",
+    })
   }
 }

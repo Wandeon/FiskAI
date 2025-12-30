@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { requireCompany } from "@/lib/auth-utils"
 import { createCheckoutSession, PlanId, PLANS } from "@/lib/billing/stripe"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +40,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: checkoutUrl })
   } catch (error) {
     logger.error({ error }, "Failed to create checkout session")
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to create checkout session",
+    })
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyOTP } from "@/lib/auth/otp"
 import bcrypt from "bcryptjs"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(request: Request) {
   try {
@@ -68,7 +69,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Reset password error:", error)
-    return NextResponse.json({ error: "Greška na serveru" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Greška na serveru",
+    })
   }
 }

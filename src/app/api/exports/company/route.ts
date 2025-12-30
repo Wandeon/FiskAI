@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { exportCompanyData, validateBackupData, BackupData } from "@/lib/backup/export"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 function escapeXml(str: string | null | undefined): string {
   if (!str) return ""
@@ -246,6 +247,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Export failed", details: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ error: "Export failed due to unknown error" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Export failed due to unknown error",
+    })
   }
 }

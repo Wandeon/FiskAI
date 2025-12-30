@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
 import RoleChangeNotification from "@/emails/role-change-notification"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
@@ -60,8 +61,7 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString(),
         })
       } catch (auditError) {
-        console.error("[AUDIT] Failed to log role change:", auditError)
-      }
+        }
 
       try {
         await sendEmail({
@@ -78,16 +78,18 @@ export async function POST(request: NextRequest) {
           }),
         })
       } catch (emailError) {
-        console.error("Failed to send role change notification email:", emailError)
-      }
+        }
 
       return NextResponse.json({ success: true, user: updatedUser, message: "User promoted to staff. Notification email sent." })
     } else {
       return NextResponse.json({ error: "User not found. Please ensure the user has registered first." }, { status: 404 })
     }
   } catch (error) {
-    console.error("Error adding staff member:", error)
-    return NextResponse.json({ error: "Failed to add staff member" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to add staff member",
+    })
   }
 }
 
@@ -106,7 +108,10 @@ export async function GET() {
 
     return NextResponse.json({ staff })
   } catch (error) {
-    console.error("Error fetching staff:", error)
-    return NextResponse.json({ error: "Failed to fetch staff" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch staff",
+    })
   }
 }

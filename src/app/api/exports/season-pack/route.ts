@@ -10,6 +10,7 @@ import {
 } from "@/lib/reports/accountant-export"
 import archiver from "archiver"
 import { Readable } from "stream"
+import { apiError } from "@/lib/api-error"
 
 const querySchema = z.object({
   from: z.string().optional(),
@@ -106,8 +107,11 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Season pack export error:", error)
-    return NextResponse.json({ error: "Neuspješan izvoz tax season paketa" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan izvoz tax season paketa",
+    })
   }
 }
 

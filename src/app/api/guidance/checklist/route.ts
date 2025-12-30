@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import {
+import { apiError } from "@/lib/api-error"
   getChecklist,
   completeChecklistItem,
   dismissChecklistItem,
@@ -70,8 +71,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error fetching checklist:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }
 
@@ -142,7 +142,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, action, itemReference })
   } catch (error) {
-    console.error("Error updating checklist item:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

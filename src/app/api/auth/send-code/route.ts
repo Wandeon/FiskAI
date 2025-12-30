@@ -6,6 +6,7 @@ import { generateOTP, hashOTP, OTP_EXPIRY_MINUTES } from "@/lib/auth/otp"
 import { checkRateLimit } from "@/lib/security/rate-limit"
 import { sendEmail } from "@/lib/email"
 import { OTPCodeEmail } from "@/lib/email/templates/otp-code-email"
+import { apiError } from "@/lib/api-error"
 
 const schema = z.object({
   email: z.string().email(),
@@ -80,7 +81,10 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Nevažeći podaci" }, { status: 400 })
     }
-    console.error("Send code error:", error)
-    return NextResponse.json({ error: "Greška pri slanju koda" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Greška pri slanju koda",
+    })
   }
 }

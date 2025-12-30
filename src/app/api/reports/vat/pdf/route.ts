@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { VatPdfDocument } from "@/lib/reports/vat-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,7 +88,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("VAT PDF export error:", error)
-    return NextResponse.json({ error: "Neuspješan PDV PDF izvoz" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan PDV PDF izvoz",
+    })
   }
 }

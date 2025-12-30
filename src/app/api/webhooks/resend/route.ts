@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 import { createHmac, timingSafeEqual } from "crypto"
+import { apiError } from "@/lib/api-error"
 
 // Resend webhook secret for signature verification
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET
@@ -224,6 +225,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     logger.error({ error }, "Resend webhook processing failed")
-    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Webhook processing failed",
+    })
   }
 }

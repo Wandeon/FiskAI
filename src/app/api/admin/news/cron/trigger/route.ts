@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 const CRON_ENDPOINTS = {
   "fetch-classify": "/api/cron/news/fetch-classify",
@@ -46,7 +47,11 @@ export async function POST(request: NextRequest) {
     // Call the cron endpoint with CRON_SECRET
     const cronSecret = process.env.CRON_SECRET
     if (!cronSecret) {
-      return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 })
+      return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "CRON_SECRET not configured",
+    })
     }
 
     const response = await fetch(`${baseUrl}${endpoint}`, {
@@ -74,7 +79,6 @@ export async function POST(request: NextRequest) {
       result,
     })
   } catch (error) {
-    console.error("Error triggering cron job:", error)
     return NextResponse.json(
       {
         error: `Failed to trigger cron job: ${error instanceof Error ? error.message : "Unknown error"}`,

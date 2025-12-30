@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { Prisma } from "@prisma/client"
 import { bankingLogger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024 // 20MB safety cap
 const ALLOWED_EXTENSIONS = ["pdf", "xml"]
@@ -101,10 +102,11 @@ export async function POST(request: Request) {
         { error, jobId: existingJob.id, accountId },
         "Failed to delete previous import job during overwrite - data integrity may be compromised"
       )
-      return NextResponse.json(
-        { error: "Failed to overwrite previous import. Please try again or contact support." },
-        { status: 500 }
-      )
+      return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to overwrite previous import. Please try again or contact support.",
+    })
     }
     if (existingJob.storagePath) {
       try {
@@ -179,6 +181,10 @@ export async function POST(request: Request) {
       )
     }
     bankingLogger.error({ error, accountId, fileName }, "Failed to create import job")
-    return NextResponse.json({ error: "Failed to create import job" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to create import job",
+    })
   }
 }

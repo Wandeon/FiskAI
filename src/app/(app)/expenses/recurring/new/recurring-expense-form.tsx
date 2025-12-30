@@ -69,7 +69,9 @@ export function RecurringExpenseForm({ vendors, categories }: RecurringExpenseFo
       description,
       netAmount: net,
       vatAmount: vat,
+      vatRate: parseFloat(vatRate),
       totalAmount: total,
+      vatDeductible: vatDeductible ?? undefined,
       frequency,
       nextDate: new Date(nextDate),
       endDate: endDate ? new Date(endDate) : undefined,
@@ -98,7 +100,11 @@ export function RecurringExpenseForm({ vendors, categories }: RecurringExpenseFo
             <Label>Kategorija *</Label>
             <select
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={(e) => {
+                setCategoryId(e.target.value)
+                // Reset vatDeductible to null so it picks up the new category's default
+                setVatDeductible(null)
+              }}
               className="w-full mt-1 rounded-md border-default"
               required
             >
@@ -165,6 +171,18 @@ export function RecurringExpenseForm({ vendors, categories }: RecurringExpenseFo
               <option value="5">5%</option>
               <option value="0">0%</option>
             </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="vatDeductible"
+              checked={vatDeductible ?? categories.find((c) => c.id === categoryId)?.vatDeductibleDefault ?? true}
+              onChange={(e) => setVatDeductible(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <Label htmlFor="vatDeductible" className="cursor-pointer">
+              PDV je odbitni
+            </Label>
           </div>
         </CardContent>
         <CardContent className="border-t pt-4">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { fetchKpr } from "@/lib/reports/kpr"
 import { kprToExcel } from "@/lib/reports/kpr-excel"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("KPR Excel export error:", error)
-    return NextResponse.json({ error: "Neuspješan KPR Excel izvoz" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan KPR Excel izvoz",
+    })
   }
 }

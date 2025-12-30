@@ -3,6 +3,7 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts } from "@/lib/db/schema/news"
 import { eq, desc, and, gte, lte, like } from "drizzle-orm"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   // Check admin auth
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ posts })
   } catch (error) {
-    console.error("Error fetching posts:", error)
-    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch posts",
+    })
   }
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { rateLimiter } from "@/lib/regulatory-truth/utils/rate-limiter"
 import { auditCircuitBreakerReset } from "@/lib/admin/circuit-breaker-audit"
+import { apiError } from "@/lib/api-error"
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +39,10 @@ export async function POST(request: NextRequest) {
     await auditCircuitBreakerReset({ resetItems: resetDomains, adminEmail: user.email, adminId: user.id, reason, component: "sentinel", resetType: domain ? "specific" : "all" })
     return NextResponse.json({ success: true, message: resetDomains.length + " circuit breakers have been reset", reset: resetDomains })
   } catch (error) {
-    console.error("[circuit-breaker-reset] Error:", error)
-    return NextResponse.json({ error: "Failed to reset circuit breaker" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to reset circuit breaker",
+    })
   }
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { logAuditEvent } from "@/lib/regulatory-truth/utils/audit-log"
 import {
+import { apiError } from "@/lib/api-error"
   getRulesNeedingRevalidation,
   applyConfidenceDecay,
 } from "@/lib/regulatory-truth/utils/confidence-decay"
@@ -30,8 +31,11 @@ export async function GET(req: NextRequest) {
       rules,
     })
   } catch (error) {
-    console.error("[revalidation] Error:", error)
-    return NextResponse.json({ error: "Failed to get rules needing revalidation" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to get rules needing revalidation",
+    })
   }
 }
 
@@ -71,7 +75,10 @@ export async function POST(req: NextRequest) {
       details: result.details,
     })
   } catch (error) {
-    console.error("[revalidation] Error:", error)
-    return NextResponse.json({ error: "Failed to apply confidence decay" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to apply confidence decay",
+    })
   }
 }

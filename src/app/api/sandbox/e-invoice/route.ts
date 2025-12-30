@@ -10,6 +10,7 @@ import { FiscalConfig } from "@/lib/e-invoice/fiscal-types"
 import { validateCroatianCompliance } from "@/lib/compliance/en16931-validator"
 import { logger } from "@/lib/logger"
 import { oibSchema } from "@/lib/validations/oib"
+import { apiError } from "@/lib/api-error"
 
 const sandboxTestSchema = z.object({
   type: z.enum(["connection", "invoice", "status", "cancel"]),
@@ -86,7 +87,11 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error({ error }, "Sandbox test failed")
 
-    return NextResponse.json({ error: "Sandbox test failed" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Sandbox test failed",
+    })
   }
 }
 

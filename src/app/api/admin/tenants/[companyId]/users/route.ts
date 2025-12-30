@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { logAudit, getIpFromHeaders, getUserAgentFromHeaders } from "@/lib/audit"
 import { sendEmail } from "@/lib/email"
 import { AdminUserManagementEmail } from "@/lib/email/templates/admin-user-management-email"
+import { apiError } from "@/lib/api-error"
 
 type RouteContext = {
   params: Promise<{ companyId: string }>
@@ -55,8 +56,7 @@ async function sendAdminActionNotifications(
           timestamp,
         }),
       }).catch((error) => {
-        console.error("[AdminUserManagement] Failed to notify owner:", error)
-      })
+        })
     )
   }
 
@@ -78,8 +78,7 @@ async function sendAdminActionNotifications(
         timestamp,
       }),
     }).catch((error) => {
-      console.error("[AdminUserManagement] Failed to notify user:", error)
-    })
+      })
   )
 
   await Promise.allSettled(emailPromises)
@@ -121,8 +120,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
       })),
     })
   } catch (error) {
-    console.error("Failed to fetch tenant users:", error)
-    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to fetch users",
+    })
   }
 }
 
@@ -388,7 +390,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   } catch (error) {
-    console.error("Failed to manage tenant users:", error)
-    return NextResponse.json({ error: "Failed to manage users" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to manage users",
+    })
   }
 }

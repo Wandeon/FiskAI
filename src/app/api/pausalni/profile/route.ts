@@ -3,6 +3,7 @@ import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
 import { drizzleDb } from "@/lib/db/drizzle"
 import { pausalniProfile } from "@/lib/db/schema/pausalni"
 import { eq } from "drizzle-orm"
+import { apiError } from "@/lib/api-error"
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,8 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ profile: profile[0] })
   } catch (error) {
-    console.error("Error fetching paušalni profile:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }
 
@@ -118,7 +118,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ profile: updated[0] })
   } catch (error) {
-    console.error("Error updating paušalni profile:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

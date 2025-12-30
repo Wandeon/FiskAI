@@ -11,6 +11,7 @@ import {
   getComplianceSummary,
 } from "@/lib/compliance/en16931-validator"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 const complianceCheckSchema = z.object({
   invoiceId: z.string().min(1, "Invoice ID is required"),
@@ -79,7 +80,11 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to perform compliance check")
 
-    return NextResponse.json({ error: "Failed to perform compliance check" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to perform compliance check",
+    })
   }
 }
 
@@ -166,6 +171,10 @@ export async function GET(request: Request) {
   } catch (error) {
     logger.error({ error }, "Failed to perform bulk compliance check")
 
-    return NextResponse.json({ error: "Failed to perform bulk compliance check" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to perform bulk compliance check",
+    })
   }
 }

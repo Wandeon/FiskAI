@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/admin/regulatory-truth/conflicts/[id]/resolve
@@ -109,7 +110,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       conflict: updatedConflict,
     })
   } catch (error) {
-    console.error("[resolve] Error resolving conflict:", error)
-    return NextResponse.json({ error: "Failed to resolve conflict" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to resolve conflict",
+    })
   }
 }

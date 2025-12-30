@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { SupportTicketPriority, SupportTicketStatus } from "@prisma/client"
 import { Resend } from "resend"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 // Vercel cron or external cron calls this endpoint
 export async function GET(request: Request) {
@@ -16,7 +17,11 @@ export async function GET(request: Request) {
   // Initialize Resend inside handler to avoid build-time errors
   if (!process.env.RESEND_API_KEY) {
     logger.error("RESEND_API_KEY not configured for support escalation")
-    return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "RESEND_API_KEY not configured",
+    })
   }
   const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -183,7 +188,11 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     logger.error({ error }, "Support escalation cron error")
-    return NextResponse.json({ error: "Internal error" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Internal error",
+    })
   }
 }
 

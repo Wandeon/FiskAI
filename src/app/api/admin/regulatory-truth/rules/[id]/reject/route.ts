@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { logAuditEvent } from "@/lib/regulatory-truth/utils/audit-log"
+import { apiError } from "@/lib/api-error"
 
 /**
  * POST /api/admin/regulatory-truth/rules/[id]/reject
@@ -70,7 +71,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       rule: updatedRule,
     })
   } catch (error) {
-    console.error("[reject] Error rejecting rule:", error)
-    return NextResponse.json({ error: "Failed to reject rule" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to reject rule",
+    })
   }
 }

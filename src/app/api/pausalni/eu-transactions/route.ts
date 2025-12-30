@@ -5,6 +5,7 @@ import { euTransaction } from "@/lib/db/schema/pausalni"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { processTransactionsForEu } from "@/lib/pausalni/eu-detection"
 import { db } from "@/lib/db"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/pausalni/eu-transactions
@@ -68,8 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ transactions, summary })
   } catch (error) {
-    console.error("Error fetching EU transactions:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }
 
@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
       total: transactions.length,
     })
   } catch (error) {
-    console.error("Error processing EU transactions:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

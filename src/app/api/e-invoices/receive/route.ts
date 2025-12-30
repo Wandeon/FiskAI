@@ -215,16 +215,11 @@ export async function POST(request: Request) {
       message: "E-invoice received and processed successfully",
     })
   } catch (error) {
-    logger.error({ error }, "Failed to process incoming e-invoice")
-
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Failed to process incoming e-invoice", details: error.message },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ error: "Failed to process incoming e-invoice" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "INCOMING_INVOICE_PROCESSING_FAILED",
+      message: "Neuspjelo procesiranje ulaznog e-računa",
+    })
   }
 }
 
@@ -292,8 +287,10 @@ export async function GET(request: Request) {
       count: receivedInvoices.length,
     })
   } catch (error) {
-    logger.error({ error }, "Failed to fetch received e-invoices")
-
-    return NextResponse.json({ error: "Failed to fetch received e-invoices" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "RECEIVED_INVOICES_FETCH_FAILED",
+      message: "Neuspjelo dohvaćanje primljenih e-računa",
+    })
   }
 }

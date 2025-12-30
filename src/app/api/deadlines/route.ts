@@ -1,6 +1,7 @@
 // src/app/api/deadlines/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getDeadlines, getUpcomingDeadlines, getDeadlinesCount } from "@/lib/deadlines/queries"
+import { apiError } from "@/lib/api-error"
 
 export const dynamic = "force-dynamic"
 
@@ -135,7 +136,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error("Error fetching deadlines:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }

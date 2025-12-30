@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { checkRateLimit, getClientIP } from "@/lib/regulatory-truth/utils/rate-limit"
+import { apiError } from "@/lib/api-error"
 
 // Valid enum values for validation
 const VALID_RISK_TIERS = ["T0", "T1", "T2", "T3"] as const
@@ -163,7 +164,10 @@ export async function GET(request: NextRequest) {
       rules,
     })
   } catch (error) {
-    console.error("[api/rules/search] Error:", error)
-    return NextResponse.json({ error: "Failed to search rules" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to search rules",
+    })
   }
 }

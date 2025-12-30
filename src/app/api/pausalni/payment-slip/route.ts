@@ -9,6 +9,7 @@ import {
   formatHub3aData,
 } from "@/lib/pausalni/payment-slips"
 import { DOPRINOSI_2025, PDV_CONFIG, HOK_CONFIG } from "@/lib/pausalni/constants"
+import { apiError } from "@/lib/api-error"
 
 /**
  * GET /api/pausalni/payment-slip
@@ -101,8 +102,7 @@ export const GET = withApiLogging(async (request: NextRequest) => {
       warnings: hub3aResult.warnings,
     })
   } catch (error) {
-    console.error("Error generating payment slip:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })
 
@@ -165,7 +165,6 @@ export const POST = withApiLogging(async (request: NextRequest) => {
       totalAmount: DOPRINOSI_2025.TOTAL,
     })
   } catch (error) {
-    console.error("Error generating batch payment slips:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 })

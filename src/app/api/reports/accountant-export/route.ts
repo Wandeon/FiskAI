@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import {
+import { apiError } from "@/lib/api-error"
   fetchAccountantExportData,
   invoicesToCsv,
   expensesToCsv,
@@ -96,7 +97,10 @@ export async function GET(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error("Accountant export error:", error)
-    return NextResponse.json({ error: "Neuspješan izvoz za knjigovođu" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Neuspješan izvoz za knjigovođu",
+    })
   }
 }

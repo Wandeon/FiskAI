@@ -7,6 +7,7 @@ import { requireCompany } from "@/lib/auth-utils"
 import { uploadToR2, generateR2Key } from "@/lib/r2-client"
 import { createHash } from "crypto"
 import { logger } from "@/lib/logger"
+import { apiError } from "@/lib/api-error"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"]
@@ -71,6 +72,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     logger.error({ error }, "Receipt upload failed")
-    return NextResponse.json({ error: "Failed to upload receipt" }, { status: 500 })
+    return apiError(error, {
+      status: 500,
+      code: "OPERATION_FAILED",
+      message: "Failed to upload receipt",
+    })
   }
 }

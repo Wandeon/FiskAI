@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
 import {
+import { apiError } from "@/lib/api-error"
   getGuidancePreferences,
   updateGuidancePreferences,
   setGlobalLevel,
@@ -50,8 +51,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error("Error fetching guidance preferences:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }
 
@@ -136,7 +136,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ preferences })
   } catch (error) {
-    console.error("Error updating guidance preferences:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return apiError(error)
   }
 }
