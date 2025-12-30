@@ -5,6 +5,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getFiscalProvider, calculateZKI, validateZKIInput } from "@/lib/e-invoice"
 import type { FiscalInvoice, PaymentMethodCode } from "@/lib/e-invoice"
 import { revalidatePath } from "next/cache"
+import { validateStatusTransition, getTransitionError } from "@/lib/e-invoice-status"
 
 /**
  * Fiscalize an invoice with Croatian Tax Authority (CIS)

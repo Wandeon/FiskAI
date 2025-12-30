@@ -16,6 +16,8 @@ import { createEInvoiceProvider, generateUBLInvoice } from "@/lib/e-invoice"
 import { decryptOptionalSecret } from "@/lib/secrets"
 import { generateInvoicePDF } from "@/lib/pdf/generate-invoice-pdf"
 import { shouldFiscalizeInvoice, queueFiscalRequest } from "@/lib/fiscal/should-fiscalize"
+import { validateStatusTransition, getTransitionError } from "@/lib/e-invoice-status"
+import { validateTransition } from "@/lib/invoice-status-validation"
 
 const Decimal = Prisma.Decimal
 
@@ -558,6 +560,12 @@ export async function sendEInvoice(eInvoiceId: string) {
       return { error: "E-Invoice not found or already sent" }
     }
 
+    // Validate status transition
+    const transitionValidation = validateTransition(eInvoice.status, "SENT")
+    if (!transitionValidation.valid) {
+      return { error: transitionValidation.error }
+    }
+
     // Generate UBL XML
     const ublXml = generateUBLInvoice(eInvoice)
 
@@ -740,10 +748,10 @@ export async function markInvoiceAsPaid(invoiceId: string) {
       return { error: "Invoice not found or you don't have permission to access it" }
     }
 
-    // Check if invoice is in a valid status to be marked as paid
-    const validStatuses = ["FISCALIZED", "SENT", "DELIVERED"]
-    if (!validStatuses.includes(eInvoice.status)) {
-      return { error: "Invoice must be fiscalized, sent, or delivered to mark as paid" }
+    // Validate status transition
+    const transitionValidation = validateTransition(eInvoice.status, "ACCEPTED")
+    if (!transitionValidation.valid) {
+      return { error: transitionValidation.error }
     }
 
     // Check if already paid
