@@ -15,6 +15,7 @@ import {
   buildCrawlEvent,
   trackCrawlerHit,
 } from "@/lib/ai-crawler"
+import { checkRateLimit } from "@/lib/security/rate-limit"
 
 // Routes to skip (API, static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
@@ -91,8 +92,42 @@ export async function middleware(request: NextRequest) {
   const realHost = getRealHost(request)
   const subdomain = getSubdomain(realHost)
 
-  // Marketing subdomain - allow all traffic
+  // Marketing subdomain - apply rate limiting for unauthenticated traffic
   if (subdomain === "marketing") {
+    // Get IP address for rate limiting
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "anonymous"
+
+    // Check rate limit for unauthenticated traffic
+    const rateLimitResult = await checkRateLimit(
+      `unauthenticated_${ip}`,
+      "UNAUTHENTICATED_TRAFFIC"
+    )
+
+    if (!rateLimitResult.allowed) {
+      logger.warn(
+        {
+          requestId,
+          ip,
+          pathname,
+          resetAt: rateLimitResult.resetAt,
+          blockedUntil: rateLimitResult.blockedUntil,
+        },
+        "Rate limit exceeded for unauthenticated traffic"
+      )
+
+      return new NextResponse("Previše zahtjeva. Molimo pričekajte prije ponovnog pokušaja.", {
+        status: 429,
+        headers: {
+          "Retry-After": "60",
+          "X-RateLimit-Reset": rateLimitResult.resetAt?.toString() || "",
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      })
+    }
+
     const response = NextResponse.next()
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-subdomain", subdomain)

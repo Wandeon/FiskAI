@@ -81,6 +81,11 @@ export const RATE_LIMITS = {
     window: 60 * 60 * 1000, // 1 hour
     blockDuration: 60 * 60 * 1000, // 1 hour block
   },
+  UNAUTHENTICATED_TRAFFIC: {
+    attempts: 100, // 100 requests per minute per IP
+    window: 60 * 1000, // 1 minute
+    blockDuration: 60 * 1000, // 1 minute block
+  },
 }
 
 /**
