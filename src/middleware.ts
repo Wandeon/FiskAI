@@ -16,6 +16,7 @@ import {
   trackCrawlerHit,
 } from "@/lib/ai-crawler"
 import { generateCSP } from "@/lib/middleware/csp"
+import { checkRateLimit } from "@/lib/security/rate-limit"
 
 // Routes to skip (API, static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
@@ -197,6 +198,32 @@ export async function middleware(request: NextRequest) {
         redirectUrl,
       },
       "Redirecting user to correct subdomain for their role"
+    )
+
+    const response = NextResponse.redirect(redirectUrl)
+    response.headers.set("x-request-id", requestId)
+    response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
+    return response
+  }
+
+  // Auto-redirect STAFF/ADMIN users from app subdomain to their primary subdomain
+  // This prevents confusion where staff see client UI instead of staff tools
+  if (subdomain === "app" && (systemRole === "STAFF" || systemRole === "ADMIN")) {
+    const externalUrl = getExternalUrl(request)
+    const redirectUrl = getRedirectUrlForSystemRole(
+      systemRole as "USER" | "STAFF" | "ADMIN",
+      externalUrl.toString()
+    )
+
+    logger.info(
+      {
+        requestId,
+        systemRole,
+        currentSubdomain: subdomain,
+        redirectUrl,
+      },
+      "Auto-redirecting STAFF/ADMIN user from app subdomain to their primary subdomain"
     )
 
     const response = NextResponse.redirect(redirectUrl)
