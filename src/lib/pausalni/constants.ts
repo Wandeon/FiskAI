@@ -57,10 +57,10 @@ export const DEADLINES = {
   DOPRINOSI: 15, // 15th of month for previous month
   PDV_FORMS: 20, // 20th of following month
   PDV_PAYMENT: -1, // Last day of following month (use -1 as marker)
-  POREZ_Q1: { month: 3, day: 31 },
-  POREZ_Q2: { month: 6, day: 30 },
-  POREZ_Q3: { month: 9, day: 30 },
-  POREZ_Q4: { month: 12, day: 31 },
+  POREZ_Q1: { month: 1, day: 31 }, // January 31 (for Q4 of previous year)
+  POREZ_Q2: { month: 4, day: 30 }, // April 30 (for Q1)
+  POREZ_Q3: { month: 7, day: 31 }, // July 31 (for Q2)
+  POREZ_Q4: { month: 10, day: 31 }, // October 31 (for Q3)
   PO_SD: { month: 1, day: 31 }, // January 31 for previous year
   DOH: { month: 2, day: 28 }, // February 28 if exceeded threshold
 } as const
