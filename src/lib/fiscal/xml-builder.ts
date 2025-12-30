@@ -1,6 +1,7 @@
 // src/lib/fiscal/xml-builder.ts
 import { create } from "xmlbuilder2"
 import { calculateZKI } from "@/lib/e-invoice/zki"
+import { validateOib } from "@/lib/validations/oib"
 import { formatAmount, formatDateTime, generateUUID } from "./utils"
 
 const NAMESPACE = "http://www.apis-it.hr/fin/2012/types/f73"
@@ -44,6 +45,14 @@ export function buildRacunRequest(
   privateKeyPem: string,
   oib: string
 ): XMLBuildResult {
+  // Validate OIBs before proceeding
+  if (!validateOib(oib)) {
+    throw new Error(`Invalid company OIB: ${oib}`)
+  }
+  if (invoice.operatorOib && !validateOib(invoice.operatorOib)) {
+    throw new Error(`Invalid operator OIB: ${invoice.operatorOib}`)
+  }
+
   const messageId = generateUUID()
   const timestamp = new Date()
 
