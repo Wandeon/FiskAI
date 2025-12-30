@@ -242,7 +242,7 @@ export function NewsTableClient({ initialPosts, categories }: NewsTableClientPro
  setSearch(e.target.value)
  debouncedSearch(e.target.value)
  }}
- className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 pl-10 pr-4 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-blue-500"
+ className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 pl-10 pr-4 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus"
  />
  </div>
 
@@ -250,7 +250,7 @@ export function NewsTableClient({ initialPosts, categories }: NewsTableClientPro
  <select
  value={statusFilter}
  onChange={(e) => handleFilterChange("status", e.target.value)}
- className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-blue-500"
+ className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus"
  >
  {STATUS_OPTIONS.map((opt) => (
  <option key={opt.value} value={opt.value}>
@@ -263,7 +263,7 @@ export function NewsTableClient({ initialPosts, categories }: NewsTableClientPro
  <select
  value={categoryFilter}
  onChange={(e) => handleFilterChange("category", e.target.value)}
- className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-blue-500"
+ className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus"
  >
  {categoryOptions.map((cat) => (
  <option key={cat.id} value={cat.id}>
@@ -276,7 +276,7 @@ export function NewsTableClient({ initialPosts, categories }: NewsTableClientPro
  <select
  value={impactFilter}
  onChange={(e) => handleFilterChange("impact", e.target.value)}
- className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-blue-500"
+ className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus"
  >
  {IMPACT_OPTIONS.map((opt) => (
  <option key={opt.value} value={opt.value}>

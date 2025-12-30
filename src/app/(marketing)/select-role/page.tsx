@@ -68,7 +68,7 @@ export default async function SelectRolePage() {
   const baseDomain = url.hostname.replace(/^(www\.|app\.|staff\.|admin\.)/, '')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-surface-1 to-slate-100 p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name || user.email}</h1>
@@ -93,7 +93,7 @@ export default async function SelectRolePage() {
 
             return (
               <a key={subdomain} href={href}>
-                <Card className="hover:bg-white/80 transition-colors cursor-pointer border-default bg-white">
+                <Card className="hover:bg-surface/80 transition-colors cursor-pointer border-default bg-surface">
                   <CardContent className="flex items-center gap-4 p-6">
                     <div className={`h-12 w-12 rounded-full bg-surface-1 flex items-center justify-center ${info.color}`}>
                       <Icon className="h-6 w-6" />

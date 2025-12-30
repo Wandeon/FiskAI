@@ -118,7 +118,7 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
           <label className="flex items-center gap-2 pt-6">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-default"
               {...register("isVatPayer")}
             />
             <span className="text-sm font-medium">PDV obveznik</span>

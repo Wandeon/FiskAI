@@ -356,7 +356,7 @@ Always pair typography styles with semantic color tokens:
 <span className="text-label-sm text-muted">Disabled</span>
 
 // AVOID - Mixing systems
-<h2 className="text-heading-lg text-gray-900">Heading</h2>
+<h2 className="text-heading-lg text-foreground">Heading</h2>
 ```
 
 ### 3. Maintain Hierarchy

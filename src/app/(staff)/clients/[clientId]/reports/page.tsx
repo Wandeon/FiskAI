@@ -230,7 +230,7 @@ export default async function ClientReportsPage({ params }: PageProps) {
  ytdRevenue > 50000
  ? "border-orange-200 bg-warning-bg"
  : ytdRevenue > 40000
- ? "border-yellow-200 bg-warning-bg"
+ ? "border-warning-border bg-warning-bg"
  : "border-success-border bg-success-bg"
  }
  >

@@ -387,10 +387,10 @@ export function EuTransactionReview({ companyId }: Props) {
                     </div>
 
                     {selectedTypes[tx.id] === TRANSACTION_TYPES.GOODS && (
-                      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <div className="bg-info-bg dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                         <div className="flex gap-2">
-                          <Package className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                          <div className="text-sm text-blue-800 dark:text-blue-200">
+                          <Package className="h-4 w-4 text-link dark:text-link mt-0.5 shrink-0" />
+                          <div className="text-sm text-info-text dark:text-blue-200">
                             <p className="font-medium">Transakcija robom</p>
                             <p className="text-xs mt-1">
                               Ova transakcija će se pratiti za Intrastat izvještavanje. Ako godišnji

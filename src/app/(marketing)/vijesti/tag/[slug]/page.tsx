@@ -164,7 +164,7 @@ export default async function TagPage({ params }: PageProps) {
 
       {/* Related Tags */}
       {allTags.length > 0 && (
-        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-xl border border-white/10 bg-surface/5 p-6">
           <h2 className="mb-4 text-xl font-semibold text-white">Popularne oznake</h2>
           <div className="flex flex-wrap gap-2">
             {allTags.map(({ tag, count }) => (
@@ -174,7 +174,7 @@ export default async function TagPage({ params }: PageProps) {
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   tag === slug
                     ? "bg-interactive/30 text-blue-200"
-                    : "bg-white/10 text-white/70 hover:bg-white/20"
+                    : "bg-surface/10 text-white/70 hover:bg-surface/20"
                 }`}
               >
                 #{tag} ({count})

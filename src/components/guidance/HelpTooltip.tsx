@@ -81,14 +81,14 @@ export function HelpTooltip({
         <div
           role="tooltip"
           className={cn(
-            "absolute z-50 w-64 rounded-lg border border-white/10 bg-slate-800 p-3 shadow-xl",
+            "absolute z-50 w-64 rounded-lg border border-white/10 bg-surface-elevated p-3 shadow-xl",
             positionClasses[position]
           )}
         >
           {title && <div className="font-semibold text-sm text-white mb-1">{title}</div>}
           <div className="text-xs text-white/70 leading-relaxed">{content}</div>
           <div
-            className={cn("absolute h-3 w-3 border-white/10 bg-slate-800", arrowClasses[position])}
+            className={cn("absolute h-3 w-3 border-white/10 bg-surface-elevated", arrowClasses[position])}
           />
         </div>
       )}

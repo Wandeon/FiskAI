@@ -29,7 +29,7 @@ export default function ContactPage() {
 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-8">
-            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-white/10 bg-surface/5 backdrop-blur-sm p-6">
               <h2 className="text-xl font-semibold mb-4">Kontakt podaci</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -109,7 +109,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-white/10 bg-surface/5 backdrop-blur-sm p-6">
               <h2 className="text-xl font-semibold mb-4">Tvrtka</h2>
               <div className="space-y-2 text-sm">
                 <p>
@@ -132,7 +132,7 @@ export default function ContactPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-white/10 bg-surface/5 backdrop-blur-sm p-6">
               <h2 className="text-xl font-semibold mb-4">Zahtjev za demo</h2>
               <p className="text-sm text-white/60 mb-4">
                 Zatražite personalizirani demo koji pokazuje kako FiskAI može ubrzati vaše
@@ -141,7 +141,7 @@ export default function ContactPage() {
               <ContactForm />
             </div>
 
-            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+            <div className="rounded-lg border border-white/10 bg-surface/5 backdrop-blur-sm p-6">
               <h2 className="text-xl font-semibold mb-2">Već imate račun?</h2>
               <p className="text-sm text-white/60 mb-4">
                 Prijavite se u aplikaciju ili koristite in-app podršku za tehnička pitanja.
@@ -149,7 +149,7 @@ export default function ContactPage() {
               <div className="flex gap-3">
                 <Link
                   href="/login"
-                  className="flex-1 rounded-md border border-white/20 bg-white/5 px-4 py-2 text-center text-sm font-medium hover:bg-white/10"
+                  className="flex-1 rounded-md border border-white/20 bg-surface/5 px-4 py-2 text-center text-sm font-medium hover:bg-surface/10"
                 >
                   Prijava
                 </Link>
@@ -166,7 +166,7 @@ export default function ContactPage() {
 
         <div className="mt-12 rounded-lg border border-focus bg-info-bg p-6">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <Phone className="h-5 w-5 text-red-700" />
+            <Phone className="h-5 w-5 text-danger-text" />
             Hitna podrška
           </h3>
           <p className="text-sm text-white/60 mb-3">
@@ -176,7 +176,7 @@ export default function ContactPage() {
           <div className="flex items-center gap-4">
             <a
               href={getPhoneLink(companyInfo.phoneEmergency)}
-              className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-white/95 border border-red-200"
+              className="inline-flex items-center gap-2 rounded-md bg-surface px-4 py-2 text-sm font-semibold text-danger-text hover:bg-surface/95 border border-danger-border"
             >
               <Phone className="h-4 w-4" />
               {companyInfo.phoneEmergency}

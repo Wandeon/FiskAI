@@ -31,15 +31,15 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
- DRAFT: "bg-gray-100 text-secondary",
- PENDING_FISCALIZATION: "bg-yellow-100 text-warning-text",
- FISCALIZED: "bg-blue-100 text-info-text",
- SENT: "bg-blue-100 text-info-text",
- DELIVERED: "bg-green-100 text-success-text",
- ACCEPTED: "bg-green-100 text-success-text",
- REJECTED: "bg-red-100 text-danger-text",
- ARCHIVED: "bg-gray-100 text-gray-600",
- ERROR: "bg-red-100 text-danger-text",
+ DRAFT: "bg-surface-2 text-secondary",
+ PENDING_FISCALIZATION: "bg-warning-bg text-warning-text",
+ FISCALIZED: "bg-info-bg text-info-text",
+ SENT: "bg-info-bg text-info-text",
+ DELIVERED: "bg-success-bg text-success-text",
+ ACCEPTED: "bg-success-bg text-success-text",
+ REJECTED: "bg-danger-bg text-danger-text",
+ ARCHIVED: "bg-surface-2 text-secondary",
+ ERROR: "bg-danger-bg text-danger-text",
 }
 
 type InvoiceItem = {
@@ -221,7 +221,7 @@ export default async function ClientEInvoicesPage({ params, searchParams }: Page
  cell: (invoice) => (
  <span
  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
- statusColors[invoice.status] || "bg-gray-100 text-secondary"
+ statusColors[invoice.status] || "bg-surface-2 text-secondary"
  }`}
  >
  {statusLabels[invoice.status] || invoice.status}
@@ -290,7 +290,7 @@ export default async function ClientEInvoicesPage({ params, searchParams }: Page
  </Card>
  </Link>
  <Link href={`/clients/${clientId}/e-invoices?filter=reviewed`}>
- <Card className={`cursor-pointer transition-colors hover:bg-accent/50 ${filter === "reviewed" ? "border-green-500 bg-success-bg" : ""}`}>
+ <Card className={`cursor-pointer transition-colors hover:bg-accent/50 ${filter === "reviewed" ? "border-success-border bg-success-bg" : ""}`}>
  <CardContent className="pt-6">
  <p className="text-sm text-muted-foreground">Pregledano</p>
  <p className="text-2xl font-bold text-success-icon">{stats.reviewed}</p>

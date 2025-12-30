@@ -174,7 +174,7 @@ export function ComparisonCalculator({
   }
 
   return (
-    <div className="bg-slate-800/80 border border-white/20 rounded-lg p-4 sm:p-6">
+    <div className="bg-surface-elevated/80 border border-white/20 rounded-lg p-4 sm:p-6">
       {/* Revenue Input */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-white/90 mb-2">
@@ -191,7 +191,7 @@ export function ComparisonCalculator({
             className="flex-1 h-11 sm:h-auto"
             style={{ minHeight: "44px" }}
           />
-          <div className="w-full sm:w-32 text-center sm:text-right font-mono text-lg bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded text-white">
+          <div className="w-full sm:w-32 text-center sm:text-right font-mono text-lg bg-surface/5 sm:bg-transparent p-2 sm:p-0 rounded text-white">
             <AnimatedAmount value={revenue} className="text-lg" />
           </div>
         </div>
@@ -314,7 +314,7 @@ export function ComparisonCalculator({
               "border rounded-lg p-4",
               r.isRecommended
                 ? "border-emerald-500 bg-chart-4/10"
-                : "border-white/20 bg-white/5"
+                : "border-white/20 bg-surface/5"
             )}
           >
             <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/20">

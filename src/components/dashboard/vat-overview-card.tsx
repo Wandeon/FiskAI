@@ -71,7 +71,7 @@ export function VatOverviewCard({ paidVat, pendingVat, isVatPayer }: VatOverview
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-secondary)]">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 via-brand-500 to-indigo-500 transition-all"
+            className="h-full bg-gradient-to-r from-emerald-500 via-brand-500 to-chart-1 transition-all"
             style={{ width: `${paidPercent}%` }}
           />
         </div>

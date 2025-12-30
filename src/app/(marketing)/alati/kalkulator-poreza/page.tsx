@@ -81,7 +81,7 @@ export default function TaxCalculatorPage() {
           <TaxCalculator embedded={false} />
         </div>
 
-        <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+        <div className="mt-10 rounded-2xl border border-white/10 bg-surface/5 p-6 backdrop-blur-sm">
           <h2 className="text-lg font-semibold">Povezani sadržaj</h2>
           <ul className="mt-4 space-y-2 text-sm">
             <li>

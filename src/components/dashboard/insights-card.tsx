@@ -75,7 +75,7 @@ export function InsightsCard({
             key={insight.title}
             className="flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-3"
           >
-            <div className="rounded-full bg-white/70 p-2 shadow-sm dark:bg-[var(--surface)]">
+            <div className="rounded-full bg-surface/70 p-2 shadow-sm dark:bg-[var(--surface)]">
               {insight.icon}
             </div>
             <div className="space-y-1">

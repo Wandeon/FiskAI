@@ -57,7 +57,7 @@ const CHANGELOG_ENTRIES: ChangelogEntry[] = [
 ]
 
 const typeColors = {
-  added: "bg-success/10 text-success-text border-green-500/20",
+  added: "bg-success/10 text-success-text border-success-border/20",
   changed: "bg-interactive/10 text-link border-focus/20",
   fixed: "bg-warning/10 text-warning-text border-amber-500/20",
 }
@@ -112,14 +112,14 @@ export function WhatsNewModal() {
           <div className="absolute top-4 right-4">
             <button
               onClick={handleDismiss}
-              className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-lg p-1.5 text-white/70 hover:bg-surface/10 hover:text-white transition-colors"
               aria-label="Zatvori"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-white/20 p-2.5">
+            <div className="rounded-xl bg-surface/20 p-2.5">
               <Sparkles className="h-6 w-6" />
             </div>
             <div>

@@ -23,7 +23,7 @@ export function ProsCons({
   return (
     <Reveal className={cn("not-prose my-6", className)}>
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-card">
+        <section className="rounded-2xl border border-white/10 bg-surface/5 p-5 shadow-card">
           <header className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-chart-4/10 text-emerald-400">
               <CheckCircle2 className="h-5 w-5" aria-hidden />
@@ -45,7 +45,7 @@ export function ProsCons({
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-card">
+        <section className="rounded-2xl border border-white/10 bg-surface/5 p-5 shadow-card">
           <header className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-chart-8/10 text-rose-400">
               <XCircle className="h-5 w-5" aria-hidden />

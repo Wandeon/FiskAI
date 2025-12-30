@@ -123,10 +123,10 @@ export default function PDVCalculatorPage() {
                   <Bell className="h-4 w-4 text-primary" /> Upozorenje na 80% praga
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-400">✓</span> Projekcija do kraja godine
+                  <span className="text-success-text">✓</span> Projekcija do kraja godine
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-400">✓</span> Automatski izvještaj za knjigovođu
+                  <span className="text-success-text">✓</span> Automatski izvještaj za knjigovođu
                 </li>
               </ul>
               <Link

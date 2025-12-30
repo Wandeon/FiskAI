@@ -67,8 +67,8 @@ export function StepIndicator({ currentStep, isStepValid }: StepIndicatorProps) 
                     "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
                     isActive && "border-focus bg-interactive text-white",
                     isPast && "border-green-600 bg-green-600 text-white",
-                    !isActive && !isPast && "border-default bg-white text-tertiary",
-                    canClick && !isActive && "cursor-pointer hover:border-blue-400",
+                    !isActive && !isPast && "border-default bg-surface text-tertiary",
+                    canClick && !isActive && "cursor-pointer hover:border-focus",
                     !canClick && "cursor-not-allowed opacity-50"
                   )}
                   aria-current={isActive ? "step" : undefined}

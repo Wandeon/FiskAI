@@ -65,7 +65,7 @@ export function FiscalValue({
 
   return (
     <span
-      className={cn("font-mono text-cyan-400", className)}
+      className={cn("font-mono text-accent-light", className)}
       data-fiscal-path={path}
       title={`Izvor: ${path}`}
     >

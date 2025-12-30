@@ -15,10 +15,10 @@ const STATUS_LABELS: Record<ExpenseStatus, string> = {
 }
 
 const STATUS_COLORS: Record<ExpenseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
-  PAID: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
+  DRAFT: "bg-surface-2 text-foreground",
+  PENDING: "bg-warning-bg text-warning-text",
+  PAID: "bg-success-bg text-green-800",
+  CANCELLED: "bg-danger-bg text-red-800",
 }
 
 export function ExpenseInlineStatus({ id, status }: { id: string; status: ExpenseStatus }) {

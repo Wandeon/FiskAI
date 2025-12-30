@@ -52,7 +52,7 @@ export function CompetenceSelector({
               "rounded-md px-3 py-1.5 text-sm font-medium transition-all border",
               globalLevel === level
                 ? levelColors[level]
-                : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                : "bg-surface/5 text-white/60 border-white/10 hover:bg-surface/10"
             )}
           >
             {LEVEL_LABELS[level]}
@@ -81,7 +81,7 @@ export function CompetenceSelector({
                     "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all border",
                     isActive
                       ? levelColors[level]
-                      : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                      : "bg-surface/5 text-white/60 border-white/10 hover:bg-surface/10"
                   )}
                 >
                   {LEVEL_LABELS[level]}

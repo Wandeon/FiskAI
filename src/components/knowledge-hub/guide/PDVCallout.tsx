@@ -28,7 +28,7 @@ const calloutStyles: Record<
     bg: "bg-interactive/10",
     border: "border-focus/20",
     iconBg: "bg-interactive/20",
-    iconColor: "text-blue-400",
+    iconColor: "text-link",
     icon: Lightbulb,
   },
   tip: {

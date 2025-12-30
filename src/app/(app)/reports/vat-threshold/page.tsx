@@ -334,7 +334,7 @@ export default async function VatThresholdReportPage() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
-                    className="h-2 rounded-full bg-blue-500"
+                    className="h-2 rounded-full bg-interactive"
                     style={{
                       width: `${Math.min(month.percentageOfThreshold * 2.5, 100)}%`,
                       backgroundColor:
@@ -463,7 +463,7 @@ export default async function VatThresholdReportPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-full bg-purple-100 p-1">
+                <div className="mt-0.5 rounded-full bg-chart-2/10 p-1">
                   <Target className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>

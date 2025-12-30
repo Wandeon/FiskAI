@@ -153,7 +153,7 @@ export default function OnboardingPage() {
       <div className="mx-auto max-w-xl py-12">
         <div className="flex flex-col items-center justify-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          <p className="text-sm text-gray-500">Učitavanje podataka...</p>
+          <p className="text-sm text-tertiary">Učitavanje podataka...</p>
         </div>
       </div>
     )
@@ -164,8 +164,8 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto max-w-xl py-12">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Dobrodošli u FiskAI</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-foreground">Dobrodošli u FiskAI</h1>
+        <p className="mt-2 text-secondary">
           Postavite svoju tvrtku u {stepCount} jednostavna koraka
         </p>
       </div>
@@ -183,7 +183,7 @@ export default function OnboardingPage() {
         </CardContent>
       </Card>
 
-      <p className="mt-6 text-center text-xs text-gray-500">
+      <p className="mt-6 text-center text-xs text-tertiary">
         Vaši podaci se automatski spremaju tijekom unosa
       </p>
     </div>

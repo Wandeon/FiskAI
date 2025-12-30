@@ -41,7 +41,7 @@ export default async function PoSDPage() {
         className={`${
           isBeforeDeadline
             ? "border-amber-500/50 bg-amber-500/10"
-            : "border-focus/50 bg-blue-500/10"
+            : "border-focus/50 bg-interactive/10"
         }`}
       >
         <CardContent className="pt-6">

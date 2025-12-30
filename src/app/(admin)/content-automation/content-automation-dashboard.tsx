@@ -152,7 +152,7 @@ export function ContentAutomationDashboard({
  <CardContent>
  <div className="grid gap-4 md:grid-cols-2">
  {/* Article Agent Health */}
- <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+ <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border">
  <FileText className="h-8 w-8 text-info-icon" />
  <div>
  <div className="font-medium">Article Agent</div>
@@ -177,7 +177,7 @@ export function ContentAutomationDashboard({
  </div>
 
  {/* Content Sync Health */}
- <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+ <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border">
  <RefreshCw className="h-8 w-8 text-primary" />
  <div>
  <div className="font-medium">Content Sync</div>
@@ -657,7 +657,7 @@ export function ContentAutomationDashboard({
  href={pr.prUrl}
  target="_blank"
  rel="noopener noreferrer"
- className="flex items-center gap-1 px-3 py-1 text-sm font-medium text-info-icon hover:text-blue-800 hover:bg-info-bg rounded transition-colors"
+ className="flex items-center gap-1 px-3 py-1 text-sm font-medium text-info-icon hover:text-info-text hover:bg-info-bg rounded transition-colors"
  >
  Review PR
  <ExternalLink className="h-4 w-4" />

@@ -58,7 +58,7 @@ export function KeyboardShortcutHint({
             className={cn(
               "inline-flex items-center justify-center min-w-[1.5rem] h-5 px-1.5 rounded",
               "text-xs font-mono font-medium",
-              "bg-white/5 border border-white/10",
+              "bg-surface/5 border border-white/10",
               "text-white/60",
               "shadow-sm"
             )}

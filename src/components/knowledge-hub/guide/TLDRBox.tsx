@@ -9,8 +9,8 @@ interface TLDRBoxProps {
 
 const variantStyles = {
   default: {
-    container: "border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-indigo-500/10",
-    icon: "bg-purple-500/20 text-purple-400",
+    container: "border-purple-500/20 bg-gradient-to-br from-chart-2/10 to-chart-1/10",
+    icon: "bg-purple-500/20 text-chart-2",
     title: "text-purple-300",
   },
   success: {

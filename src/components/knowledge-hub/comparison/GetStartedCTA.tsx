@@ -21,7 +21,7 @@ export function GetStartedCTA() {
 
   return (
     <section className="mt-12 border-t border-white/10 pt-8">
-      <div className="rounded-xl border border-focus/30 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 p-6">
+      <div className="rounded-xl border border-focus/30 bg-gradient-to-r from-interactive/10 to-chart-1/10 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-white">{ctaTitle}</h3>

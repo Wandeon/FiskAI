@@ -75,7 +75,7 @@ export function PDVThresholdCalculator() {
               type="number"
               value={currentRevenue}
               onChange={(e) => setCurrentRevenue(Number(e.target.value))}
-              className="w-full rounded-md border border-white/20 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[44px] md:min-h-0"
+              className="w-full rounded-md border border-white/20 bg-surface-elevated px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[44px] md:min-h-0"
             />
             <span className="text-xs text-white/50 whitespace-nowrap">max 80k</span>
           </div>
@@ -97,7 +97,7 @@ export function PDVThresholdCalculator() {
               type="number"
               value={monthlyAverage}
               onChange={(e) => setMonthlyAverage(Number(e.target.value))}
-              className="w-full rounded-md border border-white/20 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[44px] md:min-h-0"
+              className="w-full rounded-md border border-white/20 bg-surface-elevated px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[44px] md:min-h-0"
             />
             <span className="text-xs text-white/50 whitespace-nowrap">max 20k</span>
           </div>
@@ -108,7 +108,7 @@ export function PDVThresholdCalculator() {
           <select
             value={currentMonth}
             onChange={(e) => setCurrentMonth(Number(e.target.value))}
-            className="w-full rounded-md border border-white/20 bg-slate-800 px-3 py-2 text-sm text-white min-h-[44px] md:min-h-0"
+            className="w-full rounded-md border border-white/20 bg-surface-elevated px-3 py-2 text-sm text-white min-h-[44px] md:min-h-0"
           >
             {monthNames.map((name, idx) => (
               <option key={name} value={idx + 1}>
@@ -126,7 +126,7 @@ export function PDVThresholdCalculator() {
           <span>Napredak prema pragu</span>
           <span>{animatedPercentage.toFixed(1)}%</span>
         </div>
-        <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-4 bg-surface/10 rounded-full overflow-hidden">
           <div
             className={cn(
               "h-full transition-all duration-500",

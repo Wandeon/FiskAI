@@ -64,12 +64,12 @@ const typeConfig = {
   added: {
     icon: Plus,
     label: "Novo",
-    className: "bg-green-500/10 text-green-600 border-green-500/20",
+    className: "bg-success-bg0/10 text-success-text border-success-border/20",
   },
   changed: {
     icon: RefreshCw,
     label: "Promjena",
-    className: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    className: "bg-interactive/10 text-link border-focus/20",
   },
   fixed: {
     icon: Wrench,

@@ -68,7 +68,7 @@ export function ContactForm() {
           name="name"
           required
           disabled={isSubmitting}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Vaše ime i prezime"
         />
         {fieldErrors.name && (
@@ -86,7 +86,7 @@ export function ContactForm() {
           name="email"
           required
           disabled={isSubmitting}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="vaš@email.hr"
         />
         {fieldErrors.email && (
@@ -106,7 +106,7 @@ export function ContactForm() {
           aria-describedby="businessType-desc"
           aria-label="Odaberite tip poslovanja"
           disabled={isSubmitting}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="" disabled>-- Odaberite tip poslovanja --</option>
           <option value="pausalni-obrt">Paušalni obrt</option>
@@ -134,7 +134,7 @@ export function ContactForm() {
           aria-describedby="invoiceVolume-desc"
           aria-label="Odaberite broj računa mjesečno"
           disabled={isSubmitting}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="" disabled>-- Odaberite broj računa --</option>
           <option value="1-10">1-10</option>
@@ -158,7 +158,7 @@ export function ContactForm() {
           id="message"
           name="message"
           disabled={isSubmitting}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Specifična pitanja ili zahtjevi..."
         />
         {fieldErrors.message && (

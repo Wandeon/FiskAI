@@ -162,7 +162,7 @@ export default function FormsPage() {
                         className="flex items-center justify-between p-4 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-lg bg-blue-500/10">
+                          <div className="p-2 rounded-lg bg-interactive/10">
                             <FileText className="h-5 w-5 text-link" />
                           </div>
                           <div>

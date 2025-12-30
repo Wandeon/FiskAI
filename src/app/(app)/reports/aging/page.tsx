@@ -93,7 +93,7 @@ export default async function AgingReportPage() {
             <p className="text-xs text-muted">{aging.days90.length} računa</p>
           </CardContent>
         </Card>
-        <Card className="border-red-500">
+        <Card className="border-danger-border">
           <CardContent className="pt-4">
             <p className="text-sm text-secondary">90+ dana</p>
             <p className="text-xl font-bold text-danger-text">{formatCurrency(totals.over90)}</p>

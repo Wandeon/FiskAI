@@ -154,7 +154,7 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                    isCustomer ? "bg-emerald-100 text-emerald-700" : "bg-purple-100 text-purple-700"
+                    isCustomer ? "bg-emerald-100 text-emerald-700" : "bg-chart-2/10 text-chart-2"
                   )}
                 >
                   {isCustomer ? "Kupac" : "Dobavljac"}
@@ -337,10 +337,10 @@ export default async function ContactOverviewPage({ params }: PageProps) {
                     onTimePercentage >= 80
                       ? "bg-emerald-500"
                       : onTimePercentage >= 60
-                        ? "bg-blue-500"
+                        ? "bg-interactive"
                         : onTimePercentage >= 40
                           ? "bg-amber-500"
-                          : "bg-red-500"
+                          : "bg-danger-bg0"
                   )}
                   style={{ width: `${onTimePercentage}%` }}
                 />

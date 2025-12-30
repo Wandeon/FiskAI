@@ -46,7 +46,7 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
 
   return (
     <>
-      <Card className={`${premises.isDefault ? "border-green-500" : ""} ${isSelected ? "ring-2 ring-[var(--primary)]" : ""}`}>
+      <Card className={`${premises.isDefault ? "border-success-border" : ""} ${isSelected ? "ring-2 ring-[var(--primary)]" : ""}`}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

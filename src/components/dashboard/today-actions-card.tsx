@@ -33,7 +33,7 @@ interface TodayActionsCardProps {
 
 export function TodayActionsCard({ alerts, stats, tasks }: TodayActionsCardProps) {
   return (
-    <div className="rounded-3xl border border-white/20 bg-white/70 p-6 shadow-card backdrop-blur lg:p-8 dark:bg-white/5">
+    <div className="rounded-3xl border border-white/20 bg-surface/70 p-6 shadow-card backdrop-blur lg:p-8 dark:bg-surface/5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Današnje akcije</p>

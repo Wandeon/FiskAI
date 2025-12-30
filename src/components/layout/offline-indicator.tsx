@@ -76,7 +76,7 @@ export function OfflineIndicator() {
       <WifiOff className="h-4 w-4" />
       Izvan mreže: izmjene će se spremiti kada se veza vrati.
       {pendingSyncCount > 0 && (
-        <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+        <span className="ml-2 rounded-full bg-surface/20 px-2 py-0.5 text-xs">
           {pendingSyncCount} na čekanju
         </span>
       )}

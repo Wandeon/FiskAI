@@ -10,7 +10,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/law/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-purple-100", "text-purple-800")
+    expect(badge).toHaveClass("bg-chart-2/10", "text-purple-800")
   })
 
   it("renders REGULATION badge with correct styling", () => {
@@ -18,7 +18,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/regulation/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-blue-100", "text-blue-800")
+    expect(badge).toHaveClass("bg-info-bg", "text-info-text")
   })
 
   it("renders GUIDANCE badge with correct styling", () => {
@@ -26,7 +26,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/guidance/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-green-100", "text-green-800")
+    expect(badge).toHaveClass("bg-success-bg", "text-green-800")
   })
 
   it("renders PRACTICE badge with correct styling", () => {
@@ -34,7 +34,7 @@ describe("AuthorityBadge", () => {
 
     const badge = screen.getByText(/practice/i)
     expect(badge).toBeInTheDocument()
-    expect(badge).toHaveClass("bg-gray-100", "text-gray-800")
+    expect(badge).toHaveClass("bg-surface-2", "text-foreground")
   })
 
   it("has accessible role", () => {

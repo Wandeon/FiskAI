@@ -64,7 +64,7 @@ Hardcoded colors are blocked by ESLint:
 
 ```tsx
 // BLOCKED
-<div className="text-blue-600">Error!</div>
+<div className="text-link">Error!</div>
 
 // ALLOWED
 <div className="text-link">Correct!</div>

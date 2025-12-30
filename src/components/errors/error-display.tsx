@@ -90,7 +90,7 @@ export function ErrorDisplay({
           {showHomeButton && (
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-default bg-white px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-1 focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-default bg-surface px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-1 focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2"
             >
               <Home className="h-4 w-4" />
               Natrag na početnu

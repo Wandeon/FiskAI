@@ -73,28 +73,28 @@ export default function AboutPage() {
 
         <h2 className="text-display mt-12 text-2xl font-semibold">Naše vrijednosti</h2>
         <ul className="mt-4 space-y-3">
-          <li className="rounded-lg bg-white/5 px-5 py-4">
+          <li className="rounded-lg bg-surface/5 px-5 py-4">
             <h3 className="text-display text-base font-semibold">Jednostavnost</h3>
             <p className="mt-2 text-sm text-white/60">
               Računovodstvo ne mora biti komplicirano. Dizajniramo sučelje koje razumije svaki poduzetnik,
               bez obzira na tehničko znanje. Kreni s osnovama, nadograđuj prema potrebi.
             </p>
           </li>
-          <li className="rounded-lg bg-white/5 px-5 py-4">
+          <li className="rounded-lg bg-surface/5 px-5 py-4">
             <h3 className="text-display text-base font-semibold">Automatizacija</h3>
             <p className="mt-2 text-sm text-white/60">
               AI asistent čita račune, predlaže knjiženja i prati rokove - vi samo potvrdite.
               Automatizacija štedi vrijeme, ali odluke ostaju kod vas. Bez &quot;skrivenih&quot; promjena.
             </p>
           </li>
-          <li className="rounded-lg bg-white/5 px-5 py-4">
+          <li className="rounded-lg bg-surface/5 px-5 py-4">
             <h3 className="text-display text-base font-semibold">Usklađenost</h3>
             <p className="mt-2 text-sm text-white/60">
               Gradimo platformu uz hrvatski regulatorni okvir - Fiskalizacija 2.0, e-računi, PDV, doprinosi.
               Automatski prati zakonske izmjene i upozorava na rokove. Compliance nije opcija, to je temelj.
             </p>
           </li>
-          <li className="rounded-lg bg-white/5 px-5 py-4">
+          <li className="rounded-lg bg-surface/5 px-5 py-4">
             <h3 className="text-display text-base font-semibold">Transparentnost</h3>
             <p className="mt-2 text-sm text-white/60">
               Vaši podaci su vaši. Izvoz u standardnim formatima (Excel, PDF, XML) u bilo kojem trenutku.
@@ -105,7 +105,7 @@ export default function AboutPage() {
 
         <h2 className="text-display mt-12 text-2xl font-semibold">Zašto FiskAI?</h2>
         <div className="mt-4 space-y-3">
-          <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-surface/5 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                 ✓
@@ -119,7 +119,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-surface/5 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                 ✓
@@ -133,7 +133,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-surface/5 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                 ✓
@@ -147,7 +147,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-surface/5 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                 ✓
@@ -161,7 +161,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/5 px-5 py-4">
+          <div className="rounded-lg border border-white/10 bg-surface/5 px-5 py-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                 ✓

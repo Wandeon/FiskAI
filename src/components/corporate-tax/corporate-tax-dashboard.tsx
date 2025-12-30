@@ -246,7 +246,7 @@ export function CorporateTaxDashboard({ companyName, taxBaseInputs }: Props) {
               <div className="text-2xl font-bold text-success-text dark:text-green-300">
                 {TAX_RATES.corporate.small.rate * 100}%
               </div>
-              <div className="text-sm text-success-text dark:text-green-400">
+              <div className="text-sm text-success-text dark:text-success-text">
                 Za tvrtke s prihodima do {threshold.toLocaleString("hr-HR")} EUR
               </div>
             </div>
@@ -254,7 +254,7 @@ export function CorporateTaxDashboard({ companyName, taxBaseInputs }: Props) {
               <div className="text-2xl font-bold text-link dark:text-blue-300">
                 {TAX_RATES.corporate.large.rate * 100}%
               </div>
-              <div className="text-sm text-link dark:text-blue-400">
+              <div className="text-sm text-link dark:text-link">
                 Za tvrtke s prihodima iznad {threshold.toLocaleString("hr-HR")} EUR
               </div>
             </div>

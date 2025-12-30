@@ -46,7 +46,7 @@ export default function CheckEmailPage() {
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-info-bg">
           <Mail className="h-8 w-8 text-link" />
         </div>
         <CardTitle className="text-2xl">Provjerite svoj email</CardTitle>
@@ -67,13 +67,13 @@ export default function CheckEmailPage() {
         </div>
 
         {resent && (
-          <div className="flex items-center justify-center gap-2 text-green-600">
+          <div className="flex items-center justify-center gap-2 text-success-text">
             <CheckCircle className="h-4 w-4" />
             <span className="text-sm">Email je ponovno poslan!</span>
           </div>
         )}
 
-        {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+        {error && <div className="rounded-md bg-danger-bg p-3 text-sm text-danger-text">{error}</div>}
 
         <Button
           variant="outline"

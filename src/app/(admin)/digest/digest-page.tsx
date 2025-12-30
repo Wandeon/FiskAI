@@ -281,7 +281,7 @@ export function DigestPage({ digestData }: DigestPageProps) {
  </CardHeader>
  <CardContent className="space-y-2">
  {digestData.actionItems.map((alert) => (
- <div key={alert.id} className="p-3 bg-white border border-danger-border rounded-lg">
+ <div key={alert.id} className="p-3 bg-surface border border-danger-border rounded-lg">
  <p className="font-medium text-danger-text">{alert.title}</p>
  <p className="text-sm text-muted-foreground">
  {alert.companyName}: {alert.description}

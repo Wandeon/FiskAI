@@ -47,7 +47,7 @@ export function InvoiceSummary({
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border border-subtle shadow-sm sticky top-20",
+        "bg-surface rounded-xl border border-subtle shadow-sm sticky top-20",
         className
       )}
     >

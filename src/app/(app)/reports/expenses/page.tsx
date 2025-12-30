@@ -181,7 +181,7 @@ export default async function ExpensesByCategoryPage({
                         <div className="flex items-center justify-end gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-blue-600 h-2 rounded-full"
+                              className="bg-interactive h-2 rounded-full"
                               style={{ width: `${formatPercent(cat.totalAmount)}%` }}
                             />
                           </div>

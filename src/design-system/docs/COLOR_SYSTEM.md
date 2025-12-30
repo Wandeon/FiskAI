@@ -71,8 +71,8 @@ Configured in `tailwind.config.ts` to map CSS variables to Tailwind utilities:
 </div>
 
 // ❌ WRONG - Hardcoded colors (will trigger ESLint error)
-<div className="text-slate-800 bg-white border-slate-200">
-  <button className="bg-blue-600 hover:bg-blue-700">
+<div className="text-foreground bg-surface border-default">
+  <button className="bg-interactive hover:bg-interactive-hover">
     Click me
   </button>
 </div>
@@ -310,7 +310,7 @@ Already configured in `.eslintrc.json`:
 
 ❌ **Hardcoded Tailwind colors:**
 ```tsx
-<div className="text-slate-800 bg-blue-600 border-red-500">
+<div className="text-foreground bg-interactive border-danger-border">
 ```
 
 ❌ **RGB/Hex colors:**

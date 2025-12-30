@@ -93,7 +93,7 @@ export function PosdWizard({ companyId }: Props) {
     // Show error state
     if (error) {
       return (
-        <div className="rounded-lg border border-red-500/50 bg-danger/10 p-4">
+        <div className="rounded-lg border border-danger-border/50 bg-danger/10 p-4">
           <p className="text-danger-text">{error}</p>
           <Button variant="outline" onClick={() => setYear(year)} className="mt-3">
             Pokušaj ponovno
@@ -425,7 +425,7 @@ export function PosdWizard({ companyId }: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="rounded-lg bg-success/10 border border-green-500/50 p-4">
+            <div className="rounded-lg bg-success/10 border border-success-border/50 p-4">
               <p className="font-medium text-green-900 dark:text-green-200">
                 Pripremili smo za vas sve potrebne podatke za podnošenje PO-SD obrasca!
               </p>
@@ -518,7 +518,7 @@ export function PosdWizard({ companyId }: Props) {
 
             {/* Generation Error */}
             {generationError && (
-              <div className="rounded-lg border border-red-500/50 bg-danger/10 p-4">
+              <div className="rounded-lg border border-danger-border/50 bg-danger/10 p-4">
                 <p className="text-danger-text text-sm">{generationError}</p>
               </div>
             )}

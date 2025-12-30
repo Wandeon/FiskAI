@@ -116,7 +116,7 @@ export function ChecklistPageClient({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
-          <ClipboardList className="h-7 w-7 text-cyan-400" />
+          <ClipboardList className="h-7 w-7 text-accent-light" />
           Što moram napraviti?
         </h1>
         <p className="text-[var(--muted)] mt-1">
@@ -130,7 +130,7 @@ export function ChecklistPageClient({
           <div className="text-sm text-[var(--muted)]">Ukupno zadataka</div>
         </GlassCard>
         <GlassCard hover={false} padding="sm">
-          <div className="text-2xl font-bold text-red-400">{stats.critical}</div>
+          <div className="text-2xl font-bold text-danger-text">{stats.critical}</div>
           <div className="text-sm text-[var(--muted)]">Kritično</div>
         </GlassCard>
         <GlassCard hover={false} padding="sm">

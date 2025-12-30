@@ -140,18 +140,18 @@ function getStatusColor(status: SupportTicketStatus) {
  case 'OPEN':
  return 'bg-interactive/10 text-info-text dark:text-info-icon'
  case 'IN_PROGRESS':
- return 'bg-warning/10 text-warning-text dark:text-yellow-400'
+ return 'bg-warning/10 text-warning-text dark:text-warning-text'
  case 'RESOLVED':
- return 'bg-success/10 text-success-text dark:text-green-400'
+ return 'bg-success/10 text-success-text dark:text-success-text'
  case 'CLOSED':
- return 'bg-surface/10 text-secondary dark:text-gray-400'
+ return 'bg-surface/10 text-secondary dark:text-muted'
  }
 }
 
 function getPriorityColor(priority: SupportTicketPriority) {
  switch (priority) {
  case 'LOW':
- return 'bg-surface/10 text-secondary dark:text-gray-400'
+ return 'bg-surface/10 text-secondary dark:text-muted'
  case 'NORMAL':
  return 'bg-interactive/10 text-info-text dark:text-info-icon'
  case 'HIGH':

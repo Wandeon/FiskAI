@@ -67,7 +67,7 @@ Welcome to the comprehensive documentation for the FiskAI design system. This do
 
 **Issue #235** identified that while the design system has a comprehensive semantic token architecture, adoption was poor:
 
-- 249 files used hardcoded Tailwind colors (e.g., `text-blue-600`, `bg-slate-800`)
+- 249 files used hardcoded Tailwind colors (e.g., `text-link`, `bg-surface-elevated`)
 - Core UI components didn't use semantic tokens
 - No documented contrast ratios
 - No automated enforcement
@@ -147,13 +147,13 @@ Components
 
 ### Why Semantic Tokens?
 
-Instead of `bg-blue-600`, use `bg-interactive` because:
+Instead of `bg-interactive`, use `bg-interactive` because:
 
 1. **Automatic dark mode** - No need for `dark:` variants
 2. **Consistent meaning** - Same token = same purpose everywhere
 3. **Easy theming** - Change one value, update entire app
 4. **Better accessibility** - Guaranteed contrast ratios
-5. **Self-documenting** - `text-foreground` is clearer than `text-slate-900`
+5. **Self-documenting** - `text-foreground` is clearer than `text-foreground`
 
 ## 📖 Token Categories
 

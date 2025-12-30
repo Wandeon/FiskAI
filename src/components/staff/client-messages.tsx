@@ -57,10 +57,10 @@ interface StaffClientMessagesProps {
 }
 
 const statusColors: Record<string, string> = {
- OPEN: 'bg-blue-100 text-info-text',
- IN_PROGRESS: 'bg-yellow-100 text-warning-text',
- RESOLVED: 'bg-green-100 text-success-text',
- CLOSED: 'bg-gray-100 text-secondary',
+ OPEN: 'bg-info-bg text-info-text',
+ IN_PROGRESS: 'bg-warning-bg text-warning-text',
+ RESOLVED: 'bg-success-bg text-success-text',
+ CLOSED: 'bg-surface-2 text-secondary',
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -72,9 +72,9 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 const priorityColors: Record<string, string> = {
  LOW: 'bg-surface-1 text-secondary',
- NORMAL: 'bg-blue-100 text-info-icon',
+ NORMAL: 'bg-info-bg text-info-icon',
  HIGH: 'bg-orange-100 text-warning-text',
- URGENT: 'bg-red-100 text-danger-icon',
+ URGENT: 'bg-danger-bg text-danger-icon',
 }
 
 export function StaffClientMessages({ clientId, clientName, initialTickets }: StaffClientMessagesProps) {

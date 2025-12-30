@@ -143,7 +143,7 @@ export function StepContactTax() {
 
         {data.legalForm === "OBRT_PAUSAL" && (
           <div className="rounded-md bg-info-bg border border-blue-100 p-3">
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-info-text">
               <strong>Paušalni obrt</strong> nije u sustavu PDV-a i ne obračunava PDV na račune.
             </p>
           </div>

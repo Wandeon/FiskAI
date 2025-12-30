@@ -245,7 +245,7 @@ export async function StaffCalendar() {
  key={deadline.id}
  className={`flex items-start gap-3 rounded-lg p-3 ${
  daysLeft <= 3
- ? 'bg-danger/10 border border-red-500/20'
+ ? 'bg-danger/10 border border-danger-border/20'
  : daysLeft <= 7
  ? 'bg-warning/10 border border-amber-500/20'
  : 'bg-muted/30'

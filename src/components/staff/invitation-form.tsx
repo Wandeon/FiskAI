@@ -53,7 +53,7 @@ export function InvitationForm() {
 
  if (success) {
  return (
- <Alert className="border-green-500 bg-success-bg">
+ <Alert className="border-success-border bg-success-bg">
  <CheckCircle className="h-4 w-4 text-success-icon" />
  <AlertDescription className="text-success-text">
  Invitation sent successfully! Redirecting to invitations list...

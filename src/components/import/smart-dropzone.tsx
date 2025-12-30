@@ -36,7 +36,7 @@ export function SmartDropzone({ onFilesDropped, disabled }: SmartDropzoneProps) 
         ${
           isDragActive
             ? "border-focus bg-info-bg"
-            : "border-default bg-gradient-to-br from-slate-50 to-white hover:border-strong"
+            : "border-default bg-gradient-to-br from-surface-1 to-white hover:border-strong"
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}

@@ -74,7 +74,7 @@ export default async function RegulatoryDashboardPage() {
  icon: AlertTriangle,
  color: "text-warning-icon",
  bgColor: "bg-warning-bg",
- borderColor: "border-yellow-200",
+ borderColor: "border-warning-border",
  },
  critical: {
  icon: AlertCircle,

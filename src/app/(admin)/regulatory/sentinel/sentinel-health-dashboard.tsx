@@ -109,7 +109,7 @@ export function SentinelHealthDashboard({ initialData }: { initialData: Sentinel
  icon: AlertTriangle,
  color: "text-warning-icon",
  bgColor: "bg-warning-bg",
- borderColor: "border-yellow-200",
+ borderColor: "border-warning-border",
  label: "WARNING",
  },
  critical: {
@@ -304,7 +304,7 @@ export function SentinelHealthDashboard({ initialData }: { initialData: Sentinel
  ? "bg-danger-bg border-danger-border"
  : stats.isHealthy
  ? "bg-success-bg border-success-border"
- : "bg-warning-bg border-yellow-200"
+ : "bg-warning-bg border-warning-border"
  }`}
  >
  <div className="flex items-center gap-3">

@@ -50,7 +50,7 @@ export function TaxCalculator({ embedded = true }: Props) {
             }}
             min={0}
             max={THRESHOLDS.pausalni.value}
-            className="font-mono bg-slate-800 border-white/20 text-white placeholder:text-white/40"
+            className="font-mono bg-surface-elevated border-white/20 text-white placeholder:text-white/40"
           />
           <span className="text-xs text-white/50 whitespace-nowrap">
             max {formatEUR(THRESHOLDS.pausalni.value)}
@@ -61,7 +61,7 @@ export function TaxCalculator({ embedded = true }: Props) {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+      <div className="rounded-2xl border border-white/10 bg-surface/5 p-4 space-y-3">
         <h4 className="font-semibold text-white">Godišnji troškovi (procjena)</h4>
         <div className="grid gap-2 text-sm">
           <div className="flex justify-between gap-3">
