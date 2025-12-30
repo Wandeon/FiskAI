@@ -215,6 +215,9 @@ model Company {
   revenueRegisterEntries         RevenueRegisterEntry[]
   invoiceEvents                  InvoiceEvent[]
   matchRecords                   MatchRecord[]
+  accountMappings                AccountMapping[]
+  exportProfiles                 ExportProfile[]
+  exportJobs                     ExportJob[]
 }
 
 model ChartOfAccounts {
@@ -235,6 +238,7 @@ model ChartOfAccounts {
   debitRules    PostingRule[]      @relation("DebitPostingRules")
   creditRules   PostingRule[]      @relation("CreditPostingRules")
   vatRules      PostingRule[]      @relation("VatPostingRules")
+  accountMappings AccountMapping[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -366,6 +370,69 @@ model OperationalEvent {
 
   @@unique([companyId, sourceType, sourceId, eventType])
   @@index([companyId, status])
+}
+
+// ============================================================================
+// EXPORTS & INTEGRATIONS
+// ============================================================================
+
+model ExportProfile {
+  id            String              @id @default(cuid())
+  companyId     String
+  name          String
+  targetSystem  ExportTargetSystem
+  isDefault     Boolean             @default(false)
+  settings      Json?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  company       Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accountMappings AccountMapping[]
+  exportJobs    ExportJob[]
+
+  @@index([companyId])
+  @@index([companyId, targetSystem])
+}
+
+model AccountMapping {
+  id                 String         @id @default(cuid())
+  companyId          String
+  exportProfileId    String
+  chartOfAccountsId  String
+  externalAccountCode String
+  externalAccountName String?
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  company            Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  exportProfile      ExportProfile  @relation(fields: [exportProfileId], references: [id], onDelete: Cascade)
+  chartOfAccounts    ChartOfAccounts @relation(fields: [chartOfAccountsId], references: [id], onDelete: Restrict)
+
+  @@unique([exportProfileId, chartOfAccountsId])
+  @@index([companyId])
+  @@index([chartOfAccountsId])
+}
+
+model ExportJob {
+  id             String           @id @default(cuid())
+  companyId      String
+  exportProfileId String
+  status         ExportJobStatus  @default(PENDING)
+  periodFrom     DateTime?
+  periodTo       DateTime?
+  recordCount    Int              @default(0)
+  fileName       String?
+  controlSum     String?
+  validationReport Json?
+  errorMessage   String?
+  completedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  exportProfile  ExportProfile    @relation(fields: [exportProfileId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([exportProfileId])
+  @@index([status])
 }
 
 // ============================================================================
@@ -2672,6 +2739,12 @@ enum OperationalEventStatus {
   FAILED
 }
 
+enum ExportTargetSystem {
+  SYNESIS
+  PANTHEON
+  MINIMAX
+}
+
 enum EntitlementChangeType {
   MODULE_ENABLED
   MODULE_DISABLED
@@ -2818,6 +2891,14 @@ enum JobStatus {
   READY_FOR_REVIEW
   CONFIRMED
   REJECTED
+}
+
+enum ExportJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  BLOCKED
 }
 
 enum JoppdSubmissionStatus {
