@@ -32,6 +32,7 @@ model User {
   staffReviews         StaffReview[]          @relation("StaffReviews")
   experimentAssignments ExperimentAssignment[]
   experimentEvents     ExperimentEvent[]
+  personSnapshots      PersonSnapshot[]       @relation("PersonSnapshotAuthor")
 }
 
 model Account {
@@ -136,6 +137,12 @@ model Company {
   businessPremises               BusinessPremises[]
   users                          CompanyUser[]
   contacts                       Contact[]
+  people                         Person[]
+  personContactRoles             PersonContactRole[]
+  personEmployeeRoles            PersonEmployeeRole[]
+  personDirectorRoles            PersonDirectorRole[]
+  personSnapshots                PersonSnapshot[]
+  personEvents                   PersonEvent[]
   eInvoices                      EInvoice[]
   emailAttachments               EmailAttachment[]
   emailConnections               EmailConnection[]
@@ -283,6 +290,122 @@ model Contact {
   @@unique([companyId, oib])
   @@index([companyId])
   @@index([oib])
+}
+
+model Person {
+  id                 String               @id @default(cuid())
+  companyId          String
+  fullName           String
+  normalizedFullName String
+  firstName          String?
+  lastName           String?
+  oib                String?
+  email              String?
+  phone              String?
+  iban               String?
+  addressLine1       String?
+  addressLine2       String?
+  city               String?
+  postalCode         String?
+  country            String               @default("HR")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contactRoles       PersonContactRole[]
+  employeeRoles      PersonEmployeeRole[]
+  directorRoles      PersonDirectorRole[]
+  snapshots          PersonSnapshot[]
+  events             PersonEvent[]
+
+  @@unique([companyId, normalizedFullName])
+  @@unique([companyId, oib])
+  @@index([companyId])
+  @@index([oib])
+  @@index([normalizedFullName])
+}
+
+model PersonContactRole {
+  id               String      @id @default(cuid())
+  companyId        String
+  personId         String
+  type             ContactType
+  paymentTermsDays Int         @default(15)
+  notes            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person           Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, personId])
+  @@index([companyId])
+  @@index([personId])
+  @@index([type])
+}
+
+model PersonEmployeeRole {
+  id         String    @id @default(cuid())
+  companyId  String
+  personId   String
+  jobTitle   String?
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person     Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, personId])
+  @@index([companyId])
+  @@index([personId])
+}
+
+model PersonDirectorRole {
+  id               String    @id @default(cuid())
+  companyId        String
+  personId         String
+  appointmentDate  DateTime?
+  resignationDate  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person           Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, personId])
+  @@index([companyId])
+  @@index([personId])
+}
+
+model PersonSnapshot {
+  id               String               @id @default(cuid())
+  companyId        String
+  personId         String
+  action           PersonSnapshotAction
+  data             Json
+  capturedAt       DateTime             @default(now())
+  capturedByUserId String?
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person           Person               @relation(fields: [personId], references: [id], onDelete: Cascade)
+  capturedByUser   User?                @relation("PersonSnapshotAuthor", fields: [capturedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([personId])
+  @@index([capturedAt])
+}
+
+model PersonEvent {
+  id        String          @id @default(cuid())
+  companyId String
+  personId  String
+  eventType PersonEventType
+  payload   Json
+  createdAt DateTime        @default(now())
+  company   Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  person    Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([personId])
+  @@index([eventType])
+  @@index([createdAt])
 }
 
 model Product {
@@ -1454,6 +1577,24 @@ enum ContactType {
   CUSTOMER
   SUPPLIER
   BOTH
+}
+
+enum PersonSnapshotAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum PersonEventType {
+  PERSON_CREATED
+  PERSON_UPDATED
+  PERSON_DELETED
+  CONTACT_ROLE_ASSIGNED
+  EMPLOYEE_ROLE_ASSIGNED
+  DIRECTOR_ROLE_ASSIGNED
+  CONTACT_ROLE_REMOVED
+  EMPLOYEE_ROLE_REMOVED
+  DIRECTOR_ROLE_REMOVED
 }
 
 enum EInvoiceDirection {
@@ -3685,4 +3826,3 @@ model CronJobError {
   @@index([resolvedAt])
   @@index([createdAt])
 }
-
