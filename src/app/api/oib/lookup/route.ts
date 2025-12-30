@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { lookupOib, validateOib } from "@/lib/oib-lookup"
-import { getCurrentUser } from "@/lib/auth-utils"
+import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
+import { logAudit, getIpFromHeaders, getUserAgentFromHeaders } from "@/lib/audit"
 
 // Simple in-memory rate limiting
 // In production, consider using Redis or a proper rate limiting service
@@ -54,12 +55,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get IP for rate limiting
-    const ip =
-      request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
+    // Get user's company for audit logging
+    const company = await getCurrentCompany(user.id)
+    const companyId = company?.id
 
-    // Check rate limit
-    if (!checkRateLimit(ip)) {
+    // Use user ID for rate limiting instead of IP (per-user rate limits)
+    const rateLimitKey = `oib_lookup_${user.id}`
+
+    // Check rate limit (per-user instead of per-IP)
+    if (!checkRateLimit(rateLimitKey)) {
       return NextResponse.json(
         {
           success: false,
@@ -97,6 +101,26 @@ export async function POST(request: NextRequest) {
 
     // Perform lookup
     const result = await lookupOib(oib)
+
+    // Log audit event for successful lookup (only if user has a company)
+    if (companyId && result.success) {
+      await logAudit({
+        companyId,
+        userId: user.id,
+        action: "VIEW",
+        entity: "OIB_LOOKUP",
+        entityId: oib,
+        changes: {
+          after: {
+            oib,
+            businessName: result.data?.businessName,
+            address: result.data?.address,
+          },
+        },
+        ipAddress: getIpFromHeaders(request.headers),
+        userAgent: getUserAgentFromHeaders(request.headers),
+      })
+    }
 
     return NextResponse.json(result)
   } catch (error) {
