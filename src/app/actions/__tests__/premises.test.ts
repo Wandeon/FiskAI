@@ -43,6 +43,7 @@ import {
   updatePremises,
   deletePremises,
   updateDevice,
+  deleteDevice,
 } from "@/app/actions/premises"
 
 const user = { id: "user-1" }
@@ -148,5 +149,16 @@ describe("premises actions auth", () => {
     expect(db.paymentDevice.findFirst).toHaveBeenCalledWith({
       where: { id: "dev-1", companyId: "company-1" },
     })
+  })
+
+  it("deleteDevice scopes deletion to auth company", async () => {
+    vi.mocked(db.paymentDevice.deleteMany).mockResolvedValue({ count: 0 } as any)
+
+    const result = await deleteDevice("dev-1")
+
+    expect(db.paymentDevice.deleteMany).toHaveBeenCalledWith({
+      where: { id: "dev-1", companyId: "company-1" },
+    })
+    expect(result.success).toBe(false)
   })
 })

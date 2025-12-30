@@ -302,9 +302,20 @@ export async function updateDevice(
 
 export async function deleteDevice(id: string): Promise<ActionResult> {
   try {
-    await db.paymentDevice.delete({ where: { id } })
-    revalidatePath("/settings/premises")
-    return { success: true }
+    const user = await requireAuth()
+
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const deleted = await db.paymentDevice.deleteMany({
+        where: { id, companyId: company.id },
+      })
+
+      if (deleted.count === 0) {
+        return { success: false, error: "Naplatni uređaj nije pronađen" }
+      }
+
+      revalidatePath("/settings/premises")
+      return { success: true }
+    })
   } catch (error) {
     console.error("Failed to delete device:", error)
     return { success: false, error: "Greška pri brisanju naplatnog uređaja" }
