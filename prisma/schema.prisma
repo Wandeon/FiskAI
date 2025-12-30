@@ -731,10 +731,12 @@ model Contact {
   country           String      @default("HR")
   email             String?
   phone             String?
+  organizationId    String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   paymentTermsDays  Int         @default(15)
   company           Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   eInvoicesAsBuyer  EInvoice[]  @relation("EInvoiceBuyer")
   eInvoicesAsSeller EInvoice[]  @relation("EInvoiceSeller")
   expensesAsVendor  Expense[]   @relation("ExpenseVendor")
@@ -742,6 +744,72 @@ model Contact {
   @@unique([companyId, oib])
   @@index([companyId])
   @@index([oib])
+  @@index([organizationId])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  companyId  String
+  line1      String
+  line2      String?
+  city       String
+  postalCode String?
+  country    String   @default("HR")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  organizations Organization[] @relation("OrganizationPrimaryAddress")
+
+  @@unique([companyId, line1, line2, city, postalCode, country])
+  @@index([companyId])
+  @@index([city])
+}
+
+model Organization {
+  id                   String        @id @default(cuid())
+  companyId            String
+  legalName            String
+  normalizedLegalName  String
+  email                String?
+  phone                String?
+  primaryAddressId     String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  company              Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  primaryAddress       Address?      @relation("OrganizationPrimaryAddress", fields: [primaryAddressId], references: [id], onDelete: SetNull)
+  taxIdentities        TaxIdentity[]
+  contacts             Contact[]
+  bankAccounts         BankAccount[]
+  buyerInvoices        EInvoice[]    @relation("EInvoiceBuyerOrganization")
+  sellerInvoices       EInvoice[]    @relation("EInvoiceSellerOrganization")
+  vendorExpenses       Expense[]     @relation("ExpenseVendorOrganization")
+  counterpartyTransactions BankTransaction[] @relation("BankTransactionCounterpartyOrganization")
+
+  @@unique([companyId, normalizedLegalName])
+  @@index([companyId])
+  @@index([normalizedLegalName])
+  @@index([primaryAddressId])
+}
+
+model TaxIdentity {
+  id             String          @id @default(cuid())
+  companyId      String
+  type           TaxIdentityType
+  value          String
+  country        String          @default("HR")
+  organizationId String?
+  personId       String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  person         Person?         @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, type, value])
+  @@index([companyId])
+  @@index([organizationId])
+  @@index([personId])
+  @@index([type])
 }
 
 model Person {
@@ -985,6 +1053,8 @@ model EInvoice {
   direction         EInvoiceDirection
   sellerId          String?
   buyerId           String?
+  sellerOrganizationId String?
+  buyerOrganizationId  String?
   invoiceNumber     String
   issueDate         DateTime
   dueDate           DateTime?
@@ -1031,6 +1101,7 @@ model EInvoice {
   emailBounceReason String?
   bankTransactions  BankTransaction[]
   buyer             Contact?          @relation("EInvoiceBuyer", fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerOrganization Organization?     @relation("EInvoiceBuyerOrganization", fields: [buyerOrganizationId], references: [id], onDelete: SetNull)
   company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   convertedFrom     EInvoice?         @relation("InvoiceConversion", fields: [convertedFromId], references: [id])
   convertedTo       EInvoice[]        @relation("InvoiceConversion")
@@ -1038,6 +1109,7 @@ model EInvoice {
   creditNotes       EInvoice[]        @relation("InvoiceCorrections")
   importJob         ImportJob?        @relation(fields: [importJobId], references: [id])
   seller            Contact?          @relation("EInvoiceSeller", fields: [sellerId], references: [id], onDelete: SetNull)
+  sellerOrganization Organization?    @relation("EInvoiceSellerOrganization", fields: [sellerOrganizationId], references: [id], onDelete: SetNull)
   lines             EInvoiceLine[]
   fiscalRequests    FiscalRequest[]
   revenueRegisterEntries RevenueRegisterEntry[]
@@ -1053,6 +1125,8 @@ model EInvoice {
   @@index([emailMessageId])
   @@index([sellerId])
   @@index([buyerId])
+  @@index([sellerOrganizationId])
+  @@index([buyerOrganizationId])
   @@index([correctsInvoiceId])
 }
 
@@ -1259,6 +1333,7 @@ model Expense {
   id               String            @id @default(cuid())
   companyId        String
   vendorId         String?
+  vendorOrganizationId String?
   categoryId       String
   description      String
   date             DateTime
@@ -1286,6 +1361,7 @@ model Expense {
   category         ExpenseCategory   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   vendor           Contact?          @relation("ExpenseVendor", fields: [vendorId], references: [id])
+  vendorOrganization Organization?   @relation("ExpenseVendorOrganization", fields: [vendorOrganizationId], references: [id])
   stockMovements   StockMovement[]
   matchRecords     MatchRecord[]
 
@@ -1293,6 +1369,7 @@ model Expense {
   @@index([date])
   @@index([status])
   @@index([categoryId])
+  @@index([vendorOrganizationId])
 }
 
 model ExpenseLine {
@@ -1588,6 +1665,7 @@ model BankAccount {
   currentBalance        Decimal           @db.Decimal(12, 2)
   lastSyncAt            DateTime?
   isDefault             Boolean           @default(false)
+  organizationId        String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   connectionExpiresAt   DateTime?
@@ -1595,6 +1673,7 @@ model BankAccount {
   syncProvider          SyncProvider?
   syncProviderAccountId String?
   company               Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  organization          Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   connection            BankConnection?
   statementImports      StatementImport[]
   transactions          BankTransaction[]
@@ -1604,6 +1683,7 @@ model BankAccount {
   @@unique([companyId, iban])
   @@index([companyId])
   @@index([connectionStatus])
+  @@index([organizationId])
 }
 
 model BankTransaction {
@@ -1619,6 +1699,7 @@ model BankTransaction {
   reference        String?
   counterpartyName String?
   counterpartyIban String?
+  counterpartyOrganizationId String?
   matchedInvoiceId String?
   matchedExpenseId String?
   matchStatus      MatchStatus       @default(UNMATCHED)
@@ -1632,6 +1713,7 @@ model BankTransaction {
   statementImport  StatementImport?  @relation(fields: [statementImportId], references: [id], onDelete: SetNull)
   matchedExpense   Expense?          @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
   matchedInvoice   EInvoice?         @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
+  counterpartyOrganization Organization? @relation("BankTransactionCounterpartyOrganization", fields: [counterpartyOrganizationId], references: [id], onDelete: SetNull)
   matchRecords     MatchRecord[]
 
   @@index([companyId])
@@ -1640,6 +1722,7 @@ model BankTransaction {
   @@index([date])
   @@index([externalId])
   @@index([statementImportId])
+  @@index([counterpartyOrganizationId])
 }
 
 model MatchRecord {
@@ -2681,6 +2764,11 @@ enum ContactType {
   CUSTOMER
   SUPPLIER
   BOTH
+}
+
+enum TaxIdentityType {
+  OIB
+  VAT
 }
 
 enum PersonSnapshotAction {

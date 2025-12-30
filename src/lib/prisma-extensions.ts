@@ -445,6 +445,9 @@ async function assertEntryBalanced(prismaBase: PrismaClient, entryId: string): P
 // Models that require tenant filtering
 const TENANT_MODELS = [
   "Contact",
+  "Organization",
+  "Address",
+  "TaxIdentity",
   "Product",
   "EInvoice",
   "EInvoiceLine",
@@ -519,6 +522,9 @@ const TENANT_MODELS = [
 // Models to audit (exclude AuditLog itself to prevent infinite loops)
 const AUDITED_MODELS = [
   "Contact",
+  "Organization",
+  "Address",
+  "TaxIdentity",
   "Product",
   "EInvoice",
   "Company",

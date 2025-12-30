@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { ensureOrganizationForContact } from "@/lib/master-data/contact-master-data"
 import { revalidatePath } from "next/cache"
 import { MatchKind, MatchSource, MatchStatus } from "@prisma/client"
 import { setTenantContext } from "@/lib/prisma-extensions"
@@ -77,6 +78,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Račun je već evidentiran kao plaćen" }, { status: 400 })
     }
 
+    let counterpartyOrganizationId: string | null =
+      invoice.direction === "OUTBOUND"
+        ? (invoice.buyerOrganizationId ?? null)
+        : (invoice.sellerOrganizationId ?? null)
+
+    if (!counterpartyOrganizationId) {
+      const contactId = invoice.direction === "OUTBOUND" ? invoice.buyerId : invoice.sellerId
+      if (contactId) {
+        counterpartyOrganizationId = await ensureOrganizationForContact(company.id, contactId)
+      }
+    }
+
     await db.matchRecord.create({
       data: {
         companyId: company.id,
@@ -128,6 +141,13 @@ export async function POST(request: Request) {
       },
     })
 
+    if (counterpartyOrganizationId) {
+      await db.bankTransaction.update({
+        where: { id: transaction.id },
+        data: { counterpartyOrganizationId },
+      })
+    }
+
     revalidatePath("/banking")
     revalidatePath("/banking/transactions")
     revalidatePath("/banking/reconciliation")
@@ -151,6 +171,11 @@ export async function POST(request: Request) {
 
     if (expense.status === "PAID") {
       return NextResponse.json({ error: "Trošak je već evidentiran kao plaćen" }, { status: 400 })
+    }
+
+    let counterpartyOrganizationId: string | null = expense.vendorOrganizationId ?? null
+    if (!counterpartyOrganizationId && expense.vendorId) {
+      counterpartyOrganizationId = await ensureOrganizationForContact(company.id, expense.vendorId)
     }
 
     await db.matchRecord.create({
@@ -204,6 +229,13 @@ export async function POST(request: Request) {
         paymentMethod: "TRANSFER",
       },
     })
+
+    if (counterpartyOrganizationId) {
+      await db.bankTransaction.update({
+        where: { id: transaction.id },
+        data: { counterpartyOrganizationId },
+      })
+    }
 
     revalidatePath("/banking")
     revalidatePath("/banking/transactions")
