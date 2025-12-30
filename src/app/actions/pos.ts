@@ -8,6 +8,7 @@ import { Prisma, PaymentMethod } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import type { ProcessPosSaleInput, ProcessPosSaleResult } from "@/types/pos"
 import { fiscalizePosSale } from "@/lib/fiscal/pos-fiscalize"
+import { recordRevenueRegisterEntry } from "@/lib/invoicing/events"
 
 const Decimal = Prisma.Decimal
 
@@ -47,7 +48,8 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
       }
 
       // Generate invoice number
-      const numbering = await getNextInvoiceNumber(company.id)
+      const issueDate = new Date()
+      const numbering = await getNextInvoiceNumber(company.id, undefined, undefined, issueDate)
 
       // Calculate line items
       const lineItems = input.items.map((item, index) => {
@@ -84,7 +86,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           invoiceNumber: numbering.invoiceNumber,
           internalReference: numbering.internalReference,
           buyerId: input.buyerId || null,
-          issueDate: new Date(),
+          issueDate,
           currency: "EUR",
           netAmount,
           vatAmount,
@@ -125,18 +127,18 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
             status: fiscalResult.jir ? "FISCALIZED" : "PENDING_FISCALIZATION",
           },
         })
-      } else {
-        // Still save ZKI if available (for offline mode/retry)
-        if (fiscalResult.zki) {
-          await db.eInvoice.update({
-            where: { id: invoice.id },
-            data: {
-              zki: fiscalResult.zki,
-              status: "PENDING_FISCALIZATION",
-            },
-          })
+
+        if (fiscalResult.jir) {
+          await recordRevenueRegisterEntry(invoice.id)
         }
+      } else {
         console.error("Fiscalization warning:", fiscalResult.error)
+        revalidatePath("/invoices")
+        revalidatePath("/pos")
+        return {
+          success: false,
+          error: fiscalResult.error || "Greška pri fiskalizaciji računa",
+        }
       }
 
       revalidatePath("/invoices")

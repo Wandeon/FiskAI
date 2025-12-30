@@ -12,6 +12,10 @@ const AUDITED_MODELS = [
   "EInvoiceLine",
   "Expense",
   "BankTransaction",
+  "Person",
+  "PersonContactRole",
+  "PersonEmployeeRole",
+  "PersonDirectorRole",
 ]
 
 // Map Prisma actions to our AuditAction enum

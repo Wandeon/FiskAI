@@ -30,6 +30,12 @@ export const PERMISSIONS = {
   "contact:update": ["OWNER", "ADMIN", "MEMBER"],
   "contact:delete": ["OWNER", "ADMIN"],
 
+  // Person permissions
+  "person:create": ["OWNER", "ADMIN", "MEMBER"],
+  "person:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
+  "person:update": ["OWNER", "ADMIN", "MEMBER"],
+  "person:delete": ["OWNER", "ADMIN"],
+
   // Product permissions
   "product:create": ["OWNER", "ADMIN", "MEMBER"],
   "product:read": ["OWNER", "ADMIN", "MEMBER", "ACCOUNTANT", "VIEWER"],
