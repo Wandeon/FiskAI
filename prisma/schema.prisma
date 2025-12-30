@@ -13,6 +13,7 @@ model User {
   emailVerified       DateTime?
   image               String?
   passwordHash        String?
+  checksum            String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   systemRole          SystemRole           @default(USER)
@@ -32,6 +33,8 @@ model User {
   staffReviews         StaffReview[]          @relation("StaffReviews")
   experimentAssignments ExperimentAssignment[]
   experimentEvents     ExperimentEvent[]
+  artifactsCreated     Artifact[]             @relation("ArtifactCreator")
+  accountingLocks      AccountingPeriod[]     @relation("AccountingPeriodLocks")
 }
 
 model Account {
@@ -106,6 +109,7 @@ model Company {
   email                          String?
   phone                          String?
   iban                           String?
+  checksum                       String?
   isVatPayer                     Boolean               @default(false)
   eInvoiceProvider               String?
   createdAt                      DateTime              @default(now())
@@ -162,6 +166,8 @@ model Company {
   staffReviews                   StaffReview[]
   adminAlerts                    AdminAlert[]
   bankImports                    BankImport[]
+  accountingPeriods              AccountingPeriod[]
+  artifacts                      Artifact[]
 }
 
 // Audit trail for module entitlement changes
@@ -411,12 +417,15 @@ model AuditLog {
   id        String      @id @default(cuid())
   companyId String
   userId    String?
+  actor     String      @default("system")
   action    AuditAction
   entity    String
   entityId  String
   changes   Json?
   ipAddress String?
   userAgent String?
+  reason    String      @default("unspecified")
+  checksum  String?
   timestamp DateTime    @default(now())
   company   Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -3261,6 +3270,7 @@ model FeatureFlag {
   key         String            @unique // e.g., "reasoning_ux", "ai_assistant_v2"
   name        String // Human-readable name
   description String?           @db.Text
+  checksum    String?
   scope       FeatureFlagScope  @default(GLOBAL)
   status      FeatureFlagStatus @default(INACTIVE)
 
@@ -3292,6 +3302,87 @@ model FeatureFlag {
   @@index([category])
   @@index([tags])
   @@index([deletedAt])
+}
+
+// =============================================================================
+// CORE DOMAIN MODELS
+// =============================================================================
+
+enum AccountingPeriodStatus {
+  OPEN
+  LOCKED
+}
+
+enum ArtifactType {
+  PDF
+  XML
+}
+
+model AccountingPeriod {
+  id          String                 @id @default(cuid())
+  companyId   String
+  startDate   DateTime
+  endDate     DateTime
+  status      AccountingPeriodStatus @default(OPEN)
+  lockedAt    DateTime?
+  lockedById  String?
+  lockReason  String?
+  checksum    String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  company     Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lockedBy    User?                  @relation("AccountingPeriodLocks", fields: [lockedById], references: [id])
+
+  @@unique([companyId, startDate, endDate])
+  @@index([companyId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model Artifact {
+  id                String       @id @default(cuid())
+  companyId          String
+  type              ArtifactType
+  fileName          String
+  contentType       String
+  sizeBytes         Int
+  storageKey        String
+  checksum          String
+  checksumAlgorithm String       @default("SHA256")
+  createdById       String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  company           Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy         User?        @relation("ArtifactCreator", fields: [createdById], references: [id])
+
+  @@index([companyId])
+  @@index([type])
+  @@index([checksum])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  checksum    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roles       RolePermission[]
+
+  @@index([key])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  role         Role
+  permissionId String
+  grantedBy    String?
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
 }
 
 model FeatureFlagOverride {
@@ -3685,4 +3776,3 @@ model CronJobError {
   @@index([resolvedAt])
   @@index([createdAt])
 }
-

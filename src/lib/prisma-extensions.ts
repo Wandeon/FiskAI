@@ -1,6 +1,8 @@
 // src/lib/prisma-extensions.ts
 import { PrismaClient, AuditAction, Prisma } from "@prisma/client"
 import { AsyncLocalStorage } from "node:async_hooks"
+import { getAuditContext } from "./audit-context"
+import { computeAuditChecksum } from "./audit-utils"
 
 // Context for current request
 export type TenantContext = {
@@ -112,6 +114,8 @@ const TENANT_MODELS = [
   "EInvoice",
   "EInvoiceLine",
   "AuditLog",
+  "AccountingPeriod",
+  "Artifact",
   "BankAccount",
   "BankTransaction",
   "BankImport",
@@ -138,6 +142,8 @@ const AUDITED_MODELS = [
   "Product",
   "EInvoice",
   "Company",
+  "AccountingPeriod",
+  "Artifact",
   "BankAccount",
   "Expense",
   "ExpenseCategory",
@@ -148,6 +154,165 @@ const AUDITED_MODELS = [
   "SupportTicket",
 ] as const
 type AuditedModel = (typeof AUDITED_MODELS)[number]
+
+// ============================================
+// ACCOUNTING PERIOD LOCK ENFORCEMENT
+// ============================================
+
+const PERIOD_LOCK_MODELS = {
+  EInvoice: { dateField: "issueDate", client: "eInvoice" },
+  Expense: { dateField: "date", client: "expense" },
+  BankTransaction: { dateField: "date", client: "bankTransaction" },
+  Transaction: { dateField: "date", client: "transaction" },
+  Statement: { dateField: "statementDate", client: "statement" },
+} as const
+
+type PeriodLockModel = keyof typeof PERIOD_LOCK_MODELS
+
+export class AccountingPeriodLockedError extends Error {
+  constructor(model: string, date: Date) {
+    super(
+      `Cannot modify ${model} on ${date.toISOString()}: accounting period is locked.`
+    )
+    this.name = "AccountingPeriodLockedError"
+  }
+}
+
+function extractDate(data: Record<string, unknown>, field: string): Date | null {
+  const value = data[field]
+  if (value instanceof Date) {
+    return value
+  }
+  if (typeof value === "string") {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+  if (value && typeof value === "object") {
+    const setValue = (value as { set?: unknown }).set
+    if (setValue instanceof Date) return setValue
+    if (typeof setValue === "string") {
+      const parsed = new Date(setValue)
+      return Number.isNaN(parsed.getTime()) ? null : parsed
+    }
+  }
+  return null
+}
+
+async function assertPeriodUnlocked(
+  prismaBase: PrismaClient,
+  companyId: string,
+  date: Date,
+  model: string
+): Promise<void> {
+  const lockedPeriod = await prismaBase.accountingPeriod.findFirst({
+    where: {
+      companyId,
+      status: "LOCKED",
+      startDate: { lte: date },
+      endDate: { gte: date },
+    },
+    select: { id: true },
+  })
+
+  if (lockedPeriod) {
+    throw new AccountingPeriodLockedError(model, date)
+  }
+}
+
+async function resolvePeriodLockContext(
+  prismaBase: PrismaClient,
+  model: string,
+  args: { data?: Record<string, unknown>; where?: Record<string, unknown> }
+): Promise<{ companyId: string | null; date: Date | null }> {
+  if (!(model in PERIOD_LOCK_MODELS)) {
+    return { companyId: null, date: null }
+  }
+
+  const { dateField, client } = PERIOD_LOCK_MODELS[model as PeriodLockModel]
+  const context = getTenantContext()
+  const companyId =
+    context?.companyId ?? (args.data?.companyId as string | undefined) ?? null
+
+  const directDate = args.data ? extractDate(args.data, dateField) : null
+  if (companyId && directDate) {
+    return { companyId, date: directDate }
+  }
+
+  if (!args.where) {
+    return { companyId, date: directDate }
+  }
+
+  const modelClient = (prismaBase as Record<string, unknown>)[client] as {
+    findUnique?: (params: unknown) => Promise<Record<string, unknown> | null>
+    findFirst?: (params: unknown) => Promise<Record<string, unknown> | null>
+  }
+
+  if (!modelClient) {
+    return { companyId, date: directDate }
+  }
+
+  const existing = modelClient.findUnique
+    ? await modelClient.findUnique({
+        where: args.where,
+        select: { companyId: true, [dateField]: true },
+      })
+    : await modelClient.findFirst({
+        where: args.where,
+        select: { companyId: true, [dateField]: true },
+      })
+
+  if (!existing) {
+    return { companyId, date: directDate }
+  }
+
+  return {
+    companyId: (existing.companyId as string) ?? companyId,
+    date: (existing[dateField] as Date) ?? directDate,
+  }
+}
+
+async function enforcePeriodLockForBulk(
+  prismaBase: PrismaClient,
+  model: string,
+  args: { where?: Record<string, unknown> }
+): Promise<void> {
+  if (!(model in PERIOD_LOCK_MODELS)) return
+  const { dateField, client } = PERIOD_LOCK_MODELS[model as PeriodLockModel]
+  const context = getTenantContext()
+  const companyId =
+    context?.companyId ?? (args.where?.companyId as string | undefined) ?? null
+
+  if (!companyId) return
+
+  const lockedPeriods = await prismaBase.accountingPeriod.findMany({
+    where: { companyId, status: "LOCKED" },
+    select: { startDate: true, endDate: true },
+  })
+
+  if (lockedPeriods.length === 0) return
+
+  const modelClient = (prismaBase as Record<string, unknown>)[client] as {
+    findFirst?: (params: unknown) => Promise<Record<string, unknown> | null>
+  }
+
+  if (!modelClient?.findFirst) return
+
+  const lockedWhere = {
+    ...args.where,
+    OR: lockedPeriods.map((period) => ({
+      [dateField]: { gte: period.startDate, lte: period.endDate },
+    })),
+  }
+
+  const existing = await modelClient.findFirst({
+    where: lockedWhere,
+    select: { [dateField]: true },
+  })
+
+  if (existing && existing[dateField]) {
+    throw new AccountingPeriodLockedError(model, existing[dateField] as Date)
+  }
+}
 
 // ============================================
 // EVIDENCE IMMUTABILITY PROTECTION
@@ -374,10 +539,14 @@ function validateStatusTransitionInternal(
 interface AuditQueueItem {
   companyId: string
   userId: string | null
+  actor: string
   action: AuditAction
   entity: string
   entityId: string
   changes: Record<string, unknown> | null
+  reason: string
+  timestamp: Date
+  checksum: string
 }
 
 const auditQueue: AuditQueueItem[] = []
@@ -397,10 +566,14 @@ async function processAuditQueue(prismaBase: PrismaClient) {
           data: {
             companyId: item.companyId,
             userId: item.userId,
+            actor: item.actor,
             action: item.action,
             entity: item.entity,
             entityId: item.entityId,
             changes: item.changes as Record<string, never> | undefined,
+            reason: item.reason,
+            checksum: item.checksum,
+            timestamp: item.timestamp,
           },
         })
       } catch (error) {
@@ -421,6 +594,7 @@ function queueAuditLog(
   const companyId = result.companyId as string
   const entityId = result.id as string
   const context = getTenantContext()
+  const auditContext = getAuditContext()
 
   if (!companyId || !entityId) return
 
@@ -430,13 +604,29 @@ function queueAuditLog(
       ? { before: JSON.parse(JSON.stringify(result)) }
       : { after: JSON.parse(JSON.stringify(result)) }
 
+  const timestamp = new Date()
+  const actor = auditContext?.actorId ?? context?.userId ?? "system"
+  const reason = auditContext?.reason ?? "unspecified"
+  const checksum = computeAuditChecksum({
+    actor,
+    action,
+    entity: model,
+    entityId,
+    reason,
+    timestamp: timestamp.toISOString(),
+  })
+
   auditQueue.push({
     companyId,
     userId: context?.userId ?? null,
+    actor,
     action,
     entity: model,
     entityId,
     changes,
+    reason,
+    timestamp,
+    checksum,
   })
 
   // Process queue asynchronously
@@ -494,6 +684,16 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             } as typeof args.data
           }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+              data: args.data as Record<string, unknown>,
+            })
+            if (companyId && date) {
+              await assertPeriodUnlocked(prismaBase, companyId, date, model)
+            }
+          }
+
           const result = await query(args)
 
           // Audit logging for create operations
@@ -511,6 +711,16 @@ export function withTenantIsolation(prisma: PrismaClient) {
           // EVIDENCE IMMUTABILITY: Block updates to immutable fields
           if (model === "Evidence" && args.data && typeof args.data === "object") {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
+          }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+              data: args.data as Record<string, unknown>,
+              where: args.where as Record<string, unknown>,
+            })
+            if (companyId && date) {
+              await assertPeriodUnlocked(prismaBase, companyId, date, model)
+            }
           }
 
           // REGULATORY RULE STATUS TRANSITIONS: enforce allowed transitions (hard backstop)
@@ -573,6 +783,16 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             }
           }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+              where: args.where as Record<string, unknown>,
+            })
+            if (companyId && date) {
+              await assertPeriodUnlocked(prismaBase, companyId, date, model)
+            }
+          }
+
           const result = await query(args)
 
           // Audit logging for delete operations
@@ -603,6 +823,19 @@ export function withTenantIsolation(prisma: PrismaClient) {
               }
             }
           }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const entries = Array.isArray(args.data) ? args.data : [args.data]
+            for (const entry of entries) {
+              const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+                data: entry as Record<string, unknown>,
+              })
+              if (companyId && date) {
+                await assertPeriodUnlocked(prismaBase, companyId, date, model)
+              }
+            }
+          }
+
           return query(args)
         },
         async updateMany({ model, args, query }) {
@@ -610,6 +843,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
           if (model === "Evidence" && args.data && typeof args.data === "object") {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
           }
+
+          await enforcePeriodLockForBulk(prismaBase, model, {
+            where: args.where as Record<string, unknown>,
+          })
 
           // REGULATORY RULE: forbid updateMany for status transitions
           // updateMany bypasses per-rule validation (conflicts, provenance, tier checks)
@@ -637,12 +874,27 @@ export function withTenantIsolation(prisma: PrismaClient) {
               companyId: context.companyId,
             }
           }
+
+          await enforcePeriodLockForBulk(prismaBase, model, {
+            where: args.where as Record<string, unknown>,
+          })
+
           return query(args)
         },
         async upsert({ model, args, query }) {
           // EVIDENCE IMMUTABILITY: Block updates to immutable fields in upsert
           if (model === "Evidence" && args.update && typeof args.update === "object") {
             checkEvidenceImmutability(args.update as Record<string, unknown>)
+          }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+              data: args.update as Record<string, unknown>,
+              where: args.where as Record<string, unknown>,
+            })
+            if (companyId && date) {
+              await assertPeriodUnlocked(prismaBase, companyId, date, model)
+            }
           }
 
           const context = getTenantContext()

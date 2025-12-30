@@ -9,12 +9,20 @@ export interface ModuleAccess {
   getDependentModules: (moduleKey: ModuleKey) => ModuleKey[]
 }
 
-export function createModuleAccess(entitlements: string[]): ModuleAccess {
+export function createModuleAccess(
+  entitlements: string[],
+  featureFlags?: Record<string, boolean>
+): ModuleAccess {
   const enabledModules = new Set(entitlements as ModuleKey[])
 
   function hasModule(moduleKey: ModuleKey): boolean {
     // First check if the module itself is enabled
     if (!enabledModules.has(moduleKey)) {
+      return false
+    }
+
+    const featureFlagKey = MODULES[moduleKey].featureFlagKey
+    if (featureFlagKey && featureFlags && !featureFlags[featureFlagKey]) {
       return false
     }
 

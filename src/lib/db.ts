@@ -29,6 +29,7 @@ export {
   getRegulatoryContext,
   RegulatoryRuleStatusTransitionError,
   RegulatoryRuleUpdateManyStatusNotAllowedError,
+  AccountingPeriodLockedError,
 } from "./prisma-extensions"
 export type {
   TenantContext,

@@ -27,6 +27,7 @@ export interface ModuleDefinition {
   navItems: string[]
   defaultEnabled: boolean
   depends?: ModuleKey[]
+  featureFlagKey?: string
 }
 
 export const MODULES: Record<ModuleKey, ModuleDefinition> = {
@@ -160,6 +161,7 @@ export const MODULES: Record<ModuleKey, ModuleDefinition> = {
     routes: ["/assistant", "/article-agent"],
     navItems: ["ai-assistant"],
     defaultEnabled: false,
+    featureFlagKey: "ai_assistant",
   },
 }
 
