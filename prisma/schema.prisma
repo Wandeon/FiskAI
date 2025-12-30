@@ -2356,6 +2356,7 @@ model JoppdSubmission {
   correctedSubmission   JoppdSubmission?      @relation("JoppdSubmissionCorrections", fields: [correctedSubmissionId], references: [id], onDelete: SetNull)
   corrections           JoppdSubmission[]     @relation("JoppdSubmissionCorrections")
   lines                 JoppdSubmissionLine[]
+  events                JoppdSubmissionEvent[]
 
   @@index([companyId, periodYear, periodMonth], map: "joppd_submission_period_idx")
   @@index([status], map: "joppd_submission_status_idx")
@@ -2369,15 +2370,31 @@ model JoppdSubmissionLine {
   lineNumber     Int                   @map("line_number")
   lineData       Json?                 @map("line_data")
   originalLineId String?               @map("original_line_id")
+  ruleVersionId  String?               @map("rule_version_id")
   createdAt      DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
   submission     JoppdSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   payoutLine     PayoutLine            @relation(fields: [payoutLineId], references: [id], onDelete: Restrict)
   originalLine   JoppdSubmissionLine?  @relation("JoppdLineCorrections", fields: [originalLineId], references: [id], onDelete: SetNull)
   corrections    JoppdSubmissionLine[] @relation("JoppdLineCorrections")
+  ruleVersion    RuleVersion?          @relation(fields: [ruleVersionId], references: [id], onDelete: SetNull)
 
   @@index([submissionId], map: "joppd_submission_line_submission_idx")
   @@index([payoutLineId], map: "joppd_submission_line_payout_idx")
+  @@index([ruleVersionId], map: "joppd_submission_line_rule_version_idx")
   @@map("joppd_submission_line")
+}
+
+model JoppdSubmissionEvent {
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String                @map("submission_id")
+  status       JoppdSubmissionStatus
+  note         String?               @db.VarChar(500)
+  createdAt    DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
+  submission   JoppdSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId], map: "joppd_submission_event_submission_idx")
+  @@index([status], map: "joppd_submission_event_status_idx")
+  @@map("joppd_submission_event")
 }
 
 model news_categories {
