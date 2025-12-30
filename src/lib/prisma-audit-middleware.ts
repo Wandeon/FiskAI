@@ -1,4 +1,6 @@
 import { getContext } from "./context"
+import { getAuditContext } from "./audit-context"
+import { computeAuditChecksum } from "./audit-utils"
 import { logger } from "./logger"
 
 // Entities to audit - add more as needed
@@ -10,6 +12,10 @@ const AUDITED_MODELS = [
   "EInvoiceLine",
   "Expense",
   "BankTransaction",
+  "Person",
+  "PersonContactRole",
+  "PersonEmployeeRole",
+  "PersonDirectorRole",
 ]
 
 // Map Prisma actions to our AuditAction enum
@@ -26,10 +32,14 @@ const ACTION_MAP: Record<string, "CREATE" | "UPDATE" | "DELETE"> = {
 interface AuditQueueItem {
   companyId: string
   userId: string | null
+  actor: string
   action: "CREATE" | "UPDATE" | "DELETE"
   entity: string
   entityId: string
   changes: { before?: Record<string, unknown>; after?: Record<string, unknown> } | null
+  reason: string
+  timestamp: Date
+  checksum: string
 }
 
 // Prisma middleware types for v7+
@@ -64,10 +74,14 @@ async function processAuditQueue() {
           data: {
             companyId: item.companyId,
             userId: item.userId,
+            actor: item.actor,
             action: item.action,
             entity: item.entity,
             entityId: item.entityId,
             changes: item.changes ?? undefined,
+            reason: item.reason,
+            checksum: item.checksum,
+            timestamp: item.timestamp,
           },
         })
       } catch (error) {
@@ -108,6 +122,10 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
   // Get user context from AsyncLocalStorage
   const ctx = getContext()
   const userId = ctx?.userId ?? null
+  const auditContext = getAuditContext()
+  const actor = auditContext?.actorId ?? userId ?? "system"
+  const reason = auditContext?.reason ?? "unspecified"
+  const timestamp = new Date()
 
   // Helper to queue an audit item
   const queueAuditItem = (
@@ -118,10 +136,21 @@ export const auditMiddleware = async (params: MiddlewareParams, next: Middleware
     auditQueue.push({
       companyId,
       userId,
+      actor,
       action,
       entity: params.model!,
       entityId,
       changes,
+      reason,
+      timestamp,
+      checksum: computeAuditChecksum({
+        actor,
+        action,
+        entity: params.model!,
+        entityId,
+        reason,
+        timestamp: timestamp.toISOString(),
+      }),
     })
   }
 

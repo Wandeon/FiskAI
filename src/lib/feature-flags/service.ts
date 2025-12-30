@@ -9,6 +9,7 @@
  */
 
 import { prisma } from "@/lib/prisma"
+import { computeAuditChecksum } from "@/lib/audit-utils"
 import type {
   FeatureFlag,
   FeatureFlagOverride,
@@ -279,6 +280,18 @@ export async function createFlag(
   input: CreateFeatureFlagInput,
   userId: string
 ): Promise<FeatureFlag> {
+  const checksum = computeAuditChecksum({
+    key: input.key,
+    name: input.name,
+    description: input.description,
+    scope: input.scope ?? "GLOBAL",
+    status: input.status ?? "INACTIVE",
+    defaultValue: input.defaultValue ?? false,
+    rolloutPercentage: input.rolloutPercentage ?? 0,
+    category: input.category,
+    tags: input.tags ?? [],
+  })
+
   const flag = await prisma.featureFlag.create({
     data: {
       key: input.key,
@@ -290,6 +303,7 @@ export async function createFlag(
       rolloutPercentage: input.rolloutPercentage ?? 0,
       category: input.category,
       tags: input.tags ?? [],
+      checksum,
       createdBy: userId,
       updatedBy: userId,
     },
@@ -325,6 +339,17 @@ export async function updateFlag(
     where: { id },
     data: {
       ...input,
+      checksum: computeAuditChecksum({
+        key: previous.key,
+        name: input.name ?? previous.name,
+        description: input.description ?? previous.description,
+        scope: input.scope ?? previous.scope,
+        status: input.status ?? previous.status,
+        defaultValue: input.defaultValue ?? previous.defaultValue,
+        rolloutPercentage: input.rolloutPercentage ?? previous.rolloutPercentage,
+        category: input.category ?? previous.category,
+        tags: input.tags ?? previous.tags,
+      }),
       updatedBy: userId,
     },
   })
@@ -334,7 +359,10 @@ export async function updateFlag(
   if (input.status === "ACTIVE" && previous.status !== "ACTIVE") action = "ENABLED"
   else if (input.status === "INACTIVE" && previous.status !== "INACTIVE") action = "DISABLED"
   else if (input.status === "ARCHIVED") action = "ARCHIVED"
-  else if (input.rolloutPercentage !== undefined && input.rolloutPercentage !== previous.rolloutPercentage)
+  else if (
+    input.rolloutPercentage !== undefined &&
+    input.rolloutPercentage !== previous.rolloutPercentage
+  )
     action = "ROLLOUT_CHANGED"
 
   await prisma.featureFlagAuditLog.create({
@@ -387,7 +415,11 @@ export async function deleteFlag(id: string, userId: string, reason?: string): P
 /**
  * Restore a soft-deleted feature flag
  */
-export async function restoreFlag(id: string, userId: string, reason?: string): Promise<FeatureFlag> {
+export async function restoreFlag(
+  id: string,
+  userId: string,
+  reason?: string
+): Promise<FeatureFlag> {
   const previous = await prisma.featureFlag.findUnique({ where: { id } })
   if (!previous) throw new Error("Feature flag not found")
   if (previous.status !== "DELETED") throw new Error("Flag is not deleted")

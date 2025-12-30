@@ -27,6 +27,7 @@ export interface ModuleDefinition {
   navItems: string[]
   defaultEnabled: boolean
   depends?: ModuleKey[]
+  featureFlagKey?: string
 }
 
 export const MODULES: Record<ModuleKey, ModuleDefinition> = {
@@ -160,6 +161,7 @@ export const MODULES: Record<ModuleKey, ModuleDefinition> = {
     routes: ["/assistant", "/article-agent"],
     navItems: ["ai-assistant"],
     defaultEnabled: false,
+    featureFlagKey: "ai_assistant",
   },
 }
 
@@ -220,9 +222,9 @@ export function getDependencies(moduleKey: ModuleKey): ModuleKey[] {
     if (visited.has(key)) return
     visited.add(key)
 
-    const module = MODULES[key]
-    if (module.depends) {
-      for (const dep of module.depends) {
+    const moduleDef = MODULES[key]
+    if (moduleDef.depends) {
+      for (const dep of moduleDef.depends) {
         collectDependencies(dep)
         if (!dependencies.includes(dep)) {
           dependencies.push(dep)

@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
 
 interface ActionResult {
@@ -27,10 +28,10 @@ interface BulkImportResult {
  * Parse CSV content for premises import
  * Expected columns: code, name, address (optional), isDefault (optional)
  */
-export function parsePremisesCsv(csvContent: string): {
+export async function parsePremisesCsv(csvContent: string): Promise<{
   rows: BulkImportRow[]
   errors: string[]
-} {
+}> {
   const lines = csvContent.trim().split("\n")
   if (lines.length < 2) {
     return { rows: [], errors: ["CSV datoteka je prazna ili nema podataka"] }
@@ -41,7 +42,9 @@ export function parsePremisesCsv(csvContent: string): {
   const codeIndex = header.findIndex((h) => h === "kod" || h === "code")
   const nameIndex = header.findIndex((h) => h === "naziv" || h === "name")
   const addressIndex = header.findIndex((h) => h === "adresa" || h === "address")
-  const defaultIndex = header.findIndex((h) => h === "zadani" || h === "isdefault" || h === "default")
+  const defaultIndex = header.findIndex(
+    (h) => h === "zadani" || h === "isdefault" || h === "default"
+  )
 
   if (codeIndex === -1) {
     return { rows: [], errors: ["CSV mora sadrzavati stupac 'kod' ili 'code'"] }
@@ -77,8 +80,14 @@ export function parsePremisesCsv(csvContent: string): {
     rows.push({
       code,
       name,
-      address: addressIndex !== -1 ? values[addressIndex]?.trim().replace(/"/g, "") || undefined : undefined,
-      isDefault: defaultIndex !== -1 ? ["da", "yes", "true", "1"].includes(values[defaultIndex]?.toLowerCase().trim() ?? "") : false,
+      address:
+        addressIndex !== -1
+          ? values[addressIndex]?.trim().replace(/"/g, "") || undefined
+          : undefined,
+      isDefault:
+        defaultIndex !== -1
+          ? ["da", "yes", "true", "1"].includes(values[defaultIndex]?.toLowerCase().trim() ?? "")
+          : false,
     })
   }
 
@@ -109,69 +118,73 @@ function parseCSVLine(line: string): string[] {
  * Bulk import premises from parsed CSV data
  */
 export async function bulkImportPremises(
-  companyId: string,
+  _companyId: string,
   rows: BulkImportRow[]
 ): Promise<BulkImportResult> {
   let created = 0
   let skipped = 0
   const errors: string[] = []
 
-  // Get existing premises codes
-  const existing = await db.businessPremises.findMany({
-    where: { companyId },
-    select: { code: true },
-  })
-  const existingCodes = new Set(existing.map((p) => p.code))
+  const user = await requireAuth()
 
-  // Check if any row wants to be default
-  const hasNewDefault = rows.some((r) => r.isDefault)
-
-  // If we have a new default, clear existing defaults
-  if (hasNewDefault) {
-    await db.businessPremises.updateMany({
-      where: { companyId, isDefault: true },
-      data: { isDefault: false },
+  return requireCompanyWithContext(user.id!, async (company) => {
+    // Get existing premises codes
+    const existing = await db.businessPremises.findMany({
+      where: { companyId: company.id },
+      select: { code: true },
     })
-  }
+    const existingCodes = new Set(existing.map((p) => p.code))
 
-  // Track if we've already set a default in this import
-  let defaultSet = false
+    // Check if any row wants to be default
+    const hasNewDefault = rows.some((r) => r.isDefault)
 
-  for (const row of rows) {
-    if (existingCodes.has(row.code)) {
-      skipped++
-      errors.push(`Kod ${row.code} vec postoji - preskoceno`)
-      continue
-    }
-
-    try {
-      // Only set isDefault for the first row that wants it
-      const isDefault = row.isDefault && !defaultSet
-
-      await db.businessPremises.create({
-        data: {
-          companyId,
-          code: row.code,
-          name: row.name,
-          address: row.address,
-          isDefault,
-          isActive: true,
-        },
+    // If we have a new default, clear existing defaults
+    if (hasNewDefault) {
+      await db.businessPremises.updateMany({
+        where: { companyId: company.id, isDefault: true },
+        data: { isDefault: false },
       })
-      created++
-      existingCodes.add(row.code) // Prevent duplicates within same import
-
-      if (isDefault) {
-        defaultSet = true
-      }
-    } catch (error) {
-      console.error(`Failed to create premises ${row.code}:`, error)
-      errors.push(`Greska pri stvaranju poslovnog prostora ${row.code}`)
     }
-  }
 
-  revalidatePath("/settings/premises")
-  return { success: errors.length === 0, created, skipped, errors }
+    // Track if we've already set a default in this import
+    let defaultSet = false
+
+    for (const row of rows) {
+      if (existingCodes.has(row.code)) {
+        skipped++
+        errors.push(`Kod ${row.code} vec postoji - preskoceno`)
+        continue
+      }
+
+      try {
+        // Only set isDefault for the first row that wants it
+        const isDefault = row.isDefault && !defaultSet
+
+        await db.businessPremises.create({
+          data: {
+            companyId: company.id,
+            code: row.code,
+            name: row.name,
+            address: row.address,
+            isDefault,
+            isActive: true,
+          },
+        })
+        created++
+        existingCodes.add(row.code) // Prevent duplicates within same import
+
+        if (isDefault) {
+          defaultSet = true
+        }
+      } catch (error) {
+        console.error(`Failed to create premises ${row.code}:`, error)
+        errors.push(`Greska pri stvaranju poslovnog prostora ${row.code}`)
+      }
+    }
+
+    revalidatePath("/settings/premises")
+    return { success: errors.length === 0, created, skipped, errors }
+  })
 }
 
 /**
@@ -183,63 +196,67 @@ export async function clonePremises(
   newName: string
 ): Promise<ActionResult> {
   try {
-    const source = await db.businessPremises.findUnique({
-      where: { id: premisesId },
-      include: { devices: true },
-    })
+    const user = await requireAuth()
 
-    if (!source) {
-      return { success: false, error: "Izvorni poslovni prostor nije pronaden" }
-    }
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const source = await db.businessPremises.findFirst({
+        where: { id: premisesId, companyId: company.id },
+        include: { devices: true },
+      })
 
-    // Check if new code already exists
-    const existing = await db.businessPremises.findUnique({
-      where: {
-        companyId_code: {
-          companyId: source.companyId,
-          code: newCode,
+      if (!source) {
+        return { success: false, error: "Izvorni poslovni prostor nije pronaden" }
+      }
+
+      // Check if new code already exists
+      const existing = await db.businessPremises.findUnique({
+        where: {
+          companyId_code: {
+            companyId: company.id,
+            code: newCode,
+          },
         },
-      },
-    })
+      })
 
-    if (existing) {
-      return { success: false, error: `Poslovni prostor s kodom ${newCode} vec postoji` }
-    }
+      if (existing) {
+        return { success: false, error: `Poslovni prostor s kodom ${newCode} vec postoji` }
+      }
 
-    // Create new premises
-    const newPremises = await db.businessPremises.create({
-      data: {
-        companyId: source.companyId,
-        code: newCode,
-        name: newName,
-        address: source.address,
-        isDefault: false,
-        isActive: true,
-      },
-    })
-
-    // Clone devices
-    for (const device of source.devices) {
-      await db.paymentDevice.create({
+      // Create new premises
+      const newPremises = await db.businessPremises.create({
         data: {
-          companyId: source.companyId,
-          businessPremisesId: newPremises.id,
-          code: device.code,
-          name: device.name,
-          isDefault: device.isDefault,
+          companyId: company.id,
+          code: newCode,
+          name: newName,
+          address: source.address,
+          isDefault: false,
           isActive: true,
         },
       })
-    }
 
-    revalidatePath("/settings/premises")
-    return {
-      success: true,
-      data: {
-        premises: newPremises,
-        devicesCloned: source.devices.length,
-      },
-    }
+      // Clone devices
+      for (const device of source.devices) {
+        await db.paymentDevice.create({
+          data: {
+            companyId: company.id,
+            businessPremisesId: newPremises.id,
+            code: device.code,
+            name: device.name,
+            isDefault: device.isDefault,
+            isActive: true,
+          },
+        })
+      }
+
+      revalidatePath("/settings/premises")
+      return {
+        success: true,
+        data: {
+          premises: newPremises,
+          devicesCloned: source.devices.length,
+        },
+      }
+    })
   } catch (error) {
     console.error("Failed to clone premises:", error)
     return { success: false, error: "Greska pri kloniranju poslovnog prostora" }
@@ -254,16 +271,20 @@ export async function bulkTogglePremisesStatus(
   isActive: boolean
 ): Promise<ActionResult> {
   try {
-    const result = await db.businessPremises.updateMany({
-      where: { id: { in: premisesIds } },
-      data: { isActive },
-    })
+    const user = await requireAuth()
 
-    revalidatePath("/settings/premises")
-    return {
-      success: true,
-      data: { updated: result.count },
-    }
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const result = await db.businessPremises.updateMany({
+        where: { id: { in: premisesIds }, companyId: company.id },
+        data: { isActive },
+      })
+
+      revalidatePath("/settings/premises")
+      return {
+        success: true,
+        data: { updated: result.count },
+      }
+    })
   } catch (error) {
     console.error("Failed to bulk toggle premises status:", error)
     return { success: false, error: "Greska pri azuriranju statusa poslovnih prostora" }
@@ -275,50 +296,62 @@ export async function bulkTogglePremisesStatus(
  * Creates multiple devices with sequential codes starting from provided startCode
  */
 export async function bulkAssignDevices(
-  companyId: string,
+  _companyId: string,
   premisesId: string,
   count: number,
   namePrefix: string,
   startCode: number = 1
 ): Promise<ActionResult> {
   try {
-    // Get existing device codes for this premises
-    const existingDevices = await db.paymentDevice.findMany({
-      where: { businessPremisesId: premisesId },
-      select: { code: true },
-    })
-    const existingCodes = new Set(existingDevices.map((d) => d.code))
+    const user = await requireAuth()
 
-    const created: number[] = []
-    let currentCode = startCode
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const premises = await db.businessPremises.findFirst({
+        where: { id: premisesId, companyId: company.id },
+      })
 
-    for (let i = 0; i < count; i++) {
-      // Find next available code
-      while (existingCodes.has(currentCode)) {
+      if (!premises) {
+        return { success: false, error: "Poslovni prostor nije pronađen" }
+      }
+
+      // Get existing device codes for this premises
+      const existingDevices = await db.paymentDevice.findMany({
+        where: { businessPremisesId: premisesId },
+        select: { code: true },
+      })
+      const existingCodes = new Set(existingDevices.map((d) => d.code))
+
+      const created: number[] = []
+      let currentCode = startCode
+
+      for (let i = 0; i < count; i++) {
+        // Find next available code
+        while (existingCodes.has(currentCode)) {
+          currentCode++
+        }
+
+        await db.paymentDevice.create({
+          data: {
+            companyId: company.id,
+            businessPremisesId: premisesId,
+            code: currentCode,
+            name: `${namePrefix} ${currentCode}`,
+            isDefault: existingDevices.length === 0 && i === 0, // First device is default if no devices exist
+            isActive: true,
+          },
+        })
+
+        created.push(currentCode)
+        existingCodes.add(currentCode)
         currentCode++
       }
 
-      await db.paymentDevice.create({
-        data: {
-          companyId,
-          businessPremisesId: premisesId,
-          code: currentCode,
-          name: `${namePrefix} ${currentCode}`,
-          isDefault: existingDevices.length === 0 && i === 0, // First device is default if no devices exist
-          isActive: true,
-        },
-      })
-
-      created.push(currentCode)
-      existingCodes.add(currentCode)
-      currentCode++
-    }
-
-    revalidatePath("/settings/premises")
-    return {
-      success: true,
-      data: { created: created.length, codes: created },
-    }
+      revalidatePath("/settings/premises")
+      return {
+        success: true,
+        data: { created: created.length, codes: created },
+      }
+    })
   } catch (error) {
     console.error("Failed to bulk assign devices:", error)
     return { success: false, error: "Greska pri stvaranju naplatnih uredaja" }
@@ -328,7 +361,7 @@ export async function bulkAssignDevices(
 /**
  * Generate CSV template for premises import
  */
-export function generatePremisesTemplate(): string {
+export async function generatePremisesTemplate(): Promise<string> {
   return `kod,naziv,adresa,zadani
 1,Glavni ured,"Ilica 123, Zagreb",da
 2,Poslovnica Centar,"Trg bana Jelacica 1, Zagreb",ne
