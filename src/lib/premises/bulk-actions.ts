@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
+import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
 
 interface ActionResult {
@@ -262,16 +263,20 @@ export async function bulkTogglePremisesStatus(
   isActive: boolean
 ): Promise<ActionResult> {
   try {
-    const result = await db.businessPremises.updateMany({
-      where: { id: { in: premisesIds } },
-      data: { isActive },
-    })
+    const user = await requireAuth()
 
-    revalidatePath("/settings/premises")
-    return {
-      success: true,
-      data: { updated: result.count },
-    }
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const result = await db.businessPremises.updateMany({
+        where: { id: { in: premisesIds }, companyId: company.id },
+        data: { isActive },
+      })
+
+      revalidatePath("/settings/premises")
+      return {
+        success: true,
+        data: { updated: result.count },
+      }
+    })
   } catch (error) {
     console.error("Failed to bulk toggle premises status:", error)
     return { success: false, error: "Greska pri azuriranju statusa poslovnih prostora" }
