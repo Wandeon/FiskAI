@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 const batchReviewSchema = z.object({
   companyId: z.string(),

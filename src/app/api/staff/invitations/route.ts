@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { z } from "zod"
 import { addDays } from "date-fns"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 const createInvitationSchema = z.object({
   email: z.string().email("Invalid email address"),

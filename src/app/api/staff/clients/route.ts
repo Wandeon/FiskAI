@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()
