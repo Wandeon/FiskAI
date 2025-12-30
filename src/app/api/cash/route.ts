@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-import { auth } from "@/lib/auth"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { createCashIn, createCashOut } from "@/lib/cash/cash-service"
-import { getCompanyId } from "@/lib/auth/company"
 
 const createCashEntrySchema = z.object({
   type: z.enum(["in", "out"]),
@@ -14,15 +13,9 @@ const createCashEntrySchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   const { searchParams } = new URL(request.url)
   const from = searchParams.get("from")
@@ -53,15 +46,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   try {
     const body = await request.json()
