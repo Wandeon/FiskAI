@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-import { auth } from "@/lib/auth"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getCashLimitSetting, upsertCashLimitSetting } from "@/lib/cash/cash-service"
-import { getCompanyId } from "@/lib/auth/company"
 
 const updateLimitSchema = z.object({
   limitAmount: z.number().positive(),
@@ -12,15 +11,9 @@ const updateLimitSchema = z.object({
 })
 
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   try {
     const setting = await getCashLimitSetting(companyId)
@@ -44,15 +37,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   try {
     const body = await request.json()

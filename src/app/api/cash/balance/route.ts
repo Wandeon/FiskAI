@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server"
 
-import { auth } from "@/lib/auth"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getCashBalance, getCashLimitSetting } from "@/lib/cash/cash-service"
-import { getCompanyId } from "@/lib/auth/company"
 
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   try {
     const [balance, limitSetting] = await Promise.all([
