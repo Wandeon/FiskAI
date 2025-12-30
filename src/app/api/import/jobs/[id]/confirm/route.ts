@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { ensureOrganizationForContact } from "@/lib/master-data/contact-master-data"
 import { ImportFormat, Prisma } from "@prisma/client"
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -142,11 +143,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       lineItemsDesc ||
       `Račun ${invoice?.number || "N/A"} - ${vendor?.name || "Nepoznati dobavljač"}`
 
+    const vendorOrganizationId = vendorContact?.id
+      ? await ensureOrganizationForContact(company.id, vendorContact.id)
+      : null
+
     // Create the Expense record
     const expense = await db.expense.create({
       data: {
         companyId: company.id,
         vendorId: vendorContact?.id || null,
+        vendorOrganizationId,
         categoryId: category.id,
         description,
         date: invoice?.issueDate ? new Date(invoice.issueDate) : new Date(),

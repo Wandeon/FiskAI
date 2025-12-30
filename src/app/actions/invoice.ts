@@ -7,6 +7,7 @@ import {
   requireCompanyWithContext,
   requireCompanyWithPermission,
 } from "@/lib/auth-utils"
+import { ensureOrganizationForContact } from "@/lib/master-data/contact-master-data"
 import { revalidatePath } from "next/cache"
 import { Prisma, InvoiceType } from "@prisma/client"
 import { getNextInvoiceNumber } from "@/lib/invoice-numbering"
@@ -145,6 +146,8 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
         return { success: false, error: "Kupac nije pronađen" }
       }
 
+      const buyerOrganizationId = await ensureOrganizationForContact(company.id, buyer.id)
+
       // Generate invoice number
       const numbering = await getNextInvoiceNumber(
         company.id,
@@ -177,6 +180,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
           invoiceNumber: numbering.invoiceNumber,
           internalReference: numbering.internalReference,
           buyerId: input.buyerId,
+          buyerOrganizationId,
           issueDate: input.issueDate,
           dueDate: input.dueDate ?? null,
           currency: input.currency || "EUR",
@@ -537,6 +541,8 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
       return { error: "Invalid buyer - contact not found or doesn't belong to your company" }
     }
 
+    const buyerOrganizationId = await ensureOrganizationForContact(company.id, buyerId)
+
     // Generate invoice number if not provided (using Croatian format)
     let invoiceNumber = invoiceData.invoiceNumber
     let internalReference: string | undefined
@@ -573,6 +579,7 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
         companyId: company.id,
         direction: "OUTBOUND",
         buyerId,
+        buyerOrganizationId,
         invoiceNumber,
         issueDate: invoiceData.issueDate,
         dueDate: invoiceData.dueDate ?? null,
