@@ -119,6 +119,30 @@ async function getInteractedReferences(
 }
 
 /**
+ * Get currently snoozed item references (where snoozedUntil > now)
+ * These items should be hidden until their snooze expires
+ */
+async function getSnoozedReferences(
+  userId: string,
+  companyId: string
+): Promise<Set<string>> {
+  const now = new Date()
+  const snoozedInteractions = await drizzleDb
+    .select({ ref: checklistInteractions.itemReference })
+    .from(checklistInteractions)
+    .where(
+      and(
+        eq(checklistInteractions.userId, userId),
+        eq(checklistInteractions.companyId, companyId),
+        eq(checklistInteractions.action, CHECKLIST_ACTIONS.SNOOZED),
+        gte(checklistInteractions.snoozedUntil, now)
+      )
+    )
+
+  return new Set(snoozedInteractions.map((i) => i.ref))
+}
+
+/**
  * Get count of completed items for a user/company
  * This counts all items marked as completed in the interactions table
  */
@@ -557,10 +581,16 @@ export async function getChecklist(params: GetChecklistParams): Promise<{
   if (!includeCompleted) excludeActions.push(CHECKLIST_ACTIONS.COMPLETED)
   if (!includeDismissed) excludeActions.push(CHECKLIST_ACTIONS.DISMISSED)
 
-  const excludeRefs =
+  // Fetch completed/dismissed refs and currently snoozed refs in parallel
+  const [interactedRefs, snoozedRefs] = await Promise.all([
     excludeActions.length > 0
-      ? await getInteractedReferences(userId, companyId, excludeActions)
-      : new Set<string>()
+      ? getInteractedReferences(userId, companyId, excludeActions)
+      : Promise.resolve(new Set<string>()),
+    getSnoozedReferences(userId, companyId),
+  ])
+
+  // Merge both sets - exclude completed/dismissed AND currently snoozed items
+  const excludeRefs = new Set([...interactedRefs, ...snoozedRefs])
 
   // Aggregate from all sources in parallel
   const [obligationItems, deadlineItems, actionItems, onboardingItems, seasonalItems] =
