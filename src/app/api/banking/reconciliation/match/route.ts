@@ -4,6 +4,8 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { MatchKind, MatchSource, MatchStatus } from "@prisma/client"
+import { setTenantContext } from "@/lib/prisma-extensions"
+import { getIpFromHeaders, getUserAgentFromHeaders, logAudit } from "@/lib/audit"
 
 const bodySchema = z
   .object({
@@ -25,6 +27,11 @@ export async function POST(request: Request) {
   if (!company) {
     return NextResponse.json({ error: "Company not found" }, { status: 404 })
   }
+
+  setTenantContext({
+    companyId: company.id,
+    userId: user.id!,
+  })
 
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
@@ -84,6 +91,35 @@ export async function POST(request: Request) {
       },
     })
 
+    const beforeMatch = latestMatch
+      ? {
+          matchStatus: latestMatch.matchStatus,
+          matchKind: latestMatch.matchKind,
+          matchedInvoiceId: latestMatch.matchedInvoiceId,
+          matchedExpenseId: latestMatch.matchedExpenseId,
+        }
+      : { matchStatus: MatchStatus.UNMATCHED }
+
+    await logAudit({
+      companyId: company.id,
+      userId: user.id!,
+      action: "UPDATE",
+      entity: "BankTransaction",
+      entityId: transactionId,
+      reason: "bank_match_invoice",
+      ipAddress: getIpFromHeaders(request.headers),
+      userAgent: getUserAgentFromHeaders(request.headers),
+      changes: {
+        before: beforeMatch,
+        after: {
+          matchStatus: MatchStatus.MANUAL_MATCHED,
+          matchKind: MatchKind.INVOICE,
+          matchedInvoiceId: invoice.id,
+          matchedExpenseId: null,
+        },
+      },
+    })
+
     await db.eInvoice.update({
       where: { id: invoice.id },
       data: {
@@ -128,6 +164,35 @@ export async function POST(request: Request) {
         reason: "Manual match",
         source: MatchSource.MANUAL,
         createdBy: user.id!,
+      },
+    })
+
+    const beforeMatch = latestMatch
+      ? {
+          matchStatus: latestMatch.matchStatus,
+          matchKind: latestMatch.matchKind,
+          matchedInvoiceId: latestMatch.matchedInvoiceId,
+          matchedExpenseId: latestMatch.matchedExpenseId,
+        }
+      : { matchStatus: MatchStatus.UNMATCHED }
+
+    await logAudit({
+      companyId: company.id,
+      userId: user.id!,
+      action: "UPDATE",
+      entity: "BankTransaction",
+      entityId: transactionId,
+      reason: "bank_match_expense",
+      ipAddress: getIpFromHeaders(request.headers),
+      userAgent: getUserAgentFromHeaders(request.headers),
+      changes: {
+        before: beforeMatch,
+        after: {
+          matchStatus: MatchStatus.MANUAL_MATCHED,
+          matchKind: MatchKind.EXPENSE,
+          matchedInvoiceId: null,
+          matchedExpenseId: expense.id,
+        },
       },
     })
 
