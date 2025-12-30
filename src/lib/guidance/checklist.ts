@@ -533,11 +533,11 @@ async function getSeasonalItems(
         description:
           currentMonth === 12
             ? `Počni pripremati PO-SD za ${currentYear}. godinu`
-            : `Rok za predaju PO-SD za ${currentYear - 1}. godinu je 15. siječnja`,
-        dueDate: new Date(currentYear + (currentMonth === 12 ? 1 : 0), 0, 15),
+            : `Rok za predaju PO-SD za ${currentYear - 1}. godinu je 31. siječnja`,
+        dueDate: new Date(currentYear + (currentMonth === 12 ? 1 : 0), 0, 31),
         urgency:
           currentMonth === 1
-            ? calculateUrgency(new Date(currentYear, 0, 15))
+            ? calculateUrgency(new Date(currentYear, 0, 31))
             : URGENCY_LEVELS.UPCOMING,
         action: {
           type: ACTION_TYPES.WIZARD,

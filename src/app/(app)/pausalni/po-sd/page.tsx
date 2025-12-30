@@ -19,7 +19,7 @@ export default async function PoSDPage() {
   }
 
   const currentYear = new Date().getFullYear()
-  const deadlineDate = new Date(currentYear, 0, 15) // January 15
+  const deadlineDate = new Date(currentYear, 0, 31) // January 31
   const today = new Date()
   const isBeforeDeadline = today < deadlineDate
 
@@ -69,7 +69,7 @@ export default async function PoSDPage() {
                 }`}
               >
                 PO-SD obrazac za {currentYear - 1}. godinu mora biti podnesen do{" "}
-                <strong>15. siječnja {currentYear}.</strong> godine. Ova prijava određuje vaše
+                <strong>31. siječnja {currentYear}.</strong> godine. Ova prijava određuje vaše
                 mjesečne doprinose za {currentYear}. godinu.
               </p>
             </div>
