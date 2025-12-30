@@ -336,6 +336,7 @@ model EInvoice {
   internalReference String?
   notes             String?
   convertedFromId   String?
+  correctsInvoiceId String?
   paidAt            DateTime?
   bankAccount       String?
   includeBarcode    Boolean           @default(true)
@@ -358,6 +359,8 @@ model EInvoice {
   company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   convertedFrom     EInvoice?         @relation("InvoiceConversion", fields: [convertedFromId], references: [id])
   convertedTo       EInvoice[]        @relation("InvoiceConversion")
+  correctsInvoice   EInvoice?         @relation("InvoiceCorrections", fields: [correctsInvoiceId], references: [id])
+  creditNotes       EInvoice[]        @relation("InvoiceCorrections")
   importJob         ImportJob?        @relation(fields: [importJobId], references: [id])
   seller            Contact?          @relation("EInvoiceSeller", fields: [sellerId], references: [id], onDelete: SetNull)
   lines             EInvoiceLine[]
@@ -372,6 +375,7 @@ model EInvoice {
   @@index([emailMessageId])
   @@index([sellerId])
   @@index([buyerId])
+  @@index([correctsInvoiceId])
 }
 
 model EInvoiceLine {
@@ -386,9 +390,12 @@ model EInvoiceLine {
   vatRate     Decimal  @db.Decimal(5, 2)
   vatCategory String   @default("S")
   vatAmount   Decimal  @db.Decimal(10, 2)
+  vatRuleId   String?
   eInvoice    EInvoice @relation(fields: [eInvoiceId], references: [id], onDelete: Cascade)
+  vatRule     RegulatoryRule? @relation(fields: [vatRuleId], references: [id])
 
   @@index([eInvoiceId])
+  @@index([vatRuleId])
 }
 
 model EmailSuppression {
@@ -404,6 +411,40 @@ model EmailSuppression {
   @@index([email])
   @@index([suppressedAt])
   @@index([expiresAt])
+}
+
+model RevenueRegisterEntry {
+  id          String   @id @default(cuid())
+  companyId   String
+  invoiceId   String   @unique
+  issueDate   DateTime
+  netAmount   Decimal  @db.Decimal(10, 2)
+  vatAmount   Decimal  @db.Decimal(10, 2)
+  totalAmount Decimal  @db.Decimal(10, 2)
+  currency    String   @default("EUR")
+  createdAt   DateTime @default(now())
+
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoice EInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([issueDate])
+}
+
+model InvoiceEvent {
+  id        String           @id @default(cuid())
+  companyId String
+  invoiceId String
+  type      InvoiceEventType
+  payload   Json?
+  createdAt DateTime         @default(now())
+
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoice EInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, type])
+  @@index([companyId])
+  @@index([type])
 }
 
 
@@ -1480,6 +1521,11 @@ enum InvoiceType {
   PROFORMA
   CREDIT_NOTE
   DEBIT_NOTE
+}
+
+enum InvoiceEventType {
+  REVENUE_REGISTERED
+  FISCALIZATION_TRIGGERED
 }
 
 enum EntitlementChangeType {
@@ -3685,4 +3731,3 @@ model CronJobError {
   @@index([resolvedAt])
   @@index([createdAt])
 }
-

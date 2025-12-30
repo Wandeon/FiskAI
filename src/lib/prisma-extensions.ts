@@ -111,6 +111,8 @@ const TENANT_MODELS = [
   "Product",
   "EInvoice",
   "EInvoiceLine",
+  "RevenueRegisterEntry",
+  "InvoiceEvent",
   "AuditLog",
   "BankAccount",
   "BankTransaction",
@@ -148,6 +150,134 @@ const AUDITED_MODELS = [
   "SupportTicket",
 ] as const
 type AuditedModel = (typeof AUDITED_MODELS)[number]
+
+// ============================================
+// INVOICE IMMUTABILITY PROTECTION
+// ============================================
+
+const INVOICE_MUTABLE_FIELDS_AFTER_ISSUE = new Set<string>([
+  "status",
+  "fiscalStatus",
+  "jir",
+  "zki",
+  "fiscalizedAt",
+  "sentAt",
+  "receivedAt",
+  "archivedAt",
+  "providerRef",
+  "providerStatus",
+  "providerError",
+  "ublXml",
+  "paidAt",
+  "emailMessageId",
+  "emailDeliveredAt",
+  "emailOpenedAt",
+  "emailClickedAt",
+  "emailBouncedAt",
+  "emailBounceReason",
+  "importJobId",
+])
+
+export class InvoiceImmutabilityError extends Error {
+  constructor(details: string) {
+    super(`Issued invoices are immutable. ${details}`)
+    this.name = "InvoiceImmutabilityError"
+  }
+}
+
+async function enforceInvoiceImmutability(
+  prismaBase: PrismaClient,
+  args: { where: unknown; data?: Record<string, unknown> }
+): Promise<void> {
+  if (!args.data || typeof args.data !== "object") return
+
+  const updateKeys = Object.keys(args.data)
+  if (updateKeys.length === 0) return
+
+  const disallowedKeys = updateKeys.filter((key) => !INVOICE_MUTABLE_FIELDS_AFTER_ISSUE.has(key))
+  if (disallowedKeys.length === 0) return
+
+  const existing = await prismaBase.eInvoice.findUnique({
+    where: args.where as Prisma.EInvoiceWhereUniqueInput,
+    select: { status: true },
+  })
+
+  if (!existing) return
+
+  if (existing.status !== "DRAFT") {
+    throw new InvoiceImmutabilityError(
+      `Attempted to update fields [${disallowedKeys.join(", ")}] on invoice in status ${
+        existing.status
+      }. Use a credit note for corrections.`
+    )
+  }
+}
+
+async function enforceInvoiceLineImmutability(
+  prismaBase: PrismaClient,
+  where: Prisma.EInvoiceLineWhereInput,
+  action: "update" | "delete"
+): Promise<void> {
+  const lockedLine = await prismaBase.eInvoiceLine.findFirst({
+    where: {
+      ...where,
+      eInvoice: { status: { not: "DRAFT" } },
+    },
+    select: { id: true, eInvoiceId: true },
+  })
+
+  if (lockedLine) {
+    throw new InvoiceImmutabilityError(
+      `Cannot ${action} invoice line ${lockedLine.id} because invoice ${lockedLine.eInvoiceId} has been issued.`
+    )
+  }
+}
+
+async function enforceInvoiceDeleteImmutability(
+  prismaBase: PrismaClient,
+  where: Prisma.EInvoiceWhereUniqueInput,
+  action: "delete"
+): Promise<void> {
+  const existing = await prismaBase.eInvoice.findUnique({
+    where,
+    select: { status: true },
+  })
+
+  if (existing && existing.status !== "DRAFT") {
+    throw new InvoiceImmutabilityError(
+      `Cannot ${action} invoice in status ${existing.status}. Use a credit note for corrections.`
+    )
+  }
+}
+
+async function enforceInvoiceUpdateManyImmutability(
+  prismaBase: PrismaClient,
+  args: { where?: Prisma.EInvoiceWhereInput; data?: Record<string, unknown> }
+): Promise<void> {
+  if (!args.data || typeof args.data !== "object") return
+
+  const updateKeys = Object.keys(args.data)
+  if (updateKeys.length === 0) return
+
+  const disallowedKeys = updateKeys.filter((key) => !INVOICE_MUTABLE_FIELDS_AFTER_ISSUE.has(key))
+  if (disallowedKeys.length === 0) return
+
+  const lockedInvoice = await prismaBase.eInvoice.findFirst({
+    where: {
+      ...(args.where ?? {}),
+      status: { not: "DRAFT" },
+    },
+    select: { id: true, status: true },
+  })
+
+  if (lockedInvoice) {
+    throw new InvoiceImmutabilityError(
+      `Attempted to update fields [${disallowedKeys.join(", ")}] on invoice ${lockedInvoice.id} in status ${
+        lockedInvoice.status
+      }. Use a credit note for corrections.`
+    )
+  }
+}
 
 // ============================================
 // EVIDENCE IMMUTABILITY PROTECTION
@@ -513,6 +643,18 @@ export function withTenantIsolation(prisma: PrismaClient) {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
           }
 
+          if (model === "EInvoice") {
+            await enforceInvoiceImmutability(prismaBase, args)
+          }
+
+          if (model === "EInvoiceLine") {
+            await enforceInvoiceLineImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceLineWhereInput,
+              "update"
+            )
+          }
+
           // REGULATORY RULE STATUS TRANSITIONS: enforce allowed transitions (hard backstop)
           if (model === "RegulatoryRule") {
             const newStatus = getRequestedRuleStatus(args.data)
@@ -566,6 +708,22 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return result
         },
         async delete({ model, args, query }) {
+          if (model === "EInvoice") {
+            await enforceInvoiceDeleteImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceWhereUniqueInput,
+              "delete"
+            )
+          }
+
+          if (model === "EInvoiceLine") {
+            await enforceInvoiceLineImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceLineWhereInput,
+              "delete"
+            )
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -611,6 +769,21 @@ export function withTenantIsolation(prisma: PrismaClient) {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
           }
 
+          if (model === "EInvoice") {
+            await enforceInvoiceUpdateManyImmutability(prismaBase, {
+              where: args.where as Prisma.EInvoiceWhereInput,
+              data: args.data as Record<string, unknown>,
+            })
+          }
+
+          if (model === "EInvoiceLine") {
+            await enforceInvoiceLineImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceLineWhereInput,
+              "update"
+            )
+          }
+
           // REGULATORY RULE: forbid updateMany for status transitions
           // updateMany bypasses per-rule validation (conflicts, provenance, tier checks)
           if (model === "RegulatoryRule") {
@@ -630,6 +803,30 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return query(args)
         },
         async deleteMany({ model, args, query }) {
+          if (model === "EInvoice") {
+            const lockedInvoice = await prismaBase.eInvoice.findFirst({
+              where: {
+                ...(args.where as Prisma.EInvoiceWhereInput),
+                status: { not: "DRAFT" },
+              },
+              select: { id: true, status: true },
+            })
+
+            if (lockedInvoice) {
+              throw new InvoiceImmutabilityError(
+                `Cannot delete invoice ${lockedInvoice.id} in status ${lockedInvoice.status}. Use a credit note for corrections.`
+              )
+            }
+          }
+
+          if (model === "EInvoiceLine") {
+            await enforceInvoiceLineImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceLineWhereInput,
+              "delete"
+            )
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -643,6 +840,21 @@ export function withTenantIsolation(prisma: PrismaClient) {
           // EVIDENCE IMMUTABILITY: Block updates to immutable fields in upsert
           if (model === "Evidence" && args.update && typeof args.update === "object") {
             checkEvidenceImmutability(args.update as Record<string, unknown>)
+          }
+
+          if (model === "EInvoice") {
+            await enforceInvoiceImmutability(prismaBase, {
+              where: args.where as Prisma.EInvoiceWhereUniqueInput,
+              data: args.update as Record<string, unknown>,
+            })
+          }
+
+          if (model === "EInvoiceLine") {
+            await enforceInvoiceLineImmutability(
+              prismaBase,
+              args.where as Prisma.EInvoiceLineWhereInput,
+              "update"
+            )
           }
 
           const context = getTenantContext()
