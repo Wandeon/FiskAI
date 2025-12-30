@@ -209,6 +209,7 @@ model Company {
   cashIns                        CashIn[]
   cashOuts                       CashOut[]
   cashDayCloses                  CashDayClose[]
+  cashLimitSetting               CashLimitSetting?
   employees                      Employee[]
   artifacts                      Artifact[]
   employeeRoles                  EmployeeRole[]
@@ -1190,6 +1191,19 @@ model CashDayClose {
   @@unique([companyId, businessDate])
   @@index([companyId])
   @@index([businessDate])
+}
+
+model CashLimitSetting {
+  id          String   @id @default(cuid())
+  companyId   String   @unique
+  limitAmount Decimal  @db.Decimal(14, 2)
+  currency    String   @default("EUR")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }
 
 model BusinessPremises {
