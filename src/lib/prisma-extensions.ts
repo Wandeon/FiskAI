@@ -120,6 +120,11 @@ const TENANT_MODELS = [
   "StatementPage",
   "Transaction",
   "Expense",
+  "ExpenseLine",
+  "UraInput",
+  "Attachment",
+  "ExpenseCorrection",
+  "FixedAssetCandidate",
   "ExpenseCategory",
   "RecurringExpense",
   "SavedReport",
@@ -140,6 +145,11 @@ const AUDITED_MODELS = [
   "Company",
   "BankAccount",
   "Expense",
+  "ExpenseLine",
+  "UraInput",
+  "Attachment",
+  "ExpenseCorrection",
+  "FixedAssetCandidate",
   "ExpenseCategory",
   "RecurringExpense",
   "BusinessPremises",
@@ -178,6 +188,39 @@ function checkEvidenceImmutability(data: Record<string, unknown>): void {
     if (field in data) {
       throw new EvidenceImmutabilityError(field)
     }
+  }
+}
+
+// ============================================
+// ATTACHMENT IMMUTABILITY PROTECTION
+// ============================================
+// Source attachments (email/import) must remain immutable for audit integrity.
+
+/**
+ * Error thrown when attempting to modify immutable attachments.
+ */
+export class AttachmentImmutabilityError extends Error {
+  constructor(id: string) {
+    super(
+      `Cannot modify Attachment ${id}: source attachments are immutable once stored. ` +
+        "Create a new attachment record for corrections."
+    )
+    this.name = "AttachmentImmutabilityError"
+  }
+}
+
+async function ensureAttachmentMutable(
+  prismaBase: PrismaClient,
+  where: Prisma.AttachmentWhereInput | Prisma.AttachmentWhereUniqueInput
+) {
+  const baseWhere = (where ?? {}) as Prisma.AttachmentWhereInput
+  const immutable = await prismaBase.attachment.findFirst({
+    where: { ...baseWhere, isSourceImmutable: true },
+    select: { id: true },
+  })
+
+  if (immutable) {
+    throw new AttachmentImmutabilityError(immutable.id)
   }
 }
 
@@ -513,6 +556,13 @@ export function withTenantIsolation(prisma: PrismaClient) {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
           }
 
+          if (model === "Attachment") {
+            await ensureAttachmentMutable(
+              prismaBase,
+              args.where as Prisma.AttachmentWhereUniqueInput
+            )
+          }
+
           // REGULATORY RULE STATUS TRANSITIONS: enforce allowed transitions (hard backstop)
           if (model === "RegulatoryRule") {
             const newStatus = getRequestedRuleStatus(args.data)
@@ -566,6 +616,13 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return result
         },
         async delete({ model, args, query }) {
+          if (model === "Attachment") {
+            await ensureAttachmentMutable(
+              prismaBase,
+              args.where as Prisma.AttachmentWhereUniqueInput
+            )
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -611,6 +668,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
             checkEvidenceImmutability(args.data as Record<string, unknown>)
           }
 
+          if (model === "Attachment") {
+            await ensureAttachmentMutable(prismaBase, args.where as Prisma.AttachmentWhereInput)
+          }
+
           // REGULATORY RULE: forbid updateMany for status transitions
           // updateMany bypasses per-rule validation (conflicts, provenance, tier checks)
           if (model === "RegulatoryRule") {
@@ -630,6 +691,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
           return query(args)
         },
         async deleteMany({ model, args, query }) {
+          if (model === "Attachment") {
+            await ensureAttachmentMutable(prismaBase, args.where as Prisma.AttachmentWhereInput)
+          }
+
           const context = getTenantContext()
           if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
@@ -643,6 +708,13 @@ export function withTenantIsolation(prisma: PrismaClient) {
           // EVIDENCE IMMUTABILITY: Block updates to immutable fields in upsert
           if (model === "Evidence" && args.update && typeof args.update === "object") {
             checkEvidenceImmutability(args.update as Record<string, unknown>)
+          }
+
+          if (model === "Attachment") {
+            await ensureAttachmentMutable(
+              prismaBase,
+              args.where as Prisma.AttachmentWhereUniqueInput
+            )
           }
 
           const context = getTenantContext()
