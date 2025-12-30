@@ -646,12 +646,12 @@ async function enforceInvoiceImmutability(
 
   const existing = await prismaBase.eInvoice.findUnique({
     where: args.where as Prisma.EInvoiceWhereUniqueInput,
-    select: { status: true },
+    select: { status: true, jir: true, fiscalizedAt: true },
   })
 
   if (!existing) return
 
-  if (existing.status !== "DRAFT") {
+  if (existing.status !== "DRAFT" || existing.jir || existing.fiscalizedAt) {
     throw new InvoiceImmutabilityError(
       `Attempted to update fields [${disallowedKeys.join(", ")}] on invoice in status ${
         existing.status
@@ -668,7 +668,9 @@ async function enforceInvoiceLineImmutability(
   const lockedLine = await prismaBase.eInvoiceLine.findFirst({
     where: {
       ...where,
-      eInvoice: { status: { not: "DRAFT" } },
+      eInvoice: {
+        OR: [{ status: { not: "DRAFT" } }, { jir: { not: null } }, { fiscalizedAt: { not: null } }],
+      },
     },
     select: { id: true, eInvoiceId: true },
   })
@@ -687,10 +689,10 @@ async function enforceInvoiceDeleteImmutability(
 ): Promise<void> {
   const existing = await prismaBase.eInvoice.findUnique({
     where,
-    select: { status: true },
+    select: { status: true, jir: true, fiscalizedAt: true },
   })
 
-  if (existing && existing.status !== "DRAFT") {
+  if (existing && (existing.status !== "DRAFT" || existing.jir || existing.fiscalizedAt)) {
     throw new InvoiceImmutabilityError(
       `Cannot ${action} invoice in status ${existing.status}. Use a credit note for corrections.`
     )
@@ -712,7 +714,7 @@ async function enforceInvoiceUpdateManyImmutability(
   const lockedInvoice = await prismaBase.eInvoice.findFirst({
     where: {
       ...(args.where ?? {}),
-      status: { not: "DRAFT" },
+      OR: [{ status: { not: "DRAFT" } }, { jir: { not: null } }, { fiscalizedAt: { not: null } }],
     },
     select: { id: true, status: true },
   })

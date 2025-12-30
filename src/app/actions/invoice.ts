@@ -337,7 +337,7 @@ export async function updateInvoice(
     return requireCompanyWithPermission(user.id!, "invoice:update", async () => {
       const existing = await db.eInvoice.findFirst({
         where: { id, status: "DRAFT" },
-        select: { id: true, issueDate: true },
+        select: { id: true, issueDate: true, jir: true, fiscalizedAt: true },
       })
 
       if (!existing) {
