@@ -38,6 +38,10 @@ export type JoppdEntryDraft = {
   currency: string
   incomeType: "PER_DIEM" | "MILEAGE"
   ruleVersionId?: string
+  lineData: {
+    receiptType: string // P6.2 (17, 18)
+    recipientType: string // P6.1 (0001)
+  }
 }
 
 export type TravelCalculationResult = {
@@ -88,6 +92,7 @@ export function calculateTravelPayouts(input: TravelCalculationInput): TravelCal
       ruleVersionId: perDiem.ruleVersionId,
     })
 
+    // Code 17: Dnevnice za službena putovanja u tuzemstvu i inozemstvu
     joppdDrafts.push({
       travelOrderId: input.travelOrderId,
       companyId: input.companyId,
@@ -96,6 +101,10 @@ export function calculateTravelPayouts(input: TravelCalculationInput): TravelCal
       currency: input.currency,
       incomeType: "PER_DIEM",
       ruleVersionId: perDiem.ruleVersionId,
+      lineData: {
+        receiptType: "17",
+        recipientType: "0001",
+      },
     })
   }
 
@@ -110,6 +119,7 @@ export function calculateTravelPayouts(input: TravelCalculationInput): TravelCal
       ruleVersionId: mileage.ruleVersionId,
     })
 
+    // Code 18: Naknade za korištenje privatnog automobila u službene svrhe
     joppdDrafts.push({
       travelOrderId: input.travelOrderId,
       companyId: input.companyId,
@@ -118,6 +128,10 @@ export function calculateTravelPayouts(input: TravelCalculationInput): TravelCal
       currency: input.currency,
       incomeType: "MILEAGE",
       ruleVersionId: mileage.ruleVersionId,
+      lineData: {
+        receiptType: "18",
+        recipientType: "0001",
+      },
     })
   }
 
