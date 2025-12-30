@@ -22,7 +22,7 @@ const navItems = [
   { href: "/e-invoices", icon: FileText, label: "Računi", module: "invoicing" },
   { href: "/support", icon: LifeBuoy, label: "Support" },
   { href: "/contacts", icon: Users, label: "Kontakti" },
-  { href: "/settings", icon: Settings, label: "Postavke", module: "settings" },
+  { href: "/settings", icon: Settings, label: "Postavke" },
 ]
 
 const quickActions = [
