@@ -138,6 +138,8 @@ const TENANT_MODELS = [
   "InvoiceSequence",
   "Payout",
   "PayoutLine",
+  "JoppdSubmission",
+  "JoppdSubmissionLine",
   "PayslipArtifact",
   "CalculationSnapshot",
   "Employee",
