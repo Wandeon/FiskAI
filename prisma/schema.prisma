@@ -416,7 +416,7 @@ model AuditLog {
   ipAddress String?
   userAgent String?
   timestamp DateTime    @default(now())
-  company   Company     @relation(fields: [companyId], references: [id])
+  company   Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([entity, entityId])
@@ -2766,22 +2766,6 @@ model ConflictResolutionAudit {
 // CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking (Issue #789)
 // =============================================================================
 
-model ConflictResolutionAudit {
-  id         String   @id @default(cuid())
-  conflictId String
-  ruleAId    String?
-  ruleBId    String?
-  resolution String // RULE_A_PREVAILS, RULE_B_PREVAILS, MERGE_RULES, ESCALATE_TO_HUMAN
-  reason     String   @db.Text
-  resolvedBy String // ARBITER_AGENT, HUMAN, SYSTEM
-  resolvedAt DateTime @default(now())
-  metadata   Json? // { authorityComparison, sourceComparison, temporalAnalysis, aiArbitration }
-
-  @@index([conflictId])
-  @@index([ruleAId])
-  @@index([ruleBId])
-  @@index([resolvedAt])
-}
 
 // =============================================================================
 // HUMAN REVIEW QUEUE - Centralized review management (Issue #884)
@@ -3269,7 +3253,6 @@ enum FeatureFlagStatus {
   INACTIVE
   ARCHIVED
   DELETED
-  DELETED
 }
 
 model FeatureFlag {
@@ -3295,8 +3278,6 @@ model FeatureFlag {
   updatedAt DateTime @updatedAt
   createdBy String? // User ID who created
   updatedBy String? // User ID who last updated
-  deletedAt DateTime? // Soft-delete timestamp
-  deletedBy String? // User ID who soft-deleted
   deletedAt DateTime? // Soft-delete timestamp
   deletedBy String? // User ID who soft-deleted
 
@@ -3348,8 +3329,6 @@ enum FeatureFlagAuditAction {
   OVERRIDE_ADDED
   OVERRIDE_REMOVED
   ROLLOUT_CHANGED
-  DELETED
-  RESTORED
   DELETED
   RESTORED
 }
