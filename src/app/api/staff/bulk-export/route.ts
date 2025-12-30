@@ -10,6 +10,7 @@ import {
   summaryToCsv,
 } from "@/lib/reports/accountant-export"
 import JSZip from "jszip"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 const querySchema = z.object({
   clientIds: z.string(), // comma-separated list of client IDs

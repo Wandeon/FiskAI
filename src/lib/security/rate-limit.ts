@@ -65,6 +65,16 @@ export const RATE_LIMITS = {
     window: 60 * 60 * 1000, // 1 hour
     blockDuration: 60 * 60 * 1000, // 1 hour block
   },
+  STAFF_API: {
+    attempts: 100, // 100 requests per minute per staff user
+    window: 60 * 1000, // 1 minute
+    blockDuration: 60 * 1000, // 1 minute block
+  },
+  STAFF_BULK_EXPORT: {
+    attempts: 3, // 3 bulk exports per hour per staff user
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000, // 1 hour block
+  },
   },
   EXPORT: {
     attempts: 3, // 3 exports per hour

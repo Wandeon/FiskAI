@@ -3,6 +3,7 @@ import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { SupportTicketPriority, SupportTicketStatus, TicketCategory } from "@prisma/client"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 const createTicketSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),

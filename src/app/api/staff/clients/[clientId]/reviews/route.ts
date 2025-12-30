@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { z } from "zod"
 import { StaffReviewEntity } from "@prisma/client"
+import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 
 const toggleReviewSchema = z.object({
   entityType: z.enum(["EINVOICE", "EXPENSE", "DOCUMENT"]),
