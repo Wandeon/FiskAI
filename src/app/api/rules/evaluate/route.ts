@@ -8,6 +8,8 @@ import {
   type EvaluationContext,
 } from "@/lib/regulatory-truth/dsl/applies-when"
 import { checkRateLimit, getClientIP } from "@/lib/regulatory-truth/utils/rate-limit"
+import { apiError } from "@/lib/api-error"
+import { auth } from "@/lib/auth"
 
 /**
  * POST /api/rules/evaluate
@@ -17,6 +19,12 @@ import { checkRateLimit, getClientIP } from "@/lib/regulatory-truth/utils/rate-l
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     // Check rate limit
     const ip = getClientIP(request)
     const rateLimit = checkRateLimit(`evaluate:${ip}`, 60)
