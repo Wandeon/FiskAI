@@ -55,6 +55,10 @@ export const RATE_LIMITS = {
     window: 15 * 60 * 1000, // 15 minutes
     blockDuration: 15 * 60 * 1000,
   },
+  EXPORT: {
+    attempts: 3, // 3 exports per hour
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000, // 1 hour block
 }
 
 /**
