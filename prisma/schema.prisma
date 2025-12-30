@@ -777,7 +777,6 @@ model ImportJob {
   @@index([status])
   @@index([userId])
   @@index([bankAccountId, fileChecksum])
-  @@index([userId])
 }
 
 model Statement {
@@ -3309,7 +3308,6 @@ model FeatureFlag {
   @@index([status])
   @@index([category])
   @@index([tags])
-  @@index([deletedAt])
   @@index([deletedAt])
 }
 
