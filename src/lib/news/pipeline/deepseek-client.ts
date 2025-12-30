@@ -4,6 +4,7 @@
  */
 
 import OpenAI from "openai"
+import { trackAIUsage } from "@/lib/ai/usage-tracking"
 
 interface DeepSeekMessage {
   role: "system" | "user" | "assistant"
@@ -71,6 +72,7 @@ async function callOllamaCloud(
     maxTokens?: number
     jsonMode?: boolean
     retries?: number
+    operation?: string
   }
 ): Promise<string> {
   const {
@@ -79,6 +81,7 @@ async function callOllamaCloud(
     maxTokens = 4000,
     jsonMode = false,
     retries = 3,
+    operation = "deepseek_chat",
   } = options
 
   const apiKey = process.env.OLLAMA_API_KEY
@@ -97,11 +100,11 @@ async function callOllamaCloud(
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const response = await fetch(`${endpoint}/api/chat`, {
+      const response = await fetch(\`\${endpoint}/api/chat\`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: \`Bearer \${apiKey}\`,
         },
         body: JSON.stringify({
           model,
@@ -118,7 +121,7 @@ async function callOllamaCloud(
       if (!response.ok) {
         const errorBody = await response.text()
         throw new DeepSeekError(
-          `Ollama API error: ${response.status} ${response.statusText}`,
+          \`Ollama API error: \${response.status} \${response.statusText}\`,
           response.status,
           errorBody
         )
@@ -127,6 +130,17 @@ async function callOllamaCloud(
       const data = await response.json()
       const content = data.message?.content
       if (!content) throw new DeepSeekError("Ollama returned no content")
+
+      // Track usage for system operations (news processing)
+      await trackAIUsage({
+        companyId: "system",
+        operation: operation as any,
+        model,
+        inputTokens: 0, // Ollama doesn't provide token counts
+        outputTokens: 0,
+        success: true,
+      })
+
       return content
     } catch (error) {
       lastError = error as Error
@@ -142,8 +156,18 @@ async function callOllamaCloud(
     }
   }
 
+  // Track failed request
+  await trackAIUsage({
+    companyId: "system",
+    operation: operation as any,
+    model,
+    inputTokens: 0,
+    outputTokens: 0,
+    success: false,
+  })
+
   throw new DeepSeekError(
-    `Ollama API failed after ${retries} attempts: ${lastError?.message}`,
+    \`Ollama API failed after \${retries} attempts: \${lastError?.message}\`,
     undefined,
     lastError
   )
@@ -157,6 +181,7 @@ async function callOpenAI(
     maxTokens?: number
     jsonMode?: boolean
     retries?: number
+    operation?: string
   }
 ): Promise<string> {
   const {
@@ -165,6 +190,7 @@ async function callOpenAI(
     maxTokens = 2000,
     jsonMode = false,
     retries = 3,
+    operation = "deepseek_chat",
   } = options
 
   const apiKey = process.env.OPENAI_API_KEY
@@ -193,6 +219,17 @@ async function callOpenAI(
 
       const content = response.choices[0]?.message?.content
       if (!content) throw new DeepSeekError("OpenAI returned no content")
+
+      // Track usage for system operations (news processing)
+      await trackAIUsage({
+        companyId: "system",
+        operation: operation as any,
+        model,
+        inputTokens: response.usage?.prompt_tokens || 0,
+        outputTokens: response.usage?.completion_tokens || 0,
+        success: true,
+      })
+
       return content
     } catch (error) {
       lastError = error as Error
@@ -205,8 +242,18 @@ async function callOpenAI(
     }
   }
 
+  // Track failed request
+  await trackAIUsage({
+    companyId: "system",
+    operation: operation as any,
+    model,
+    inputTokens: 0,
+    outputTokens: 0,
+    success: false,
+  })
+
   throw new DeepSeekError(
-    `OpenAI API failed after ${retries} attempts: ${lastError?.message}`,
+    \`OpenAI API failed after \${retries} attempts: \${lastError?.message}\`,
     undefined,
     lastError
   )
@@ -223,6 +270,7 @@ export async function callDeepSeek(
     maxTokens?: number
     jsonMode?: boolean
     retries?: number
+    operation?: string
   } = {}
 ): Promise<string> {
   const {
@@ -231,14 +279,15 @@ export async function callDeepSeek(
     maxTokens = 4000,
     jsonMode = false,
     retries = 3,
+    operation = "deepseek_chat",
   } = options
 
   const provider = resolveProvider()
   if (provider === "ollama") {
-    return callOllamaCloud(prompt, { systemPrompt, temperature, maxTokens, jsonMode, retries })
+    return callOllamaCloud(prompt, { systemPrompt, temperature, maxTokens, jsonMode, retries, operation })
   }
   if (provider === "openai") {
-    return callOpenAI(prompt, { systemPrompt, temperature, maxTokens, jsonMode, retries })
+    return callOpenAI(prompt, { systemPrompt, temperature, maxTokens, jsonMode, retries, operation })
   }
 
   const apiKey = process.env.DEEPSEEK_API_KEY
@@ -273,7 +322,7 @@ export async function callDeepSeek(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: \`Bearer \${apiKey}\`,
         },
         body: JSON.stringify(requestBody),
       })
@@ -281,7 +330,7 @@ export async function callDeepSeek(
       if (!response.ok) {
         const errorBody = await response.text()
         throw new DeepSeekError(
-          `DeepSeek API error: ${response.status} ${response.statusText}`,
+          \`DeepSeek API error: \${response.status} \${response.statusText}\`,
           response.status,
           errorBody
         )
@@ -294,6 +343,19 @@ export async function callDeepSeek(
       }
 
       const content = data.choices[0].message.content
+
+      // Track usage for system operations (news processing)
+      if (data.usage) {
+        await trackAIUsage({
+          companyId: "system",
+          operation: operation as any,
+          model,
+          inputTokens: data.usage.prompt_tokens,
+          outputTokens: data.usage.completion_tokens,
+          success: true,
+        })
+      }
+
       return content
     } catch (error) {
       lastError = error as Error
@@ -311,8 +373,18 @@ export async function callDeepSeek(
     }
   }
 
+  // Track failed request
+  await trackAIUsage({
+    companyId: "system",
+    operation: operation as any,
+    model: model || "deepseek-chat",
+    inputTokens: 0,
+    outputTokens: 0,
+    success: false,
+  })
+
   throw new DeepSeekError(
-    `DeepSeek API failed after ${retries} attempts: ${lastError?.message}`,
+    \`DeepSeek API failed after \${retries} attempts: \${lastError?.message}\`,
     undefined,
     lastError
   )
@@ -328,6 +400,7 @@ export async function callDeepSeekJSON<T>(
     temperature?: number
     maxTokens?: number
     retries?: number
+    operation?: string
   } = {}
 ): Promise<T> {
   const response = await callDeepSeek(prompt, {
@@ -339,7 +412,7 @@ export async function callDeepSeekJSON<T>(
     return JSON.parse(response) as T
   } catch (error) {
     throw new DeepSeekError(
-      `Failed to parse DeepSeek JSON response: ${(error as Error).message}`,
+      \`Failed to parse DeepSeek JSON response: \${(error as Error).message}\`,
       undefined,
       response
     )
