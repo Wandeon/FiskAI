@@ -508,7 +508,7 @@ export function PosdWizard({ companyId }: Props) {
                 <div className="text-sm">
                   <p className="font-medium text-amber-900 dark:text-amber-200 mb-1">Važan rok!</p>
                   <p className="text-amber-800 dark:text-amber-300">
-                    PO-SD obrazac mora biti podnesen do <strong>15. siječnja {year + 1}.</strong>{" "}
+                    PO-SD obrazac mora biti podnesen do <strong>31. siječnja {year + 1}.</strong>{" "}
                     godine. Kašnjenje može rezultirati kaznama.
                   </p>
                 </div>

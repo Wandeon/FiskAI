@@ -160,7 +160,7 @@ export async function generateObligations({ companyId, year, month }: GenerateOp
     }
   }
 
-  // Annual PO-SD (January 15 for previous year)
+  // Annual PO-SD (January 31 for previous year)
   if (!month || month === 1) {
     const posdDueDate = new Date(year, DEADLINES.PO_SD.month - 1, DEADLINES.PO_SD.day)
     obligations.push({

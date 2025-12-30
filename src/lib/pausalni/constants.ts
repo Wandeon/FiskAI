@@ -61,7 +61,7 @@ export const DEADLINES = {
   POREZ_Q2: { month: 6, day: 30 },
   POREZ_Q3: { month: 9, day: 30 },
   POREZ_Q4: { month: 12, day: 31 },
-  PO_SD: { month: 1, day: 15 }, // January 15 for previous year
+  PO_SD: { month: 1, day: 31 }, // January 31 for previous year
   DOH: { month: 2, day: 28 }, // February 28 if exceeded threshold
 } as const
 

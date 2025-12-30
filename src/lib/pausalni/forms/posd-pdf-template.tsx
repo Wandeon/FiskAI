@@ -319,7 +319,7 @@ export function PosdPDFDocument({ data }: Props) {
           <Text style={styles.warningText}>
             NAPOMENA: Ovaj dokument služi kao priprema za podnošenje PO-SD obrasca. Za
             službenu prijavu morate pristupiti portalu ePorezna i unijeti podatke iz ovog
-            dokumenta. Rok za podnošenje je 15. siječnja za prethodnu godinu.
+            dokumenta. Rok za podnošenje je 31. siječnja za prethodnu godinu.
           </Text>
         </View>
 

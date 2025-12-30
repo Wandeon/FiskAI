@@ -112,7 +112,7 @@ export const ADDITIONAL_DEADLINES = {
   posd: {
     name: "PO-SD obrazac",
     description: "Prijava paušalnog poreza za sljedeću godinu",
-    dates: ["15.01"], // Do 15. siječnja
+    dates: ["31.01"], // Do 31. siječnja
     frequency: "annual" as const,
   },
 

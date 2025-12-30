@@ -106,8 +106,8 @@ export const PAUSALNI_FIRST_WEEK: TutorialTrack = {
         },
         {
           id: "set-reminder",
-          title: "Postavi podsjetnik za 15.1.",
-          description: "Rok za PO-SD je 15. siječnja",
+          title: "Postavi podsjetnik za 31.1.",
+          description: "Rok za PO-SD je 31. siječnja",
           href: "/settings/reminders",
         },
       ],

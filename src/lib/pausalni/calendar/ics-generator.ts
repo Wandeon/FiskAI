@@ -73,7 +73,7 @@ function getObligationDescription(obligation: PaymentObligation): string {
   } else if (obligation.obligationType === "POREZ_DOHODAK") {
     description += `\n\nPorez na dohodak uplaćuje se nakon predaje obračuna.`
   } else if (obligation.obligationType === "PO_SD") {
-    description += `\n\nGodišnji obrazac PO-SD predaje se do 15. siječnja za prethodnu godinu.`
+    description += `\n\nGodišnji obrazac PO-SD predaje se do 31. siječnja za prethodnu godinu.`
   }
 
   return description
