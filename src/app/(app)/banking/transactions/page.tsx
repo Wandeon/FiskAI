@@ -62,9 +62,8 @@ export default async function TransactionsPage({
     where.bankAccountId = params.accountId
   }
 
-  if (params.status && params.status in MatchStatus) {
-    where.matchStatus = params.status as MatchStatus
-  }
+  const statusFilter =
+    params.status && params.status in MatchStatus ? (params.status as MatchStatus) : null
 
   if (params.dateFrom || params.dateTo) {
     where.date = {}
@@ -76,30 +75,83 @@ export default async function TransactionsPage({
     }
   }
 
-  const [transactions, total] = await Promise.all([
-    db.bankTransaction.findMany({
-      where,
-      include: {
-        bankAccount: {
-          select: { name: true, currency: true },
-        },
-        matchedInvoice: {
-          select: { invoiceNumber: true },
-        },
-        matchedExpense: {
-          select: { id: true, description: true },
-        },
+  const transactionRows = await db.bankTransaction.findMany({
+    where,
+    select: { id: true, date: true },
+    orderBy: { date: "desc" },
+  })
+
+  const latestMatches = await db.matchRecord.findMany({
+    where: { bankTransactionId: { in: transactionRows.map((row) => row.id) } },
+    orderBy: [{ bankTransactionId: "asc" }, { createdAt: "desc" }],
+    distinct: ["bankTransactionId"],
+  })
+  const matchMap = new Map(latestMatches.map((match) => [match.bankTransactionId, match]))
+
+  const filtered = transactionRows.filter((row) => {
+    if (!statusFilter) return true
+    const status = matchMap.get(row.id)?.matchStatus ?? MatchStatus.UNMATCHED
+    return status === statusFilter
+  })
+
+  const total = filtered.length
+  const pagedIds = filtered.slice(skip, skip + pageSize).map((row) => row.id)
+
+  const transactions = await db.bankTransaction.findMany({
+    where: { id: { in: pagedIds } },
+    include: {
+      bankAccount: {
+        select: { name: true, currency: true },
       },
-      orderBy: { date: "desc" },
-      take: pageSize,
-      skip,
-    }),
-    db.bankTransaction.count({ where }),
+    },
+    orderBy: { date: "desc" },
+  })
+
+  const invoiceIds = new Set<string>()
+  const expenseIds = new Set<string>()
+  for (const transactionId of pagedIds) {
+    const match = matchMap.get(transactionId)
+    if (match?.matchedInvoiceId) invoiceIds.add(match.matchedInvoiceId)
+    if (match?.matchedExpenseId) expenseIds.add(match.matchedExpenseId)
+  }
+
+  const [invoices, expenses] = await Promise.all([
+    invoiceIds.size
+      ? db.eInvoice.findMany({
+          where: { id: { in: Array.from(invoiceIds) } },
+          select: { id: true, invoiceNumber: true },
+        })
+      : Promise.resolve([]),
+    expenseIds.size
+      ? db.expense.findMany({
+          where: { id: { in: Array.from(expenseIds) } },
+          select: { id: true, description: true },
+        })
+      : Promise.resolve([]),
   ])
+
+  const invoiceMap = new Map(invoices.map((invoice) => [invoice.id, invoice]))
+  const expenseMap = new Map(expenses.map((expense) => [expense.id, expense]))
 
   const totalPages = Math.ceil(total / pageSize)
 
-  type TransactionRow = (typeof transactions)[0]
+  type TransactionRow = (typeof transactions)[0] & {
+    matchStatus: MatchStatus
+    matchedInvoice: { invoiceNumber: string | null } | null
+    matchedExpense: { description: string | null } | null
+  }
+
+  const enrichedTransactions: TransactionRow[] = transactions.map((txn) => {
+    const match = matchMap.get(txn.id)
+    const invoice = match?.matchedInvoiceId ? invoiceMap.get(match.matchedInvoiceId) : null
+    const expense = match?.matchedExpenseId ? expenseMap.get(match.matchedExpenseId) : null
+    return {
+      ...txn,
+      matchStatus: match?.matchStatus ?? MatchStatus.UNMATCHED,
+      matchedInvoice: invoice ? { invoiceNumber: invoice.invoiceNumber } : null,
+      matchedExpense: expense ? { description: expense.description } : null,
+    }
+  })
 
   const columns: Column<TransactionRow>[] = [
     {
@@ -287,7 +339,7 @@ export default async function TransactionsPage({
           <CardContent className="pt-6">
             <p className="text-sm text-secondary">Nepovezane</p>
             <p className="text-2xl font-bold text-warning-text">
-              {transactions.filter((t) => t.matchStatus === "UNMATCHED").length}
+              {enrichedTransactions.filter((t) => t.matchStatus === "UNMATCHED").length}
             </p>
           </CardContent>
         </Card>
@@ -296,7 +348,7 @@ export default async function TransactionsPage({
             <p className="text-sm text-secondary">Povezane</p>
             <p className="text-2xl font-bold text-success-text">
               {
-                transactions.filter(
+                enrichedTransactions.filter(
                   (t) => t.matchStatus === "AUTO_MATCHED" || t.matchStatus === "MANUAL_MATCHED"
                 ).length
               }
@@ -307,14 +359,14 @@ export default async function TransactionsPage({
           <CardContent className="pt-6">
             <p className="text-sm text-secondary">Ignorirane</p>
             <p className="text-2xl font-bold text-secondary">
-              {transactions.filter((t) => t.matchStatus === "IGNORED").length}
+              {enrichedTransactions.filter((t) => t.matchStatus === "IGNORED").length}
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Table */}
-      {transactions.length === 0 ? (
+      {enrichedTransactions.length === 0 ? (
         <Card>
           <CardContent className="py-6">
             <EmptyState
@@ -332,7 +384,7 @@ export default async function TransactionsPage({
       ) : (
         <ResponsiveTable
           columns={columns}
-          data={transactions}
+          data={enrichedTransactions}
           className="bg-[var(--surface)] rounded-2xl border border-[var(--border)]"
           getRowKey={(txn) => txn.id}
           renderCard={(txn) => (

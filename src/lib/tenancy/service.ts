@@ -39,23 +39,21 @@ export async function updateTenant(
     throw new Error("Tenant not found")
   }
 
-  const updated = await runWithAuditContext(
-    { actorId, reason },
-    async () =>
-      db.company.update({
-        where: { id: companyId },
-        data: {
-          name: input.name ?? undefined,
-          email: input.email ?? undefined,
-          phone: input.phone ?? undefined,
-          address: input.address ?? undefined,
-          city: input.city ?? undefined,
-          postalCode: input.postalCode ?? undefined,
-          country: input.country ?? undefined,
-          legalForm: input.legalForm ?? undefined,
-          isVatPayer: input.isVatPayer ?? undefined,
-        },
-      })
+  const updated = await runWithAuditContext({ actorId, reason }, async () =>
+    db.company.update({
+      where: { id: companyId },
+      data: {
+        name: input.name ?? undefined,
+        email: input.email ?? undefined,
+        phone: input.phone ?? undefined,
+        address: input.address ?? undefined,
+        city: input.city ?? undefined,
+        postalCode: input.postalCode ?? undefined,
+        country: input.country ?? undefined,
+        legalForm: input.legalForm ?? undefined,
+        isVatPayer: input.isVatPayer ?? undefined,
+      },
+    })
   )
 
   await logServiceBoundarySnapshot({

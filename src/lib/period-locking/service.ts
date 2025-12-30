@@ -21,16 +21,14 @@ export async function createAccountingPeriod(
   actorId: string,
   reason: string
 ): Promise<AccountingPeriod> {
-  const period = await runWithAuditContext(
-    { actorId, reason },
-    async () =>
-      db.accountingPeriod.create({
-        data: {
-          companyId,
-          startDate: input.startDate,
-          endDate: input.endDate,
-        },
-      })
+  const period = await runWithAuditContext({ actorId, reason }, async () =>
+    db.accountingPeriod.create({
+      data: {
+        companyId,
+        startDate: input.startDate,
+        endDate: input.endDate,
+      },
+    })
   )
 
   await logServiceBoundarySnapshot({
@@ -62,18 +60,16 @@ export async function lockAccountingPeriod(
     throw new Error("Accounting period not found")
   }
 
-  const updated = await runWithAuditContext(
-    { actorId, reason },
-    async () =>
-      db.accountingPeriod.update({
-        where: { id: periodId },
-        data: {
-          status: "LOCKED",
-          lockedAt: new Date(),
-          lockedById: actorId,
-          lockReason: reason,
-        },
-      })
+  const updated = await runWithAuditContext({ actorId, reason }, async () =>
+    db.accountingPeriod.update({
+      where: { id: periodId },
+      data: {
+        status: "LOCKED",
+        lockedAt: new Date(),
+        lockedById: actorId,
+        lockReason: reason,
+      },
+    })
   )
 
   await logServiceBoundarySnapshot({
@@ -110,18 +106,16 @@ export async function unlockAccountingPeriod(
     throw new Error("Accounting period not found")
   }
 
-  const updated = await runWithAuditContext(
-    { actorId, reason },
-    async () =>
-      db.accountingPeriod.update({
-        where: { id: periodId },
-        data: {
-          status: "OPEN",
-          lockedAt: null,
-          lockedById: null,
-          lockReason: null,
-        },
-      })
+  const updated = await runWithAuditContext({ actorId, reason }, async () =>
+    db.accountingPeriod.update({
+      where: { id: periodId },
+      data: {
+        status: "OPEN",
+        lockedAt: null,
+        lockedById: null,
+        lockReason: null,
+      },
+    })
   )
 
   await logServiceBoundarySnapshot({

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
-import { Prisma } from "@prisma/client"
+import { ImportFormat, Prisma } from "@prisma/client"
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
@@ -33,12 +33,40 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Bank account required" }, { status: 400 })
     }
 
+    const existingImport = await db.statementImport.findFirst({
+      where: { importJobId: job.id },
+    })
+
+    const extension = job.originalName.split(".").pop()?.toLowerCase() || ""
+    const format =
+      extension === "xml"
+        ? ImportFormat.XML_CAMT053
+        : extension === "csv"
+          ? ImportFormat.CSV
+          : ImportFormat.PDF
+
+    const statementImport =
+      existingImport ??
+      (await db.statementImport.create({
+        data: {
+          companyId: company.id,
+          bankAccountId,
+          importJobId: job.id,
+          fileName: job.originalName,
+          fileChecksum: job.fileChecksum,
+          format,
+          transactionCount: transactions?.length || 0,
+          importedBy: user.id!,
+        },
+      }))
+
     // Write transactions to database
     if (transactions && transactions.length > 0) {
       await db.bankTransaction.createMany({
         data: transactions.map((t: any) => ({
           companyId: company.id,
           bankAccountId,
+          statementImportId: statementImport.id,
           date: new Date(t.date),
           description: t.description || "",
           amount: new Prisma.Decimal(Math.abs(t.amount)),

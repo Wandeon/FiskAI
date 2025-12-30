@@ -359,7 +359,10 @@ export async function updateFlag(
   if (input.status === "ACTIVE" && previous.status !== "ACTIVE") action = "ENABLED"
   else if (input.status === "INACTIVE" && previous.status !== "INACTIVE") action = "DISABLED"
   else if (input.status === "ARCHIVED") action = "ARCHIVED"
-  else if (input.rolloutPercentage !== undefined && input.rolloutPercentage !== previous.rolloutPercentage)
+  else if (
+    input.rolloutPercentage !== undefined &&
+    input.rolloutPercentage !== previous.rolloutPercentage
+  )
     action = "ROLLOUT_CHANGED"
 
   await prisma.featureFlagAuditLog.create({
@@ -412,7 +415,11 @@ export async function deleteFlag(id: string, userId: string, reason?: string): P
 /**
  * Restore a soft-deleted feature flag
  */
-export async function restoreFlag(id: string, userId: string, reason?: string): Promise<FeatureFlag> {
+export async function restoreFlag(
+  id: string,
+  userId: string,
+  reason?: string
+): Promise<FeatureFlag> {
   const previous = await prisma.featureFlag.findUnique({ where: { id } })
   if (!previous) throw new Error("Feature flag not found")
   if (previous.status !== "DELETED") throw new Error("Flag is not deleted")

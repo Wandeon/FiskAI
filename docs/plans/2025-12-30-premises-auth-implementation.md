@@ -13,6 +13,7 @@
 ### Task 1: Add failing test for createPremises uses context company ID
 
 **Files:**
+
 - Create: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -179,6 +180,7 @@ git commit -m "test: add createPremises auth scoping"
 ### Task 2: Add failing test for createDevice rejects non-owned premises
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -295,6 +297,7 @@ git commit -m "test: enforce premises ownership for createDevice"
 ### Task 3: Add failing test for updatePremises uses company-scoped lookup
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -396,6 +399,7 @@ git commit -m "test: scope updatePremises lookup to company"
 ### Task 4: Add failing test for deletePremises uses company-scoped counts and deleteMany
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -495,6 +499,7 @@ git commit -m "test: scope deletePremises to company"
 ### Task 5: Add failing test for updateDevice uses company-scoped lookup
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -602,6 +607,7 @@ git commit -m "test: scope updateDevice lookup to company"
 ### Task 6: Add failing test for deleteDevice uses deleteMany with company scope
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -671,6 +677,7 @@ git commit -m "test: scope deleteDevice to company"
 ### Task 7: Add failing test for getDefaultPremisesAndDevice uses auth company
 
 **Files:**
+
 - Modify: `src/app/actions/__tests__/premises.test.ts`
 
 **Step 1: Write the failing test**
@@ -743,6 +750,7 @@ git commit -m "test: scope getDefaultPremisesAndDevice to company"
 ### Task 8: Add failing test for bulkTogglePremisesStatus scopes by company
 
 **Files:**
+
 - Create: `src/lib/premises/__tests__/bulk-actions.test.ts`
 
 **Step 1: Write the failing test**
@@ -858,6 +866,7 @@ git commit -m "test: scope bulkTogglePremisesStatus to company"
 ### Task 9: Add failing test for bulkImportPremises uses company context
 
 **Files:**
+
 - Modify: `src/lib/premises/__tests__/bulk-actions.test.ts`
 
 **Step 1: Write the failing test**
@@ -870,9 +879,7 @@ it("bulkImportPremises scopes default reset to company", async () => {
   vi.mocked(db.businessPremises.updateMany).mockResolvedValue({ count: 1 } as any)
   vi.mocked(db.businessPremises.create).mockResolvedValue({ id: "prem-1" } as any)
 
-  await bulkImportPremises("company-999", [
-    { code: 1, name: "Main", isDefault: true },
-  ])
+  await bulkImportPremises("company-999", [{ code: 1, name: "Main", isDefault: true }])
 
   expect(db.businessPremises.updateMany).toHaveBeenCalledWith({
     where: { companyId: "company-1", isDefault: true },
@@ -974,6 +981,7 @@ git commit -m "test: scope bulkImportPremises to company"
 ### Task 10: Add failing test for clonePremises rejects non-owned premises
 
 **Files:**
+
 - Modify: `src/lib/premises/__tests__/bulk-actions.test.ts`
 
 **Step 1: Write the failing test**
@@ -1088,6 +1096,7 @@ git commit -m "test: scope clonePremises to company"
 ### Task 11: Add failing test for bulkAssignDevices rejects non-owned premises
 
 **Files:**
+
 - Modify: `src/lib/premises/__tests__/bulk-actions.test.ts`
 
 **Step 1: Write the failing test**

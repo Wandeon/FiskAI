@@ -8,7 +8,7 @@ import {
   getExpenseCandidates,
   ExpenseCandidate,
 } from "./expense-reconciliation"
-import { MatchStatus, Prisma } from "@prisma/client"
+import { MatchKind, MatchSource, MatchStatus } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logger"
 
@@ -25,26 +25,30 @@ export async function runAutoMatchExpenses(params: AutoMatchParams) {
   const { companyId, bankAccountId, userId, threshold = AUTO_MATCH_THRESHOLD } = params
 
   // Find unmatched debit transactions (outgoing payments = expenses)
-  const where: Record<string, unknown> = {
-    companyId,
-    matchStatus: MatchStatus.UNMATCHED,
-    amount: { lt: 0 }, // Negative = debit = expense payment
-  }
-  if (bankAccountId) {
-    where.bankAccountId = bankAccountId
-  }
-
   const transactions = await db.bankTransaction.findMany({
-    where,
+    where: {
+      companyId,
+      amount: { lt: 0 },
+      ...(bankAccountId ? { bankAccountId } : {}),
+    },
     include: {
       bankAccount: {
         select: { currency: true },
+      },
+      matchRecords: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
       },
     },
     orderBy: { date: "desc" },
   })
 
-  if (transactions.length === 0) {
+  const unmatchedTransactions = transactions.filter((txn) => {
+    const latestMatch = txn.matchRecords[0]
+    return !latestMatch || latestMatch.matchStatus === MatchStatus.UNMATCHED
+  })
+
+  if (unmatchedTransactions.length === 0) {
     return { matchedCount: 0, evaluated: 0 }
   }
 
@@ -65,18 +69,20 @@ export async function runAutoMatchExpenses(params: AutoMatchParams) {
     return { matchedCount: 0, evaluated: 0 }
   }
 
-  const parsedTransactions: (ParsedTransaction & { id: string })[] = transactions.map((txn) => ({
-    id: txn.id,
-    date: txn.date,
-    amount: Math.abs(Number(txn.amount)), // Make positive for matching
-    description: txn.description,
-    reference: txn.reference || "",
-    type: "debit",
-    currency: txn.bankAccount?.currency || "EUR",
-  }))
+  const parsedTransactions: (ParsedTransaction & { id: string })[] = unmatchedTransactions.map(
+    (txn) => ({
+      id: txn.id,
+      date: txn.date,
+      amount: Math.abs(Number(txn.amount)), // Make positive for matching
+      description: txn.description,
+      reference: txn.reference || "",
+      type: "debit",
+      currency: txn.bankAccount?.currency || "EUR",
+    })
+  )
 
   const results = matchTransactionsToExpenses(parsedTransactions, expenses)
-  const txMap = new Map(transactions.map((txn) => [txn.id, txn]))
+  const txMap = new Map(unmatchedTransactions.map((txn) => [txn.id, txn]))
   const updates: Promise<unknown>[] = []
   let matchedCount = 0
 
@@ -98,14 +104,17 @@ export async function runAutoMatchExpenses(params: AutoMatchParams) {
 
       // Link transaction to expense
       updates.push(
-        db.bankTransaction.update({
-          where: { id: txn.id },
+        db.matchRecord.create({
           data: {
+            companyId,
+            bankTransactionId: txn.id,
             matchStatus: MatchStatus.AUTO_MATCHED,
-            confidenceScore: result.confidenceScore,
-            matchedAt: new Date(),
-            matchedBy: userId,
+            matchKind: MatchKind.EXPENSE,
             matchedExpenseId: result.matchedExpenseId!,
+            confidenceScore: result.confidenceScore,
+            reason: result.reason,
+            source: MatchSource.AUTO,
+            createdBy: userId,
           },
         })
       )
@@ -222,14 +231,17 @@ export async function linkTransactionToExpense(
     }
 
     // Link transaction to expense
-    await db.bankTransaction.update({
-      where: { id: transactionId },
+    await db.matchRecord.create({
       data: {
+        companyId,
+        bankTransactionId: transactionId,
         matchStatus: MatchStatus.MANUAL_MATCHED,
-        matchedAt: new Date(),
-        matchedBy: userId,
-        confidenceScore: 100, // Manual = certain
+        matchKind: MatchKind.EXPENSE,
         matchedExpenseId: expenseId,
+        confidenceScore: 100,
+        reason: "Manual match",
+        source: MatchSource.MANUAL,
+        createdBy: userId,
       },
     })
 
@@ -266,30 +278,39 @@ export async function unlinkTransactionFromExpense(
   try {
     const transaction = await db.bankTransaction.findFirst({
       where: { id: transactionId, companyId },
-      include: { matchedExpense: true },
+      include: {
+        matchRecords: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
     })
 
     if (!transaction) {
       return { success: false, error: "Transakcija nije pronađena" }
     }
 
-    const expenseId = transaction.matchedExpenseId
+    const latestMatch = transaction.matchRecords[0]
+    const expenseId = latestMatch?.matchedExpenseId
 
     // Disconnect the expense
-    await db.bankTransaction.update({
-      where: { id: transactionId },
+    await db.matchRecord.create({
       data: {
+        companyId,
+        bankTransactionId: transactionId,
         matchStatus: MatchStatus.UNMATCHED,
-        matchedAt: null,
-        matchedBy: null,
-        confidenceScore: null,
-        matchedExpenseId: null,
+        matchKind: MatchKind.UNMATCH,
+        source: MatchSource.MANUAL,
+        createdBy: null,
+        reason: "Manual unlink",
       },
     })
 
     // Restore expense to its original status if there was one
     if (expenseId) {
-      const expense = transaction.matchedExpense
+      const expense = expenseId
+        ? await db.expense.findFirst({ where: { id: expenseId, companyId } })
+        : null
       const restoredStatus = expense?.statusBeforeMatch || "PENDING"
 
       await db.expense.update({
