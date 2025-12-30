@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
 import { createHash } from "crypto"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { Prisma } from "@prisma/client"
 import { bankingLogger } from "@/lib/logger"
+import { uploadToR2, generateR2Key } from "@/lib/r2-client"
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024 // 20MB safety cap
 const ALLOWED_EXTENSIONS = ["pdf", "xml"]
@@ -63,11 +62,6 @@ export async function POST(request: Request) {
   const buffer = Buffer.from(arrayBuffer)
   const checksum = createHash("sha256").update(buffer).digest("hex")
 
-  const storageDir = path.join(process.cwd(), "uploads", "bank-statements")
-  await fs.mkdir(storageDir, { recursive: true })
-  const storedFileName = `${checksum}.${extension}`
-  const storagePath = path.join(storageDir, storedFileName)
-
   // Detect duplicate for this bank account by checksum
   const existingJob = await db.importJob.findFirst({
     where: {
@@ -88,7 +82,7 @@ export async function POST(request: Request) {
     )
   }
 
-  // Overwrite flow: delete existing job + file before writing new file
+  // Overwrite flow: delete existing job before creating new one
   if (existingJob && overwrite) {
     try {
       await db.importJob.delete({ where: { id: existingJob.id } })
@@ -106,25 +100,11 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-    if (existingJob.storagePath) {
-      try {
-        await fs.unlink(existingJob.storagePath)
-        bankingLogger.info(
-          { path: existingJob.storagePath, jobId: existingJob.id },
-          "Deleted previous statement file for overwrite"
-        )
-      } catch (error) {
-        // Log error but continue - orphaned file is less critical than blocking upload
-        // A cleanup job should handle orphaned files periodically
-        bankingLogger.warn(
-          { error, path: existingJob.storagePath, jobId: existingJob.id },
-          "Failed to delete old statement file - orphaned file may remain on disk"
-        )
-      }
-    }
   }
 
-  await fs.writeFile(storagePath, buffer)
+  // Upload file to R2 storage
+  const key = generateR2Key(company.id, checksum, fileName)
+  await uploadToR2(key, buffer, file.type)
 
   try {
     const job = await db.importJob.create({
@@ -134,7 +114,7 @@ export async function POST(request: Request) {
         bankAccountId: accountId,
         fileChecksum: checksum,
         originalName: fileName,
-        storagePath,
+        storageKey: key,
         status: "PENDING",
         tierUsed: extension === "xml" ? "XML" : null,
       },
