@@ -9,10 +9,16 @@ export type AIOperation =
   | "extract_receipt"
   | "extract_invoice"
   | "categorize_expense"
+  | "deepseek_chat"
+  | "deepseek_vision"
+  | "deepseek_news_classify"
+  | "deepseek_news_write"
+  | "deepseek_news_review"
+  | "deepseek_news_rewrite"
 
 /**
  * Model pricing in cents (EUR) per 1M tokens
- * Based on OpenAI pricing as of 2024
+ * Based on OpenAI and Deepseek pricing as of 2024-2025
  */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-4o": {
@@ -22,6 +28,14 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-4o-mini": {
     input: 15, // $0.15 per 1M input tokens
     output: 60, // $0.60 per 1M output tokens
+  },
+  "deepseek-chat": {
+    input: 14, // $0.14 per 1M input tokens (cache miss)
+    output: 28, // $0.28 per 1M output tokens
+  },
+  "deepseek-reasoner": {
+    input: 55, // $0.55 per 1M input tokens
+    output: 219, // $2.19 per 1M output tokens
   },
 }
 
