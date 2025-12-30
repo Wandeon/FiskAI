@@ -31,6 +31,54 @@ Sentry.init({
     }),
   ],
 
+  // Filter out sensitive data before sending
+  beforeSend(event) {
+    // Redact sensitive headers (client-side requests may include these)
+    if (event.request?.headers) {
+      delete event.request.headers["authorization"]
+      delete event.request.headers["cookie"]
+      delete event.request.headers["x-api-key"]
+    }
+
+    // Redact sensitive URL parameters
+    if (event.request?.url) {
+      try {
+        const url = new URL(event.request.url)
+        // Remove common sensitive query parameters
+        url.searchParams.delete("token")
+        url.searchParams.delete("code")
+        url.searchParams.delete("session")
+        url.searchParams.delete("api_key")
+        url.searchParams.delete("apikey")
+        event.request.url = url.toString()
+      } catch {
+        // If URL parsing fails, leave it as is
+      }
+    }
+
+    // Redact breadcrumb data that may contain sensitive information
+    if (event.breadcrumbs) {
+      event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
+        if (breadcrumb.data?.url) {
+          try {
+            const url = new URL(breadcrumb.data.url)
+            url.searchParams.delete("token")
+            url.searchParams.delete("code")
+            url.searchParams.delete("session")
+            url.searchParams.delete("api_key")
+            url.searchParams.delete("apikey")
+            breadcrumb.data.url = url.toString()
+          } catch {
+            // If URL parsing fails, leave it as is
+          }
+        }
+        return breadcrumb
+      })
+    }
+
+    return event
+  },
+
   // Ignore common non-critical errors
   ignoreErrors: [
     // Browser extensions
