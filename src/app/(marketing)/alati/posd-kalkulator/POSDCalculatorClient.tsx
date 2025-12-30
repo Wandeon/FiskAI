@@ -47,7 +47,7 @@ type Step = "upload" | "review" | "results"
 const supportedBanks = [
   { name: "Erste Bank", format: "camt.053" },
   { name: "PBZ", format: "camt.053 / XML" },
-  { name: "Zagrebacka banka", format: "camt.053" },
+  { name: "Zagrebačka banka", format: "camt.053" },
   { name: "Raiffeisen (RBA)", format: "camt.053" },
   { name: "OTP banka", format: "camt.053" },
   { name: "Addiko Bank", format: "camt.053" },
@@ -75,16 +75,16 @@ export function POSDCalculatorClient() {
 
   const faq = [
     {
-      q: "Sto je PO-SD obrazac?",
-      a: "Kvartalni obrazac kojim pausalni obrtnici prijavljuju primitke Poreznoj upravi.",
+      q: "Što je PO-SD obrazac?",
+      a: "Kvartalni obrazac kojim paušalni obrtnici prijavljuju primitke Poreznoj upravi.",
     },
     {
       q: "Koji je rok za predaju PO-SD?",
-      a: "Do " + posdDeadlineExample + " za zadnji obracunski kvartal.",
+      a: "Do " + posdDeadlineExample + " za zadnji obračunski kvartal.",
     },
     {
-      q: "Sto ako propustim rok?",
-      a: "Kazne ovise o prekrsaju i mogu biti znacajne, stoga je vazno predati obrazac na vrijeme.",
+      q: "Što ako propustim rok?",
+      a: "Kazne ovise o prekršaju i mogu biti značajne, stoga je važno predati obrazac na vrijeme.",
     },
   ]
 
@@ -119,7 +119,7 @@ export function POSDCalculatorClient() {
 
   const processFile = async (file: File) => {
     if (!file.name.endsWith(".xml")) {
-      setError("Molimo ucitajte XML datoteku bankovnog izvoda.")
+      setError("Molimo učitajte XML datoteku bankovnog izvoda.")
       return
     }
 
@@ -135,14 +135,14 @@ export function POSDCalculatorClient() {
       setStep("review")
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Greska pri parsiranju datoteke. Provjerite format."
+        err instanceof Error ? err.message : "Greška pri parsiranju datoteke. Provjerite format."
       )
     }
   }
 
   const handleCalculate = () => {
     if (!incomeTransactions.length) {
-      setError("Nema primitaka za izracun.")
+      setError("Nema primitaka za izračun.")
       return
     }
 
@@ -195,7 +195,7 @@ export function POSDCalculatorClient() {
           </div>
           <h1 className="text-3xl font-bold text-white md:text-4xl">PO-SD Kalkulator</h1>
           <p className="mx-auto mt-3 max-w-2xl text-white/60">
-            Ucitaj XML izvod iz banke i automatski izracunaj primitke za PO-SD obrazac. Podrzava
+            Učitaj XML izvod iz banke i automatski izračunaj primitke za PO-SD obrazac. Podržava
             Erste, PBZ, ZABA, RBA, OTP i druge banke.
           </p>
         </Reveal>
@@ -225,7 +225,7 @@ export function POSDCalculatorClient() {
               />
               <div>
                 <p className="font-medium text-white">
-                  Sljedeci rok za PO-SD (Q{deadlineInfo.quarter})
+                  Sljedeći rok za PO-SD (Q{deadlineInfo.quarter})
                 </p>
                 <p className="text-sm text-white/70">
                   {deadlineInfo.deadline.toLocaleDateString("hr-HR", {
@@ -301,7 +301,7 @@ export function POSDCalculatorClient() {
                       />
                     </label>
                     <p className="mt-4 text-xs text-white/40">
-                      Podrzani formati: camt.053 (ISO 20022), XML izvodi
+                      Podržani formati: camt.053 (ISO 20022), XML izvodi
                     </p>
                   </div>
 
@@ -325,7 +325,7 @@ export function POSDCalculatorClient() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Landmark className="h-5 w-5 text-white/60" />
-                    Podrzane banke
+                    Podržane banke
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -343,7 +343,7 @@ export function POSDCalculatorClient() {
                   </div>
                   <p className="mt-4 text-sm text-white/60">
                     <Info className="mr-1 inline h-4 w-4" />
-                    Vecina hrvatskih banaka nudi izvoz u camt.053 formatu kroz internet bankarstvo.
+                    Većina hrvatskih banaka nudi izvoz u camt.053 formatu kroz internet bankarstvo.
                   </p>
                 </CardContent>
               </Card>
@@ -360,12 +360,12 @@ export function POSDCalculatorClient() {
                 <div className="border-t border-white/20 p-4 text-sm text-white/80">
                   <ol className="list-decimal space-y-2 pl-4">
                     <li>Prijavi se u internet bankarstvo svoje banke</li>
-                    <li>Pronadi opciju &quot;Izvodi&quot; ili &quot;Izvjestaji&quot;</li>
+                    <li>Pronađi opciju &quot;Izvodi&quot; ili &quot;Izvještaji&quot;</li>
                     <li>Odaberi period (npr. cijela godina)</li>
                     <li>
                       Odaberi format <strong>XML</strong> ili <strong>camt.053</strong>
                     </li>
-                    <li>Preuzmi datoteku i ucitaj je ovdje</li>
+                    <li>Preuzmi datoteku i učitaj je ovdje</li>
                   </ol>
                 </div>
               </details>
@@ -385,13 +385,13 @@ export function POSDCalculatorClient() {
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-link" />
-                      Ucitani izvod
+                      Učitani izvod
                     </span>
                     <button
                       onClick={handleReset}
                       className="text-sm font-normal text-white/60 hover:text-white"
                     >
-                      Ucitaj drugi
+                      Učitaj drugi
                     </button>
                   </CardTitle>
                 </CardHeader>
@@ -423,7 +423,7 @@ export function POSDCalculatorClient() {
               {/* Settings */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Postavke izracuna</CardTitle>
+                  <CardTitle className="text-lg">Postavke izračuna</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -445,7 +445,7 @@ export function POSDCalculatorClient() {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-white/80">
-                        Opcina (za prirez)
+                        Općina (za prirez)
                       </label>
                       <select
                         value={municipality}
@@ -503,7 +503,7 @@ export function POSDCalculatorClient() {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-4 text-sm text-white/60">
-                    Oznacite samo primitke koji su dio vaseg pausalnog obrta. Iskljucite privatne
+                    Označite samo primitke koji su dio vašeg paušalnog obrta. Isključite privatne
                     uplate, povrate i sl.
                   </p>
 
@@ -563,7 +563,7 @@ export function POSDCalculatorClient() {
                   disabled={incomeTransactions.length === 0}
                   className="rounded-lg bg-interactive px-6 py-3 font-medium text-white hover:bg-interactive-hover disabled:bg-white/10 disabled:cursor-not-allowed"
                 >
-                  Izracunaj PO-SD
+                  Izračunaj PO-SD
                 </button>
               </div>
             </motion.div>
@@ -655,7 +655,7 @@ export function POSDCalculatorClient() {
               {/* Tax Details */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Detalji izracuna</CardTitle>
+                  <CardTitle className="text-lg">Detalji izračuna</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -699,7 +699,7 @@ export function POSDCalculatorClient() {
                     </div>
                     <div className="flex justify-between border-b border-white/10 pb-2 pt-4">
                       <span className="text-white/70">
-                        Doprinosi (godisnje, {formatCurrency(result.monthlyContributions)}
+                        Doprinosi (godišnje, {formatCurrency(result.monthlyContributions)}
                         /mj)
                       </span>
                       <span className="font-medium text-white">
@@ -735,7 +735,7 @@ export function POSDCalculatorClient() {
                         {vatThresholdLabel})
                       </p>
                       <p className="mt-1 text-sm text-amber-700">
-                        Pratite prihode pazljivo. Ako prijedete prag, morate se registrirati za PDV.
+                        Pratite prihode pažljivo. Ako prijeđete prag, morate se registrirati za PDV.
                       </p>
                       <Link
                         href="/alati/pdv-kalkulator"
@@ -753,7 +753,7 @@ export function POSDCalculatorClient() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileSpreadsheet className="h-5 w-5 text-link" />
-                    Sljedeci koraci
+                    Sljedeći koraci
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -792,7 +792,7 @@ export function POSDCalculatorClient() {
                       </span>
                       <div>
                         <p className="font-medium text-white">
-                          Unesi primitke po kvartalima iz izracuna iznad
+                          Unesi primitke po kvartalima iz izračuna iznad
                         </p>
                       </div>
                     </li>
@@ -801,7 +801,7 @@ export function POSDCalculatorClient() {
                         4
                       </span>
                       <div>
-                        <p className="font-medium text-white">Potpisi i posalji</p>
+                        <p className="font-medium text-white">Potpiši i pošalji</p>
                         <p className="text-sm text-white/60">
                           Rok: {deadlineInfo.deadline.toLocaleDateString("hr-HR")}
                         </p>
@@ -817,7 +817,7 @@ export function POSDCalculatorClient() {
                   onClick={handleReset}
                   className="rounded-lg border border-white/20 bg-white/5 px-6 py-3 font-medium text-white hover:bg-white/10"
                 >
-                  Novi izracun
+                  Novi izračun
                 </button>
                 <div className="flex gap-3">
                   <button
@@ -839,22 +839,22 @@ export function POSDCalculatorClient() {
                   <div className="flex-1">
                     <h3 className="font-bold text-white">Automatski PO-SD s FiskAI</h3>
                     <p className="mt-1 text-sm text-white/70">
-                      Zaboravi na rucne izracune. FiskAI automatski prati primitke, generira PO-SD i
-                      podsjeca te na rokove.
+                      Zaboravi na ručne izračune. FiskAI automatski prati primitke, generira PO-SD i
+                      podsjeća te na rokove.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <Link
                         href="/register"
                         className="inline-flex items-center gap-2 rounded-lg bg-interactive-hover px-6 py-2.5 text-sm font-medium text-white hover:bg-interactive-hover"
                       >
-                        Zapocni besplatno
+                        Započni besplatno
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                       <Link
                         href="/features"
                         className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-6 py-2.5 text-sm font-medium text-white hover:bg-white/15"
                       >
-                        Saznaj vise
+                        Saznaj više
                       </Link>
                     </div>
                   </div>
