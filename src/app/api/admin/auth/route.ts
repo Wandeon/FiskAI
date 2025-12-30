@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Adminpass123!"
+// SECURITY: ADMIN_PASSWORD must be explicitly set in environment variables
+// No fallback password is provided to prevent unauthorized access
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 const ADMIN_COOKIE = "fiskai_admin_auth"
 
 export async function POST(request: NextRequest) {
+  // Verify ADMIN_PASSWORD is configured
+  if (!ADMIN_PASSWORD) {
+    console.error("SECURITY: ADMIN_PASSWORD environment variable is not set")
+    return NextResponse.json(
+      { error: "Konfiguracija sustava nije ispravna. Kontaktirajte administratora." },
+      { status: 500 }
+    )
+  }
+
   const { password } = await request.json()
 
   if (password === ADMIN_PASSWORD) {
@@ -20,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
-  return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+  return NextResponse.json({ error: "Neispravna lozinka" }, { status: 401 })
 }
 
 export async function DELETE() {
