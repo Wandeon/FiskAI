@@ -57,6 +57,7 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
   const lineInputs: JoppdLineInput[] = payout.lines.map((line, index) => ({
     lineNumber: line.lineNumber ?? index + 1,
     payoutLineId: line.id,
+    ruleVersionId: line.ruleVersionId ?? null,
     recipientName: line.employeeName ?? line.recipientName,
     recipientOib: line.employeeOib ?? line.recipientOib,
     grossAmount: decimalToNumber(line.grossAmount),
@@ -84,7 +85,7 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
         lineNumber: line.lineNumber,
         lineData: line.lineData as Prisma.InputJsonValue,
         originalLineId: line.originalLineId,
-        ruleVersionId: ruleVersion.id,
+        ruleVersionId: line.ruleVersionId ?? ruleVersion.id,
       })),
     })
 
