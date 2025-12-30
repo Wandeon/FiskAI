@@ -892,6 +892,164 @@ function checkEvidenceImmutability(data: Record<string, unknown>): void {
 }
 
 // ============================================
+// JOPPD SUBMISSION IMMUTABILITY PROTECTION
+// ============================================
+// JOPPD submissions become immutable once signed or submitted to tax authority.
+// After signing: signedXmlStorageKey and signedXmlHash are locked.
+// After submission: all core fields are locked; only status transitions allowed.
+
+/**
+ * Fields that can be updated after JOPPD is signed (signedXmlStorageKey set).
+ * This is the most restrictive lock - only status transitions and submission tracking.
+ */
+const JOPPD_MUTABLE_FIELDS_AFTER_SIGNED = new Set<string>([
+  "status",
+  "submissionReference",
+  "submittedAt",
+  "acceptedAt",
+  "rejectedAt",
+  "rejectionReason",
+  "updatedAt",
+])
+
+/**
+ * Statuses that indicate a JOPPD has been submitted to the tax authority.
+ * Records in these states are immutable except for status tracking fields.
+ */
+const JOPPD_SUBMITTED_STATUSES = new Set(["SUBMITTED", "ACCEPTED", "REJECTED"])
+
+export class JoppdImmutabilityError extends Error {
+  constructor(details: string) {
+    super(`JOPPD submissions are immutable after signing/submission. ${details}`)
+    this.name = "JoppdImmutabilityError"
+  }
+}
+
+/**
+ * Check if a JOPPD submission is locked (signed or submitted).
+ */
+function isJoppdLocked(record: { status: string; signedXmlStorageKey?: string | null }): boolean {
+  return (
+    JOPPD_SUBMITTED_STATUSES.has(record.status) ||
+    (record.signedXmlStorageKey != null && record.signedXmlStorageKey !== "")
+  )
+}
+
+/**
+ * Enforce immutability for JOPPD update operations.
+ */
+async function enforceJoppdImmutability(
+  prismaBase: PrismaClient,
+  args: { where: unknown; data?: Record<string, unknown> }
+): Promise<void> {
+  if (!args.data || typeof args.data !== "object") return
+
+  const updateKeys = Object.keys(args.data)
+  if (updateKeys.length === 0) return
+
+  const disallowedKeys = updateKeys.filter((key) => !JOPPD_MUTABLE_FIELDS_AFTER_SIGNED.has(key))
+  if (disallowedKeys.length === 0) return
+
+  const existing = await prismaBase.joppdSubmission.findUnique({
+    where: args.where as Prisma.JoppdSubmissionWhereUniqueInput,
+    select: { status: true, signedXmlStorageKey: true },
+  })
+
+  if (!existing) return
+
+  if (isJoppdLocked(existing)) {
+    throw new JoppdImmutabilityError(
+      `Attempted to update fields [${disallowedKeys.join(", ")}] on JOPPD in status ${existing.status}. ` +
+        "Signed/submitted JOPPD records cannot be modified. Use a correction submission instead."
+    )
+  }
+}
+
+/**
+ * Enforce immutability for JOPPD delete operations.
+ */
+async function enforceJoppdDeleteImmutability(
+  prismaBase: PrismaClient,
+  where: Prisma.JoppdSubmissionWhereUniqueInput
+): Promise<void> {
+  const existing = await prismaBase.joppdSubmission.findUnique({
+    where,
+    select: { status: true, signedXmlStorageKey: true },
+  })
+
+  if (existing && isJoppdLocked(existing)) {
+    throw new JoppdImmutabilityError(
+      `Cannot delete JOPPD in status ${existing.status}. ` +
+        "Signed/submitted JOPPD records are immutable. Use a correction submission instead."
+    )
+  }
+}
+
+/**
+ * Enforce immutability for JOPPD updateMany operations.
+ */
+async function enforceJoppdUpdateManyImmutability(
+  prismaBase: PrismaClient,
+  args: { where?: Prisma.JoppdSubmissionWhereInput; data?: Record<string, unknown> }
+): Promise<void> {
+  if (!args.data || typeof args.data !== "object") return
+
+  const updateKeys = Object.keys(args.data)
+  if (updateKeys.length === 0) return
+
+  const disallowedKeys = updateKeys.filter((key) => !JOPPD_MUTABLE_FIELDS_AFTER_SIGNED.has(key))
+  if (disallowedKeys.length === 0) return
+
+  // Check if any locked records would be affected
+  const lockedSubmission = await prismaBase.joppdSubmission.findFirst({
+    where: {
+      ...(args.where ?? {}),
+      OR: [
+        { status: { in: ["SUBMITTED", "ACCEPTED", "REJECTED"] } },
+        { signedXmlStorageKey: { not: null } },
+      ],
+    },
+    select: { id: true, status: true },
+  })
+
+  if (lockedSubmission) {
+    throw new JoppdImmutabilityError(
+      `Attempted to update fields [${disallowedKeys.join(", ")}] on JOPPD ${lockedSubmission.id} ` +
+        `in status ${lockedSubmission.status}. Use a correction submission instead.`
+    )
+  }
+}
+
+/**
+ * Enforce immutability for JOPPD line operations.
+ * Lines inherit lock status from their parent submission.
+ */
+async function enforceJoppdLineImmutability(
+  prismaBase: PrismaClient,
+  where: Prisma.JoppdSubmissionLineWhereInput,
+  action: "update" | "delete"
+): Promise<void> {
+  const lockedLine = await prismaBase.joppdSubmissionLine.findFirst({
+    where: {
+      ...where,
+      submission: {
+        OR: [
+          { status: { in: ["SUBMITTED", "ACCEPTED", "REJECTED"] } },
+          { signedXmlStorageKey: { not: null } },
+        ],
+      },
+    },
+    select: { id: true, submissionId: true },
+  })
+
+  if (lockedLine) {
+    throw new JoppdImmutabilityError(
+      `Cannot ${action} JOPPD line ${lockedLine.id} because submission ${lockedLine.submissionId} has been signed/submitted.`
+    )
+  }
+}
+
+// ============================================
 // ATTACHMENT IMMUTABILITY PROTECTION
 // ============================================
 // Source attachments (email/import) must remain immutable for audit integrity.
@@ -1015,6 +1173,16 @@ export class CashAmountNegativeError extends Error {
   constructor() {
     super("Cash amount must be non-negative.")
     this.name = "CashAmountNegativeError"
+  }
+}
+
+export class CashLimitExceededError extends Error {
+  constructor(limit: string, nextBalance: string) {
+    super(
+      `Cash limit exceeded: adding this amount would result in ${nextBalance} EUR, ` +
+        `which exceeds the configured limit of ${limit} EUR.`
+    )
+    this.name = "CashLimitExceededError"
   }
 }
 
@@ -1598,7 +1766,8 @@ function queueAuditLog(
   prismaBase: PrismaClient,
   model: string,
   action: AuditAction,
-  result: Record<string, unknown>
+  result: Record<string, unknown>,
+  beforeState?: Record<string, unknown> | null
 ) {
   const companyId = result.companyId as string
   const entityId = result.id as string
@@ -1608,10 +1777,20 @@ function queueAuditLog(
   if (!companyId || !entityId) return
 
   // Create a JSON-serializable changes object
-  const changes: Record<string, unknown> =
-    action === "DELETE"
-      ? { before: JSON.parse(JSON.stringify(result)) }
-      : { after: JSON.parse(JSON.stringify(result)) }
+  // For DELETE: capture before state (the deleted record)
+  // For CREATE: capture after state (the created record)
+  // For UPDATE: capture both before and after states for complete audit trail
+  let changes: Record<string, unknown>
+  if (action === "DELETE") {
+    changes = { before: JSON.parse(JSON.stringify(result)) }
+  } else if (action === "UPDATE" && beforeState) {
+    changes = {
+      before: JSON.parse(JSON.stringify(beforeState)),
+      after: JSON.parse(JSON.stringify(result)),
+    }
+  } else {
+    changes = { after: JSON.parse(JSON.stringify(result)) }
+  }
 
   const timestamp = new Date()
   const actor = auditContext?.actorId ?? context?.userId ?? "system"
@@ -1870,6 +2049,29 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("update")
           }
 
+          // AUDIT: Capture before-state for audited models BEFORE the update
+          // This is essential for complete audit trails showing what changed
+          let auditBeforeState: Record<string, unknown> | null = null
+          if (AUDITED_MODELS.includes(model as AuditedModel)) {
+            try {
+              // Use dynamic model access to fetch the current state
+              const modelClient = prismaBase[model.charAt(0).toLowerCase() + model.slice(1)] as {
+                findUnique: (args: { where: unknown }) => Promise<unknown>
+              }
+              if (modelClient?.findUnique) {
+                const existing = await modelClient.findUnique({
+                  where: args.where,
+                })
+                if (existing && typeof existing === "object") {
+                  auditBeforeState = existing as Record<string, unknown>
+                }
+              }
+            } catch {
+              // If we can't fetch before-state, continue without it
+              // This allows the update to proceed while logging what we can
+            }
+          }
+
           if (model in PERIOD_LOCK_MODELS) {
             const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
               data: args.data as Record<string, unknown>,
@@ -1888,6 +2090,19 @@ export function withTenantIsolation(prisma: PrismaClient) {
             await enforceInvoiceLineImmutability(
               prismaBase,
               args.where as Prisma.EInvoiceLineWhereInput,
+              "update"
+            )
+          }
+
+          // JOPPD IMMUTABILITY: Block updates on signed/submitted submissions
+          if (model === "JoppdSubmission") {
+            await enforceJoppdImmutability(prismaBase, args)
+          }
+
+          if (model === "JoppdSubmissionLine") {
+            await enforceJoppdLineImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionLineWhereInput,
               "update"
             )
           }
@@ -2270,13 +2485,19 @@ export function withTenantIsolation(prisma: PrismaClient) {
           }
           const result = await query(args)
 
-          // Audit logging for update operations
+          // Audit logging for update operations (with before-state for complete audit trail)
           if (
             AUDITED_MODELS.includes(model as AuditedModel) &&
             result &&
             typeof result === "object"
           ) {
-            queueAuditLog(prismaBase, model, "UPDATE", result as Record<string, unknown>)
+            queueAuditLog(
+              prismaBase,
+              model,
+              "UPDATE",
+              result as Record<string, unknown>,
+              auditBeforeState
+            )
           }
 
           if (operationalEvent) {
@@ -2302,6 +2523,22 @@ export function withTenantIsolation(prisma: PrismaClient) {
             await enforceInvoiceLineImmutability(
               prismaBase,
               args.where as Prisma.EInvoiceLineWhereInput,
+              "delete"
+            )
+          }
+
+          // JOPPD IMMUTABILITY: Block deletion of signed/submitted submissions
+          if (model === "JoppdSubmission") {
+            await enforceJoppdDeleteImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionWhereUniqueInput
+            )
+          }
+
+          if (model === "JoppdSubmissionLine") {
+            await enforceJoppdLineImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionLineWhereInput,
               "delete"
             )
           }
@@ -2543,6 +2780,22 @@ export function withTenantIsolation(prisma: PrismaClient) {
             )
           }
 
+          // JOPPD IMMUTABILITY: Block updateMany on signed/submitted submissions
+          if (model === "JoppdSubmission") {
+            await enforceJoppdUpdateManyImmutability(prismaBase, {
+              where: args.where as Prisma.JoppdSubmissionWhereInput,
+              data: args.data as Record<string, unknown>,
+            })
+          }
+
+          if (model === "JoppdSubmissionLine") {
+            await enforceJoppdLineImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionLineWhereInput,
+              "update"
+            )
+          }
+
           if (model === "CalculationSnapshot") {
             throw new CalculationSnapshotImmutabilityError()
           }
@@ -2627,6 +2880,35 @@ export function withTenantIsolation(prisma: PrismaClient) {
             )
           }
 
+          // JOPPD IMMUTABILITY: Block deleteMany on signed/submitted submissions
+          if (model === "JoppdSubmission") {
+            const lockedSubmission = await prismaBase.joppdSubmission.findFirst({
+              where: {
+                ...(args.where as Prisma.JoppdSubmissionWhereInput),
+                OR: [
+                  { status: { in: ["SUBMITTED", "ACCEPTED", "REJECTED"] } },
+                  { signedXmlStorageKey: { not: null } },
+                ],
+              },
+              select: { id: true, status: true },
+            })
+
+            if (lockedSubmission) {
+              throw new JoppdImmutabilityError(
+                `Cannot delete JOPPD ${lockedSubmission.id} in status ${lockedSubmission.status}. ` +
+                  "Use a correction submission instead."
+              )
+            }
+          }
+
+          if (model === "JoppdSubmissionLine") {
+            await enforceJoppdLineImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionLineWhereInput,
+              "delete"
+            )
+          }
+
           if (model === "CalculationSnapshot") {
             throw new CalculationSnapshotImmutabilityError()
           }
@@ -2679,6 +2961,27 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("upsert")
           }
 
+          // AUDIT: Capture before-state for audited models BEFORE the upsert
+          // If record exists (update case), we need the before-state for audit trail
+          let upsertBeforeState: Record<string, unknown> | null = null
+          if (AUDITED_MODELS.includes(model as AuditedModel)) {
+            try {
+              const modelClient = prismaBase[model.charAt(0).toLowerCase() + model.slice(1)] as {
+                findUnique: (args: { where: unknown }) => Promise<unknown>
+              }
+              if (modelClient?.findUnique) {
+                const existing = await modelClient.findUnique({
+                  where: args.where,
+                })
+                if (existing && typeof existing === "object") {
+                  upsertBeforeState = existing as Record<string, unknown>
+                }
+              }
+            } catch {
+              // If we can't fetch before-state, continue without it
+            }
+          }
+
           if (model in PERIOD_LOCK_MODELS) {
             const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
               data: args.update as Record<string, unknown>,
@@ -2700,6 +3003,22 @@ export function withTenantIsolation(prisma: PrismaClient) {
             await enforceInvoiceLineImmutability(
               prismaBase,
               args.where as Prisma.EInvoiceLineWhereInput,
+              "update"
+            )
+          }
+
+          // JOPPD IMMUTABILITY: Block upsert updates on signed/submitted submissions
+          if (model === "JoppdSubmission") {
+            await enforceJoppdImmutability(prismaBase, {
+              where: args.where as Prisma.JoppdSubmissionWhereUniqueInput,
+              data: args.update as Record<string, unknown>,
+            })
+          }
+
+          if (model === "JoppdSubmissionLine") {
+            await enforceJoppdLineImmutability(
+              prismaBase,
+              args.where as Prisma.JoppdSubmissionLineWhereInput,
               "update"
             )
           }
@@ -2758,12 +3077,20 @@ export function withTenantIsolation(prisma: PrismaClient) {
           const result = await query(args)
 
           // Audit logging for upsert operations
+          // If before-state existed, this was an UPDATE; otherwise it was a CREATE
           if (
             AUDITED_MODELS.includes(model as AuditedModel) &&
             result &&
             typeof result === "object"
           ) {
-            queueAuditLog(prismaBase, model, "UPDATE", result as Record<string, unknown>)
+            const action = upsertBeforeState ? "UPDATE" : "CREATE"
+            queueAuditLog(
+              prismaBase,
+              model,
+              action,
+              result as Record<string, unknown>,
+              upsertBeforeState
+            )
           }
 
           return result
