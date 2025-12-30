@@ -146,7 +146,12 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
       }
 
       // Generate invoice number
-      const numbering = await getNextInvoiceNumber(company.id, undefined, undefined, input.issueDate)
+      const numbering = await getNextInvoiceNumber(
+        company.id,
+        undefined,
+        undefined,
+        input.issueDate
+      )
 
       // Calculate line totals
       const lineItems = await Promise.all(
@@ -193,7 +198,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<ActionRe
         })
 
         if (fiscalDecision.shouldFiscalize) {
-          await queueFiscalRequest(invoice.id, company.id, fiscalDecision)
+          await queueFiscalRequest(invoice, company, fiscalDecision)
           await db.eInvoice.update({
             where: { id: invoice.id },
             data: { fiscalStatus: "PENDING" },
@@ -295,7 +300,7 @@ export async function convertToInvoice(id: string): Promise<ActionResult<{ id: s
         })
 
         if (fiscalDecision.shouldFiscalize) {
-          await queueFiscalRequest(invoice.id, company.id, fiscalDecision)
+          await queueFiscalRequest(invoice, company, fiscalDecision)
           await db.eInvoice.update({
             where: { id: invoice.id },
             data: { fiscalStatus: "PENDING" },
@@ -338,8 +343,13 @@ export async function updateInvoice(
       if (!existing) {
         return {
           success: false,
-          error: "Dokument nije pronađen ili nije nacrt. Korekcije se rade isključivo kroz storno (kreditnu notu).",
+          error:
+            "Dokument nije pronađen ili nije nacrt. Korekcije se rade isključivo kroz storno (kreditnu notu).",
         }
+      }
+
+      if (existing.jir || existing.fiscalizedAt) {
+        return { success: false, error: "Fiskalizirani račun nije moguće mijenjati" }
       }
 
       const updateData: Prisma.EInvoiceUpdateInput = {}
@@ -404,6 +414,10 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
 
       if (!invoice) {
         return { success: false, error: "Samo nacrte je moguće obrisati" }
+      }
+
+      if (invoice.jir || invoice.fiscalizedAt) {
+        return { success: false, error: "Fiskalizirani račun nije moguće obrisati" }
       }
 
       // Check if this invoice was converted to something
@@ -590,7 +604,7 @@ export async function createEInvoice(formData: z.input<typeof eInvoiceSchema>) {
       })
 
       if (fiscalDecision.shouldFiscalize) {
-        await queueFiscalRequest(eInvoice.id, company.id, fiscalDecision)
+        await queueFiscalRequest(eInvoice, company, fiscalDecision)
         await db.eInvoice.update({
           where: { id: eInvoice.id },
           data: { fiscalStatus: "PENDING" },
@@ -695,7 +709,7 @@ export async function sendEInvoice(eInvoiceId: string) {
       })
 
       if (fiscalDecision.shouldFiscalize) {
-        await queueFiscalRequest(updatedInvoice.id, company.id, fiscalDecision)
+        await queueFiscalRequest(updatedInvoice, company, fiscalDecision)
         await db.eInvoice.update({
           where: { id: updatedInvoice.id },
           data: { fiscalStatus: "PENDING" },
@@ -806,6 +820,10 @@ export async function deleteEInvoice(eInvoiceId: string) {
 
     if (!eInvoice) {
       return { error: "Can only delete draft invoices" }
+    }
+
+    if (eInvoice.jir || eInvoice.fiscalizedAt) {
+      return { error: "Fiskalizirani račun nije moguće obrisati" }
     }
 
     await db.eInvoice.delete({
