@@ -11,6 +11,7 @@ import {
 } from "@/lib/reports/accountant-export"
 import JSZip from "jszip"
 import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
+import { logStaffAccess, getRequestMetadata } from "@/lib/staff-audit"
 
 const querySchema = z.object({
   clientIds: z.string(), // comma-separated list of client IDs
@@ -84,6 +85,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Log bulk export access for audit trail (GDPR compliance)
+    const { ipAddress, userAgent } = getRequestMetadata(request.headers)
+    await logStaffAccess({
+      staffUserId: user.id,
+      clientCompanyId: clientIds.join(","),
+      action: "STAFF_EXPORT_DATA",
+      resourceType: "BulkExport",
+      metadata: {
+        clientCount: clientIds.length,
+        exportType: parsed.data.exportType,
+        format: parsed.data.format,
+        dateRange: {
+          from: parsed.data.from,
+          to: parsed.data.to,
+        },
+      },
+      ipAddress,
+      userAgent,
+    })
+
     const fromDate = parseDate(parsed.data.from)
     const toDate = parseDate(parsed.data.to)
 
@@ -101,6 +122,25 @@ export async function GET(request: NextRequest) {
     // For single client, return direct CSV
     if (clientIds.length === 1 && parsed.data.format !== "combined") {
       const companyId = clientIds[0]
+
+      // Log individual client export
+      await logStaffAccess({
+        staffUserId: user.id,
+        clientCompanyId: companyId,
+        action: "STAFF_EXPORT_DATA",
+        resourceType: "SingleClientExport",
+        metadata: {
+          exportType: parsed.data.exportType,
+          format: parsed.data.format,
+          dateRange: {
+            from: parsed.data.from,
+            to: parsed.data.to,
+          },
+        },
+        ipAddress,
+        userAgent,
+      })
+
       const exportData = await fetchAccountantExportData(companyId, fromDate, toDate)
 
       let csv: string
@@ -171,6 +211,26 @@ export async function GET(request: NextRequest) {
 
     // Process each client
     for (const assignment of assignments) {
+      // Log individual client export within bulk operation
+      await logStaffAccess({
+        staffUserId: user.id,
+        clientCompanyId: assignment.company.id,
+        action: "STAFF_EXPORT_DATA",
+        resourceType: "ClientExport",
+        metadata: {
+          exportType: parsed.data.exportType,
+          format: parsed.data.format,
+          dateRange: {
+            from: parsed.data.from,
+            to: parsed.data.to,
+          },
+          partOfBulkExport: true,
+          bulkClientCount: clientIds.length,
+        },
+        ipAddress,
+        userAgent,
+      })
+
       const exportData = await fetchAccountantExportData(
         assignment.company.id,
         fromDate,
