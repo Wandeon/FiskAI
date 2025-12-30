@@ -129,6 +129,7 @@ model Company {
   userLimit                      Int                   @default(1)
   stripeTerminalLocationId       String?
   stripeTerminalReaderId         String?
+  stockValuationMethod           StockValuationMethod  @default(WEIGHTED_AVERAGE)
   aiUsage                        AIUsage[]
   auditLogs                      AuditLog[]
   bankAccounts                   BankAccount[]
@@ -149,6 +150,10 @@ model Company {
   paymentDevices                 PaymentDevice[]
   potentialDuplicates            PotentialDuplicate[]
   products                       Product[]
+  warehouses                     Warehouse[]
+  stockItems                     StockItem[]
+  stockMovements                 StockMovement[]
+  valuationSnapshots             ValuationSnapshot[]
   recurringExpenses              RecurringExpense[]
   savedReports                   SavedReport[]
   assignedStaff                  StaffAssignment[]     @relation("AssignedStaff")
@@ -299,9 +304,109 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockItems  StockItem[]
+  stockMovements StockMovement[]
+  valuationSnapshots ValuationSnapshot[]
 
   @@unique([companyId, sku])
   @@index([companyId])
+}
+
+model Warehouse {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  code       String?
+  address    String?
+  city       String?
+  postalCode String?
+  country    String   @default("HR")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockItems StockItem[]
+  stockMovements StockMovement[]
+  valuationSnapshots ValuationSnapshot[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model StockItem {
+  id               String   @id @default(cuid())
+  companyId        String
+  warehouseId      String
+  productId        String
+  quantityOnHand   Decimal  @default(0) @db.Decimal(14, 3)
+  averageCost      Decimal? @db.Decimal(10, 2)
+  lastMovementAt   DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  movements        StockMovement[]
+  valuationSnapshots ValuationSnapshot[]
+
+  @@unique([warehouseId, productId])
+  @@index([companyId])
+  @@index([productId])
+}
+
+model StockMovement {
+  id              String             @id @default(cuid())
+  companyId       String
+  warehouseId     String
+  productId       String
+  stockItemId     String?
+  movementType    StockMovementType
+  quantity        Decimal            @db.Decimal(14, 3)
+  unitCost        Decimal?           @db.Decimal(10, 2)
+  movementDate    DateTime           @default(now())
+  referenceNumber String?
+  eInvoiceLineId  String?
+  expenseId       String?
+  createdAt       DateTime           @default(now())
+  company         Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouse       Warehouse          @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  product         Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  stockItem       StockItem?         @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+  eInvoiceLine    EInvoiceLine?      @relation(fields: [eInvoiceLineId], references: [id], onDelete: SetNull)
+  expense         Expense?           @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  valuationSnapshots ValuationSnapshot[]
+
+  @@index([companyId])
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([movementDate])
+  @@index([eInvoiceLineId])
+  @@index([expenseId])
+}
+
+model ValuationSnapshot {
+  id               String               @id @default(cuid())
+  companyId        String
+  warehouseId      String
+  productId        String
+  stockItemId      String?
+  movementId       String?
+  valuationMethod  StockValuationMethod
+  quantityOnHand   Decimal              @db.Decimal(14, 3)
+  value            Decimal              @db.Decimal(14, 2)
+  asOfDate         DateTime
+  createdAt        DateTime             @default(now())
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouse        Warehouse            @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  product          Product              @relation(fields: [productId], references: [id], onDelete: Restrict)
+  stockItem        StockItem?           @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+  movement         StockMovement?       @relation(fields: [movementId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([warehouseId])
+  @@index([productId])
+  @@index([asOfDate])
 }
 
 model EInvoice {
@@ -387,6 +492,7 @@ model EInvoiceLine {
   vatCategory String   @default("S")
   vatAmount   Decimal  @db.Decimal(10, 2)
   eInvoice    EInvoice @relation(fields: [eInvoiceId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
 
   @@index([eInvoiceId])
 }
@@ -500,6 +606,7 @@ model Expense {
   category         ExpenseCategory   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   vendor           Contact?          @relation("ExpenseVendor", fields: [vendorId], references: [id])
+  stockMovements   StockMovement[]
 
   @@index([companyId])
   @@index([date])
@@ -1626,6 +1733,18 @@ enum DocumentType {
   BANK_STATEMENT
   INVOICE
   EXPENSE
+}
+
+enum StockMovementType {
+  PRIMKA
+  IZDATNICA
+  ADJUSTMENT
+}
+
+enum StockValuationMethod {
+  FIFO
+  LIFO
+  WEIGHTED_AVERAGE
 }
 
 enum PageStatus {
@@ -3685,4 +3804,3 @@ model CronJobError {
   @@index([resolvedAt])
   @@index([createdAt])
 }
-
