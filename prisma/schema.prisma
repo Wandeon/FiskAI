@@ -870,6 +870,8 @@ model WebAuthnCredential {
   createdAt    DateTime  @default(now())
   lastUsedAt   DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model FiscalCertificate {
