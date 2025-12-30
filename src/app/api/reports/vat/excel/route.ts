@@ -92,6 +92,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("VAT Excel export error:", error)
-    return NextResponse.json({ error: "Neuspjesan PDV Excel izvoz" }, { status: 500 })
+    return NextResponse.json({ error: "Neuspješan PDV Excel izvoz" }, { status: 500 })
   }
 }

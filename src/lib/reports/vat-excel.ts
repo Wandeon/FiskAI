@@ -36,15 +36,15 @@ export function vatToExcel(data: VatReportData): string {
   lines.push("") // Empty line
 
   // Output VAT section
-  lines.push('"IZLAZNI PDV (iz racuna)"')
+  lines.push('"IZLAZNI PDV (iz računa)"')
   lines.push('"Stavka","Iznos (EUR)"')
   lines.push('"Osnovica",' + data.outputVat.net.toFixed(2))
   lines.push('"PDV",' + data.outputVat.vat.toFixed(2))
-  lines.push('"Ukupno racuni",' + data.outputVat.total.toFixed(2))
+  lines.push('"Ukupno računi",' + data.outputVat.total.toFixed(2))
   lines.push("") // Empty line
 
   // Input VAT section
-  lines.push('"ULAZNI PDV (iz troskova)"')
+  lines.push('"ULAZNI PDV (iz troškova)"')
   lines.push('"Stavka","Iznos (EUR)"')
   lines.push('"Priznati PDV",' + data.inputVat.deductible.toFixed(2))
   lines.push('"Nepriznati PDV",' + data.inputVat.nonDeductible.toFixed(2))
@@ -65,7 +65,7 @@ export function vatToExcel(data: VatReportData): string {
 
   // Footer
   lines.push('"Generirano:",' + formatDate(new Date()))
-  lines.push('"Izvor: FiskAI - PDV izvjestavanje"')
+  lines.push('"Izvor: FiskAI - PDV izvještavanje"')
 
   return lines.join("\n")
 }
