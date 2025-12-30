@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
     })
 
     // TODO: Send invitation email using Resend
-    // For now, just log the invitation token
-    console.log(`Invitation created for ${email} with token: ${invitation.token}`)
+    // Log invitation creation without exposing the sensitive token
+    console.log(`Invitation created for ${email} (ID: ${invitation.id})`)
 
     return NextResponse.json(invitation, { status: 201 })
   } catch (error) {
