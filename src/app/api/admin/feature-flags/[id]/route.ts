@@ -64,9 +64,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 /**
  * DELETE /api/admin/feature-flags/[id]
  *
- * Delete a feature flag
+ * Soft-delete a feature flag (requires reason)
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const user = await requireAdmin()
   const { id } = await params
 
@@ -75,6 +75,14 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Feature flag not found" }, { status: 404 })
   }
 
-  await deleteFlag(id, user.id!)
+  // Extract reason from request body
+  const body = await request.json().catch(() => ({}))
+  const { reason } = body
+
+  if (!reason || reason.trim().length === 0) {
+    return NextResponse.json({ error: "Deletion reason is required" }, { status: 400 })
+  }
+
+  await deleteFlag(id, user.id!, reason)
   return NextResponse.json({ success: true })
 }

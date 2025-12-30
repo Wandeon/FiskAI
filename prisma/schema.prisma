@@ -3202,6 +3202,7 @@ enum FeatureFlagStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
+  DELETED
 }
   DELETED
 
@@ -3228,6 +3229,8 @@ model FeatureFlag {
   updatedAt DateTime @updatedAt
   createdBy String? // User ID who created
   updatedBy String? // User ID who last updated
+  deletedAt DateTime? // Soft-delete timestamp
+  deletedBy String? // User ID who soft-deleted
 
   // Relations
   overrides      FeatureFlagOverride[]
@@ -3238,6 +3241,7 @@ model FeatureFlag {
   @@index([status])
   @@index([category])
   @@index([tags])
+  @@index([deletedAt])
 }
 
 model FeatureFlagOverride {
@@ -3275,6 +3279,8 @@ enum FeatureFlagAuditAction {
   OVERRIDE_ADDED
   OVERRIDE_REMOVED
   ROLLOUT_CHANGED
+  DELETED
+  RESTORED
 }
 
 model FeatureFlagAuditLog {
