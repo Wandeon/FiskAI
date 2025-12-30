@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { EInvoiceStatus } from "@prisma/client"
 import { logger } from "@/lib/logger"
+import { validateStatusTransition, getTransitionError } from "@/lib/e-invoice-status"
 
 const acceptInvoiceSchema = z.object({
   accept: z.boolean(), // true to accept, false to reject
