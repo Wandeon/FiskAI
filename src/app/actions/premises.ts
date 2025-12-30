@@ -83,41 +83,47 @@ export async function updatePremises(
   input: Partial<Omit<CreatePremisesInput, "companyId">>
 ): Promise<ActionResult> {
   try {
-    const existing = await db.businessPremises.findUnique({ where: { id } })
-    if (!existing) {
-      return { success: false, error: "Poslovni prostor nije pronađen" }
-    }
+    const user = await requireAuth()
 
-    // Check for duplicate code if code is being changed
-    if (input.code && input.code !== existing.code) {
-      const duplicate = await db.businessPremises.findUnique({
-        where: {
-          companyId_code: {
-            companyId: existing.companyId,
-            code: input.code,
-          },
-        },
+    return requireCompanyWithContext(user.id!, async (company) => {
+      const existing = await db.businessPremises.findFirst({
+        where: { id, companyId: company.id },
       })
-      if (duplicate) {
-        return { success: false, error: `Poslovni prostor s kodom ${input.code} već postoji` }
+      if (!existing) {
+        return { success: false, error: "Poslovni prostor nije pronađen" }
       }
-    }
 
-    // If this should be default, unset other defaults first
-    if (input.isDefault) {
-      await db.businessPremises.updateMany({
-        where: { companyId: existing.companyId, isDefault: true, id: { not: id } },
-        data: { isDefault: false },
+      // Check for duplicate code if code is being changed
+      if (input.code && input.code !== existing.code) {
+        const duplicate = await db.businessPremises.findUnique({
+          where: {
+            companyId_code: {
+              companyId: company.id,
+              code: input.code,
+            },
+          },
+        })
+        if (duplicate) {
+          return { success: false, error: `Poslovni prostor s kodom ${input.code} već postoji` }
+        }
+      }
+
+      // If this should be default, unset other defaults first
+      if (input.isDefault) {
+        await db.businessPremises.updateMany({
+          where: { companyId: company.id, isDefault: true, id: { not: id } },
+          data: { isDefault: false },
+        })
+      }
+
+      const premises = await db.businessPremises.update({
+        where: { id },
+        data: input,
       })
-    }
 
-    const premises = await db.businessPremises.update({
-      where: { id },
-      data: input,
+      revalidatePath("/settings/premises")
+      return { success: true, data: premises }
     })
-
-    revalidatePath("/settings/premises")
-    return { success: true, data: premises }
   } catch (error) {
     console.error("Failed to update premises:", error)
     return { success: false, error: "Greška pri ažuriranju poslovnog prostora" }

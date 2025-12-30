@@ -37,7 +37,7 @@ vi.mock("next/cache", () => ({
 
 import { db } from "@/lib/db"
 import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
-import { createPremises, createDevice } from "@/app/actions/premises"
+import { createPremises, createDevice, updatePremises } from "@/app/actions/premises"
 
 const user = { id: "user-1" }
 const company = { id: "company-1" }
@@ -92,5 +92,20 @@ describe("premises actions auth", () => {
 
     expect(result.success).toBe(false)
     expect(db.paymentDevice.create).not.toHaveBeenCalled()
+  })
+
+  it("updatePremises scopes lookup to auth company", async () => {
+    vi.mocked(db.businessPremises.findFirst).mockResolvedValue({
+      id: "prem-1",
+      companyId: "company-1",
+      code: 1,
+    } as any)
+    vi.mocked(db.businessPremises.update).mockResolvedValue({ id: "prem-1" } as any)
+
+    await updatePremises("prem-1", { name: "Updated" })
+
+    expect(db.businessPremises.findFirst).toHaveBeenCalledWith({
+      where: { id: "prem-1", companyId: "company-1" },
+    })
   })
 })
