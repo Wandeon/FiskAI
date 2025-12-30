@@ -185,7 +185,22 @@ export async function POST(
 
     return NextResponse.json(review)
   } else {
-    // Remove review
+    // Remove review - check authorization first
+    const existingReview = await db.staffReview.findFirst({
+      where: {
+        companyId: clientId,
+        entityType: entityType as StaffReviewEntity,
+        entityId,
+      },
+    })
+
+    if (existingReview && existingReview.reviewerId !== user.id && user.systemRole !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Only the original reviewer or admin can unmark this review" },
+        { status: 403 }
+      )
+    }
+
     await db.staffReview.deleteMany({
       where: {
         companyId: clientId,
