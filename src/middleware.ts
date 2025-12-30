@@ -15,6 +15,7 @@ import {
   buildCrawlEvent,
   trackCrawlerHit,
 } from "@/lib/ai-crawler"
+import { generateCSP } from "@/lib/middleware/csp"
 
 // Routes to skip (API, static assets, etc.)
 function shouldSkipRoute(pathname: string): boolean {
@@ -45,6 +46,9 @@ export async function middleware(request: NextRequest) {
   const requestId = request.headers.get("x-request-id") || crypto.randomUUID()
   const startTime = Date.now()
   const pathname = request.nextUrl.pathname
+
+  // Generate CSP nonce for this request
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
 
   // Log incoming request
   logger.info(
@@ -106,6 +110,11 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+
+    // Apply CSP with nonce
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
+    response.headers.set("x-nonce", nonce)
+
     return response
   }
 
@@ -131,6 +140,7 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.redirect(loginUrl)
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
     return response
   }
 
@@ -158,6 +168,7 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.redirect(redirectUrl)
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
     return response
   }
 
