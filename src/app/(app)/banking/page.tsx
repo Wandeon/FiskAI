@@ -35,13 +35,21 @@ export default async function BankingPage() {
     {} as Record<string, number>
   )
 
-  // Get unmatched transactions count
-  const unmatchedCount = await db.bankTransaction.count({
-    where: {
-      companyId: company.id,
-      matchStatus: "UNMATCHED",
-    },
+  const transactionIds = await db.bankTransaction.findMany({
+    where: { companyId: company.id },
+    select: { id: true },
   })
+
+  const latestMatches = await db.matchRecord.findMany({
+    where: { bankTransactionId: { in: transactionIds.map((row) => row.id) } },
+    orderBy: [{ bankTransactionId: "asc" }, { createdAt: "desc" }],
+    distinct: ["bankTransactionId"],
+  })
+
+  const unmatchedCount =
+    transactionIds.length -
+    latestMatches.length +
+    latestMatches.filter((match) => match.matchStatus === "UNMATCHED").length
 
   // Get recent transactions
   const recentTransactions = await db.bankTransaction.findMany({
@@ -54,6 +62,18 @@ export default async function BankingPage() {
     orderBy: { date: "desc" },
     take: 10,
   })
+  const recentMatchRecords = await db.matchRecord.findMany({
+    where: { bankTransactionId: { in: recentTransactions.map((txn) => txn.id) } },
+    orderBy: [{ bankTransactionId: "asc" }, { createdAt: "desc" }],
+    distinct: ["bankTransactionId"],
+  })
+  const recentMatchMap = new Map(
+    recentMatchRecords.map((record) => [record.bankTransactionId, record])
+  )
+  const recentWithStatus = recentTransactions.map((txn) => ({
+    ...txn,
+    matchStatus: recentMatchMap.get(txn.id)?.matchStatus ?? "UNMATCHED",
+  }))
 
   return (
     <div className="space-y-6">
@@ -234,7 +254,7 @@ export default async function BankingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {recentTransactions.map((txn) => (
+                    {recentWithStatus.map((txn) => (
                       <tr key={txn.id} className="hover:bg-surface-1">
                         <td className="px-4 py-3 text-sm">
                           {new Date(txn.date).toLocaleDateString("hr-HR")}
@@ -248,7 +268,9 @@ export default async function BankingPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-mono">
                           <span
-                            className={Number(txn.amount) >= 0 ? "text-success-text" : "text-danger-text"}
+                            className={
+                              Number(txn.amount) >= 0 ? "text-success-text" : "text-danger-text"
+                            }
                           >
                             {Number(txn.amount) >= 0 ? "+" : ""}
                             {new Intl.NumberFormat("hr-HR", {

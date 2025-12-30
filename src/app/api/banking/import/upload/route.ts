@@ -36,8 +36,6 @@ export async function POST(request: Request) {
   const formData = await request.formData()
   const file = formData.get("file")
   const accountId = formData.get("accountId") as string | null
-  const overwrite = (formData.get("overwrite") as string) === "true"
-
   if (!(file instanceof Blob) || !accountId) {
     return NextResponse.json({ error: "Missing file or account" }, { status: 400 })
   }
@@ -95,52 +93,16 @@ export async function POST(request: Request) {
     },
   })
 
-  if (existingJob && !overwrite) {
+  if (existingJob) {
     return NextResponse.json(
       {
-        success: false,
-        requiresOverwrite: true,
+        success: true,
+        deduplicated: true,
         existingJobId: existingJob.id,
-        message: "Izvod s istim sadržajem već postoji. Prepiši?",
+        message: "Izvod s istim sadržajem već postoji. Koristimo postojeći uvoz.",
       },
-      { status: 409 }
+      { status: 200 }
     )
-  }
-
-  // Overwrite flow: delete existing job + file before writing new file
-  if (existingJob && overwrite) {
-    try {
-      await db.importJob.delete({ where: { id: existingJob.id } })
-      bankingLogger.info(
-        { jobId: existingJob.id, accountId },
-        "Deleted previous import job for overwrite"
-      )
-    } catch (error) {
-      bankingLogger.error(
-        { error, jobId: existingJob.id, accountId },
-        "Failed to delete previous import job during overwrite - data integrity may be compromised"
-      )
-      return NextResponse.json(
-        { error: "Failed to overwrite previous import. Please try again or contact support." },
-        { status: 500 }
-      )
-    }
-    if (existingJob.storagePath) {
-      try {
-        await fs.unlink(existingJob.storagePath)
-        bankingLogger.info(
-          { path: existingJob.storagePath, jobId: existingJob.id },
-          "Deleted previous statement file for overwrite"
-        )
-      } catch (error) {
-        // Log error but continue - orphaned file is less critical than blocking upload
-        // A cleanup job should handle orphaned files periodically
-        bankingLogger.warn(
-          { error, path: existingJob.storagePath, jobId: existingJob.id },
-          "Failed to delete old statement file - orphaned file may remain on disk"
-        )
-      }
-    }
   }
 
   await fs.writeFile(storagePath, buffer)
@@ -185,7 +147,6 @@ export async function POST(request: Request) {
         "Failed to clean up uploaded file after job creation failed - orphaned file will be cleaned by cron"
       )
     }
-
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       bankingLogger.warn(

@@ -29,7 +29,7 @@ export default async function ImportPage() {
   })
 
   // Get recent imports
-  const recentImports = await db.bankImport.findMany({
+  const recentImports = await db.statementImport.findMany({
     where: { companyId: company.id },
     include: {
       bankAccount: {
@@ -119,8 +119,8 @@ export default async function ImportPage() {
                 <code className="bg-surface-1 px-1 py-0.5 rounded">opis</code> - Opis transakcije
               </li>
               <li>
-                <code className="bg-surface-1 px-1 py-0.5 rounded">iznos</code> - Iznos (pozitivan za
-                prihode, negativan za rashode)
+                <code className="bg-surface-1 px-1 py-0.5 rounded">iznos</code> - Iznos (pozitivan
+                za prihode, negativan za rashode)
               </li>
               <li>
                 <code className="bg-surface-1 px-1 py-0.5 rounded">stanje</code> - Stanje računa

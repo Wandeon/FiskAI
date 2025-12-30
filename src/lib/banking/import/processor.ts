@@ -90,31 +90,6 @@ export async function processNextImportJob() {
     } else {
       await handlePdf(job.id)
     }
-    // Update bank import record after successful processing (only for supported formats)
-    if (extension === "xml") {
-      const transactions = await db.bankTransaction.count({
-        where: {
-          companyId: job.companyId,
-          bankAccountId: job.bankAccountId ?? undefined,
-          createdAt: {
-            gte: new Date(Date.now() - 60 * 1000), // Last minute (this import run)
-          },
-        },
-      })
-      if (job.bankAccountId) {
-        await db.bankImport.create({
-          data: {
-            companyId: job.companyId,
-            bankAccountId: job.bankAccountId,
-            fileName: job.originalName,
-            format: ImportFormat.XML_CAMT053,
-            transactionCount: transactions,
-            importedAt: new Date(),
-            importedBy: job.userId,
-          },
-        })
-      }
-    }
     return { status: "ok", jobId: job.id }
   } catch (error) {
     console.error("[processNextImportJob] error", error)
@@ -137,6 +112,16 @@ async function handleXml(jobId: string) {
   const job = await db.importJob.findUniqueOrThrow({ where: { id: jobId } })
   if (!job.bankAccountId) {
     throw new Error("Bank account ID is required for XML import")
+  }
+  const existingImport = await db.statementImport.findFirst({
+    where: { importJobId: jobId },
+  })
+  if (existingImport) {
+    await db.importJob.update({
+      where: { id: jobId },
+      data: { status: JobStatus.VERIFIED },
+    })
+    return
   }
   const bankAccountId = job.bankAccountId
   const xmlBuffer = await fs.readFile(job.storagePath, "utf-8")
@@ -179,6 +164,25 @@ async function handleXml(jobId: string) {
   const currency = balances[0]?.Amt?.["@_Ccy"] || "EUR"
 
   const entries = Array.isArray(stmt.Ntry) ? stmt.Ntry : stmt.Ntry ? [stmt.Ntry] : []
+
+  const statementImport = await db.statementImport.create({
+    data: {
+      companyId: job.companyId,
+      bankAccountId,
+      importJobId: jobId,
+      fileName: job.originalName,
+      fileChecksum: job.fileChecksum,
+      format: ImportFormat.XML_CAMT053,
+      transactionCount: entries.length,
+      importedBy: job.userId,
+      metadata: {
+        sequenceNumber,
+        statementDate: statementDate.toISOString(),
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+      },
+    },
+  })
 
   const statement = await db.statement.create({
     data: {
@@ -234,6 +238,7 @@ async function handleXml(jobId: string) {
         return {
           companyId: job.companyId,
           bankAccountId: job.bankAccountId,
+          statementImportId: statementImport.id,
           date: new Date(dateStr),
           description: typeof description === "string" ? description : JSON.stringify(description),
           amount: new Prisma.Decimal(Math.abs(amount)),
@@ -264,6 +269,16 @@ async function handlePdf(jobId: string) {
   if (!job.bankAccountId) {
     throw new Error("Bank account ID is required for PDF import")
   }
+  const existingImport = await db.statementImport.findFirst({
+    where: { importJobId: jobId },
+  })
+  if (existingImport) {
+    await db.importJob.update({
+      where: { id: jobId },
+      data: { status: JobStatus.VERIFIED },
+    })
+    return
+  }
   const bankAccountId = job.bankAccountId
   const buffer = await fs.readFile(job.storagePath)
   const pdfBase64 = buffer.toString("base64")
@@ -285,6 +300,15 @@ async function handlePdf(jobId: string) {
   let pagesVerified = 0
   let pagesFailed = 0
   let visionTriggered = false
+
+  const processedPages: Array<{
+    pageNumber: number
+    pageStartBalance: number | null
+    pageEndBalance: number | null
+    status: PageStatus
+    rawText: string
+    transactions: ParsedPage["transactions"]
+  }> = []
 
   const statement = await db.statement.create({
     data: {
@@ -349,24 +373,62 @@ async function handlePdf(jobId: string) {
       pagesFailed += 1
     }
 
-    const pageRecord = await db.statementPage.create({
+    processedPages.push({
+      pageNumber: page.pageNumber,
+      pageStartBalance: page.pageStartBalance,
+      pageEndBalance: page.pageEndBalance,
+      status: pageStatus,
+      rawText: pagesText[page.pageNumber - 1],
+      transactions: repairedTransactions,
+    })
+  }
+
+  const totalTransactionCount = processedPages.reduce(
+    (count, page) => count + page.transactions.length,
+    0
+  )
+
+  const statementImport = await db.statementImport.create({
+    data: {
+      companyId: job.companyId,
+      bankAccountId,
+      importJobId: jobId,
+      fileName: job.originalName,
+      fileChecksum: job.fileChecksum,
+      format: ImportFormat.PDF,
+      transactionCount: totalTransactionCount,
+      importedBy: job.userId,
+      metadata: {
+        statementDate: statementMeta.statementDate.toISOString(),
+        periodStart: statementMeta.periodStart.toISOString(),
+        periodEnd: statementMeta.periodEnd.toISOString(),
+        pagesVerified,
+        pagesFailed,
+        visionTriggered,
+      },
+    },
+  })
+
+  for (const page of processedPages) {
+    await db.statementPage.create({
       data: {
         statementId: statement.id,
         companyId: job.companyId,
         pageNumber: page.pageNumber,
         pageStartBalance: page.pageStartBalance,
         pageEndBalance: page.pageEndBalance,
-        status: pageStatus,
-        rawText: pagesText[page.pageNumber - 1],
+        status: page.status,
+        rawText: page.rawText,
       },
     })
 
-    const txnsToStore = repairedTransactions
+    const txnsToStore = page.transactions
     if (txnsToStore.length) {
       await db.bankTransaction.createMany({
         data: txnsToStore.map((t) => ({
           companyId: job.companyId,
           bankAccountId,
+          statementImportId: statementImport.id,
           date: new Date(t.date),
           description: t.description || "",
           amount: new Prisma.Decimal(t.amount),

@@ -112,13 +112,13 @@ export default async function DashboardPage() {
       _sum: { totalAmount: true },
     }),
     db.expense.count({ where: { companyId: company.id } }),
-    db.bankImport
+    db.statementImport
       .findFirst({
         where: { companyId: company.id },
-        orderBy: { createdAt: "desc" },
-        select: { createdAt: true },
+        orderBy: { importedAt: "desc" },
+        select: { importedAt: true },
       })
-      .then((result) => result?.createdAt),
+      .then((result) => result?.importedAt),
   ])
 
   const totalRevenueValue = Number(totalRevenue._sum.totalAmount || new Decimal(0))

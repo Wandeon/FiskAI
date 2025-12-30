@@ -122,10 +122,7 @@ async function getInteractedReferences(
  * Get currently snoozed item references (where snoozedUntil > now)
  * These items should be hidden until their snooze expires
  */
-async function getSnoozedReferences(
-  userId: string,
-  companyId: string
-): Promise<Set<string>> {
+async function getSnoozedReferences(userId: string, companyId: string): Promise<Set<string>> {
   const now = new Date()
   const snoozedInteractions = await drizzleDb
     .select({ ref: checklistInteractions.itemReference })
@@ -440,7 +437,7 @@ async function getOnboardingItems(
 
   // Issue #885: Bank import and bank account guidance
   const bankAccounts = await db.bankAccount.count({ where: { companyId } })
-  const bankImports = await db.bankImport.count({ where: { companyId } })
+  const bankImports = await db.statementImport.count({ where: { companyId } })
 
   // First bank account guidance
   if (bankAccounts === 0) {

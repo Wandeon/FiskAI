@@ -161,7 +161,7 @@ model Company {
   featureFlagOverrides           FeatureFlagOverride[]
   staffReviews                   StaffReview[]
   adminAlerts                    AdminAlert[]
-  bankImports                    BankImport[]
+  statementImports               StatementImport[]
 }
 
 // Audit trail for module entitlement changes
@@ -582,7 +582,7 @@ model BankAccount {
   syncProviderAccountId String?
   company               Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   connection            BankConnection?
-  imports               BankImport[]
+  statementImports      StatementImport[]
   transactions          BankTransaction[]
   importJobs            ImportJob[]
   statements            Statement[]
@@ -596,6 +596,7 @@ model BankTransaction {
   id               String            @id @default(cuid())
   companyId        String
   bankAccountId    String
+  statementImportId String?
   date             DateTime
   description      String
   amount           Decimal           @db.Decimal(12, 2)
@@ -614,14 +615,43 @@ model BankTransaction {
   externalId       String?
   source           TransactionSource @default(MANUAL)
   bankAccount      BankAccount       @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  statementImport  StatementImport?  @relation(fields: [statementImportId], references: [id], onDelete: SetNull)
   matchedExpense   Expense?          @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
   matchedInvoice   EInvoice?         @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
+  matchRecords     MatchRecord[]
 
   @@index([companyId])
   @@index([bankAccountId])
   @@index([matchStatus])
   @@index([date])
   @@index([externalId])
+  @@index([statementImportId])
+}
+
+model MatchRecord {
+  id                String      @id @default(cuid())
+  companyId          String
+  bankTransactionId  String
+  matchStatus        MatchStatus
+  matchKind          MatchKind
+  matchedInvoiceId   String?
+  matchedExpenseId   String?
+  confidenceScore    Int?
+  reason             String?
+  source             MatchSource @default(MANUAL)
+  metadata           Json?
+  createdAt          DateTime    @default(now())
+  createdBy          String?
+  company            Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankTransaction    BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Cascade)
+  matchedInvoice     EInvoice?   @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
+  matchedExpense     Expense?    @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([bankTransactionId])
+  @@index([matchStatus])
+  @@index([matchKind])
+  @@index([createdAt])
 }
 
 model BankConnection {
@@ -734,20 +764,27 @@ model EmailAttachment {
   @@index([status])
 }
 
-model BankImport {
-  id               String       @id @default(cuid())
+model StatementImport {
+  id               String        @id @default(cuid())
   companyId        String
   bankAccountId    String
+  importJobId      String?       @unique
   fileName         String
+  fileChecksum     String
   format           ImportFormat
   transactionCount Int
-  importedAt       DateTime     @default(now())
+  importedAt       DateTime      @default(now())
   importedBy       String
-  bankAccount      BankAccount  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
-  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  metadata         Json?
+  bankAccount      BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  importJob        ImportJob?    @relation(fields: [importJobId], references: [id], onDelete: SetNull)
+  transactions     BankTransaction[]
 
+  @@unique([bankAccountId, fileChecksum])
   @@index([companyId])
   @@index([bankAccountId])
+  @@index([importJobId])
 }
 
 model ImportJob {
@@ -1599,10 +1636,24 @@ enum MatchStatus {
   IGNORED
 }
 
+enum MatchSource {
+  AUTO
+  MANUAL
+  SYSTEM
+}
+
+enum MatchKind {
+  INVOICE
+  EXPENSE
+  IGNORE
+  UNMATCH
+}
+
 enum ImportFormat {
   CSV
   XML_CAMT053
   MT940
+  PDF
 }
 
 enum JobStatus {
@@ -3685,4 +3736,3 @@ model CronJobError {
   @@index([resolvedAt])
   @@index([createdAt])
 }
-

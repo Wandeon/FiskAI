@@ -5,6 +5,7 @@ import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { runAutoMatchTransactions } from "@/lib/banking/reconciliation-service"
+import { createHash } from "crypto"
 
 const createBankAccountSchema = z.object({
   name: z.string().min(1, "Naziv je obavezan"),
@@ -219,15 +220,41 @@ export async function importBankStatement(formData: FormData) {
         }
       )
 
-      // Create import record
-      const importRecord = await db.bankImport.create({
+      const checksumPayload = JSON.stringify({
+        bankAccountId: accountId,
+        format: "CSV",
+        transactions: validatedTransactions.map((txn) => ({
+          date: txn.date,
+          description: txn.description,
+          amount: txn.amount,
+          balance: txn.balance,
+          reference: txn.reference ?? null,
+          counterpartyName: txn.counterpartyName ?? null,
+          counterpartyIban: txn.counterpartyIban ?? null,
+        })),
+      })
+      const checksum = createHash("sha256").update(checksumPayload).digest("hex")
+
+      const existingImport = await db.statementImport.findFirst({
+        where: { bankAccountId: accountId, fileChecksum: checksum },
+      })
+      if (existingImport) {
+        return {
+          success: true,
+          data: { deduplicated: true, importId: existingImport.id },
+        }
+      }
+
+      const importRecord = await db.statementImport.create({
         data: {
           companyId: company.id,
           bankAccountId: accountId,
           fileName: fileName || "imported.csv",
+          fileChecksum: checksum,
           format: "CSV",
           transactionCount: validatedTransactions.length,
           importedBy: user.id!,
+          metadata: { source: "manual_csv" },
         },
       })
 
@@ -237,6 +264,7 @@ export async function importBankStatement(formData: FormData) {
           data: {
             companyId: company.id,
             bankAccountId: accountId,
+            statementImportId: importRecord.id,
             date: new Date(txn.date),
             description: txn.description,
             amount: typeof txn.amount === "string" ? parseFloat(txn.amount) : txn.amount,

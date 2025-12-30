@@ -3,14 +3,17 @@ import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { MatchKind, MatchSource, MatchStatus } from "@prisma/client"
 
-const bodySchema = z.object({
-  transactionId: z.string().min(1),
-  invoiceId: z.string().min(1).optional(),
-  expenseId: z.string().min(1).optional(),
-}).refine((data) => data.invoiceId || data.expenseId, {
-  message: "Either invoiceId or expenseId must be provided",
-})
+const bodySchema = z
+  .object({
+    transactionId: z.string().min(1),
+    invoiceId: z.string().min(1).optional(),
+    expenseId: z.string().min(1).optional(),
+  })
+  .refine((data) => data.invoiceId || data.expenseId, {
+    message: "Either invoiceId or expenseId must be provided",
+  })
 
 export async function POST(request: Request) {
   const user = await requireAuth()
@@ -33,13 +36,24 @@ export async function POST(request: Request) {
 
   const transaction = await db.bankTransaction.findFirst({
     where: { id: transactionId, companyId: company.id },
+    include: {
+      matchRecords: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
   })
 
   if (!transaction) {
     return NextResponse.json({ error: "Transakcija nije pronađena" }, { status: 404 })
   }
 
-  if (transaction.matchStatus !== "UNMATCHED" && transaction.matchStatus !== "IGNORED") {
+  const latestMatch = transaction.matchRecords[0]
+  if (
+    latestMatch &&
+    latestMatch.matchStatus !== MatchStatus.UNMATCHED &&
+    latestMatch.matchStatus !== MatchStatus.IGNORED
+  ) {
     return NextResponse.json({ error: "Transakcija je već povezana" }, { status: 400 })
   }
 
@@ -56,15 +70,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Račun je već evidentiran kao plaćen" }, { status: 400 })
     }
 
-    await db.bankTransaction.update({
-      where: { id: transactionId },
+    await db.matchRecord.create({
       data: {
+        companyId: company.id,
+        bankTransactionId: transactionId,
+        matchStatus: MatchStatus.MANUAL_MATCHED,
+        matchKind: MatchKind.INVOICE,
         matchedInvoiceId: invoice.id,
-        matchedExpenseId: null,
-        matchStatus: "MANUAL_MATCHED",
         confidenceScore: 100,
-        matchedAt: new Date(),
-        matchedBy: user.id!,
+        reason: "Manual match",
+        source: MatchSource.MANUAL,
+        createdBy: user.id!,
       },
     })
 
@@ -101,15 +117,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Trošak je već evidentiran kao plaćen" }, { status: 400 })
     }
 
-    await db.bankTransaction.update({
-      where: { id: transactionId },
+    await db.matchRecord.create({
       data: {
+        companyId: company.id,
+        bankTransactionId: transactionId,
+        matchStatus: MatchStatus.MANUAL_MATCHED,
+        matchKind: MatchKind.EXPENSE,
         matchedExpenseId: expense.id,
-        matchedInvoiceId: null,
-        matchStatus: "MANUAL_MATCHED",
         confidenceScore: 100,
-        matchedAt: new Date(),
-        matchedBy: user.id!,
+        reason: "Manual match",
+        source: MatchSource.MANUAL,
+        createdBy: user.id!,
       },
     })
 

@@ -3,7 +3,8 @@
 import { db, runWithTenant } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
-import { Prisma, ImportFormat } from "@prisma/client"
+import { MatchKind, MatchSource, MatchStatus, Prisma, ImportFormat } from "@prisma/client"
+import { createHash } from "crypto"
 
 const Decimal = Prisma.Decimal
 
@@ -220,15 +221,40 @@ export async function importBankStatement(
 
       // Create import record and transactions in a transaction
       const result = await db.$transaction(async (tx) => {
-        // Create import record
-        const bankImport = await tx.bankImport.create({
+        const checksumPayload = JSON.stringify({
+          bankAccountId,
+          format,
+          transactions: transactions.map((txn) => ({
+            date: txn.date.toISOString(),
+            description: txn.description,
+            amount: txn.amount,
+            balance: txn.balance,
+            reference: txn.reference ?? null,
+            counterpartyName: txn.counterpartyName ?? null,
+            counterpartyIban: txn.counterpartyIban ?? null,
+          })),
+        })
+        const checksum = createHash("sha256").update(checksumPayload).digest("hex")
+
+        const existingImport = await tx.statementImport.findFirst({
+          where: { bankAccountId, fileChecksum: checksum },
+        })
+        if (existingImport) {
+          return { importId: existingImport.id, count: 0, deduplicated: true }
+        }
+
+        const statementImport = await tx.statementImport.create({
           data: {
             companyId: company.id,
             bankAccountId,
             fileName: `import-${new Date().toISOString()}.${format.toLowerCase()}`,
+            fileChecksum: checksum,
             format,
             transactionCount: transactions.length,
             importedBy: user.id!,
+            metadata: {
+              source: "manual_csv",
+            },
           },
         })
 
@@ -252,6 +278,7 @@ export async function importBankStatement(
             data: {
               companyId: company.id,
               bankAccountId,
+              statementImportId: statementImport.id,
               date: txn.date,
               description: txn.description,
               amount: new Decimal(txn.amount),
@@ -279,7 +306,7 @@ export async function importBankStatement(
           })
         }
 
-        return { importId: bankImport.id, count: importedCount }
+        return { importId: statementImport.id, count: importedCount, deduplicated: false }
       })
 
       revalidatePath("/banking")
@@ -308,15 +335,23 @@ export async function matchTransaction(
       // Verify transaction exists and belongs to company
       const transaction = await db.bankTransaction.findFirst({
         where: { id: transactionId, companyId: company.id },
+        include: {
+          matchRecords: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
       if (!transaction) {
         return { success: false, error: "Transakcija nije pronađena" }
       }
 
+      const latestMatch = transaction.matchRecords[0]
       if (
-        transaction.matchStatus === "MANUAL_MATCHED" ||
-        transaction.matchStatus === "AUTO_MATCHED"
+        latestMatch &&
+        latestMatch.matchStatus !== MatchStatus.UNMATCHED &&
+        latestMatch.matchStatus !== MatchStatus.IGNORED
       ) {
         return { success: false, error: "Transakcija je već povezana" }
       }
@@ -339,14 +374,18 @@ export async function matchTransaction(
       }
 
       // Update transaction with match
-      await db.bankTransaction.update({
-        where: { id: transactionId },
+      await db.matchRecord.create({
         data: {
-          matchedInvoiceId: type === "invoice" ? matchId : null,
-          matchedExpenseId: type === "expense" ? matchId : null,
-          matchStatus: "MANUAL_MATCHED",
-          matchedAt: new Date(),
-          matchedBy: user.id!,
+          companyId: company.id,
+          bankTransactionId: transactionId,
+          matchStatus: MatchStatus.MANUAL_MATCHED,
+          matchKind: type === "invoice" ? MatchKind.INVOICE : MatchKind.EXPENSE,
+          matchedInvoiceId: type === "invoice" ? matchId : undefined,
+          matchedExpenseId: type === "expense" ? matchId : undefined,
+          confidenceScore: 100,
+          reason: "Manual match",
+          source: MatchSource.MANUAL,
+          createdBy: user.id!,
         },
       })
 
@@ -372,25 +411,32 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
       // Verify transaction exists and belongs to company
       const transaction = await db.bankTransaction.findFirst({
         where: { id: transactionId, companyId: company.id },
+        include: {
+          matchRecords: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       })
 
       if (!transaction) {
         return { success: false, error: "Transakcija nije pronađena" }
       }
 
-      if (transaction.matchStatus === "UNMATCHED" || transaction.matchStatus === "IGNORED") {
+      const latestMatch = transaction.matchRecords[0]
+      if (!latestMatch || latestMatch.matchStatus === MatchStatus.UNMATCHED) {
         return { success: false, error: "Transakcija nije povezana" }
       }
 
-      // Remove match
-      await db.bankTransaction.update({
-        where: { id: transactionId },
+      await db.matchRecord.create({
         data: {
-          matchedInvoiceId: null,
-          matchedExpenseId: null,
-          matchStatus: "UNMATCHED",
-          matchedAt: null,
-          matchedBy: null,
+          companyId: company.id,
+          bankTransactionId: transactionId,
+          matchStatus: MatchStatus.UNMATCHED,
+          matchKind: MatchKind.UNMATCH,
+          source: MatchSource.MANUAL,
+          reason: "Manual unlink",
+          createdBy: user.id!,
         },
       })
 
@@ -422,14 +468,15 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
         return { success: false, error: "Transakcija nije pronađena" }
       }
 
-      await db.bankTransaction.update({
-        where: { id: transactionId },
+      await db.matchRecord.create({
         data: {
-          matchStatus: "IGNORED",
-          matchedInvoiceId: null,
-          matchedExpenseId: null,
-          matchedAt: null,
-          matchedBy: null,
+          companyId: company.id,
+          bankTransactionId: transactionId,
+          matchStatus: MatchStatus.IGNORED,
+          matchKind: MatchKind.IGNORE,
+          source: MatchSource.MANUAL,
+          reason: "Ignored",
+          createdBy: user.id!,
         },
       })
 
@@ -463,129 +510,15 @@ export async function autoMatchTransactions(
         return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
-      // Get unmatched transactions
-      const unmatchedTransactions = await db.bankTransaction.findMany({
-        where: {
-          bankAccountId,
-          companyId: company.id,
-          matchStatus: "UNMATCHED",
-        },
-        orderBy: { date: "desc" },
+      const result = await runAutoMatchTransactions({
+        companyId: company.id,
+        bankAccountId,
+        userId: user.id!,
       })
-
-      let matchedCount = 0
-
-      for (const txn of unmatchedTransactions) {
-        let matched = false
-
-        // Try to match by invoice number in description
-        // Look for patterns like "Račun 123" or "Invoice 123" or just numbers
-        const invoiceNumberMatch = txn.description.match(/\b(\d{3,})\b/)
-        if (invoiceNumberMatch && txn.amount.toNumber() > 0) {
-          const possibleInvoiceNumber = invoiceNumberMatch[1]
-
-          // Search for invoice with matching number and similar amount
-          const invoice = await db.eInvoice.findFirst({
-            where: {
-              companyId: company.id,
-              invoiceNumber: { contains: possibleInvoiceNumber },
-              totalAmount: txn.amount,
-              direction: "OUTBOUND",
-            },
-          })
-
-          if (invoice) {
-            await db.bankTransaction.update({
-              where: { id: txn.id },
-              data: {
-                matchedInvoiceId: invoice.id,
-                matchStatus: "AUTO_MATCHED",
-                matchedAt: new Date(),
-                matchedBy: user.id!,
-              },
-            })
-            matchedCount++
-            matched = true
-            continue
-          }
-        }
-
-        // Try to match by exact amount within date range (±7 days)
-        if (!matched) {
-          const dateFrom = new Date(txn.date)
-          dateFrom.setDate(dateFrom.getDate() - 7)
-          const dateTo = new Date(txn.date)
-          dateTo.setDate(dateTo.getDate() + 7)
-
-          // Match outgoing payments to expenses
-          if (txn.amount.toNumber() < 0) {
-            const expense = await db.expense.findFirst({
-              where: {
-                companyId: company.id,
-                totalAmount: txn.amount.abs(),
-                date: { gte: dateFrom, lte: dateTo },
-                status: "PENDING",
-              },
-            })
-
-            if (expense) {
-              await db.bankTransaction.update({
-                where: { id: txn.id },
-                data: {
-                  matchedExpenseId: expense.id,
-                  matchStatus: "AUTO_MATCHED",
-                  matchedAt: new Date(),
-                  matchedBy: user.id!,
-                },
-              })
-
-              // Mark expense as paid
-              await db.expense.update({
-                where: { id: expense.id },
-                data: {
-                  status: "PAID",
-                  paymentMethod: "TRANSFER",
-                  paymentDate: txn.date,
-                },
-              })
-
-              matchedCount++
-              matched = true
-              continue
-            }
-          }
-
-          // Match incoming payments to invoices
-          if (!matched && txn.amount.toNumber() > 0) {
-            const invoice = await db.eInvoice.findFirst({
-              where: {
-                companyId: company.id,
-                totalAmount: txn.amount,
-                issueDate: { gte: dateFrom, lte: dateTo },
-                direction: "OUTBOUND",
-              },
-            })
-
-            if (invoice) {
-              await db.bankTransaction.update({
-                where: { id: txn.id },
-                data: {
-                  matchedInvoiceId: invoice.id,
-                  matchStatus: "AUTO_MATCHED",
-                  matchedAt: new Date(),
-                  matchedBy: user.id!,
-                },
-              })
-              matchedCount++
-              continue
-            }
-          }
-        }
-      }
 
       revalidatePath("/banking")
       revalidatePath(`/banking/${bankAccountId}`)
-      return { success: true, data: { count: matchedCount } }
+      return { success: true, data: { count: result.matchedCount } }
     })
   } catch (error) {
     console.error("Failed to auto-match transactions:", error)
