@@ -2,6 +2,7 @@ import OpenAI from "openai"
 import type { RuleCandidate } from "./rule-selector"
 import { assistantLogger } from "@/lib/logger"
 import { synthesizedAnswerSchema } from "@/lib/ai/schemas"
+import { sanitizePII } from "@/lib/security/sanitize"
 
 /**
  * ANSWER SYNTHESIZER
@@ -15,12 +16,14 @@ import { synthesizedAnswerSchema } from "@/lib/ai/schemas"
  * - Confidence-weighted rule prioritization
  * - Croatian language output
  * - Prompt injection protection through content sanitization
+ * - PII sanitization for user queries
  *
  * This replaces template-based answer construction with LLM-generated responses
  * while maintaining fail-closed guarantees through source validation.
  *
  * Security:
  * - Rule content is sanitized to prevent prompt injection
+ * - User queries are sanitized to prevent PII leakage to OpenAI
  * - System prompts include hardening against embedded instructions
  * - Defense-in-depth approach for untrusted database content
  */
@@ -154,7 +157,10 @@ Generiraj JSON objekt sa sljedećim poljima:
 
 NIKADA ne generiraj tekst izvan JSON objekta.`
 
-    let userPrompt = `Korisničko pitanje: "${context.userQuery}"
+    // Sanitize user query to prevent PII leakage to OpenAI
+    const sanitizedQuery = sanitizePII(context.userQuery)
+
+    let userPrompt = `Korisničko pitanje: "${sanitizedQuery}"
 
 PRILOŽENI PROPISI:
 ${rulesContext}
@@ -302,7 +308,10 @@ Generiraj JSON objekt:
   "explanation": "Opcionalno: Dodatno pojašnjenje uvjeta (max 300 znakova)"
 }`
 
-    const userPrompt = `Korisničko pitanje: "${context.userQuery}"
+    // Sanitize user query to prevent PII leakage to OpenAI
+    const sanitizedQuery = sanitizePII(context.userQuery)
+
+    const userPrompt = `Korisničko pitanje: "${sanitizedQuery}"
 
 PRAVILA KOJA SE PRIMJENJUJU (${context.rules.length}):
 ${rulesContext}
