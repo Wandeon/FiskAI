@@ -118,69 +118,73 @@ function parseCSVLine(line: string): string[] {
  * Bulk import premises from parsed CSV data
  */
 export async function bulkImportPremises(
-  companyId: string,
+  _companyId: string,
   rows: BulkImportRow[]
 ): Promise<BulkImportResult> {
   let created = 0
   let skipped = 0
   const errors: string[] = []
 
-  // Get existing premises codes
-  const existing = await db.businessPremises.findMany({
-    where: { companyId },
-    select: { code: true },
-  })
-  const existingCodes = new Set(existing.map((p) => p.code))
+  const user = await requireAuth()
 
-  // Check if any row wants to be default
-  const hasNewDefault = rows.some((r) => r.isDefault)
-
-  // If we have a new default, clear existing defaults
-  if (hasNewDefault) {
-    await db.businessPremises.updateMany({
-      where: { companyId, isDefault: true },
-      data: { isDefault: false },
+  return requireCompanyWithContext(user.id!, async (company) => {
+    // Get existing premises codes
+    const existing = await db.businessPremises.findMany({
+      where: { companyId: company.id },
+      select: { code: true },
     })
-  }
+    const existingCodes = new Set(existing.map((p) => p.code))
 
-  // Track if we've already set a default in this import
-  let defaultSet = false
+    // Check if any row wants to be default
+    const hasNewDefault = rows.some((r) => r.isDefault)
 
-  for (const row of rows) {
-    if (existingCodes.has(row.code)) {
-      skipped++
-      errors.push(`Kod ${row.code} vec postoji - preskoceno`)
-      continue
-    }
-
-    try {
-      // Only set isDefault for the first row that wants it
-      const isDefault = row.isDefault && !defaultSet
-
-      await db.businessPremises.create({
-        data: {
-          companyId,
-          code: row.code,
-          name: row.name,
-          address: row.address,
-          isDefault,
-          isActive: true,
-        },
+    // If we have a new default, clear existing defaults
+    if (hasNewDefault) {
+      await db.businessPremises.updateMany({
+        where: { companyId: company.id, isDefault: true },
+        data: { isDefault: false },
       })
-      created++
-      existingCodes.add(row.code) // Prevent duplicates within same import
-
-      if (isDefault) {
-        defaultSet = true
-      }
-    } catch (error) {
-      console.error(`Failed to create premises ${row.code}:`, error)
-      errors.push(`Greska pri stvaranju poslovnog prostora ${row.code}`)
     }
-  }
 
-  revalidatePath("/settings/premises")
-  return { success: errors.length === 0, created, skipped, errors }
+    // Track if we've already set a default in this import
+    let defaultSet = false
+
+    for (const row of rows) {
+      if (existingCodes.has(row.code)) {
+        skipped++
+        errors.push(`Kod ${row.code} vec postoji - preskoceno`)
+        continue
+      }
+
+      try {
+        // Only set isDefault for the first row that wants it
+        const isDefault = row.isDefault && !defaultSet
+
+        await db.businessPremises.create({
+          data: {
+            companyId: company.id,
+            code: row.code,
+            name: row.name,
+            address: row.address,
+            isDefault,
+            isActive: true,
+          },
+        })
+        created++
+        existingCodes.add(row.code) // Prevent duplicates within same import
+
+        if (isDefault) {
+          defaultSet = true
+        }
+      } catch (error) {
+        console.error(`Failed to create premises ${row.code}:`, error)
+        errors.push(`Greska pri stvaranju poslovnog prostora ${row.code}`)
+      }
+    }
+
+    revalidatePath("/settings/premises")
+    return { success: errors.length === 0, created, skipped, errors }
+  })
 }
 
 /**

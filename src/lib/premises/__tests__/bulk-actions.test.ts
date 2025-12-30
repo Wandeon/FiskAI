@@ -26,7 +26,7 @@ vi.mock("next/cache", () => ({
 
 import { db } from "@/lib/db"
 import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
-import { bulkTogglePremisesStatus } from "@/lib/premises/bulk-actions"
+import { bulkTogglePremisesStatus, bulkImportPremises } from "@/lib/premises/bulk-actions"
 
 const user = { id: "user-1" }
 const company = { id: "company-1" }
@@ -48,6 +48,19 @@ describe("premises bulk actions auth", () => {
     expect(db.businessPremises.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["prem-1"] }, companyId: "company-1" },
       data: { isActive: true },
+    })
+  })
+
+  it("bulkImportPremises scopes default reset to company", async () => {
+    vi.mocked(db.businessPremises.findMany).mockResolvedValue([] as any)
+    vi.mocked(db.businessPremises.updateMany).mockResolvedValue({ count: 1 } as any)
+    vi.mocked(db.businessPremises.create).mockResolvedValue({ id: "prem-1" } as any)
+
+    await bulkImportPremises("company-999", [{ code: 1, name: "Main", isDefault: true }])
+
+    expect(db.businessPremises.updateMany).toHaveBeenCalledWith({
+      where: { companyId: "company-1", isDefault: true },
+      data: { isDefault: false },
     })
   })
 })
