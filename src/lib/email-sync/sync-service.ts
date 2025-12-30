@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { getEmailProvider } from "./providers"
 import { decryptSecret, encryptSecret } from "@/lib/secrets"
 import { uploadToR2, generateR2Key } from "@/lib/r2-client"
+import { redis } from "@/lib/regulatory-truth/workers/redis"
 import type { EmailConnection, EmailImportRule } from "@prisma/client"
 import type { EmailMessage, EmailAttachmentInfo } from "./types"
 
@@ -14,6 +15,7 @@ interface SyncResult {
   attachmentsSaved: number
   importJobsCreated: number
   errors: string[]
+  skipped?: string
 }
 
 export async function syncEmailConnection(
@@ -241,8 +243,42 @@ export async function syncAllConnections(): Promise<SyncResult[]> {
   const results: SyncResult[] = []
 
   for (const connection of connections) {
-    const result = await syncEmailConnection(connection)
-    results.push(result)
+    // Per-connection locking to prevent duplicate processing
+    const lockKey = `email-sync:${connection.id}`
+    const lockTTL = 600 // 10 minutes in seconds
+
+    try {
+      // Try to acquire lock with NX (only set if not exists) and EX (expiry)
+      const acquired = await redis.set(lockKey, Date.now().toString(), "NX", "EX", lockTTL)
+
+      if (!acquired) {
+        // Lock already held by another process
+        console.log(`[email-sync] Connection ${connection.id} already syncing, skipping`)
+        results.push({
+          connectionId: connection.id,
+          messagesProcessed: 0,
+          attachmentsSaved: 0,
+          importJobsCreated: 0,
+          errors: [],
+          skipped: "Already syncing",
+        })
+        continue
+      }
+
+      // Lock acquired, proceed with sync
+      try {
+        const result = await syncEmailConnection(connection)
+        results.push(result)
+      } finally {
+        // Always release lock after processing
+        await redis.del(lockKey)
+      }
+    } catch (lockError) {
+      // Handle Redis errors gracefully - proceed without lock if Redis unavailable
+      console.error(`[email-sync] Lock error for connection ${connection.id}:`, lockError)
+      const result = await syncEmailConnection(connection)
+      results.push(result)
+    }
   }
 
   return results
