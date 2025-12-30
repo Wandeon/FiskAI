@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { ContactType } from "@prisma/client"
+import { z } from "zod"
 
 export interface ContactListParams {
   search?: string
@@ -13,6 +14,17 @@ export interface ContactListParams {
 }
 
 export type ContactSegment = "VAT_PAYER" | "MISSING_EMAIL" | "NO_DOCUMENTS"
+
+/**
+ * Zod schema for validating contact list parameters
+ */
+const contactListParamsSchema = z.object({
+  search: z.string().max(200).optional(),
+  type: z.enum(["CUSTOMER", "SUPPLIER", "BOTH", "ALL"]).optional(),
+  segments: z.array(z.enum(["VAT_PAYER", "MISSING_EMAIL", "NO_DOCUMENTS"])).optional(),
+  page: z.number().int().positive().default(1),
+  limit: z.number().int().positive().max(100).default(20),
+})
 
 /**
  * Escapes SQL LIKE pattern characters (% and _) to prevent
@@ -36,7 +48,9 @@ export async function getContactList(params: ContactListParams = {}) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
-  const { search, type, segments = [], page = 1, limit = 20 } = params
+  // Validate input parameters
+  const validated = contactListParamsSchema.parse(params)
+  const { search, type, segments = [], page, limit } = validated
   const skip = (page - 1) * limit
 
   // Sanitize search query to prevent SQL LIKE pattern exploitation

@@ -8,12 +8,23 @@ import {
   unlinkTransactionFromExpense,
 } from "@/lib/banking/expense-reconciliation-service"
 import { ExpenseCandidate } from "@/lib/banking/expense-reconciliation"
+import { z } from "zod"
 
 interface ActionResult<T = unknown> {
   success: boolean
   error?: string
   data?: T
 }
+
+/**
+ * Zod schema for validating UUID parameters
+ */
+const uuidSchema = z.string().uuid()
+
+/**
+ * Zod schema for validating optional UUID parameters
+ */
+const optionalUuidSchema = z.string().uuid().optional()
 
 /**
  * Run automatic expense matching for all unmatched transactions
@@ -27,6 +38,11 @@ export async function autoMatchExpenses(bankAccountId?: string): Promise<
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
+
+    // Validate bankAccountId if provided
+    if (bankAccountId !== undefined) {
+      optionalUuidSchema.parse(bankAccountId)
+    }
 
     const result = await runAutoMatchExpenses({
       companyId: company.id,
@@ -54,6 +70,9 @@ export async function getExpenseSuggestions(
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
+    // Validate transactionId is a valid UUID
+    uuidSchema.parse(transactionId)
+
     const suggestions = await getSuggestedExpenses(transactionId, company.id)
 
     return { success: true, data: suggestions }
@@ -77,6 +96,10 @@ export async function manuallyLinkExpense(
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
+    // Validate both IDs are valid UUIDs
+    uuidSchema.parse(transactionId)
+    uuidSchema.parse(expenseId)
+
     const result = await linkTransactionToExpense(transactionId, expenseId, company.id, user.id!)
 
     return result
@@ -96,6 +119,9 @@ export async function unlinkExpense(transactionId: string): Promise<ActionResult
   try {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
+
+    // Validate transactionId is a valid UUID
+    uuidSchema.parse(transactionId)
 
     const result = await unlinkTransactionFromExpense(transactionId, company.id)
 
