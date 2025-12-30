@@ -102,10 +102,35 @@ export function ExpenseForm({ vendors, categories }: ExpenseFormProps) {
     return () => clearTimeout(timeoutId)
   }, [description, vendorName])
 
-  const handleExtracted = (data: ExtractedReceiptWithUrl) => {
+  const handleExtracted = async (data: ExtractedReceiptWithUrl) => {
     // Fill form with extracted data
     setVendorName(data.vendor)
-    if (data.vendorOib) setVendorOib(data.vendorOib)
+
+    // Try to match vendor by OIB if provided
+    if (data.vendorOib) {
+      setVendorOib(data.vendorOib)
+
+      // Search for vendor by OIB using the existing searchContacts action
+      try {
+        const { searchContacts } = await import("@/app/actions/contact")
+        const matchingContacts = await searchContacts(data.vendorOib)
+
+        if (matchingContacts && matchingContacts.length > 0) {
+          // Auto-select the first matching vendor
+          const vendor = matchingContacts[0]
+          setVendorId(vendor.id)
+          setVendorName(vendor.name)
+          toast.success(`Dobavljač pronađen: ${vendor.name}`)
+        } else {
+          // No vendor found, keep the extracted name and OIB for manual selection/creation
+          toast.info(`OIB dobavljača izvučen (${data.vendorOib}), ali dobavljač nije pronađen u bazi`)
+        }
+      } catch (error) {
+        console.error("Failed to search vendor by OIB:", error)
+        // Continue with extracted data even if search fails
+      }
+    }
+
     setDate(data.date)
 
     // Calculate net amount from total and VAT
