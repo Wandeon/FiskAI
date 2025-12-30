@@ -76,3 +76,95 @@ export function escapeHtml(content: string): string {
 
   return content.replace(/[&<>"'/]/g, (char) => htmlEscapeMap[char] || char)
 }
+
+/**
+ * Sanitize IP address for export by masking the last two octets.
+ * This reduces PII exposure while maintaining geographic location context.
+ * IPv4 addresses are masked to show only the first two octets.
+ * IPv6 addresses are masked to show only the first four segments.
+ *
+ * @param ipAddress - The IP address to sanitize
+ * @returns Masked IP address with last segments replaced by 'xxx'
+ *
+ * @example
+ * sanitizeIpAddress('192.168.1.100') // Returns: '192.168.xxx.xxx'
+ * sanitizeIpAddress('2001:0db8:85a3:0000:0000:8a2e:0370:7334') // Returns: '2001:0db8:85a3:0000:xxx:xxx:xxx:xxx'
+ * sanitizeIpAddress(null) // Returns: ''
+ */
+export function sanitizeIpAddress(ipAddress: string | null | undefined): string {
+  if (!ipAddress) return ""
+
+  // IPv6 detection (contains colons)
+  if (ipAddress.includes(":")) {
+    const segments = ipAddress.split(":")
+    if (segments.length >= 4) {
+      // Keep first 4 segments, mask the rest
+      return segments.slice(0, 4).join(":") + ":xxx:xxx:xxx:xxx"
+    }
+    return "xxx:xxx:xxx:xxx:xxx:xxx:xxx:xxx"
+  }
+
+  // IPv4 handling
+  const octets = ipAddress.split(".")
+  if (octets.length === 4) {
+    // Keep first two octets, mask last two
+    return `${octets[0]}.${octets[1]}.xxx.xxx`
+  }
+
+  // Invalid format - mask completely
+  return "xxx.xxx.xxx.xxx"
+}
+
+/**
+ * Sanitize user agent string by extracting only essential browser/OS information
+ * and removing detailed version numbers and system identifiers that could be used
+ * for fingerprinting.
+ *
+ * @param userAgent - The user agent string to sanitize
+ * @returns Normalized user agent with only browser family and OS type
+ *
+ * @example
+ * sanitizeUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+ * // Returns: 'Chrome/Windows'
+ *
+ * sanitizeUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)')
+ * // Returns: 'Safari/iOS'
+ *
+ * sanitizeUserAgent(null) // Returns: ''
+ */
+export function sanitizeUserAgent(userAgent: string | null | undefined): string {
+  if (!userAgent) return ""
+
+  // Normalize to lowercase for matching
+  const ua = userAgent.toLowerCase()
+
+  // Detect browser family
+  let browser = "Other"
+  if (ua.includes("edg/")) {
+    browser = "Edge"
+  } else if (ua.includes("chrome/") || ua.includes("crios/")) {
+    browser = "Chrome"
+  } else if (ua.includes("firefox/") || ua.includes("fxios/")) {
+    browser = "Firefox"
+  } else if (ua.includes("safari/") && !ua.includes("chrome")) {
+    browser = "Safari"
+  } else if (ua.includes("opera/") || ua.includes("opr/")) {
+    browser = "Opera"
+  }
+
+  // Detect OS family
+  let os = "Other"
+  if (ua.includes("windows")) {
+    os = "Windows"
+  } else if (ua.includes("mac os x") || ua.includes("macintosh")) {
+    os = "macOS"
+  } else if (ua.includes("iphone") || ua.includes("ipad")) {
+    os = "iOS"
+  } else if (ua.includes("android")) {
+    os = "Android"
+  } else if (ua.includes("linux")) {
+    os = "Linux"
+  }
+
+  return `${browser}/${os}`
+}

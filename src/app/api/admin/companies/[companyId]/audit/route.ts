@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
+import { sanitizeIpAddress, sanitizeUserAgent } from "@/lib/security/sanitize"
+import { sanitizeCsvValue } from "@/lib/csv-sanitize"
+import { logAudit, getIpFromHeaders, getUserAgentFromHeaders } from "@/lib/audit"
 
 export async function GET(
   request: NextRequest,
@@ -22,20 +25,38 @@ export async function GET(
     take: limit,
   })
 
+  // Sanitize PII data before export
   const rows = [
     ["timestamp", "action", "entity", "entityId", "userId", "ipAddress", "userAgent"].join(","),
     ...logs.map((log) =>
       [
-        log.timestamp.toISOString(),
-        log.action,
-        log.entity,
-        log.entityId,
-        log.userId ?? "",
-        log.ipAddress ?? "",
-        (log.userAgent ?? "").replace(/"/g, "'"),
+        sanitizeCsvValue(log.timestamp.toISOString()),
+        sanitizeCsvValue(log.action),
+        sanitizeCsvValue(log.entity),
+        sanitizeCsvValue(log.entityId),
+        sanitizeCsvValue(log.userId ?? ""),
+        sanitizeCsvValue(sanitizeIpAddress(log.ipAddress)),
+        sanitizeCsvValue(sanitizeUserAgent(log.userAgent)),
       ].join(",")
     ),
   ].join("\n")
+
+  // Log the audit export action
+  await logAudit({
+    companyId,
+    userId: user.id,
+    action: "EXPORT",
+    entity: "AuditLog",
+    entityId: companyId,
+    changes: {
+      after: {
+        exportedRecords: logs.length,
+        limit,
+      },
+    },
+    ipAddress: getIpFromHeaders(request.headers),
+    userAgent: getUserAgentFromHeaders(request.headers),
+  })
 
   return new NextResponse(rows, {
     status: 200,
