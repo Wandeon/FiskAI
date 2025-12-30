@@ -66,9 +66,7 @@ export function normalizePersonUpdate(
   const fullName = input.fullName ?? existing.fullName
   const { display, normalized } = normalizeName(fullName)
 
-  const iban = normalizeIban(
-    input.iban === undefined ? existing.iban : input.iban || null
-  )
+  const iban = normalizeIban(input.iban === undefined ? existing.iban : input.iban || null)
   if (input.iban !== undefined) {
     validateIbanOrThrow(iban)
   }

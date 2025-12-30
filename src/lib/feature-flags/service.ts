@@ -9,6 +9,7 @@
  */
 
 import { prisma } from "@/lib/prisma"
+import { computeAuditChecksum } from "@/lib/audit-utils"
 import type {
   FeatureFlag,
   FeatureFlagOverride,
@@ -279,6 +280,18 @@ export async function createFlag(
   input: CreateFeatureFlagInput,
   userId: string
 ): Promise<FeatureFlag> {
+  const checksum = computeAuditChecksum({
+    key: input.key,
+    name: input.name,
+    description: input.description,
+    scope: input.scope ?? "GLOBAL",
+    status: input.status ?? "INACTIVE",
+    defaultValue: input.defaultValue ?? false,
+    rolloutPercentage: input.rolloutPercentage ?? 0,
+    category: input.category,
+    tags: input.tags ?? [],
+  })
+
   const flag = await prisma.featureFlag.create({
     data: {
       key: input.key,
@@ -290,6 +303,7 @@ export async function createFlag(
       rolloutPercentage: input.rolloutPercentage ?? 0,
       category: input.category,
       tags: input.tags ?? [],
+      checksum,
       createdBy: userId,
       updatedBy: userId,
     },
@@ -325,6 +339,17 @@ export async function updateFlag(
     where: { id },
     data: {
       ...input,
+      checksum: computeAuditChecksum({
+        key: previous.key,
+        name: input.name ?? previous.name,
+        description: input.description ?? previous.description,
+        scope: input.scope ?? previous.scope,
+        status: input.status ?? previous.status,
+        defaultValue: input.defaultValue ?? previous.defaultValue,
+        rolloutPercentage: input.rolloutPercentage ?? previous.rolloutPercentage,
+        category: input.category ?? previous.category,
+        tags: input.tags ?? previous.tags,
+      }),
       updatedBy: userId,
     },
   })

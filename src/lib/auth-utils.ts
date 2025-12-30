@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { db, runWithTenant } from "@/lib/db"
+import { runWithAuditContext } from "@/lib/audit-context"
 import { redirect } from "next/navigation"
 import type { User, Company } from "@prisma/client"
 import { requirePermission, type Permission } from "@/lib/rbac"
@@ -210,9 +211,11 @@ export async function requireCompanyWithContext<T>(
 
   const company = await requireCompany(userId)
 
-  return runWithTenant({ companyId: company.id, userId }, async () => {
-    return fn(company, user)
-  })
+  return runWithTenant({ companyId: company.id, userId }, async () =>
+    runWithAuditContext({ actorId: userId, reason: "user_request" }, async () => {
+      return fn(company, user)
+    })
+  )
 }
 
 /**
@@ -257,7 +260,9 @@ export async function requireCompanyWithPermission<T>(
   // Check permission before executing the callback
   await requirePermission(userId, company.id, permission)
 
-  return runWithTenant({ companyId: company.id, userId }, async () => {
-    return fn(company, user)
-  })
+  return runWithTenant({ companyId: company.id, userId }, async () =>
+    runWithAuditContext({ actorId: userId, reason: "user_request" }, async () => {
+      return fn(company, user)
+    })
+  )
 }

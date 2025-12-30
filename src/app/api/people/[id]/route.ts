@@ -12,10 +12,7 @@ import { Prisma } from "@prisma/client"
 
 const updateSchema = personSchema.partial()
 
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -44,10 +41,7 @@ export async function GET(
   return NextResponse.json({ data: person })
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -66,7 +60,10 @@ export async function PATCH(
     const body = await request.json()
     const parsed = updateSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload", details: parsed.error.format() }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.format() },
+        { status: 400 }
+      )
     }
 
     const person = await runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
@@ -82,7 +79,10 @@ export async function PATCH(
 
         const normalized = normalizePersonUpdate(parsed.data, existing)
 
-        const roleEvents: Array<{ type: Prisma.PersonEventType; payload: Record<string, unknown> }> = []
+        const roleEvents: Array<{
+          type: Prisma.PersonEventType
+          payload: Record<string, unknown>
+        }> = []
 
         if (normalized.roles !== undefined) {
           const contactInput = normalized.roles?.contact
@@ -250,10 +250,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
