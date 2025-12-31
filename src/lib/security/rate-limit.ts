@@ -1,7 +1,6 @@
 // src/lib/security/rate-limit.ts
 // Rate limiting and account security utilities with Redis backend for multi-instance support
-
-import { redis } from "@/lib/regulatory-truth/workers/redis"
+// NOTE: This module is Edge Runtime compatible - uses lazy loading for Redis
 
 interface RateLimitRecord {
   count: number
@@ -11,6 +10,26 @@ interface RateLimitRecord {
 
 // Redis key prefix for rate limiting
 const RATE_LIMIT_PREFIX = "rate-limit:"
+
+// Lazy-loaded Redis client to avoid Edge Runtime issues
+let redisClient: Awaited<typeof import("@/lib/regulatory-truth/workers/redis")>["redis"] | null =
+  null
+
+async function getRedis() {
+  if (redisClient) return redisClient
+  // Dynamic import to avoid Edge Runtime bundling issues
+  const { redis } = await import("@/lib/regulatory-truth/workers/redis")
+  redisClient = redis
+  return redisClient
+}
+
+// Detect Edge Runtime
+function isEdgeRuntime(): boolean {
+  return typeof (globalThis as unknown as { EdgeRuntime?: unknown }).EdgeRuntime !== "undefined"
+}
+
+// In-memory fallback for Edge Runtime and Redis failures
+const inMemoryFallback = new Map<string, RateLimitRecord>()
 
 export const RATE_LIMITS = {
   LOGIN: {
@@ -43,6 +62,11 @@ export const RATE_LIMITS = {
     window: 15 * 60 * 1000, // 15 minutes
     blockDuration: 15 * 60 * 1000,
   },
+  UNAUTHENTICATED_TRAFFIC: {
+    attempts: 100, // 100 requests per window
+    window: 60 * 1000, // 1 minute
+    blockDuration: 60 * 1000, // 1 minute block
+  },
 }
 
 /**
@@ -54,16 +78,23 @@ function getKey(identifier: string, limitType: string): string {
 
 /**
  * Check if an identifier has exceeded rate limits (async Redis-based)
+ * Falls back to in-memory when in Edge Runtime or Redis unavailable
  */
 export async function checkRateLimit(
   identifier: string,
   limitType: keyof typeof RATE_LIMITS = "API_CALLS"
 ): Promise<{ allowed: boolean; resetAt?: number; blockedUntil?: number }> {
+  // In Edge Runtime, use in-memory fallback (ioredis doesn't work in Edge)
+  if (isEdgeRuntime()) {
+    return checkRateLimitInMemory(identifier, limitType)
+  }
+
   const now = Date.now()
   const limit = RATE_LIMITS[limitType]
   const key = getKey(identifier, limitType)
 
   try {
+    const redis = await getRedis()
     const data = await redis.get(key)
     const record: RateLimitRecord | null = data ? JSON.parse(data) : null
 
@@ -129,10 +160,49 @@ export async function checkRateLimit(
 
     return { allowed: true, resetAt: record.resetAt }
   } catch (error) {
-    // If Redis is unavailable, fail open but log the error
-    console.error("[rate-limit] Redis error, allowing request:", error)
-    return { allowed: true }
+    // If Redis is unavailable, fall back to in-memory
+    console.error("[rate-limit] Redis error, using in-memory fallback:", error)
+    return checkRateLimitInMemory(identifier, limitType)
   }
+}
+
+/**
+ * In-memory rate limit check (for Edge Runtime and fallback)
+ */
+function checkRateLimitInMemory(
+  identifier: string,
+  limitType: keyof typeof RATE_LIMITS
+): { allowed: boolean; resetAt?: number; blockedUntil?: number } {
+  const now = Date.now()
+  const limit = RATE_LIMITS[limitType]
+  const key = getKey(identifier, limitType)
+  const record = inMemoryFallback.get(key)
+
+  if (!record) {
+    inMemoryFallback.set(key, { count: 1, resetAt: now + limit.window })
+    return { allowed: true, resetAt: now + limit.window }
+  }
+
+  if (record.blockedUntil && record.blockedUntil > now) {
+    return { allowed: false, resetAt: record.resetAt, blockedUntil: record.blockedUntil }
+  }
+
+  if (record.resetAt < now) {
+    inMemoryFallback.set(key, { count: 1, resetAt: now + limit.window })
+    return { allowed: true, resetAt: now + limit.window }
+  }
+
+  if (record.count >= limit.attempts) {
+    inMemoryFallback.set(key, {
+      count: record.count + 1,
+      resetAt: record.resetAt,
+      blockedUntil: now + limit.blockDuration,
+    })
+    return { allowed: false, resetAt: record.resetAt, blockedUntil: now + limit.blockDuration }
+  }
+
+  inMemoryFallback.set(key, { ...record, count: record.count + 1 })
+  return { allowed: true, resetAt: record.resetAt }
 }
 
 /**
@@ -140,8 +210,6 @@ export async function checkRateLimit(
  * Uses in-memory fallback when Redis is not immediately available
  * NOTE: This will not work across instances - use async checkRateLimit where possible
  */
-const inMemoryFallback = new Map<string, RateLimitRecord>()
-
 export function checkRateLimitSync(
   identifier: string,
   limitType: keyof typeof RATE_LIMITS = "API_CALLS"
@@ -190,13 +258,19 @@ export function checkRateLimitSync(
 export async function resetRateLimit(identifier: string): Promise<void> {
   // Reset all limit types for this identifier
   const limitTypes = Object.keys(RATE_LIMITS) as (keyof typeof RATE_LIMITS)[]
+
+  // Clear from in-memory fallback first
+  limitTypes.forEach((type) => inMemoryFallback.delete(getKey(identifier, type)))
+
+  // Skip Redis in Edge Runtime
+  if (isEdgeRuntime()) return
+
   try {
+    const redis = await getRedis()
     await Promise.all(limitTypes.map((type) => redis.del(getKey(identifier, type))))
   } catch (error) {
     console.error("[rate-limit] Redis error during reset:", error)
   }
-  // Also clear from fallback
-  limitTypes.forEach((type) => inMemoryFallback.delete(getKey(identifier, type)))
 }
 
 /**
@@ -206,11 +280,17 @@ export async function getRateLimitInfo(
   identifier: string,
   limitType: keyof typeof RATE_LIMITS = "API_CALLS"
 ): Promise<RateLimitRecord | undefined> {
+  // In Edge Runtime, use in-memory fallback
+  if (isEdgeRuntime()) {
+    return inMemoryFallback.get(getKey(identifier, limitType))
+  }
+
   try {
+    const redis = await getRedis()
     const data = await redis.get(getKey(identifier, limitType))
     return data ? JSON.parse(data) : undefined
   } catch (error) {
     console.error("[rate-limit] Redis error during info fetch:", error)
-    return undefined
+    return inMemoryFallback.get(getKey(identifier, limitType))
   }
 }
