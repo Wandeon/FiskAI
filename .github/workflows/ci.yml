@@ -173,6 +173,10 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Create test schema
+        run: |
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS \"test_${{ github.run_id }}\";"
+
       - name: Apply migrations
         run: npx prisma migrate deploy
 
