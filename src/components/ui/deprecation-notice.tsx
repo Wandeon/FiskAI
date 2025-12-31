@@ -29,7 +29,7 @@ const deprecationNoticeVariants = cva("relative rounded-lg border p-4", {
 export interface DeprecationNoticeProps
   extends
     React.HTMLAttributes<HTMLDivElement>,
-    Partial<DeprecationNoticeOptions>,
+    Omit<Partial<DeprecationNoticeOptions>, "prominence">,
     VariantProps<typeof deprecationNoticeVariants> {
   /** Feature ID to look up deprecation info */
   featureId?: string

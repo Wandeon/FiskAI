@@ -125,7 +125,7 @@ export async function extractReceipt(
       }
       return {
         success: false,
-        error: `Invalid extraction format: ${validationResult.error.errors.map((e) => e.message).join(", ")}`,
+        error: `Invalid extraction format: ${validationResult.error.issues.map((e) => e.message).join(", ")}`,
         rawText: text,
       }
     }
@@ -247,7 +247,7 @@ export async function extractInvoice(
       }
       return {
         success: false,
-        error: `Invalid extraction format: ${validationResult.error.errors.map((e) => e.message).join(", ")}`,
+        error: `Invalid extraction format: ${validationResult.error.issues.map((e) => e.message).join(", ")}`,
         rawText: text,
       }
     }

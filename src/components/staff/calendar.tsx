@@ -43,7 +43,7 @@ async function getStaffDeadlines(userId: string): Promise<DeadlineWithClient[]> 
     where: {
       companyId: { in: companyIds },
       dueDate: { gte: now, lte: nextMonth },
-      status: { notIn: ["SENT", "ARCHIVED", "PAID"] },
+      status: { notIn: ["SENT", "ARCHIVED", "ACCEPTED"] },
     },
     select: {
       id: true,
@@ -68,23 +68,25 @@ async function getStaffDeadlines(userId: string): Promise<DeadlineWithClient[]> 
       description: d.description,
       source: "compliance" as const,
     })),
-    // Invoice deadlines - client-specific
-    ...invoiceDeadlines.map((inv) => ({
-      id: `invoice-${inv.id}`,
-      title: `Invoice ${inv.invoiceNumber} - ${inv.status}`,
-      deadlineDate: inv.dueDate,
-      deadlineType: "invoice",
-      severity:
-        getDaysUntil(inv.dueDate) <= 3
-          ? "critical"
-          : getDaysUntil(inv.dueDate) <= 7
-            ? "high"
-            : "normal",
-      description: `Amount: ${Number(inv.totalAmount).toFixed(2)} EUR`,
-      clientId: inv.companyId,
-      clientName: companyMap.get(inv.companyId),
-      source: "invoice" as const,
-    })),
+    // Invoice deadlines - client-specific (filter out invoices with no due date)
+    ...invoiceDeadlines
+      .filter((inv) => inv.dueDate !== null)
+      .map((inv) => ({
+        id: `invoice-${inv.id}`,
+        title: `Invoice ${inv.invoiceNumber} - ${inv.status}`,
+        deadlineDate: inv.dueDate!,
+        deadlineType: "invoice",
+        severity:
+          getDaysUntil(inv.dueDate!) <= 3
+            ? "critical"
+            : getDaysUntil(inv.dueDate!) <= 7
+              ? "high"
+              : "normal",
+        description: `Amount: ${Number(inv.totalAmount).toFixed(2)} EUR`,
+        clientId: inv.companyId,
+        clientName: companyMap.get(inv.companyId),
+        source: "invoice" as const,
+      })),
   ]
 
   // Sort by date

@@ -23,6 +23,8 @@ const buttonVariants = cva(
       size: {
         sm: "h-8 px-3 text-body-sm",
         md: "h-10 px-4 text-body-base",
+        // Backward compatibility alias for md
+        default: "h-10 px-4 text-body-base",
         lg: "h-12 px-6 text-body-lg",
         icon: "h-10 w-10",
       },

@@ -78,7 +78,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       newStatus: newStatus,
       changedByUserId: user.id!,
       changedByName: user.name,
-      changedByEmail: user.email,
+      changedByEmail: user.email ?? "",
       companyId: company.id,
       companyName: company.name,
     }).catch((error) => {

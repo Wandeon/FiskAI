@@ -5,6 +5,7 @@ export {
   login,
   logout,
   requestPasswordReset,
+  validatePasswordResetToken,
   resetPassword,
   loginWithPasskey,
   verifyEmail,

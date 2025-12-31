@@ -67,6 +67,46 @@ export const RATE_LIMITS = {
     window: 60 * 1000, // 1 minute
     blockDuration: 60 * 1000, // 1 minute block
   },
+  STAFF_API: {
+    attempts: 200, // Staff portal API calls
+    window: 15 * 60 * 1000, // 15 minutes
+    blockDuration: 15 * 60 * 1000,
+  },
+  STAFF_BULK_EXPORT: {
+    attempts: 10, // Bulk export operations
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
+  NEWSLETTER_IP: {
+    attempts: 5, // Newsletter signups per IP
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
+  NEWSLETTER_EMAIL: {
+    attempts: 3, // Newsletter signups per email
+    window: 24 * 60 * 60 * 1000, // 24 hours
+    blockDuration: 24 * 60 * 60 * 1000,
+  },
+  CONTACT_FORM: {
+    attempts: 5, // Contact form submissions
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
+  ADMIN_EXPORT: {
+    attempts: 10, // Admin export operations
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
+  SUPPORT_TICKET: {
+    attempts: 10, // Support ticket creations
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
+  EXPORT: {
+    attempts: 10, // Generic export operations (backup/restore)
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
 }
 
 /**

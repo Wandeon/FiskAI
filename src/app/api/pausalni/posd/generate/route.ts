@@ -105,7 +105,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
 
     // Return based on format
     if (format === "pdf") {
-      return new NextResponse(pdfBuffer, {
+      return new NextResponse(pdfBuffer ? new Uint8Array(pdfBuffer) : null, {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",

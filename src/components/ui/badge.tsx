@@ -19,10 +19,17 @@ const badgeVariants = cva(
         info: "bg-info-bg text-info-text border border-info-border",
         outline: "border border-border text-foreground bg-transparent",
         tech: "bg-primary/10 text-primary border border-primary/20",
+        category: "bg-white/10 text-white border border-white/20 backdrop-blur-sm",
+      },
+      size: {
+        sm: "px-2 py-0.5 text-xs",
+        default: "px-2.5 py-0.5 text-body-xs",
+        lg: "px-3 py-1 text-sm",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )
@@ -36,7 +43,7 @@ export interface BadgeProps
 }
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant, status, statusDescription, ...props }, ref) => {
+  ({ className, variant, size, status, statusDescription, ...props }, ref) => {
     // Generate aria-label from status if provided and no explicit aria-label exists
     const ariaLabel =
       props["aria-label"] ?? (status ? getStatusAriaLabel(status, statusDescription) : undefined)
@@ -45,7 +52,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       <div
         ref={ref}
         role="status"
-        className={cn(badgeVariants({ variant, className }))}
+        className={cn(badgeVariants({ variant, size, className }))}
         aria-label={ariaLabel}
         {...props}
       />

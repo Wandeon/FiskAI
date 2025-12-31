@@ -52,7 +52,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       return NextResponse.json({ error: "File missing" }, { status: 404 })
     }
 
-    return new NextResponse(data, {
+    return new NextResponse(new Uint8Array(data), {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `inline; filename="${job.originalName}"`,

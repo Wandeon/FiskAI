@@ -60,7 +60,7 @@ async function getClientOverview(companyId: string) {
       db.expense.aggregate({
         where: { companyId },
         _count: { id: true },
-        _sum: { amount: true },
+        _sum: { totalAmount: true },
       }),
       db.document.count({ where: { companyId } }),
       db.contact.count({ where: { companyId } }),
@@ -111,7 +111,7 @@ export default async function ClientOverviewPage({ params }: PageProps) {
   }
 
   const totalRevenue = Number(invoiceStats._sum.totalAmount || 0)
-  const totalExpenses = Number(expenseStats._sum.amount || 0)
+  const totalExpenses = Number(expenseStats._sum.totalAmount || 0)
 
   return (
     <div className="space-y-6">

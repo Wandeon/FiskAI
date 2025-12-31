@@ -1,8 +1,9 @@
 "use client"
 
-import Link, { type LinkProps } from "next/link"
+import Link from "next/link"
 import { forwardRef, type ComponentPropsWithoutRef } from "react"
 import { routes, type RouteId, type Locale } from "@/config/routes"
+import { cn } from "@/lib/utils"
 
 // =============================================================================
 // SmartLink - Type-safe route linking

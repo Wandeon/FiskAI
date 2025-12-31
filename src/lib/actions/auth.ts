@@ -219,7 +219,11 @@ export async function requestPasswordReset(email: string) {
   }
 }
 
-export async function resetPassword(token: string, newPassword: string) {
+/**
+ * Validates a password reset token and returns a session ID.
+ * This converts a one-time URL token into a secure session for password reset.
+ */
+export async function validatePasswordResetToken(token: string) {
   try {
     // Find token and validate it hasn't expired
     const resetToken = await db.passwordResetToken.findUnique({
@@ -237,6 +241,48 @@ export async function resetPassword(token: string, newPassword: string) {
         where: { id: resetToken.id },
       })
       return { error: "Token je istekao. Molimo zatražite novo resetiranje lozinke." }
+    }
+
+    // Generate a session ID that can be used for the actual password reset
+    // This prevents the token from being exposed in session storage
+    const crypto = await import("crypto")
+    const sessionId = crypto.randomBytes(32).toString("hex")
+
+    // Update the token with the session ID (we'll verify this when resetting)
+    await db.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: {
+        // Store sessionId in a way we can verify later
+        // We'll use the token field itself since we're converting from URL token to session
+        token: sessionId,
+      },
+    })
+
+    return { sessionId }
+  } catch (error) {
+    console.error("Token validation error:", error)
+    return { error: "Došlo je do greške prilikom validacije tokena" }
+  }
+}
+
+export async function resetPassword(sessionId: string, newPassword: string) {
+  try {
+    // Find token by session ID and validate it hasn't expired
+    const resetToken = await db.passwordResetToken.findUnique({
+      where: { token: sessionId },
+      include: { user: true },
+    })
+
+    if (!resetToken) {
+      return { error: "Sesija je nevažeća ili je istekla" }
+    }
+
+    if (new Date() > resetToken.expiresAt) {
+      // Delete expired token
+      await db.passwordResetToken.delete({
+        where: { id: resetToken.id },
+      })
+      return { error: "Sesija je istekla. Molimo zatražite novo resetiranje lozinke." }
     }
 
     // Hash the new password

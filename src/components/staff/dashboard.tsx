@@ -39,7 +39,7 @@ async function getStaffStats(userId: string) {
     where: { id: { in: companyIds } },
     select: {
       id: true,
-      vatRegistered: true,
+      isVatPayer: true,
       entitlements: true,
     },
   })
@@ -93,7 +93,7 @@ async function getStaffStats(userId: string) {
         deadline.deadline_type.toLowerCase().includes("vat") ||
         deadline.deadline_type.toLowerCase().includes("pdv")
       ) {
-        return company.vatRegistered === true
+        return company.isVatPayer === true
       }
 
       // Check entitlements if applies_to has module requirements
@@ -101,7 +101,7 @@ async function getStaffStats(userId: string) {
         const entitlements = (company.entitlements as string[]) || []
         return appliesTo.some((requirement) => {
           if (requirement === "all") return true
-          if (requirement === "vat" && company.vatRegistered) return true
+          if (requirement === "vat" && company.isVatPayer) return true
           return entitlements.includes(requirement)
         })
       }
@@ -162,7 +162,7 @@ async function getUpcomingDeadlineDetails(
     where: { id: { in: companyIds } },
     select: {
       id: true,
-      vatRegistered: true,
+      isVatPayer: true,
       entitlements: true,
     },
   })
@@ -200,14 +200,14 @@ async function getUpcomingDeadlineDetails(
         deadline.deadline_type.toLowerCase().includes("vat") ||
         deadline.deadline_type.toLowerCase().includes("pdv")
       ) {
-        return company.vatRegistered === true
+        return company.isVatPayer === true
       }
 
       if (Array.isArray(appliesTo)) {
         const entitlements = (company.entitlements as string[]) || []
         return appliesTo.some((requirement) => {
           if (requirement === "all") return true
-          if (requirement === "vat" && company.vatRegistered) return true
+          if (requirement === "vat" && company.isVatPayer) return true
           return entitlements.includes(requirement)
         })
       }
@@ -447,13 +447,13 @@ export async function StaffDashboard() {
             <div className="text-2xl font-bold">{stats.upcomingDeadlines}</div>
             {stats.upcomingDeadlines > 0 && (
               <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                {stats.urgentDeadlines > 0 && (
+                {(stats.urgentDeadlines ?? 0) > 0 && (
                   <div className="flex items-center gap-1">
                     <AlertCircle className="h-3 w-3 text-warning-text" />
                     <span>{stats.urgentDeadlines} within 7 days</span>
                   </div>
                 )}
-                {stats.criticalDeadlines > 0 && (
+                {(stats.criticalDeadlines ?? 0) > 0 && (
                   <div className="flex items-center gap-1">
                     <AlertCircle className="h-3 w-3 text-danger-text" />
                     <span>{stats.criticalDeadlines} critical</span>

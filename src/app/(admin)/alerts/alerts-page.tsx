@@ -86,7 +86,7 @@ export function AlertsPage({ alerts }: AlertsPageProps) {
       router.refresh()
     } catch (error) {
       console.error(`Error ${action} alert:`, error)
-      alert(`Failed to ${action} alert. Please try again.`)
+      window.alert(`Failed to ${action} alert. Please try again.`)
     } finally {
       setLoadingAlerts((prev) => {
         const newSet = new Set(prev)

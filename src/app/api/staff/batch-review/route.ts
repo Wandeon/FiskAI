@@ -9,7 +9,7 @@ const batchReviewSchema = z.object({
   companyId: z.string(),
   reviews: z.array(
     z.object({
-      entityType: z.enum(["INVOICE", "EXPENSE"]),
+      entityType: z.enum(["EINVOICE", "EXPENSE", "DOCUMENT"]),
       entityId: z.string(),
       notes: z.string().optional(),
     })

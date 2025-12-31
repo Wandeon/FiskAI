@@ -143,6 +143,7 @@ const EVENT_TYPE_LABELS: Record<SystemStatusEventType, string> = {
   UNKNOWN_INTEGRATION: "Unknown Integration Detected",
   REFRESH_FAILED: "Refresh Failed",
   REFRESH_DEGRADED: "Refresh Degraded",
+  CIRCUIT_BREAKER_RESET: "Circuit Breaker Reset",
 }
 
 export function SystemStatusPage({

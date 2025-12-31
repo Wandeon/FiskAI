@@ -11,6 +11,8 @@ const alertVariants = cva(
         success: "bg-success-bg text-success-text border-success-border [&>svg]:text-success-icon",
         warning: "bg-warning-bg text-warning-text border-warning-border [&>svg]:text-warning-icon",
         danger: "bg-danger-bg text-danger-text border-danger-border [&>svg]:text-danger-icon",
+        // Backward compatibility alias for danger
+        destructive: "bg-danger-bg text-danger-text border-danger-border [&>svg]:text-danger-icon",
         info: "bg-info-bg text-info-text border-info-border [&>svg]:text-info-icon",
       },
     },

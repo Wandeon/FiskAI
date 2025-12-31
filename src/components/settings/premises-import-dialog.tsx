@@ -54,7 +54,7 @@ export function PremisesImportDialog({ companyId, isOpen, onClose }: PremisesImp
 
     try {
       const text = await file.text()
-      const { rows, errors } = parsePremisesCsv(text)
+      const { rows, errors } = await parsePremisesCsv(text)
 
       setParsedRows(rows)
       setParseErrors(errors)

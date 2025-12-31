@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       webp: "image/webp",
     }
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": mimeTypes[ext] || "application/octet-stream",
         "Content-Disposition": `inline; filename="${job.originalName}"`,

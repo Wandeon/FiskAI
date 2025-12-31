@@ -221,7 +221,7 @@ ${context.companyContext.vatStatus ? `PDV status: ${context.companyContext.vatSt
         assistantLogger.warn(
           {
             parsed,
-            errors: validationResult.error.errors.map((e) => e.message),
+            errors: validationResult.error.issues.map((e) => e.message),
           },
           "Invalid LLM response: schema validation failed"
         )
@@ -360,7 +360,7 @@ GENERIRAJ sveobuhvatan odgovor koji objašnjava kako se ova pravila primjenjuju:
       assistantLogger.warn(
         {
           parsed,
-          errors: validationResult.error.errors.map((e) => e.message),
+          errors: validationResult.error.issues.map((e) => e.message),
         },
         "Invalid multi-rule LLM response: schema validation failed"
       )

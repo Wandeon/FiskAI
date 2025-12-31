@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { FolderOpen, Download, Eye, FileText, Receipt, File } from "lucide-react"
 import Link from "next/link"
+import type { DocumentStatus, Prisma } from "@prisma/client"
 
 interface PageProps {
   params: Promise<{ clientId: string }>
@@ -33,8 +34,8 @@ type DocumentItem = {
   id: string
   name: string
   category: string
-  status: string
-  totalAmount: number | null
+  status: DocumentStatus
+  totalAmount: Prisma.Decimal | null
   currency: string | null
   uploadedAt: Date
   mimeType: string | null

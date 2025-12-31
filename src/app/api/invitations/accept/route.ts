@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const validation = acceptInvitationSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 })
+      return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 })
     }
 
     const { token, name, password } = validation.data
@@ -75,17 +75,24 @@ export async function POST(request: NextRequest) {
         data: {
           email: invitation.email,
           name,
-          password: hashedPassword,
+          passwordHash: hashedPassword,
           systemRole: "USER",
         },
       })
 
-      // Create company if companyName was provided
+      // Create company if companyName was provided (minimal, user completes in onboarding)
       let company = null
       if (invitation.companyName) {
+        // Generate a placeholder OIB that must be updated during onboarding
+        const placeholderOib = `PENDING_${Date.now()}`
         company = await tx.company.create({
           data: {
             name: invitation.companyName,
+            oib: placeholderOib,
+            address: "",
+            city: "",
+            postalCode: "",
+            country: "HR",
             entitlements: ["invoicing", "contacts", "products", "expenses"],
           },
         })
@@ -104,6 +111,7 @@ export async function POST(request: NextRequest) {
           data: {
             staffId: invitation.staffId,
             companyId: company.id,
+            assignedBy: invitation.staffId, // Staff member assigned themselves via invitation
           },
         })
 

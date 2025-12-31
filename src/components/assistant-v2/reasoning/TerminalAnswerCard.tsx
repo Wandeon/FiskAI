@@ -230,7 +230,7 @@ function ErrorCard({ payload, className }: { payload: ErrorPayload; className?: 
       <div className="p-4">
         <p className="text-secondary">{payload.message}</p>
 
-        {payload.retryable && (
+        {payload.retriable && (
           <button className="mt-4 px-4 py-2 bg-interactive text-white rounded-lg hover:bg-interactive-hover transition-colors">
             Pokušaj ponovo
           </button>
