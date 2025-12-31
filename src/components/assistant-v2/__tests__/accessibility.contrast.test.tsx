@@ -46,12 +46,12 @@ describe("Color Contrast - Badge Components", () => {
   })
 
   describe("AuthorityBadge", () => {
-    it("LAW uses purple-100/purple-800 (passes 4.5:1)", () => {
+    it("LAW uses surface-1/secondary (passes 4.5:1)", () => {
       const { container } = render(<AuthorityBadge authority="LAW" />)
       const badge = container.firstChild as HTMLElement
 
-      expect(badge.className).toContain("bg-chart-2/10")
-      expect(badge.className).toContain("text-chart-1")
+      expect(badge.className).toContain("bg-surface-1")
+      expect(badge.className).toContain("text-secondary")
     })
 
     it("REGULATION uses blue-100/blue-800 (passes 4.5:1)", () => {
@@ -70,12 +70,12 @@ describe("Color Contrast - Badge Components", () => {
       expect(badge.className).toContain("text-success-text")
     })
 
-    it("PRACTICE uses gray-100/gray-800 (passes 4.5:1)", () => {
+    it("PRACTICE uses surface-1/secondary (passes 4.5:1)", () => {
       const { container } = render(<AuthorityBadge authority="PRACTICE" />)
       const badge = container.firstChild as HTMLElement
 
-      expect(badge.className).toContain("bg-surface-2")
-      expect(badge.className).toContain("text-foreground")
+      expect(badge.className).toContain("bg-surface-1")
+      expect(badge.className).toContain("text-secondary")
     })
   })
 })
