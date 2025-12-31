@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { switchCompany } from "@/app/actions/company-switch"
+import { switchCompany } from "@/lib/actions/company-switch"
 
 type Company = {
   id: string

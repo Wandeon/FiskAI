@@ -123,7 +123,11 @@ function validateParty(party: Party, role: "seller" | "buyer"): ValidationError[
   if (!party.oib) {
     errors.push({ field: `${prefix}.oib`, message: `${role} OIB is required`, code: "REQUIRED" })
   } else if (!validateOIB(party.oib)) {
-    errors.push({ field: `${prefix}.oib`, message: `Invalid OIB: ${party.oib}`, code: "INVALID_OIB" })
+    errors.push({
+      field: `${prefix}.oib`,
+      message: `Invalid OIB: ${party.oib}`,
+      code: "INVALID_OIB",
+    })
   }
 
   return errors
@@ -143,7 +147,11 @@ function validateInvoice(invoice: EInvoice): ValidationResult {
   errors.push(...validateParty(invoice.buyer, "buyer"))
 
   if (!invoice.lines?.length) {
-    errors.push({ field: "lines", message: "At least one invoice line is required", code: "REQUIRED" })
+    errors.push({
+      field: "lines",
+      message: "At least one invoice line is required",
+      code: "REQUIRED",
+    })
   }
 
   return { valid: errors.length === 0, errors }
@@ -225,7 +233,7 @@ ${ind}    <cbc:PriceAmount currencyID="${currencyCode}">${line.unitPrice.toFixed
 ${ind}  </cac:Price>
 ${ind}</cac:InvoiceLine>`
 
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
@@ -240,7 +248,9 @@ ${generateParty(invoice.seller, "supplier", indent)}
 ${generateParty(invoice.buyer, "customer", indent)}
 ${indent}<cac:TaxTotal>
 ${indent}  <cbc:TaxAmount currencyID="${currencyCode}">${invoice.taxTotal.taxAmount.toFixed(2)}</cbc:TaxAmount>
-${invoice.taxTotal.taxSubtotals.map(s => `${indent}  <cac:TaxSubtotal>
+${invoice.taxTotal.taxSubtotals
+  .map(
+    (s) => `${indent}  <cac:TaxSubtotal>
 ${indent}    <cbc:TaxableAmount currencyID="${currencyCode}">${s.taxableAmount.toFixed(2)}</cbc:TaxableAmount>
 ${indent}    <cbc:TaxAmount currencyID="${currencyCode}">${s.taxAmount.toFixed(2)}</cbc:TaxAmount>
 ${indent}    <cac:TaxCategory>
@@ -250,7 +260,9 @@ ${indent}      <cac:TaxScheme>
 ${indent}        <cbc:ID>VAT</cbc:ID>
 ${indent}      </cac:TaxScheme>
 ${indent}    </cac:TaxCategory>
-${indent}  </cac:TaxSubtotal>`).join("\n")}
+${indent}  </cac:TaxSubtotal>`
+  )
+  .join("\n")}
 ${indent}</cac:TaxTotal>
 ${indent}<cac:LegalMonetaryTotal>
 ${indent}  <cbc:LineExtensionAmount currencyID="${currencyCode}">${invoice.legalMonetaryTotal.lineExtensionAmount.toFixed(2)}</cbc:LineExtensionAmount>
@@ -258,7 +270,7 @@ ${indent}  <cbc:TaxExclusiveAmount currencyID="${currencyCode}">${invoice.legalM
 ${indent}  <cbc:TaxInclusiveAmount currencyID="${currencyCode}">${invoice.legalMonetaryTotal.taxInclusiveAmount.toFixed(2)}</cbc:TaxInclusiveAmount>
 ${indent}  <cbc:PayableAmount currencyID="${currencyCode}">${invoice.legalMonetaryTotal.payableAmount.toFixed(2)}</cbc:PayableAmount>
 ${indent}</cac:LegalMonetaryTotal>
-${invoice.lines.map(l => generateLine(l, indent)).join("\n")}
+${invoice.lines.map((l) => generateLine(l, indent)).join("\n")}
 </Invoice>`
 
   return xml

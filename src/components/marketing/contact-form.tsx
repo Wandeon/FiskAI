@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { submitContactForm } from "@/app/actions/marketing-contact"
+import { submitContactForm } from "@/lib/actions/marketing-contact"
 import type { MarketingContactInput } from "@/lib/validations/marketing-contact"
 
 export function ContactForm() {
@@ -71,9 +71,7 @@ export function ContactForm() {
           className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Vaše ime i prezime"
         />
-        {fieldErrors.name && (
-          <p className="mt-1 text-xs text-danger-text">{fieldErrors.name[0]}</p>
-        )}
+        {fieldErrors.name && <p className="mt-1 text-xs text-danger-text">{fieldErrors.name[0]}</p>}
       </div>
 
       <div>
@@ -95,7 +93,11 @@ export function ContactForm() {
       </div>
 
       <div role="group" aria-labelledby="businessType-label">
-        <label id="businessType-label" htmlFor="businessType" className="block text-sm font-medium mb-1">
+        <label
+          id="businessType-label"
+          htmlFor="businessType"
+          className="block text-sm font-medium mb-1"
+        >
           Tip poslovanja *
         </label>
         <select
@@ -108,7 +110,9 @@ export function ContactForm() {
           disabled={isSubmitting}
           className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="" disabled>-- Odaberite tip poslovanja --</option>
+          <option value="" disabled>
+            -- Odaberite tip poslovanja --
+          </option>
           <option value="pausalni-obrt">Paušalni obrt</option>
           <option value="vat-obrt">VAT obrt</option>
           <option value="doo">d.o.o.</option>
@@ -123,7 +127,11 @@ export function ContactForm() {
       </div>
 
       <div role="group" aria-labelledby="invoiceVolume-label">
-        <label id="invoiceVolume-label" htmlFor="invoiceVolume" className="block text-sm font-medium mb-1">
+        <label
+          id="invoiceVolume-label"
+          htmlFor="invoiceVolume"
+          className="block text-sm font-medium mb-1"
+        >
           Broj računa mjesečno *
         </label>
         <select
@@ -136,7 +144,9 @@ export function ContactForm() {
           disabled={isSubmitting}
           className="w-full rounded-md border border-white/10 bg-surface/5 px-3 py-2 text-sm text-white placeholder:text-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="" disabled>-- Odaberite broj računa --</option>
+          <option value="" disabled>
+            -- Odaberite broj računa --
+          </option>
           <option value="1-10">1-10</option>
           <option value="11-50">11-50</option>
           <option value="51-200">51-200</option>

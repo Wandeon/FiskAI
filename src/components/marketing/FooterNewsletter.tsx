@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { Mail, Loader2, Check } from "lucide-react"
-import { subscribeToNewsletter } from "@/app/actions/newsletter"
+import { subscribeToNewsletter } from "@/lib/actions/newsletter"
 import { toast } from "@/lib/toast"
 
 export function FooterNewsletter() {

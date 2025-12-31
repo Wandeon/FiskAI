@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { Mail, Loader2, Check } from "lucide-react"
-import { subscribeToNewsletter } from "@/app/actions/newsletter"
+import { subscribeToNewsletter } from "@/lib/actions/newsletter"
 import { toast } from "@/lib/toast"
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/patterns/GlassCard"
@@ -48,7 +48,7 @@ export function NewsletterSignup() {
         </p>
 
         {isSubmitted ? (
-          <div className="flex items-center gap-2 rounded-lg border border-success-border/20 bg-success/10 px-4 py-3 text-sm text-green-300">
+          <div className="flex items-center gap-2 rounded-lg border border-success-border/20 bg-success/10 px-4 py-3 text-sm text-success">
             <Check className="h-4 w-4 flex-shrink-0" />
             <span>Uspješno ste se pretplatili!</span>
           </div>
@@ -82,9 +82,7 @@ export function NewsletterSignup() {
           </form>
         )}
 
-        <p className="mt-3 text-xs text-white/40">
-          Bez spama. Možete se odjaviti bilo kada.
-        </p>
+        <p className="mt-3 text-xs text-white/40">Bez spama. Možete se odjaviti bilo kada.</p>
       </GlassCard>
     </FadeIn>
   )
