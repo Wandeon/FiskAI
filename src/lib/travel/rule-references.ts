@@ -14,7 +14,7 @@ function roundCurrency(value: number): number {
 
 async function getJoppdEntry(code: string, referenceDate: Date) {
   const joppdVersion = await getEffectiveRuleVersion("JOPPD_CODEBOOK", referenceDate)
-  const data = joppdVersion.data as JoppdCodebookData
+  const data = joppdVersion.data as unknown as JoppdCodebookData
   const entry = data.entries.find((item) => item.code === code)
 
   if (!entry) {
@@ -31,7 +31,7 @@ export async function buildPerDiemRuleReference(
 
   const referenceDate = input.referenceDate ?? new Date()
   const perDiemVersion = await getEffectiveRuleVersion("PER_DIEM", referenceDate)
-  const data = perDiemVersion.data as PerDiemRuleData
+  const data = perDiemVersion.data as unknown as PerDiemRuleData
   const type = input.type ?? "domestic"
   const rate = type === "foreign" ? data.foreign.rate : data.domestic.rate
 
@@ -59,7 +59,7 @@ export async function buildMileageRuleReference(
 
   const referenceDate = input.referenceDate ?? new Date()
   const mileageVersion = await getEffectiveRuleVersion("MILEAGE", referenceDate)
-  const data = mileageVersion.data as MileageRuleData
+  const data = mileageVersion.data as unknown as MileageRuleData
   const { entry } = await getJoppdEntry("MILEAGE_PRIVATE_CAR", referenceDate)
   const capPerUnit = entry.maxAmount ?? data.rate
   const capAmount = roundCurrency(capPerUnit * input.kilometers)

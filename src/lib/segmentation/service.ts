@@ -51,7 +51,7 @@ export async function createSegment(data: {
     data: {
       name: data.name,
       description: data.description,
-      rules: data.rules as Prisma.InputJsonValue,
+      rules: data.rules as unknown as Prisma.InputJsonValue,
       category: data.category,
       tags: data.tags ?? [],
       createdBy: data.createdBy,
@@ -79,7 +79,7 @@ export async function updateSegment(
     where: { id },
     data: {
       ...data,
-      rules: data.rules ? (data.rules as Prisma.InputJsonValue) : undefined,
+      rules: data.rules ? (data.rules as unknown as Prisma.InputJsonValue) : undefined,
     },
   })
 }
@@ -137,7 +137,7 @@ export async function listSegments(options?: {
 
   return segments.map((s) => ({
     ...s,
-    rules: s.rules as SegmentRules,
+    rules: s.rules as unknown as SegmentRules,
   }))
 }
 
@@ -280,7 +280,7 @@ export async function isCompanyInSegment(companyId: string, segmentName: string)
     return false
   }
 
-  return evaluateRules(segment.rules as SegmentRules, company)
+  return evaluateRules(segment.rules as unknown as SegmentRules, company)
 }
 
 /**
@@ -292,7 +292,7 @@ export async function getSegmentMembers(
   const segment = await prisma.userSegment.findUnique({ where: { id: segmentId } })
   if (!segment) return []
 
-  const rules = segment.rules as SegmentRules
+  const rules = segment.rules as unknown as SegmentRules
   const companies = await getAllCompanyAttributes()
 
   const memberIds = companies.filter((c) => evaluateRules(rules, c)).map((c) => c.id)
@@ -312,7 +312,7 @@ export async function updateSegmentMemberCount(segmentId: string): Promise<numbe
   const segment = await prisma.userSegment.findUnique({ where: { id: segmentId } })
   if (!segment) return 0
 
-  const rules = segment.rules as SegmentRules
+  const rules = segment.rules as unknown as SegmentRules
   const companies = await getAllCompanyAttributes()
   const memberCount = companies.filter((c) => evaluateRules(rules, c)).length
 
@@ -335,7 +335,7 @@ export async function updateAllSegmentCounts(): Promise<void> {
   const companies = await getAllCompanyAttributes()
 
   for (const segment of segments) {
-    const rules = segment.rules as SegmentRules
+    const rules = segment.rules as unknown as SegmentRules
     const memberCount = companies.filter((c) => evaluateRules(rules, c)).length
 
     await prisma.userSegment.update({
@@ -362,7 +362,7 @@ export async function trackMembershipChange(
       segmentId,
       companyId,
       joined,
-      attributeSnapshot: attributes as Prisma.InputJsonValue,
+      attributeSnapshot: attributes as any,
     },
   })
 }
@@ -382,7 +382,7 @@ export async function initializeSystemSegments(): Promise<void> {
           name: segment.name,
           description: segment.description,
           category: segment.category,
-          rules: segment.rules as Prisma.InputJsonValue,
+          rules: segment.rules as unknown as Prisma.InputJsonValue,
           status: "ACTIVE",
           isSystem: true,
           tags: [],
@@ -492,7 +492,7 @@ export async function isFeatureEnabledForCompany(
     if (target.startsAt && target.startsAt > now) continue
     if (target.expiresAt && target.expiresAt < now) continue
 
-    const rules = target.segment.rules as SegmentRules
+    const rules = target.segment.rules as unknown as SegmentRules
     if (evaluateRules(rules, company)) {
       return {
         enabled: target.enabled,

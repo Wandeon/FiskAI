@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       const events = prevSnapshot ? diffSnapshots(prevSnapshot, snapshot) : []
 
       // Save snapshot and events
-      const savedSnapshot = await saveSnapshot(snapshot)
+      const savedSnapshot = await saveSnapshot(snapshot as unknown as any)
       if (events.length > 0) {
         await saveEvents(
           events.map((e) => ({
@@ -241,7 +241,7 @@ async function processRefreshAsync(
     const prevSnapshot = await getCurrentSnapshot()
     const events = prevSnapshot ? diffSnapshots(prevSnapshot, snapshot) : []
 
-    const savedSnapshot = await saveSnapshot(snapshot)
+    const savedSnapshot = await saveSnapshot(snapshot as unknown as any)
     if (events.length > 0) {
       await saveEvents(
         events.map((e) => ({

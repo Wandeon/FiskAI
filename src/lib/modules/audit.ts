@@ -350,7 +350,8 @@ export function summarizeAuditEntries(entries: EntitlementAuditEntry[]): AuditSu
 
     // Count by module
     if (entry.moduleKey) {
-      changesByModule[entry.moduleKey] = (changesByModule[entry.moduleKey] ?? 0) + 1
+      ;(changesByModule as any)[entry.moduleKey] =
+        ((changesByModule as any)[entry.moduleKey] ?? 0) + 1
     }
 
     // Track unique users

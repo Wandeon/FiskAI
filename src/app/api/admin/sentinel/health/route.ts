@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     const last7days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const recentDiscoveries = await db.discoveredItem.count({
       where: {
-        discoveredAt: { gte: last7days },
+        createdAt: { gte: last7days },
       },
     })
 

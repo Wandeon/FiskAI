@@ -78,13 +78,13 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
       buildResult = buildStornoRequest(
         fiscalInvoice,
         invoice.jir,
-        credentials.privateKeyPem,
+        credentials!.privateKeyPem,
         certificate.oibExtracted
       )
     } else {
       buildResult = buildRacunRequest(
         fiscalInvoice,
-        credentials.privateKeyPem,
+        credentials!.privateKeyPem,
         certificate.oibExtracted
       )
     }
@@ -97,8 +97,8 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
       data: { requestXml: xml, zki },
     })
 
-    // 6. Sign XML
-    const signedXml = signXML(xml, credentials)
+    // Sign XML
+    const signedXml = signXML(xml, credentials as any)
 
     // Store signed XML
     await db.fiscalRequest.update({

@@ -92,7 +92,7 @@ export function apiError(error: unknown, options: ApiErrorOptions = {}): NextRes
     {
       error: message,
       code,
-      ...(requestId && { requestId }),
+      ...(requestId ? { requestId } : {}),
     },
     { status }
   )
@@ -142,8 +142,7 @@ export const ApiErrors = {
     return NextResponse.json(
       {
         error: message,
-        code: "BAD_REQUEST",
-        ...(details && { details }),
+        ...(details ? { details } : {}),
       },
       { status: 400 }
     )
@@ -157,7 +156,7 @@ export const ApiErrors = {
       {
         error: message,
         code: "CONFLICT",
-        ...(details && { details }),
+        ...(details ? { details } : {}),
       },
       { status: 409 }
     )

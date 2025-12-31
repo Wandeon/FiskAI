@@ -124,7 +124,7 @@ async function handleXml(jobId: string) {
     return
   }
   const bankAccountId = job.bankAccountId
-  const xmlBuffer = await fs.readFile(job.storagePath, "utf-8")
+  const xmlBuffer = await fs.readFile(job.storagePath as string, "utf-8")
   const parser = new XMLParser({
     ignoreAttributes: false,
     parseTagValue: true,
@@ -280,7 +280,7 @@ async function handlePdf(jobId: string) {
     return
   }
   const bankAccountId = job.bankAccountId
-  const buffer = await fs.readFile(job.storagePath)
+  const buffer = await fs.readFile(job.storagePath as string)
   const pdfBase64 = buffer.toString("base64")
 
   const pagesText = await extractPdfTextPerPage(buffer)

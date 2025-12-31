@@ -123,7 +123,7 @@ export async function GET(request: Request) {
     matchedExpenseIds.length
       ? db.expense.findMany({
           where: { id: { in: matchedExpenseIds } },
-          select: { id: true, amount: true },
+          select: { id: true, totalAmount: true },
         })
       : Promise.resolve([]),
   ])
@@ -167,7 +167,7 @@ export async function GET(request: Request) {
     const expectedAmount = match.matchedInvoiceId
       ? Number(matchedInvoiceMap.get(match.matchedInvoiceId)?.totalAmount || 0)
       : match.matchedExpenseId
-        ? Number(matchedExpenseMap.get(match.matchedExpenseId)?.amount || 0)
+        ? Number(matchedExpenseMap.get(match.matchedExpenseId)?.totalAmount || 0)
         : null
     const transactionAmount = amountMap.get(match.bankTransactionId)
     if (
@@ -196,7 +196,7 @@ export async function GET(request: Request) {
       const expectedAmount = invoice
         ? Number(invoice.totalAmount || invoice.netAmount || 0)
         : expense
-          ? Number(expense.amount)
+          ? Number(expense.totalAmount)
           : null
       const mismatch =
         expectedAmount !== null && Math.abs(expectedAmount - Math.abs(Number(txn.amount))) > 0.01

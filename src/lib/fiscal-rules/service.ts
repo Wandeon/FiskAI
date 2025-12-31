@@ -72,8 +72,7 @@ export async function createRuleVersion(params: {
         tableId: table.id,
         version: params.version,
         effectiveFrom: params.effectiveFrom,
-        effectiveUntil: params.effectiveUntil ?? null,
-        data: params.data,
+        data: params.data as any,
         dataHash,
       },
     })
@@ -81,7 +80,7 @@ export async function createRuleVersion(params: {
     await tx.ruleSnapshot.create({
       data: {
         ruleVersionId: ruleVersion.id,
-        data: params.data,
+        data: params.data as any,
         dataHash,
       },
     })
@@ -296,8 +295,8 @@ export async function calculateDeterministicRule(
     data: {
       ruleVersionId: ruleVersion.id,
       tableKey: input.tableKey,
-      input: input,
-      result: result as object,
+      input: input as any,
+      result: result as any,
       referenceDate,
     },
   })

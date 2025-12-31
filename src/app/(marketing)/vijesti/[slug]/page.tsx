@@ -12,7 +12,7 @@ import { generateNewsArticleSchema, generateBreadcrumbSchema } from "@/lib/schem
 import { format } from "date-fns"
 import { hr } from "date-fns/locale"
 import Link from "next/link"
-import { ExternalLink, Calendar, CheckCircle2, Wrench, Zap, AlertCircle, Tag } from "lucide-react"
+import { ExternalLink, Calendar, CheckCircle2, Wrench, Zap, Tag } from "lucide-react"
 import { SocialShare } from "@/components/news/SocialShare"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://fiskai.hr"
@@ -24,13 +24,11 @@ interface PageProps {
 }
 
 // Helper function to extract structured data from content
-// This parses markdown-style sections from the content
 function extractStructuredSections(content: string) {
   const tldrMatch = content.match(/## TL;DR\s*\n([\s\S]*?)(?=\n## |\n#{1,2} |\Z)/i)
   const actionMatch = content.match(/## Što napraviti\s*\n([\s\S]*?)(?=\n## |\n#{1,2} |\Z)/i)
   const toolsMatch = content.match(/## Povezani alati\s*\n([\s\S]*?)(?=\n## |\n#{1,2} |\Z)/i)
 
-  // Parse action items from markdown list
   const actionItems = actionMatch
     ? actionMatch[1]
         .split("\n")
@@ -38,11 +36,10 @@ function extractStructuredSections(content: string) {
         .map((line) => line.replace(/^[\s-*]+/, "").trim())
     : null
 
-  // Parse related tools from markdown links
   const relatedTools = toolsMatch
-    ? Array.from(toolsMatch[1].matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)).map((match) => ({
-        title: match[1],
-        href: match[2],
+    ? Array.from(toolsMatch[1].matchAll(/\<a href=\"([^\"]+)\">([^<]+)<\/a>/g)).map((match) => ({
+        title: match[2],
+        href: match[1],
       }))
     : null
 
@@ -53,17 +50,16 @@ function extractStructuredSections(content: string) {
   }
 }
 
-// TL;DR Section Component
 function TLDRSection({ content }: { content: string }) {
   return (
     <div className="my-8 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 shadow-sm">
       <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-info-bg">
-          <Zap className="h-5 w-5 text-primary" />
+          <Zap className="h-5 w-5 text-link" />
         </div>
         <div className="flex-1">
           <h2 className="mb-3 text-lg font-semibold text-info-text">TL;DR — Brzi pregled</h2>
-          <div className="text-sm leading-relaxed text-white/90">
+          <div className="text-sm leading-relaxed text-foreground">
             <NewsMarkdown content={content} />
           </div>
         </div>
@@ -72,20 +68,19 @@ function TLDRSection({ content }: { content: string }) {
   )
 }
 
-// Action Items Section Component
 function ActionItemsSection({ items }: { items: string[] }) {
   return (
-    <div className="my-8 rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-green-500/10 p-6 shadow-sm">
+    <div className="my-8 rounded-xl border border-success-border/20 bg-gradient-to-br from-success-bg/10 to-success-bg/10 p-6 shadow-sm">
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-success-bg0/20">
-          <CheckCircle2 className="h-5 w-5 text-success" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-success-bg/20">
+          <CheckCircle2 className="h-5 w-5 text-success-text" />
         </div>
         <div className="flex-1">
-          <h2 className="mb-4 text-lg font-semibold text-emerald-300">Što napraviti</h2>
+          <h2 className="mb-4 text-lg font-semibold text-success-text">Što napraviti</h2>
           <ul className="space-y-2">
             {items.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-3 text-sm text-white/90">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
+              <li key={idx} className="flex items-start gap-3 text-sm text-foreground">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-success-text" />
                 <span>{item}</span>
               </li>
             ))}
@@ -96,24 +91,23 @@ function ActionItemsSection({ items }: { items: string[] }) {
   )
 }
 
-// Related Tools Section Component
 function RelatedToolsSection({ tools }: { tools: { title: string; href: string }[] }) {
   return (
     <div className="my-8 rounded-xl border border-info-border bg-gradient-to-br from-info-bg to-info-bg p-6 shadow-sm">
       <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-interactive/20">
-          <Wrench className="h-5 w-5 text-primary" />
+          <Wrench className="h-5 w-5 text-link" />
         </div>
         <div className="flex-1">
-          <h2 className="mb-4 text-lg font-semibold text-primary">Povezani alati</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Povezani alati</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {tools.map((tool, idx) => (
               <Link
                 key={idx}
                 href={tool.href}
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-surface/5 p-3 text-sm font-medium text-white transition-colors hover:bg-surface/10"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface/5 p-3 text-sm font-medium text-foreground transition-colors hover:bg-surface/10"
               >
-                <Wrench className="h-4 w-4 text-primary" />
+                <Wrench className="h-4 w-4 text-link" />
                 <span>{tool.title}</span>
               </Link>
             ))}
@@ -158,7 +152,6 @@ async function getPost(slug: string) {
 
   if (result.length === 0) return null
 
-  // Get source items for attribution
   const sources = await drizzleDb
     .select({
       sourceUrl: newsItems.sourceUrl,
@@ -265,11 +258,8 @@ export default async function PostDetailPage({ params }: PageProps) {
   }
 
   const relatedPosts = await getRelatedPosts(post.categoryId, post.id)
-
-  // Extract structured sections from content
   const sections = extractStructuredSections(post.content)
 
-  // Remove structured sections from main content to avoid duplication
   let mainContent = post.content
   if (sections.tldr) {
     mainContent = mainContent.replace(/## TL;DR\s*\n[\s\S]*?(?=\n## |\n#{1,2} |\Z)/i, "")
@@ -281,7 +271,6 @@ export default async function PostDetailPage({ params }: PageProps) {
     mainContent = mainContent.replace(/## Povezani alati\s*\n[\s\S]*?(?=\n## |\n#{1,2} |\Z)/i, "")
   }
 
-  // Build structured data for SEO
   const articleUrl = `${BASE_URL}/vijesti/${slug}`
   const publishedDate = post.publishedAt?.toISOString() || new Date().toISOString()
 
@@ -296,43 +285,42 @@ export default async function PostDetailPage({ params }: PageProps) {
 
   return (
     <>
-      {/* Privacy-friendly view tracking */}
       <ViewTracker slug={slug} />
-
-      {/* Enterprise SEO: NewsArticle and BreadcrumbList schemas */}
       <JsonLd
-        schemas={[
-          generateNewsArticleSchema(
-            post.title,
-            post.excerpt || "",
-            publishedDate,
-            publishedDate,
-            articleUrl,
-            post.featuredImageUrl || undefined
-          ),
-          generateBreadcrumbSchema(breadcrumbItems),
-        ]}
+        schemas={
+          [
+            generateNewsArticleSchema(
+              post.title,
+              post.excerpt || "",
+              publishedDate,
+              publishedDate,
+              articleUrl,
+              post.featuredImageUrl || undefined
+            ),
+            generateBreadcrumbSchema(breadcrumbItems),
+          ] as any
+        }
       />
 
       <div className="mx-auto max-w-4xl px-4 py-12">
-        {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-white/60">
-          <Link href="/vijesti" className="hover:text-white">
+        <nav className="mb-6 text-sm text-muted">
+          <Link href="/vijesti" className="hover:text-foreground">
             Vijesti
           </Link>
           {post.categoryName && (
             <>
               <span className="mx-2">/</span>
-              <Link href={`/vijesti/kategorija/${post.categorySlug}`} className="hover:text-white">
+              <Link
+                href={`/vijesti/kategorija/${post.categorySlug}`}
+                className="hover:text-foreground"
+              >
                 {post.categoryName}
               </Link>
             </>
           )}
         </nav>
 
-        {/* Article Header */}
         <article>
-          {/* Category Badge */}
           {post.categoryName && (
             <Link
               href={`/vijesti/kategorija/${post.categorySlug}`}
@@ -342,11 +330,9 @@ export default async function PostDetailPage({ params }: PageProps) {
             </Link>
           )}
 
-          {/* Title */}
-          <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">{post.title}</h1>
+          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">{post.title}</h1>
 
-          {/* Meta Info */}
-          <div className="mb-8 flex flex-wrap items-center gap-4 text-sm text-white/60">
+          <div className="mb-8 flex flex-wrap items-center gap-4 text-sm text-muted">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <time dateTime={post.publishedAt?.toISOString()}>
@@ -357,10 +343,10 @@ export default async function PostDetailPage({ params }: PageProps) {
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                   post.impactLevel === "high"
-                    ? "bg-danger-bg0/20 text-red-300"
+                    ? "bg-danger-bg text-danger-text"
                     : post.impactLevel === "medium"
-                      ? "bg-warning-bg0/20 text-yellow-300"
-                      : "bg-success-bg0/20 text-green-300"
+                      ? "bg-warning-bg text-warning-text"
+                      : "bg-success-bg text-success-text"
                 }`}
               >
                 {post.impactLevel === "high"
@@ -372,7 +358,6 @@ export default async function PostDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Social Share Buttons */}
           <div className="mb-8">
             <SocialShare
               url={articleUrl}
@@ -381,10 +366,9 @@ export default async function PostDetailPage({ params }: PageProps) {
             />
           </div>
 
-          {/* Tags */}
           {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
             <div className="mb-8 flex flex-wrap items-center gap-2">
-              <Tag className="h-4 w-4 text-white/40" />
+              <Tag className="h-4 w-4 text-muted" />
               {post.tags.map((tag: string) => (
                 <Link
                   key={tag}
@@ -397,7 +381,6 @@ export default async function PostDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Featured Image */}
           {post.featuredImageUrl && (
             <div className="mb-8">
               <div className="relative aspect-[21/9] overflow-hidden rounded-xl">
@@ -410,36 +393,31 @@ export default async function PostDetailPage({ params }: PageProps) {
                 />
               </div>
               {post.featuredImageCaption && (
-                <p className="mt-2 text-sm italic text-white/60">{post.featuredImageCaption}</p>
+                <p className="mt-2 text-sm italic text-muted">{post.featuredImageCaption}</p>
               )}
             </div>
           )}
 
-          {/* TL;DR Section - Prominent at the top */}
           {sections.tldr && <TLDRSection content={sections.tldr} />}
 
-          {/* Main Content */}
           <NewsMarkdown content={mainContent.trim()} />
 
-          {/* Action Items Section */}
           {sections.actionItems && sections.actionItems.length > 0 && (
             <ActionItemsSection items={sections.actionItems} />
           )}
 
-          {/* Related Tools Section */}
           {sections.relatedTools && sections.relatedTools.length > 0 && (
             <RelatedToolsSection tools={sections.relatedTools} />
           )}
 
-          {/* Source Attribution - Enhanced */}
           {post.sources && post.sources.length > 0 && (
-            <div className="my-8 rounded-xl border border-purple-500/20 bg-gradient-to-br from-chart-2/10 to-pink-500/10 p-6 shadow-sm">
+            <div className="my-8 rounded-xl border border-chart-2/20 bg-gradient-to-br from-chart-2/10 to-chart-2/5 p-6 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-500/20">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-chart-2/20">
                   <ExternalLink className="h-5 w-5 text-chart-2" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="mb-4 text-lg font-semibold text-purple-300">Izvori</h3>
+                  <h3 className="mb-4 text-lg font-semibold text-chart-2">Izvori</h3>
                   <div className="space-y-3">
                     {post.sources.map((source, idx) => (
                       <a
@@ -447,12 +425,12 @@ export default async function PostDetailPage({ params }: PageProps) {
                         href={source.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-start gap-3 rounded-lg border border-white/10 bg-surface/5 p-4 transition-all hover:border-purple-500/30 hover:bg-surface/10"
+                        className="flex items-start gap-3 rounded-lg border border-border bg-surface/5 p-4 transition-all hover:border-chart-2/30 hover:bg-surface/10"
                       >
                         <ExternalLink className="h-5 w-5 flex-shrink-0 text-chart-2" />
                         <div className="flex-1">
-                          <p className="font-medium text-white">{source.originalTitle}</p>
-                          <p className="mt-1 text-sm text-white/60">
+                          <p className="font-medium text-foreground">{source.originalTitle}</p>
+                          <p className="mt-1 text-sm text-muted">
                             {new URL(source.sourceUrl).hostname}
                           </p>
                         </div>
@@ -465,10 +443,9 @@ export default async function PostDetailPage({ params }: PageProps) {
           )}
         </article>
 
-        {/* Related Posts */}
         {relatedPosts.length > 0 && (
           <section className="mt-16">
-            <h2 className="mb-6 text-2xl font-bold text-white">Srodne vijesti</h2>
+            <h2 className="mb-6 text-2xl font-bold text-foreground">Srodne vijesti</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {relatedPosts.map((relatedPost) => (
                 <PostCard

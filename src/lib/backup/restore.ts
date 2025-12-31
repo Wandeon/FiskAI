@@ -2,6 +2,7 @@
 // Data restore/import utilities for backup restoration
 
 import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { logger } from "@/lib/logger"
 import { BackupData, validateBackupData } from "./export"
 
@@ -686,6 +687,7 @@ export async function restoreCompanyData(
                     status: expense.status,
                     netAmount: expense.netAmount,
                     vatAmount: expense.vatAmount,
+                    vatRate: (expense as any).vatRate ?? new Prisma.Decimal(25),
                     totalAmount: expense.totalAmount,
                     paymentMethod: expense.paymentMethod,
                   },
@@ -702,6 +704,7 @@ export async function restoreCompanyData(
                   status: expense.status,
                   netAmount: expense.netAmount,
                   vatAmount: expense.vatAmount,
+                  vatRate: (expense as any).vatRate ?? new Prisma.Decimal(25),
                   totalAmount: expense.totalAmount,
                   paymentMethod: expense.paymentMethod,
                 },

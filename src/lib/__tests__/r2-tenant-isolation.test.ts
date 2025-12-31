@@ -26,7 +26,7 @@ describe("R2 Tenant Isolation", () => {
 
     // Set test values
     process.env.R2_TENANT_ISOLATION_SECRET = "test-isolation-secret-32chars!!"
-    process.env.NODE_ENV = "test"
+    // process.env.NODE_ENV = "test" // Read-only in some environments
   })
 
   afterEach(() => {

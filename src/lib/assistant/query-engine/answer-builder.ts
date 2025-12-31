@@ -749,20 +749,24 @@ async function fetchCompanyData(companyId: string) {
  */
 function buildUsedFields(
   company: NonNullable<Awaited<ReturnType<typeof fetchCompanyData>>>
-): Array<{ field: string; value: string }> {
-  const used: Array<{ field: string; value: string }> = []
+): Array<{ field: string; value: string; label: string; source: string }> {
+  const used: Array<{ field: string; value: string; label: string; source: string }> = []
 
   if (company.legalForm) {
     used.push({
-      field: "Pravni oblik",
+      field: "legalForm",
       value: company.legalForm,
+      label: "Pravni oblik",
+      source: "company_profile",
     })
   }
 
   if (company.isVatPayer !== null && company.isVatPayer !== undefined) {
     used.push({
-      field: "PDV status",
+      field: "isVatPayer",
       value: company.isVatPayer ? "U sustavu PDV-a" : "Nije u sustavu PDV-a",
+      label: "PDV status",
+      source: "company_profile",
     })
   }
 

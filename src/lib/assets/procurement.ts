@@ -49,7 +49,7 @@ export const upsertProcurementAssetCandidate = async (input: ProcurementAssetCan
       acquisitionDate: input.acquisitionDate,
       acquisitionCost: input.acquisitionCost,
       usefulLifeMonths: input.usefulLifeMonths,
-      metadata: input.metadata,
+      metadata: (input.metadata as any) ?? Prisma.JsonNull,
       status: AssetCandidateStatus.PENDING,
     },
     update: {
@@ -58,7 +58,7 @@ export const upsertProcurementAssetCandidate = async (input: ProcurementAssetCan
       acquisitionDate: input.acquisitionDate,
       acquisitionCost: input.acquisitionCost,
       usefulLifeMonths: input.usefulLifeMonths,
-      metadata: input.metadata,
+      metadata: (input.metadata as any) ?? Prisma.JsonNull,
     },
   })
 }
