@@ -7,6 +7,7 @@ export {
   getValidFiscalTransitions,
 } from "./FiscalStatus"
 export { FiscalRequest, type FiscalRequestProps } from "./FiscalRequest"
+export { type FiscalRequestRepository } from "./FiscalRequestRepository"
 export { buildZkiString, type ZkiInput } from "./ZkiCalculator"
 export {
   shouldFiscalize,

@@ -1,9 +1,2 @@
-import { FiscalRequest, FiscalRequestProps } from "@/domain/fiscalization"
-
-export interface FiscalRequestRepository {
-  save(request: FiscalRequest): Promise<void>
-  findById(id: string): Promise<FiscalRequest | null>
-  findByCommandId(commandId: string): Promise<FiscalRequest | null>
-  findByInvoiceId(invoiceId: string): Promise<FiscalRequest[]>
-  findPendingRetries(): Promise<FiscalRequest[]>
-}
+// Re-export from domain layer for backward compatibility
+export { type FiscalRequestRepository } from "@/domain/fiscalization"
