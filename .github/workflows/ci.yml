@@ -118,7 +118,7 @@ jobs:
     # Enabled: Integration tests now block the build (Phase 0 Architecture Containment)
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
@@ -148,8 +148,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Create test schema
+      - name: Create test schema and enable extensions
         run: |
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector;"
           PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS \"test_${{ github.run_id }}\";"
 
       - name: Apply schema
