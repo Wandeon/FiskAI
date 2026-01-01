@@ -15,6 +15,16 @@ interface ContactData {
   oib: string | null
 }
 
+// Local type for contact data (containment: removed @prisma/client import)
+interface ContactData {
+  id: string
+  name: string
+  address: string | null
+  postalCode: string | null
+  city: string | null
+  oib: string | null
+}
+
 interface InvoicePdfPreviewProps {
   company: {
     name: string
