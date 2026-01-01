@@ -77,6 +77,100 @@
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "off"
       }
+    },
+    {
+      "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "Domain layer cannot import Prisma. Use repository interfaces."
+              },
+              {
+                "group": ["@/lib/db*", "@/infrastructure/*", "@/application/*", "@/interfaces/*"],
+                "message": "Domain layer cannot import from infrastructure, application, or interfaces layers."
+              },
+              {
+                "group": ["next/*", "next"],
+                "message": "Domain layer cannot import Next.js. Keep domain pure."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.name='parseFloat']",
+            "message": "parseFloat banned in domain/application. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.object.name='Number'][callee.property.name='parseFloat']",
+            "message": "Number.parseFloat banned. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.property.name='toFixed']",
+            "message": ".toFixed() banned in domain/application. Use Money.format() or Decimal methods."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/application/**/*.ts", "src/application/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "Application layer cannot import Prisma. Inject repositories."
+              },
+              {
+                "group": ["@/infrastructure/*", "@/interfaces/*"],
+                "message": "Application layer cannot import from infrastructure or interfaces layers."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.name='parseFloat']",
+            "message": "parseFloat banned in domain/application. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.object.name='Number'][callee.property.name='parseFloat']",
+            "message": "Number.parseFloat banned. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.property.name='toFixed']",
+            "message": ".toFixed() banned in domain/application. Use Money.format() or Decimal methods."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/**/*.ts", "src/components/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "UI components cannot import Prisma directly. Use server actions or API routes."
+              },
+              {
+                "group": ["@/lib/db*"],
+                "message": "UI components cannot import database utilities directly."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
