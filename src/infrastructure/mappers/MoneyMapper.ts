@@ -1,6 +1,6 @@
 // src/infrastructure/mappers/MoneyMapper.ts
 import { Money } from "@/domain/shared"
-import type { Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 
 /**
  * Maps between database representation and domain Money.
