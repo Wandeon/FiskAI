@@ -5,6 +5,37 @@ import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronUp, Save, Eye, X } from "lucide-react"
 
 // Local types for news data (containment: removed @/lib/db/schema/news import)
+
+// AI Pass type definitions
+interface AiPassClassification {
+  impact?: string
+  reasoning?: string
+}
+
+interface AiPassBase {
+  timestamp?: string
+  content?: string
+}
+
+interface AiPass1 extends AiPassBase {
+  classification?: AiPassClassification
+}
+
+interface AiPass2 extends AiPassBase {
+  score?: number
+  problems?: string[]
+  suggestions?: string[]
+}
+
+type AiPass3 = AiPassBase
+
+interface AiPasses {
+  pass1?: AiPass1
+  pass2?: AiPass2
+  pass3?: AiPass3
+  [key: string]: AiPass1 | AiPass2 | AiPass3 | undefined
+}
+
 interface NewsPost {
   id: string
   slug: string
@@ -62,7 +93,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
     pass3: false,
   })
 
-  const aiPasses = (post.aiPasses as Record<string, unknown>) || {}
+  const aiPasses: AiPasses = (post.aiPasses as AiPasses) || {}
 
   const handleSave = async (publish: boolean = false) => {
     setSaving(true)
@@ -424,7 +455,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
                 <div>
                   <strong>Score:</strong> {aiPasses.pass2.score}/10
                 </div>
-                {aiPasses.pass2.problems?.length > 0 && (
+                {aiPasses.pass2.problems && aiPasses.pass2.problems.length > 0 && (
                   <div>
                     <strong>Problems:</strong>
                     <ul className="ml-4 list-disc text-xs text-[var(--muted)]">
@@ -434,7 +465,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
                     </ul>
                   </div>
                 )}
-                {aiPasses.pass2.suggestions?.length > 0 && (
+                {aiPasses.pass2.suggestions && aiPasses.pass2.suggestions.length > 0 && (
                   <div>
                     <strong>Suggestions:</strong>
                     <ul className="ml-4 list-disc text-xs text-[var(--muted)]">
