@@ -12,7 +12,7 @@ import { z } from "zod"
  */
 export interface ValidationErrorDetails {
   formErrors: string[]
-  fieldErrors: Record<string, string[]>
+  fieldErrors: Record<string, string[] | undefined>
 }
 
 /**
