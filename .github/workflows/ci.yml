@@ -42,10 +42,8 @@ jobs:
   typecheck:
     name: TypeScript Check
     runs-on: ubuntu-latest
-    # TypeScript errors are tracked but currently non-blocking due to existing debt
-    # Target: Reduce to 0 errors per docs/06_ROADMAP/typescript-debt.md
-    # Once at 0, remove continue-on-error and add to build needs (issue #319)
-    continue-on-error: true
+    # BLOCKING: TypeScript errors now fail the build (Phase 0 Architecture Containment)
+    # Zero tolerance for type errors - all errors must be fixed before merge
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,37 +61,9 @@ jobs:
         run: npx prisma generate
 
       - name: Type check
-        id: typecheck
-        run: |
-          npx tsc --noEmit 2>&1 | tee typescript-errors.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-          exit 0  # Always succeed to allow summary generation
+        run: npx tsc --noEmit
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
-
-      - name: Count and report TypeScript errors
-        run: |
-          ERROR_COUNT=$(grep -c "error TS" typescript-errors.log || echo "0")
-          echo "## TypeScript Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "::warning::TypeScript check found $ERROR_COUNT errors - see docs/06_ROADMAP/typescript-debt.md"
-            echo "### Top errors by category:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            grep "error TS" typescript-errors.log | sed 's/.*error /error /' | sort | uniq -c | sort -rn | head -10 >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Action Required**: Fix TypeScript errors per [typescript-debt.md](docs/06_ROADMAP/typescript-debt.md)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No TypeScript errors found!" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Fail the step if there are errors (job continues due to continue-on-error)
-          if [ "${{ steps.typecheck.outputs.exit_code }}" != "0" ]; then
-            exit 1
-          fi
 
   security:
     name: Security Audit
@@ -206,8 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     # Build is the deploy blocker - catches actual compilation errors
     # Added security as dependency per issue #324
+    # Added typecheck as dependency per Phase 0 Architecture Containment
     # Note: test-integration skipped until Prisma 7 config is set up
-    needs: [lint, test, security]
+    needs: [lint, typecheck, test, security]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
