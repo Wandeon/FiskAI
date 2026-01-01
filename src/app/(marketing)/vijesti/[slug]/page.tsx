@@ -366,7 +366,7 @@ export default async function PostDetailPage({ params }: PageProps) {
             />
           </div>
 
-          {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
+          {Array.isArray(post.tags) && (post.tags as string[]).length > 0 && (
             <div className="mb-8 flex flex-wrap items-center gap-2">
               <Tag className="h-4 w-4 text-muted" />
               {(post.tags as string[]).map((tag: string) => (
