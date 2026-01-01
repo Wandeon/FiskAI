@@ -6,3 +6,5 @@ export {
   type BankTransactionProps,
 } from "./BankTransaction"
 export { BankingError } from "./BankingError"
+export type { BankTransactionRepository } from "./BankTransactionRepository"
+export { ImportDeduplicator, type DuplicateCheckResult } from "./ImportDeduplicator"
