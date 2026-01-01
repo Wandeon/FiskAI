@@ -34,7 +34,7 @@ jobs:
         run: npx prisma validate
 
       - name: Run lint
-        run: npm run lint
+        run: npx eslint src --ext .ts,.tsx --max-warnings=-1
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
 
@@ -150,8 +150,9 @@ jobs:
 
       - name: Create test schema and enable extensions
         run: |
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector SCHEMA public;"
           PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS \"test_${{ github.run_id }}\";"
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "ALTER DATABASE ci SET search_path TO \"test_${{ github.run_id }}\", public;"
 
       - name: Apply schema
         run: npx prisma db push --accept-data-loss
