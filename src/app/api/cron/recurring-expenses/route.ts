@@ -127,9 +127,9 @@ async function handleRecurringExpenses(request: Request) {
             // Record in DLQ for retry/investigation
             await recordCronError({
               jobName: "recurring-expenses",
-              errorType: "EXPENSE_CREATION_FAILED",
-              errorMessage,
-              payload: {
+              errorCode: "EXPENSE_CREATION_FAILED",
+              error: errorMessage,
+              metadata: {
                 recurringExpenseId: recurring.id,
                 companyId: company.id,
               },

@@ -199,7 +199,8 @@ async function parseExcel(
 ): Promise<{ text: string; metadata?: Record<string, unknown> }> {
   try {
     const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.load(buffer)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any)
 
     const sheets: string[] = []
     const sheetNames: string[] = []

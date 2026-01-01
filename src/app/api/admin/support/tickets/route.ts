@@ -169,7 +169,7 @@ export async function PATCH(request: Request) {
             after: serializeTicket(updatedTicket),
             action,
             reason: reason || "Admin bulk action",
-          },
+          } as any,
           ipAddress,
           userAgent,
         })

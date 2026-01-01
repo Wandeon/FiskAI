@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { CompactDropzone } from "./compact-dropzone"
 import { ReportsSidebar } from "./reports-sidebar"
 import { ImportJobState } from "@/components/import/processing-card"
+import { ExtractedTransaction } from "@/components/import/transaction-editor"
+import { ExtractedInvoice } from "@/components/import/invoice-editor"
 import dynamic from "next/dynamic"
 import { JobStatus, DocumentType } from "@prisma/client"
 
@@ -32,6 +34,12 @@ type ImportJobPayload = {
   warehouseId?: string
   movementDate?: string
   referenceNumber?: string
+  // Bank statement specific fields
+  openingBalance?: number
+  closingBalance?: number
+  mathValid?: boolean
+  // Allow any additional properties for invoice data
+  [key: string]: unknown
 }
 
 export function DocumentsClient({
@@ -355,17 +363,26 @@ export function DocumentsClient({
           documentType={modalJob.documentType === "BANK_STATEMENT" ? "BANK_STATEMENT" : "INVOICE"}
           onDocumentTypeChange={handleModalTypeChange}
           // Bank statement props
-          transactions={modalData.transactions}
+          transactions={modalData.transactions as unknown as ExtractedTransaction[]}
           openingBalance={modalData.openingBalance}
           closingBalance={modalData.closingBalance}
           mathValid={modalData.mathValid}
-          onTransactionsChange={(txns) => setModalData({ ...modalData, transactions: txns })}
+          onTransactionsChange={(txns) =>
+            setModalData({
+              ...modalData,
+              transactions: txns as unknown as Array<Record<string, unknown>>,
+            })
+          }
           selectedBankAccount={selectedAccountId}
           onBankAccountChange={setSelectedAccountId}
           bankAccounts={bankAccounts}
           // Invoice props - pass the whole modalData as invoice data if it's an invoice
-          invoiceData={modalJob.documentType === "INVOICE" ? modalData : undefined}
-          onInvoiceDataChange={(data) => setModalData(data)}
+          invoiceData={
+            modalJob.documentType === "INVOICE"
+              ? (modalData as unknown as ExtractedInvoice)
+              : undefined
+          }
+          onInvoiceDataChange={(data) => setModalData(data as unknown as ImportJobPayload)}
         />
       )}
     </div>

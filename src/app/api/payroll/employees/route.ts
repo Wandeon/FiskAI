@@ -216,7 +216,7 @@ export async function POST(request: Request) {
       roles: parsed.data.roles
         ? {
             create: parsed.data.roles.map((role) => ({
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               title: role.title,
               description: role.description ?? null,
               effectiveFrom: role.effectiveFrom,
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
       dependents: parsed.data.dependents
         ? {
             create: parsed.data.dependents.map((dependent) => ({
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               fullName: dependent.fullName,
               relation: dependent.relation,
               birthDate: dependent.birthDate ?? null,
@@ -241,9 +241,9 @@ export async function POST(request: Request) {
       allowances: parsed.data.allowances
         ? {
             create: parsed.data.allowances.map((allowance) => ({
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               type: allowance.type,
-              amount: toDecimal(allowance.amount),
+              amount: toDecimal(allowance.amount) ?? new Prisma.Decimal(0),
               currency: allowance.currency,
               taxable: allowance.taxable ?? false,
               effectiveFrom: allowance.effectiveFrom,
@@ -254,7 +254,7 @@ export async function POST(request: Request) {
       pensionPillars: parsed.data.pensionPillars
         ? {
             create: parsed.data.pensionPillars.map((pillar) => ({
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               pillar: pillar.pillar,
               fundName: pillar.fundName ?? null,
               contributionRate: toDecimal(pillar.contributionRate ?? null),
@@ -266,7 +266,7 @@ export async function POST(request: Request) {
       employmentContracts: parsed.data.contracts
         ? {
             create: parsed.data.contracts.map((contract) => ({
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               contractCode: contract.contractCode ?? null,
               startedAt: contract.startedAt,
               endedAt: contract.endedAt ?? null,
@@ -274,14 +274,15 @@ export async function POST(request: Request) {
               versions: contract.versions
                 ? {
                     create: contract.versions.map((version) => ({
-                      companyId: company.id,
+                      company: { connect: { id: company.id } },
                       version: version.version,
                       effectiveFrom: version.effectiveFrom,
                       effectiveTo: version.effectiveTo ?? null,
                       roleTitle: version.roleTitle ?? null,
                       employmentType: version.employmentType ?? null,
                       hoursPerWeek: version.hoursPerWeek ?? null,
-                      salaryAmount: toDecimal(version.salaryAmount ?? null),
+                      salaryAmount:
+                        toDecimal(version.salaryAmount ?? null) ?? new Prisma.Decimal(0),
                       salaryCurrency: version.salaryCurrency,
                     })),
                   }

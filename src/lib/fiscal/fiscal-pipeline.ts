@@ -38,7 +38,7 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
   // 2. Decrypt certificate and setup secure cleanup
   // Security: Use try-finally to ensure sensitive data is zeroed even on errors
   let p12Buffer: Buffer | null = null
-  let credentials: { privateKeyPem: string; certPem: string } | null = null
+  let credentials: { privateKeyPem: string; certificatePem: string } | null = null
 
   try {
     const decryptedPayload = decryptWithEnvelope(
@@ -78,13 +78,13 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
       buildResult = buildStornoRequest(
         fiscalInvoice,
         invoice.jir,
-        credentials.privateKeyPem,
+        credentials!.privateKeyPem,
         certificate.oibExtracted
       )
     } else {
       buildResult = buildRacunRequest(
         fiscalInvoice,
-        credentials.privateKeyPem,
+        credentials!.privateKeyPem,
         certificate.oibExtracted
       )
     }
@@ -97,8 +97,8 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
       data: { requestXml: xml, zki },
     })
 
-    // 6. Sign XML
-    const signedXml = signXML(xml, credentials)
+    // Sign XML
+    const signedXml = signXML(xml, credentials as any)
 
     // Store signed XML
     await db.fiscalRequest.update({
