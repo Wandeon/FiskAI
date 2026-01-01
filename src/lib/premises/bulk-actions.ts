@@ -361,7 +361,7 @@ export async function bulkAssignDevices(
 /**
  * Generate CSV template for premises import
  */
-export function generatePremisesTemplate(): string {
+export async function generatePremisesTemplate(): Promise<string> {
   return `kod,naziv,adresa,zadani
 1,Glavni ured,"Ilica 123, Zagreb",da
 2,Poslovnica Centar,"Trg bana Jelacica 1, Zagreb",ne
