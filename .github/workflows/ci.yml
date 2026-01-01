@@ -131,7 +131,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=test_${{ github.run_id }}"
+      # Use public schema for CI - simpler and pgvector extension is already there
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -148,11 +149,8 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Create test schema and enable extensions
-        run: |
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector SCHEMA public;"
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS \"test_${{ github.run_id }}\";"
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "ALTER DATABASE ci SET search_path TO \"test_${{ github.run_id }}\", public;"
+      - name: Enable pgvector extension
+        run: PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Apply schema
         run: npx prisma db push --accept-data-loss
