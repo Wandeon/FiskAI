@@ -32,6 +32,7 @@ export function ResetStep({ email, onSubmit, onResend, onBack, isLoading, error 
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [resendCooldown])
 
   // Show OTP error animation
@@ -154,7 +155,7 @@ export function ResetStep({ email, onSubmit, onResend, onBack, isLoading, error 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Najmanje 8 znakova"
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-4 pr-12 py-3 text-white placeholder:text-white/40 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 backdrop-blur-sm"
+                className="w-full rounded-xl border border-white/20 bg-surface/10 px-4 pr-12 py-3 text-white placeholder:text-white/40 focus:border-accent-light focus:outline-none focus:ring-1 focus:ring-accent-light/50 backdrop-blur-sm"
                 disabled={isLoading}
                 autoFocus
               />
@@ -206,7 +207,7 @@ export function ResetStep({ email, onSubmit, onResend, onBack, isLoading, error 
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Ponovite lozinku"
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-4 pr-12 py-3 text-white placeholder:text-white/40 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 backdrop-blur-sm"
+                className="w-full rounded-xl border border-white/20 bg-surface/10 px-4 pr-12 py-3 text-white placeholder:text-white/40 focus:border-accent-light focus:outline-none focus:ring-1 focus:ring-accent-light/50 backdrop-blur-sm"
                 disabled={isLoading}
               />
               <button
@@ -246,7 +247,7 @@ export function ResetStep({ email, onSubmit, onResend, onBack, isLoading, error 
           <motion.button
             type="submit"
             disabled={isLoading || !password || !confirmPassword}
-            className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 py-3 font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-cyan-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-accent py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-accent/40 disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -278,7 +279,7 @@ export function ResetStep({ email, onSubmit, onResend, onBack, isLoading, error 
         <motion.p
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center text-sm text-red-400"
+          className="text-center text-sm text-danger-text"
         >
           {displayError}
         </motion.p>

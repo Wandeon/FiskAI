@@ -15,6 +15,7 @@ import {
   getFreshnessStats,
   type StalenessCheckSummary,
 } from "@/lib/news/pipeline/staleness-checker"
+import { isValidationError, formatValidationError } from "@/lib/api/validation"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 120 // 2 minutes
@@ -150,12 +151,15 @@ export async function GET(request: NextRequest) {
     console.error("[CRON] Stale check fatal error:", errorMsg)
     result.summary.errors.push(errorMsg)
 
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     return NextResponse.json(
       {
+        ...result,
         success: false,
         error: "Internal server error",
         details: errorMsg,
-        ...result,
       },
       { status: 500 }
     )

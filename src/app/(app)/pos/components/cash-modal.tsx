@@ -8,6 +8,7 @@ import { Modal, ModalFooter } from "@/components/ui/modal"
 import { processPosSale } from "@/app/actions/pos"
 import { toast } from "@/lib/toast"
 import { queueOfflineSale, isOnline } from "@/lib/pos/offline-queue"
+import { calculateLineDisplay } from "@/interfaces/invoicing/InvoiceDisplayAdapter"
 import type { CartItem } from "../types"
 import type { ProcessPosSaleResult } from "@/types/pos"
 
@@ -61,13 +62,16 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
             totalAmount: total,
             issueDate: new Date().toISOString(),
             paymentMethod: "CASH",
-            items: items.map((item) => ({
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.quantity * item.unitPrice,
-              vatRate: item.vatRate,
-            })),
+            items: items.map((item) => {
+              const display = calculateLineDisplay(item)
+              return {
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: display.netAmount,
+                vatRate: item.vatRate,
+              }
+            }),
           },
         })
         return
@@ -106,20 +110,23 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
               totalAmount: total,
               issueDate: new Date().toISOString(),
               paymentMethod: "CASH",
-              items: items.map((item) => ({
-                description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                totalPrice: item.quantity * item.unitPrice,
-                vatRate: item.vatRate,
-              })),
+              items: items.map((item) => {
+                const display = calculateLineDisplay(item)
+                return {
+                  description: item.description,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  totalPrice: display.netAmount,
+                  vatRate: item.vatRate,
+                }
+              }),
             },
           })
         } else {
           toast.error(result.error || "Greška pri obradi")
         }
       }
-    } catch (error) {
+    } catch {
       // Network error - queue for offline
       await queueOfflineSale({
         items,
@@ -135,13 +142,16 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
           totalAmount: total,
           issueDate: new Date().toISOString(),
           paymentMethod: "CASH",
-          items: items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.quantity * item.unitPrice,
-            vatRate: item.vatRate,
-          })),
+          items: items.map((item) => {
+            const display = calculateLineDisplay(item)
+            return {
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: display.netAmount,
+              vatRate: item.vatRate,
+            }
+          }),
         },
       })
     } finally {
@@ -162,11 +172,7 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
         {quickAmounts.length > 0 && (
           <div className="flex justify-center gap-2">
             {quickAmounts.map((amount) => (
-              <Button
-                key={amount}
-                variant="outline"
-                onClick={() => setReceived(amount.toString())}
-              >
+              <Button key={amount} variant="outline" onClick={() => setReceived(amount.toString())}>
                 {amount} €
               </Button>
             ))}
@@ -175,9 +181,7 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
 
         {/* Amount received */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Primljeno (EUR)
-          </label>
+          <label className="block text-sm font-medium mb-1">Primljeno (EUR)</label>
           <Input
             type="number"
             step="0.01"
@@ -194,9 +198,7 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
         {receivedAmount >= total && (
           <div className="text-center p-4 bg-success-bg rounded-lg">
             <p className="text-sm text-success-text">Vraćeno kupcu</p>
-            <p className="text-3xl font-bold text-success-text">
-              {formatPrice(change)}
-            </p>
+            <p className="text-3xl font-bold text-success-text">{formatPrice(change)}</p>
           </div>
         )}
       </div>
@@ -205,10 +207,7 @@ export function CashModal({ items, total, onClose, onComplete }: Props) {
         <Button variant="outline" onClick={onClose} disabled={processing}>
           Odustani
         </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={receivedAmount < total || processing}
-        >
+        <Button onClick={handleSubmit} disabled={receivedAmount < total || processing}>
           {processing ? "Obrada..." : "Završi prodaju"}
         </Button>
       </ModalFooter>

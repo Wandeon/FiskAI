@@ -2,6 +2,9 @@
   "root": true,
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["fisk-design-system", "import"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
   "settings": {
     "import/resolver": {
       "typescript": {
@@ -10,7 +13,16 @@
     }
   },
   "rules": {
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": {
+          "attributes": false
+        }
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "error",
     "import/no-restricted-paths": [
       "error",
       {
@@ -75,7 +87,145 @@
       "files": ["src/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unused-vars": "off"
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-misused-promises": "off"
+      }
+    },
+    {
+      "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "Domain layer cannot import Prisma. Use repository interfaces."
+              },
+              {
+                "group": ["@/lib/db*", "@/infrastructure/*", "@/application/*", "@/interfaces/*"],
+                "message": "Domain layer cannot import from infrastructure, application, or interfaces layers."
+              },
+              {
+                "group": ["next/*", "next"],
+                "message": "Domain layer cannot import Next.js. Keep domain pure."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.name='parseFloat']",
+            "message": "parseFloat banned in domain/application. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.object.name='Number'][callee.property.name='parseFloat']",
+            "message": "Number.parseFloat banned. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.property.name='toFixed']",
+            "message": ".toFixed() banned in domain/application. Use Money.format() or Decimal methods."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/application/**/*.ts", "src/application/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "Application layer cannot import Prisma. Inject repositories."
+              },
+              {
+                "group": ["@/infrastructure/*", "@/interfaces/*"],
+                "message": "Application layer cannot import from infrastructure or interfaces layers."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.name='parseFloat']",
+            "message": "parseFloat banned in domain/application. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.object.name='Number'][callee.property.name='parseFloat']",
+            "message": "Number.parseFloat banned. Use Money.fromString() or Decimal."
+          },
+          {
+            "selector": "CallExpression[callee.property.name='toFixed']",
+            "message": ".toFixed() banned in domain/application. Use Money.format() or Decimal methods."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/**/*.ts", "src/components/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@prisma/*", "@prisma/client"],
+                "message": "UI components cannot import Prisma directly. Use server actions or API routes."
+              },
+              {
+                "group": ["@/lib/db*"],
+                "message": "UI components cannot import database utilities directly."
+              },
+              {
+                "group": ["@/domain/shared/Money", "@/domain/shared/VatRate", "@/domain/tax/*"],
+                "message": "UI cannot import domain Money/VAT directly. Use @/interfaces/invoicing/InvoiceDisplayAdapter."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "warn",
+          {
+            "selector": "BinaryExpression[operator='*'][right.property.name='vatRate']",
+            "message": "VAT calculation in UI banned. Use calculateLineDisplay() or calculateInvoiceTotals() from InvoiceDisplayAdapter."
+          },
+          {
+            "selector": "BinaryExpression[operator='/'][right.value=100]",
+            "message": "Percentage calculation in UI may indicate VAT calc. Use InvoiceDisplayAdapter for money operations."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/(app)/**/*.ts", "src/app/(app)/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/domain/shared/Money", "@/domain/shared/VatRate", "@/domain/tax/*"],
+                "message": "App routes cannot import domain Money/VAT directly. Use @/interfaces/invoicing/InvoiceDisplayAdapter."
+              }
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "warn",
+          {
+            "selector": "BinaryExpression[operator='*'][right.property.name='vatRate']",
+            "message": "VAT calculation in UI banned. Use calculateLineDisplay() or calculateInvoiceTotals() from InvoiceDisplayAdapter."
+          },
+          {
+            "selector": "BinaryExpression[operator='/'][right.value=100]",
+            "message": "Percentage calculation in UI may indicate VAT calc. Use InvoiceDisplayAdapter for money operations."
+          }
+        ]
       }
     }
   ]

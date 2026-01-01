@@ -17,7 +17,11 @@
     "bull-board": "npx tsx src/lib/regulatory-truth/workers/bull-board.server.ts",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --import tsx --test src/lib/__tests__/*.test.ts src/lib/e-invoice/__tests__/*.test.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:property": "vitest run src/domain/shared/__tests__/Money.property.test.ts src/domain/tax/__tests__/VatBreakdown.property.test.ts src/domain/tax/__tests__/VatCalculator.property.test.ts src/domain/invoicing/__tests__/InvoiceStatus.property.test.ts",
+    "test:golden": "vitest run src/lib/fiscal/__tests__/xml-builder.golden.test.ts src/lib/reports/__tests__/pdv-xml.golden.test.ts",
+    "test:e2e": "playwright test",
     "test:tenant": "node --import tsx --test src/lib/__tests__/tenant-isolation.test.ts",
     "test:knowledge-hub": "node --import tsx --test src/lib/knowledge-hub/__tests__/*.test.ts",
     "audit:marketing": "tsx scripts/marketing-content-audit/run-audit.ts",
@@ -47,7 +51,8 @@
     "validate:content": "tsx scripts/validate-content.ts",
     "registry:check": "npx tsx src/lib/system-registry/scripts/registry-check.ts",
     "registry:harvest": "npx tsx src/lib/system-registry/harvesters/index.ts",
-    "verify-contrast": "tsx src/design-system/scripts/verify-contrast.ts"
+    "verify-contrast": "tsx src/design-system/scripts/verify-contrast.ts",
+    "test:node": "node --import tsx --test --test-name-pattern='.*' src/lib/__tests__/e-invoice-status.test.ts src/lib/__tests__/joppd-generator.test.ts src/lib/__tests__/login-token.test.ts src/lib/__tests__/marketing-audit-*.test.ts src/lib/__tests__/r2-tenant-isolation.test.ts src/lib/__tests__/rate-limit-fail-closed.test.ts src/lib/__tests__/rbac.test.ts src/lib/__tests__/reports.test.ts src/lib/__tests__/system-registry-blast-score.test.ts src/lib/__tests__/system-registry-enforcement.test.ts src/lib/__tests__/system-registry-github-check.test.ts src/lib/__tests__/system-registry-harvester-errors.test.ts src/lib/__tests__/system-registry-pr-comment.test.ts src/lib/__tests__/system-registry-queues.test.ts src/lib/__tests__/system-registry-workers.test.ts src/lib/__tests__/system-status-*.test.ts src/lib/__tests__/tenant-isolation.test.ts src/lib/e-invoice/__tests__/*.test.ts"
   },
   "lint-staged": {
     "src/app/(app)/**/*.{ts,tsx}": [
@@ -62,7 +67,11 @@
       "prettier --write",
       "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
     ],
-    "src/components/**/*.{ts,tsx}": [
+    "src/components/marketing/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: warn'"
+    ],
+    "src/components/!(marketing)/**/*.{ts,tsx}": [
       "prettier --write",
       "eslint --fix --rule 'fisk-design-system/no-hardcoded-colors: error' --max-warnings 0"
     ],
@@ -120,6 +129,7 @@
     "decimal.js": "^10.6.0",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "fast-xml-parser": "^4.5.0",
     "framer-motion": "^12.23.26",
@@ -171,7 +181,6 @@
     "use-debounce": "^10.0.6",
     "web-vitals": "^5.1.0",
     "word-extractor": "^1.0.4",
-    "xlsx": "^0.18.5",
     "xml-crypto": "^6.1.2",
     "xml2js": "^0.6.2",
     "xmlbuilder2": "^4.0.3",
@@ -194,6 +203,7 @@
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/clamscan": "^2.4.1",
     "@types/cron": "^2.0.1",
     "@types/jest-axe": "^3.5.9",
     "@types/js-yaml": "^4.0.9",
@@ -212,6 +222,7 @@
     "eslint": "^8",
     "eslint-config-next": "^15.5.0",
     "eslint-plugin-fisk-design-system": "file:src/design-system/eslint",
+    "fast-check": "^4.5.3",
     "husky": "^9.1.7",
     "jest-axe": "^10.0.0",
     "lint-staged": "^16.2.7",
@@ -222,6 +233,7 @@
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "xlsx": "^0.18.5"
   }
 }

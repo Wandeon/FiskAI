@@ -42,7 +42,7 @@ function ruleToSourceCard(rule: RuleCandidate): SourceCard | null {
   const freshnessCheck = checkEvidenceFreshness(
     evidence.fetchedAt,
     authority,
-    evidence.hasChanged
+    (evidence as { hasChanged?: boolean }).hasChanged ?? false
   )
 
   // Apply freshness penalty to confidence

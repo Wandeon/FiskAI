@@ -10,17 +10,36 @@ import { PremisesCloneDialog } from "./premises-clone-dialog"
 import { BulkDevicesDialog } from "./premises-bulk-devices-dialog"
 import { bulkTogglePremisesStatus } from "@/lib/premises/bulk-actions"
 import { Copy, Power, PowerOff, MoreVertical, Layers } from "lucide-react"
-import type { BusinessPremises, PaymentDevice } from "@prisma/client"
+// Local types for premises data (containment: removed @prisma/client import)
+interface BusinessPremisesData {
+  id: string
+  code: number
+  name: string
+  address: string | null
+  isDefault: boolean
+  isActive: boolean
+}
+
+interface PaymentDeviceData {
+  id: string
+  name: string
+}
 
 interface PremisesCardProps {
-  premises: BusinessPremises & { devices: PaymentDevice[] }
+  premises: BusinessPremisesData & { devices: PaymentDeviceData[] }
   companyId: string
   isSelected?: boolean
   onSelect?: (id: string, selected: boolean) => void
   children?: ReactNode
 }
 
-export function PremisesCard({ premises, companyId, isSelected, onSelect, children }: PremisesCardProps) {
+export function PremisesCard({
+  premises,
+  companyId,
+  isSelected,
+  onSelect,
+  children,
+}: PremisesCardProps) {
   const router = useRouter()
   const [showCloneDialog, setShowCloneDialog] = useState(false)
   const [showBulkDevicesDialog, setShowBulkDevicesDialog] = useState(false)
@@ -34,9 +53,7 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
 
     if (result.success) {
       toast.success(
-        premises.isActive
-          ? "Poslovni prostor je deaktiviran"
-          : "Poslovni prostor je aktiviran"
+        premises.isActive ? "Poslovni prostor je deaktiviran" : "Poslovni prostor je aktiviran"
       )
       router.refresh()
     } else {
@@ -46,7 +63,9 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
 
   return (
     <>
-      <Card className={`${premises.isDefault ? "border-green-500" : ""} ${isSelected ? "ring-2 ring-[var(--primary)]" : ""}`}>
+      <Card
+        className={`${premises.isDefault ? "border-success-border" : ""} ${isSelected ? "ring-2 ring-[var(--primary)]" : ""}`}
+      >
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -67,12 +86,8 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {premises.isDefault && (
-                <Badge variant="success">Zadani</Badge>
-              )}
-              {!premises.isActive && (
-                <Badge variant="danger">Neaktivan</Badge>
-              )}
+              {premises.isDefault && <Badge variant="success">Zadani</Badge>}
+              {!premises.isActive && <Badge variant="danger">Neaktivan</Badge>}
 
               {/* Actions dropdown */}
               <div className="relative">
@@ -87,10 +102,7 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
 
                 {showActions && (
                   <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowActions(false)}
-                    />
+                    <div className="fixed inset-0 z-10" onClick={() => setShowActions(false)} />
                     <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-md border bg-[var(--surface)] shadow-lg">
                       <button
                         onClick={() => {
@@ -115,7 +127,7 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
                       <button
                         onClick={() => {
                           setShowActions(false)
-                          handleToggleStatus()
+                          void handleToggleStatus()
                         }}
                         disabled={isToggling}
                         className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--surface-secondary)]"
@@ -139,9 +151,7 @@ export function PremisesCard({ premises, companyId, isSelected, onSelect, childr
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {children}
-        </CardContent>
+        <CardContent>{children}</CardContent>
       </Card>
 
       <PremisesCloneDialog

@@ -49,14 +49,26 @@ export default async function RecurringExpensesPage() {
     userId: user.id!,
   })
 
-  const recurringExpenses = await db.recurringExpense.findMany({
-    where: { companyId: company.id },
-    include: {
-      category: true,
-      vendor: true,
-    },
-    orderBy: { nextDate: "asc" },
-  })
+  const [recurringExpensesData, categories, vendors] = await Promise.all([
+    db.recurringExpense.findMany({
+      where: { companyId: company.id },
+      orderBy: { nextDate: "asc" },
+    }),
+    db.expenseCategory.findMany({
+      where: { companyId: company.id },
+    }),
+    db.contact.findMany({
+      where: { companyId: company.id, type: "VENDOR" as any },
+    }),
+  ])
+
+  const recurringExpenses: RecurringExpenseWithRelations[] = recurringExpensesData.map(
+    (expense) => ({
+      ...expense,
+      category: categories.find((c) => c.id === expense.categoryId)!, // Assuming categoryId exists and is valid
+      vendor: expense.vendorId ? vendors.find((v) => v.id === expense.vendorId) || null : null,
+    })
+  )
 
   const columns: Column<RecurringExpenseWithRelations>[] = [
     {
@@ -107,9 +119,7 @@ export default async function RecurringExpensesPage() {
       render: (expense) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            expense.isActive
-              ? "bg-success-bg text-success-text"
-              : "bg-surface-1 text-foreground"
+            expense.isActive ? "bg-success-bg text-success-text" : "bg-surface-1 text-foreground"
           }`}
         >
           {expense.isActive ? "Aktivan" : "Neaktivan"}
@@ -150,8 +160,8 @@ export default async function RecurringExpensesPage() {
               <p className="font-medium">Kako funkcioniraju ponavljajući troškovi?</p>
               <p className="mt-1 text-info-text">
                 Svaki dan u ponoć sustav provjerava ima li ponavljajućih troškova čiji je datum
-                dospio. Za svaki takav trošak automatski se kreira novi trošak u statusu "Nacrt" i
-                postavlja se sljedeći datum prema učestalosti.
+                dospio. Za svaki takav trošak automatski se kreira novi trošak u statusu
+                &quot;Nacrt&quot; i postavlja se sljedeći datum prema učestalosti.
               </p>
             </div>
           </div>

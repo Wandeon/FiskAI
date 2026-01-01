@@ -1,4 +1,5 @@
-import type { Company, Expense, ExpenseCategory, ExpenseLine, Prisma } from "@prisma/client"
+import type { Company, Expense, ExpenseCategory, ExpenseLine } from "@prisma/client"
+import type { TransactionClient } from "@/lib/db"
 import { parseAppliesWhen, evaluateAppliesWhen } from "@/lib/regulatory-truth/dsl/applies-when"
 
 type VatInputRuleReference = {
@@ -44,13 +45,13 @@ function buildVatInputContext(
     entity: {
       type: entity.type,
       obrtSubtype: entity.obrtSubtype,
-      vat: { status: company.isVatPayer ? "IN_VAT" : "OUTSIDE_VAT" },
-      location: { country: "HR" },
+      vat: { status: company.isVatPayer ? ("IN_VAT" as const) : ("OUTSIDE_VAT" as const) },
+      location: { country: "HR" as const },
     },
     txn: {
-      kind: "PURCHASE",
+      kind: "PURCHASE" as const,
       amount: Number(line.totalAmount),
-      currency: expense.currency === "EUR" ? "EUR" : undefined,
+      currency: expense.currency === "EUR" ? ("EUR" as const) : undefined,
       itemCategory: category?.code ?? category?.name ?? expense.categoryId,
       date: expense.date.toISOString(),
     },
@@ -58,7 +59,7 @@ function buildVatInputContext(
 }
 
 export async function evaluateVatInputRules(
-  tx: Prisma.TransactionClient,
+  tx: TransactionClient,
   company: Company,
   expense: Expense,
   line: ExpenseLine,

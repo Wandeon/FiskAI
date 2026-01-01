@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     acquisitionDate: parsed.data.acquisitionDate,
     acquisitionCost: parsed.data.acquisitionCost,
     usefulLifeMonths: parsed.data.usefulLifeMonths,
-    metadata: parsed.data.metadata,
+    metadata: (parsed.data.metadata as any) ?? undefined,
   })
 
   return NextResponse.json({ candidate })

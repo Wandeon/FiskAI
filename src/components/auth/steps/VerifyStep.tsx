@@ -31,6 +31,7 @@ export function VerifyStep({
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [resendCooldown])
 
   // Reset OTP error when error prop changes
@@ -97,7 +98,7 @@ export function VerifyStep({
         <motion.p
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center text-sm text-red-400"
+          className="text-center text-sm text-danger-text"
         >
           {error}
         </motion.p>
@@ -124,7 +125,7 @@ export function VerifyStep({
       {isLoading && (
         <div className="flex justify-center">
           <motion.div
-            className="h-8 w-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full"
+            className="h-8 w-8 border-2 border-accent-light/30 border-t-cyan-400 rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
           />

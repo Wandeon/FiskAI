@@ -7,14 +7,19 @@ import { createLogger } from "@/lib/logger"
 const logger = createLogger("security:virus-scanner")
 
 // Singleton instance to avoid reinitializing ClamAV for every scan
-let clamInstance: NodeClam | null = null
-let initializationPromise: Promise<NodeClam> | null = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let clamInstance: any = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let initializationPromise: Promise<any> | null = null
 
 /**
  * Initialize ClamAV scanner
  * Uses Unix socket in production (ClamAV daemon) or fallback to local scanning in dev
  */
-async function initClamAV(): Promise<NodeClam> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClamScanner = any
+
+async function initClamAV(): Promise<ClamScanner> {
   if (clamInstance) {
     return clamInstance
   }
@@ -24,7 +29,7 @@ async function initClamAV(): Promise<NodeClam> {
     return initializationPromise
   }
 
-  initializationPromise = (async () => {
+  initializationPromise = (async (): Promise<ClamScanner> => {
     try {
       const isDev = process.env.NODE_ENV !== "production"
 
@@ -44,11 +49,13 @@ async function initClamAV(): Promise<NodeClam> {
 
       logger.info({ config: { socket: config.clamdscan.socket } }, "Initializing ClamAV scanner")
 
-      const clam = await new NodeClam().init(config)
-      clamInstance = clam
+      const clam = await new NodeClam().init(
+        config as unknown as Parameters<typeof NodeClam.prototype.init>[0]
+      )
+      clamInstance = clam as ClamScanner
 
       logger.info("ClamAV scanner initialized successfully")
-      return clam
+      return clam as ClamScanner
     } catch (error) {
       logger.error({ error }, "Failed to initialize ClamAV scanner")
       throw error
@@ -90,10 +97,7 @@ export async function scanBuffer(buffer: Buffer, fileName: string): Promise<Scan
     const { isInfected, viruses } = await clam.scanBuffer(buffer)
 
     if (isInfected) {
-      logger.warn(
-        { fileName, viruses, size: buffer.length },
-        "Infected file detected and blocked"
-      )
+      logger.warn({ fileName, viruses, size: buffer.length }, "Infected file detected and blocked")
     } else {
       logger.debug({ fileName, size: buffer.length }, "File scan clean")
     }

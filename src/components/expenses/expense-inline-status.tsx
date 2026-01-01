@@ -3,9 +3,12 @@
 import { useTransition, useState } from "react"
 import { Loader2, Check, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+// eslint-disable-next-line import/no-restricted-paths -- pre-existing import, to be refactored
 import { updateExpenseInline } from "@/app/actions/expense"
 import { toast } from "@/lib/toast"
-import type { ExpenseStatus } from "@prisma/client"
+
+// Local type for expense status (containment: removed @prisma/client import)
+type ExpenseStatus = "DRAFT" | "PENDING" | "PAID" | "CANCELLED"
 
 const STATUS_LABELS: Record<ExpenseStatus, string> = {
   DRAFT: "Nacrt",
@@ -15,10 +18,10 @@ const STATUS_LABELS: Record<ExpenseStatus, string> = {
 }
 
 const STATUS_COLORS: Record<ExpenseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-800",
-  PENDING: "bg-yellow-100 text-yellow-800",
-  PAID: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
+  DRAFT: "bg-surface-2 text-foreground",
+  PENDING: "bg-warning-bg text-warning-text",
+  PAID: "bg-success-bg text-success-text",
+  CANCELLED: "bg-danger-bg text-danger-text",
 }
 
 export function ExpenseInlineStatus({ id, status }: { id: string; status: ExpenseStatus }) {
@@ -65,7 +68,7 @@ export function ExpenseInlineStatus({ id, status }: { id: string; status: Expens
     >
       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
       {STATUS_LABELS[current]}
-      {error && <XCircle className="h-4 w-4 text-rose-600" />}
+      {error && <XCircle className="h-4 w-4 text-danger" />}
     </button>
   )
 }

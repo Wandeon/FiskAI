@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-import { auth } from "@/lib/auth"
+import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { closeCashDay } from "@/lib/cash/cash-service"
-import { getCompanyId } from "@/lib/auth/company"
 import { logServiceBoundarySnapshot } from "@/lib/audit-hooks"
+import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
 
 const closeDaySchema = z.object({
   businessDate: z.string().transform((s) => new Date(s)),
@@ -12,19 +12,12 @@ const closeDaySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const companyId = await getCompanyId()
-  if (!companyId) {
-    return NextResponse.json({ error: "No company selected" }, { status: 400 })
-  }
+  const user = await requireAuth()
+  const company = await requireCompany(user.id!)
+  const companyId = company.id
 
   try {
-    const body = await request.json()
-    const input = closeDaySchema.parse(body)
+    const input = await parseBody(request, closeDaySchema)
 
     const dayClose = await closeCashDay({
       companyId,
@@ -34,8 +27,8 @@ export async function POST(request: NextRequest) {
 
     await logServiceBoundarySnapshot({
       companyId,
-      userId: session.user.id,
-      actor: session.user.id,
+      userId: user.id!,
+      actor: user.id!,
       reason: `Close cash day for ${input.businessDate.toISOString().slice(0, 10)}`,
       action: "CREATE",
       entity: "CashDayClose",
@@ -59,8 +52,8 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid input", details: error.errors }, { status: 400 })
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
     }
     console.error("Failed to close cash day:", error)
     return NextResponse.json(

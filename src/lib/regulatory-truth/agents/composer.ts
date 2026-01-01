@@ -21,10 +21,7 @@ import {
 import { computeMeaningSignature } from "../utils/meaning-signature"
 import { validateExplanation, createQuoteOnlyExplanation } from "../utils/explanation-validator"
 import { createEdgeWithCycleCheck, CycleDetectedError } from "../graph/cycle-detection"
-import {
-  validateSourceConsistency,
-  logCrossSourceReferences,
-} from "../utils/source-consistency"
+import { validateSourceConsistency, logCrossSourceReferences } from "../utils/source-consistency"
 import { computeDerivedConfidence } from "../utils/derived-confidence"
 
 // =============================================================================
@@ -326,7 +323,7 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
   // This prevents high LLM-confidence rules backed by low-quality extractions
   const derivedConfidence = computeDerivedConfidence(
     sourcePointers.map((sp) => ({ confidence: sp.confidence })),
-    draftRule.confidence
+    draftRule.llm_confidence
   )
 
   // PHASE 4: Validate explanation against source evidence
@@ -380,8 +377,8 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
       effectiveUntil: effectiveUntilDate,
       supersedesId: draftRule.supersedes,
       status: "DRAFT",
-      confidence: draftRule.confidence, // LLM self-assessment (deprecated, kept for backward compatibility)
-      llmConfidence: draftRule.confidence, // LLM self-assessment
+      confidence: draftRule.llm_confidence, // LLM self-assessment (deprecated, kept for backward compatibility)
+      llmConfidence: draftRule.llm_confidence, // LLM self-assessment
       derivedConfidence, // Issue #770: Evidence-based confidence from source pointers
       composerNotes: draftRule.composer_notes,
       meaningSignature,
@@ -463,8 +460,8 @@ export async function runComposer(sourcePointerIds: string[]): Promise<ComposerR
     metadata: {
       conceptSlug: rule.conceptSlug,
       riskTier: draftRule.risk_tier,
-      confidence: draftRule.confidence,
-      llmConfidence: draftRule.confidence, // LLM self-assessment
+      confidence: draftRule.llm_confidence,
+      llmConfidence: draftRule.llm_confidence, // LLM self-assessment
       derivedConfidence, // Issue #770: Evidence-based confidence
       sourcePointerCount: sourcePointerIds.length,
       conflictsDetected: conflicts.length,
@@ -530,9 +527,7 @@ export async function markOrphanedPointersForReview(
     },
   })
 
-  console.log(
-    `[composer] Marked ${pointerIds.length} orphaned pointers for review: ${reason}`
-  )
+  console.log(`[composer] Marked ${pointerIds.length} orphaned pointers for review: ${reason}`)
 }
 
 /**

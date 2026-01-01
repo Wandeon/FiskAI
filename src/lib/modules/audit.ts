@@ -6,7 +6,7 @@
  */
 
 import type { ModuleKey } from "./definitions"
-import type { CompanyEntitlements, ModuleEntitlement } from "./permissions"
+import type { CompanyEntitlements, ModuleEntitlement, PermissionAction } from "./permissions"
 
 /**
  * Types of entitlement changes that can be audited
@@ -92,7 +92,7 @@ export function detectEntitlementChanges(
   metadata?: { ipAddress?: string; userAgent?: string; reason?: string }
 ): EntitlementAuditEntry[] {
   const entries: EntitlementAuditEntry[] = []
-  const previousModules = previous?.modules ?? {}
+  const previousModules = previous?.modules ?? ({} as Record<ModuleKey, ModuleEntitlement | null>)
   const currentModules = current.modules
 
   // Check for plan changes
@@ -179,8 +179,12 @@ export function detectEntitlementChanges(
             ipAddress: metadata?.ipAddress,
             userAgent: metadata?.userAgent,
             metadata: {
-              permissionsAdded: curr.permissions.filter((p) => !prev.permissions.includes(p)),
-              permissionsRemoved: prev.permissions.filter((p) => !curr.permissions.includes(p)),
+              permissionsAdded: curr.permissions.filter(
+                (p: PermissionAction) => !prev.permissions.includes(p)
+              ),
+              permissionsRemoved: prev.permissions.filter(
+                (p: PermissionAction) => !curr.permissions.includes(p)
+              ),
             },
           })
         )
@@ -346,7 +350,8 @@ export function summarizeAuditEntries(entries: EntitlementAuditEntry[]): AuditSu
 
     // Count by module
     if (entry.moduleKey) {
-      changesByModule[entry.moduleKey] = (changesByModule[entry.moduleKey] ?? 0) + 1
+      ;(changesByModule as any)[entry.moduleKey] =
+        ((changesByModule as any)[entry.moduleKey] ?? 0) + 1
     }
 
     // Track unique users

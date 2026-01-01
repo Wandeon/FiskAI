@@ -1,5 +1,29 @@
-import { Contact } from "@prisma/client"
 import { cn } from "@/lib/utils"
+import {
+  calculateLineDisplay,
+  calculateInvoiceTotals,
+  type RawInvoiceLine,
+} from "@/interfaces/invoicing/InvoiceDisplayAdapter"
+
+// Local type for contact data (containment: removed @prisma/client import)
+interface ContactData {
+  id: string
+  name: string
+  address: string | null
+  postalCode: string | null
+  city: string | null
+  oib: string | null
+}
+
+// Local type for contact data (containment: removed @prisma/client import)
+interface ContactData {
+  id: string
+  name: string
+  address: string | null
+  postalCode: string | null
+  city: string | null
+  oib: string | null
+}
 
 interface InvoicePdfPreviewProps {
   company: {
@@ -9,17 +33,11 @@ interface InvoicePdfPreviewProps {
     city: string
     iban?: string | null
   }
-  buyer: Contact | null
+  buyer: ContactData | null
   invoiceNumber: string
   issueDate?: Date
   dueDate?: Date
-  lines: Array<{
-    description: string
-    quantity: number
-    unit?: string
-    unitPrice: number
-    vatRate?: number
-  }>
+  lines: RawInvoiceLine[]
   currency: string
   className?: string
 }
@@ -34,28 +52,18 @@ export function InvoicePdfPreview({
   currency,
   className,
 }: InvoicePdfPreviewProps) {
-  const totals = lines.reduce(
-    (acc, line) => {
-      const net = (line.quantity || 0) * (line.unitPrice || 0)
-      const vat = net * ((line.vatRate || 0) / 100)
-      return {
-        net: acc.net + net,
-        vat: acc.vat + vat,
-        total: acc.total + net + vat,
-      }
-    },
-    { net: 0, vat: 0, total: 0 }
-  )
+  // Use domain-layer adapter for all VAT calculations
+  const totals = calculateInvoiceTotals(lines)
 
   return (
     <div
       className={cn(
-        "relative w-full rounded-2xl border border-[var(--border)] bg-white shadow-card overflow-hidden",
+        "relative w-full rounded-2xl border border-[var(--border)] bg-surface shadow-card overflow-hidden",
         "aspect-[210/297] max-h-[600px]",
         className
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-white to-slate-50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white to-surface-1" />
       <div className="relative z-10 flex h-full flex-col px-6 py-6">
         <header className="flex items-start justify-between border-b border-default pb-4">
           <div>
@@ -119,22 +127,24 @@ export function InvoicePdfPreview({
                 </tr>
               )}
               {lines.map((line, index) => {
-                const net = (line.quantity || 0) * (line.unitPrice || 0)
-                const vatAmount = net * ((line.vatRate || 0) / 100)
+                // Use domain-layer adapter for all calculations
+                const display = calculateLineDisplay(line)
                 return (
                   <tr key={index} className="border-t border-subtle text-foreground">
                     <td className="px-3 py-2 font-medium text-foreground">
                       {line.description || `Stavka ${index + 1}`}
                     </td>
-                    <td className="px-3 py-2 text-right">{line.quantity}</td>
+                    <td className="px-3 py-2 text-right">{display.quantity}</td>
                     <td className="px-3 py-2 text-right">
-                      {net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+                      {display.netAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })}{" "}
+                      {currency}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {vatAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+                      {display.vatAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })}{" "}
+                      {currency}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-foreground">
-                      {(net + vatAmount).toLocaleString("hr-HR", { minimumFractionDigits: 2 })}{" "}
+                      {display.totalAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })}{" "}
                       {currency}
                     </td>
                   </tr>
@@ -144,23 +154,23 @@ export function InvoicePdfPreview({
           </table>
         </section>
 
-        <footer className="mt-4 rounded-xl bg-slate-900 text-white p-4 space-y-2">
+        <footer className="mt-4 rounded-xl bg-surface text-white p-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted">Neto</span>
             <span>
-              {totals.net.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+              {totals.netAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted">PDV</span>
             <span>
-              {totals.vat.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+              {totals.vatAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
             </span>
           </div>
           <div className="flex items-center justify-between text-lg font-semibold">
             <span>Ukupno</span>
             <span>
-              {totals.total.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
+              {totals.totalAmount.toLocaleString("hr-HR", { minimumFractionDigits: 2 })} {currency}
             </span>
           </div>
         </footer>

@@ -12,11 +12,7 @@
 
 import { describe, it, beforeEach, afterEach } from "node:test"
 import assert from "node:assert"
-import {
-  generateR2Key,
-  generateTenantSignature,
-  verifyTenantSignature,
-} from "../r2-client"
+import { generateR2Key, generateTenantSignature, verifyTenantSignature } from "../r2-client"
 
 describe("R2 Tenant Isolation", () => {
   // Store original env vars
@@ -30,7 +26,7 @@ describe("R2 Tenant Isolation", () => {
 
     // Set test values
     process.env.R2_TENANT_ISOLATION_SECRET = "test-isolation-secret-32chars!!"
-    process.env.NODE_ENV = "test"
+    // process.env.NODE_ENV = "test" // Read-only in some environments
   })
 
   afterEach(() => {
@@ -191,9 +187,7 @@ describe("R2 Tenant Isolation", () => {
       // Tamper with signature (flip first character)
       const parts = key.split("/")
       const filename = parts[4]
-      const tamperedFilename = (
-        filename[0] === "0" ? "1" : "0"
-      ) + filename.slice(1)
+      const tamperedFilename = (filename[0] === "0" ? "1" : "0") + filename.slice(1)
       parts[4] = tamperedFilename
       const tamperedKey = parts.join("/")
 

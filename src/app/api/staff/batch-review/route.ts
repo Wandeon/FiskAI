@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
-import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 import { getRequestMetadata } from "@/lib/staff-audit"
-
-const batchReviewSchema = z.object({
-  companyId: z.string(),
-  reviews: z.array(
-    z.object({
-      entityType: z.enum(["INVOICE", "EXPENSE"]),
-      entityId: z.string(),
-      notes: z.string().optional(),
-    })
-  ),
-})
+import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
+import { batchReviewSchema } from "../_schemas"
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,17 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden - Staff access required" }, { status: 403 })
     }
 
-    const body = await request.json()
-    const parsed = batchReviewSchema.safeParse(body)
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request body", details: parsed.error.format() },
-        { status: 400 }
-      )
-    }
-
-    const { companyId, reviews } = parsed.data
+    const { companyId, reviews } = await parseBody(request, batchReviewSchema)
 
     // Verify staff has access to this client
     const assignment = await db.staffAssignment.findUnique({
@@ -51,10 +30,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!assignment) {
-      return NextResponse.json(
-        { error: "Access denied to this client" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Access denied to this client" }, { status: 403 })
     }
 
     // Create reviews in a transaction
@@ -107,9 +83,15 @@ export async function POST(request: NextRequest) {
       reviews: results,
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("Batch review error:", error)
     return NextResponse.json(
-      { error: "Batch review failed", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Batch review failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     )
   }

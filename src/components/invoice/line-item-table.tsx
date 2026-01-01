@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect, useCallback } from "react"
 import { Trash2, Search } from "lucide-react"
+import { calculateLineDisplay } from "@/interfaces/invoicing/InvoiceDisplayAdapter"
 
 export type ProductSuggestion = {
   id: string
@@ -213,7 +214,7 @@ export function LineItemTable({
     "w-full h-full bg-transparent border-0 px-3 py-3 text-[13px] outline-none focus:bg-info-bg/50 text-right tabular-nums transition-colors"
 
   return (
-    <div className="overflow-hidden rounded-card border border-[var(--border)] bg-white">
+    <div className="overflow-hidden rounded-card border border-[var(--border)] bg-surface">
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-surface-1 text-[12px] font-medium text-tertiary">
@@ -240,9 +241,10 @@ export function LineItemTable({
         </thead>
         <tbody>
           {lines.map((line, index) => {
-            const lineTotal = (line.quantity || 0) * (line.unitPrice || 0)
-            const vatAmount = showVat ? lineTotal * ((line.vatRate || 0) / 100) : 0
-            const total = lineTotal + vatAmount
+            // Use domain-layer adapter for all VAT calculations
+            const display = calculateLineDisplay(line)
+            // When showVat is false, display net amount as total (VAT not applicable)
+            const total = showVat ? display.totalAmount : display.netAmount
             const isActiveSuggestions = searchIndex === index && suggestions.length > 0
             const isMultiline = multilineRows[index] || false
             // When multiline: align-top, otherwise: align-middle
@@ -269,7 +271,7 @@ export function LineItemTable({
                     onMultilineChange={(isMulti) => handleMultilineChange(index, isMulti)}
                   />
                   {isActiveSuggestions && (
-                    <div className="absolute left-0 right-0 z-50 mt-0 max-h-56 overflow-auto rounded-md border border-default bg-white shadow-lg">
+                    <div className="absolute left-0 right-0 z-50 mt-0 max-h-56 overflow-auto rounded-md border border-default bg-surface shadow-lg">
                       <div className="flex items-center gap-2 px-3 py-2 text-xs text-tertiary">
                         <Search className="h-3.5 w-3.5" />
                         Pronađeno u katalogu

@@ -56,6 +56,8 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # Phase 8 Lock-Down: E2E tests now BLOCKING
+    # All tests must pass for compliance - no exceptions without ADR
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +75,15 @@ jobs:
 
       - name: Build application
         run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+          SENTRY_SKIP_SOURCE_MAP_UPLOAD: "true"
+          # Required for build - actual values not needed for E2E tests
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          RESEND_API_KEY: "re_test_dummy_key"
+          REDIS_URL: "redis://localhost:6379"
+          NEXTAUTH_SECRET: "ci-test-secret-not-for-production"
+          NEXTAUTH_URL: "http://localhost:3000"
 
       - name: Run E2E tests
         run: npx playwright test e2e/assistant/ --project=chromium
@@ -93,10 +104,17 @@ jobs:
     steps:
       - name: Check results
         run: |
+          # Unit and Accessibility tests must pass
           if [ "${{ needs.unit-tests.result }}" != "success" ] || \
-             [ "${{ needs.accessibility-tests.result }}" != "success" ] || \
-             [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+             [ "${{ needs.accessibility-tests.result }}" != "success" ]; then
             echo "Quality gates failed"
             exit 1
           fi
+
+          # Phase 8 Lock-Down: E2E tests are now BLOCKING
+          if [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+            echo "E2E tests failed - blocking deployment"
+            exit 1
+          fi
+
           echo "All quality gates passed"

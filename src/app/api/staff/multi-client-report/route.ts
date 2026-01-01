@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
-import { checkStaffRateLimit } from "@/lib/security/staff-rate-limit"
 import { logStaffAccess, getRequestMetadata } from "@/lib/staff-audit"
-
-const querySchema = z.object({
-  from: z.string().optional(),
-  to: z.string().optional(),
-  reportType: z.enum(["overview", "kpr", "pending-review", "deadlines"]).optional().default("overview"),
-})
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
+import { multiClientReportQuerySchema } from "../_schemas"
 
 function parseDate(value?: string) {
   if (!value) return undefined
@@ -30,21 +24,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const parsed = querySchema.safeParse({
-      from: searchParams.get("from") || undefined,
-      to: searchParams.get("to") || undefined,
-      reportType: searchParams.get("reportType") || "overview",
-    })
+    const parsed = parseQuery(searchParams, multiClientReportQuerySchema)
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.format() },
-        { status: 400 }
-      )
-    }
-
-    const fromDate = parseDate(parsed.data.from)
-    const toDate = parseDate(parsed.data.to)
+    const fromDate = parseDate(parsed.from)
+    const toDate = parseDate(parsed.to)
 
     // Get all assigned clients
     const assignments = await db.staffAssignment.findMany({
@@ -65,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     if (companyIds.length === 0) {
       return NextResponse.json({
-        reportType: parsed.data.reportType,
+        reportType: parsed.reportType,
         totalClients: 0,
         clients: [],
       })
@@ -79,14 +62,14 @@ export async function GET(request: NextRequest) {
         clientCompanyId: companyId,
         action: "STAFF_VIEW_REPORTS",
         resourceType: "MultiClientReport",
-        metadata: { reportType: parsed.data.reportType },
+        metadata: { reportType: parsed.reportType },
         ipAddress,
         userAgent,
       })
     }
 
     // Build report based on type
-    switch (parsed.data.reportType) {
+    switch (parsed.reportType) {
       case "overview":
         return await generateOverviewReport(companyIds, assignments, fromDate, toDate)
 
@@ -103,9 +86,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Invalid report type" }, { status: 400 })
     }
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("Multi-client report error:", error)
     return NextResponse.json(
-      { error: "Report generation failed", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Report generation failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     )
   }
@@ -125,12 +114,13 @@ async function generateOverviewReport(
       })()
     : undefined
 
-  const dateFilter = fromDate || toDateInclusive
-    ? {
-        gte: fromDate,
-        lte: toDateInclusive,
-      }
-    : undefined
+  const dateFilter =
+    fromDate || toDateInclusive
+      ? {
+          gte: fromDate,
+          lte: toDateInclusive,
+        }
+      : undefined
 
   const clientReports = await Promise.all(
     assignments.map(async (assignment) => {
@@ -179,7 +169,7 @@ async function generateOverviewReport(
             db.expense.count({ where: { companyId: assignment.company.id } }),
             db.staffReview.count({ where: { companyId: assignment.company.id } }),
           ])
-          return (invoiceCount + expenseCount) - reviewedCount
+          return invoiceCount + expenseCount - reviewedCount
         })(),
       ])
 
@@ -201,7 +191,8 @@ async function generateOverviewReport(
         },
         openTickets: ticketStats,
         pendingReview,
-        netProfit: Number(invoiceStats._sum.totalAmount || 0) - Number(expenseStats._sum.totalAmount || 0),
+        netProfit:
+          Number(invoiceStats._sum.totalAmount || 0) - Number(expenseStats._sum.totalAmount || 0),
       }
     })
   )
@@ -246,16 +237,19 @@ async function generateKprReport(
   fromDate?: Date,
   toDate?: Date
 ) {
-  const kprDateFilter = fromDate || toDate
-    ? {
-        gte: fromDate,
-        lte: toDate ? (() => {
-          const d = new Date(toDate)
-          d.setHours(23, 59, 59, 999)
-          return d
-        })() : undefined,
-      }
-    : undefined
+  const kprDateFilter =
+    fromDate || toDate
+      ? {
+          gte: fromDate,
+          lte: toDate
+            ? (() => {
+                const d = new Date(toDate)
+                d.setHours(23, 59, 59, 999)
+                return d
+              })()
+            : undefined,
+        }
+      : undefined
 
   const clientKprData = await Promise.all(
     assignments.map(async (assignment) => {
@@ -461,7 +455,9 @@ async function generateDeadlinesReport(
           dueDate: inv.dueDate,
           amount: Number(inv.totalAmount),
           status: inv.status,
-          daysUntilDue: inv.dueDate ? Math.floor((inv.dueDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : null,
+          daysUntilDue: inv.dueDate
+            ? Math.floor((inv.dueDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+            : null,
         })),
         overdue: overdueInvoices.map((inv) => ({
           id: inv.id,
@@ -469,7 +465,9 @@ async function generateDeadlinesReport(
           dueDate: inv.dueDate,
           amount: Number(inv.totalAmount),
           status: inv.status,
-          daysOverdue: inv.dueDate ? Math.floor((now.getTime() - inv.dueDate.getTime()) / (24 * 60 * 60 * 1000)) : null,
+          daysOverdue: inv.dueDate
+            ? Math.floor((now.getTime() - inv.dueDate.getTime()) / (24 * 60 * 60 * 1000))
+            : null,
         })),
       }
     })

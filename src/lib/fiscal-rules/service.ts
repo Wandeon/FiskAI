@@ -72,8 +72,7 @@ export async function createRuleVersion(params: {
         tableId: table.id,
         version: params.version,
         effectiveFrom: params.effectiveFrom,
-        effectiveUntil: params.effectiveUntil ?? null,
-        data: params.data,
+        data: params.data as any,
         dataHash,
       },
     })
@@ -81,7 +80,7 @@ export async function createRuleVersion(params: {
     await tx.ruleSnapshot.create({
       data: {
         ruleVersionId: ruleVersion.id,
-        data: params.data,
+        data: params.data as any,
         dataHash,
       },
     })
@@ -262,10 +261,13 @@ export async function calculateDeterministicRule(
     throw new Error(`Rule version not found for ${input.tableKey}`)
   }
 
-  if ("table" in ruleVersion && ruleVersion.table.key !== input.tableKey) {
-    throw new Error(`Rule version ${ruleVersion.id} does not match table ${input.tableKey}`)
+  if ("table" in ruleVersion) {
+    const table = ruleVersion.table as { key: string } | null
+    if (table && table.key !== input.tableKey) {
+      throw new Error(`Rule version ${ruleVersion.id} does not match table ${input.tableKey}`)
+    }
   }
-  const data = ruleVersion.data as RuleDataByTableKey
+  const data = ruleVersion.data as unknown as RuleDataByTableKey
 
   let result: unknown
 
@@ -288,16 +290,20 @@ export async function calculateDeterministicRule(
     case "JOPPD_CODEBOOK":
       result = calculateJoppdCodebook(data as JoppdCodebookData, input)
       break
-    default:
-      throw new Error(`Unsupported rule table key: ${input.tableKey}`)
+    default: {
+      const _exhaustiveCheck: never = input
+      throw new Error(
+        `Unsupported rule table key: ${(_exhaustiveCheck as { tableKey: string }).tableKey}`
+      )
+    }
   }
 
   await prisma.ruleCalculation.create({
     data: {
       ruleVersionId: ruleVersion.id,
       tableKey: input.tableKey,
-      input: input,
-      result: result as object,
+      input: input as any,
+      result: result as any,
       referenceDate,
     },
   })

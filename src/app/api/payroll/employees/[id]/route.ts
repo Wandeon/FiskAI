@@ -261,7 +261,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
             companyId: company.id,
             employeeId: existing.id,
             type: allowance.type,
-            amount: toDecimal(allowance.amount),
+            amount: toDecimal(allowance.amount) ?? new Prisma.Decimal(0),
             currency: allowance.currency,
             taxable: allowance.taxable ?? false,
             effectiveFrom: allowance.effectiveFrom,
@@ -318,7 +318,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
                 roleTitle: version.roleTitle ?? null,
                 employmentType: version.employmentType ?? null,
                 hoursPerWeek: version.hoursPerWeek ?? null,
-                salaryAmount: toDecimal(version.salaryAmount ?? null),
+                salaryAmount: toDecimal(version.salaryAmount ?? null) ?? new Prisma.Decimal(0),
                 salaryCurrency: version.salaryCurrency,
               })),
             })

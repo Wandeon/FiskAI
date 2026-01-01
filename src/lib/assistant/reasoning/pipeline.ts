@@ -285,7 +285,9 @@ export async function* buildAnswerWithReasoning(
     // Check primary source quality
     const primaryRule = finalRules[0]
     if (primaryRule.evidence?.url) {
-      analysisResults.push(`Primary source: ${primaryRule.evidence.sourceType || "Official document"}`)
+      analysisResults.push(
+        `Primary source: ${primaryRule.evidence.sourceType || "Official document"}`
+      )
     }
 
     // Check for multiple authority levels
@@ -341,7 +343,7 @@ export async function* buildAnswerWithReasoning(
     })
 
     // Determine terminal outcome using decision coverage
-    const topic = inferTopicFromIntent(resolution.intent, {
+    const topic = inferTopicFromIntent(resolution.intent ?? "general", {
       subjects: resolution.concepts,
       products: resolution.concepts,
     })
@@ -354,7 +356,7 @@ export async function* buildAnswerWithReasoning(
       const providedDimensions: Record<string, string> = {}
 
       // Extract dimensions from query entities
-      for (const entity of resolution.entities) {
+      for (const entity of resolution.entities || []) {
         if (entity.type === "keyword" && entity.value) {
           // Simple heuristic - map keywords to dimensions
           // This would be more sophisticated in production
@@ -440,13 +442,13 @@ export async function* buildAnswerWithReasoning(
       data: answer,
     })
 
-    return { outcome: terminalOutcome, ...answer }
+    return { outcome: terminalOutcome, ...answer } as TerminalPayload
   } catch (_err) {
     const errorPayload: ErrorPayload = {
       code: "INTERNAL",
       message: "An unexpected error occurred",
       correlationId: requestId,
-      retryable: true,
+      retriable: true,
     }
 
     yield factory.emit({

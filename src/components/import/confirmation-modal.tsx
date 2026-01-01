@@ -5,7 +5,9 @@ import { X, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionEditor, ExtractedTransaction } from "./transaction-editor"
 import { InvoiceEditor, ExtractedInvoice } from "./invoice-editor"
-import { DocumentType } from "@prisma/client"
+
+// Local type for document type enum (containment: removed @prisma/client import)
+type DocumentType = "BANK_STATEMENT" | "INVOICE" | "EXPENSE" | "PRIMKA" | "IZDATNICA"
 
 // Dynamic import PDF/Image viewers to avoid SSR issues with pdfjs-dist
 const PdfViewer = dynamic(() => import("./pdf-viewer").then((mod) => mod.PdfViewer), {
@@ -78,12 +80,10 @@ export function ConfirmationModal({
   // Normalize prop names for backward compatibility
   const displayFilename = filename || fileName || "Untitled"
   const normalizedFileType = fileType.toUpperCase() as "PDF" | "IMAGE"
-  const normalizedDocType = documentType ?? DocumentType.BANK_STATEMENT
-  const isInvoice = normalizedDocType === DocumentType.INVOICE
-  const isBankStatement =
-    normalizedDocType === DocumentType.BANK_STATEMENT || normalizedDocType === DocumentType.EXPENSE
-  const isStockMovement =
-    normalizedDocType === DocumentType.PRIMKA || normalizedDocType === DocumentType.IZDATNICA
+  const normalizedDocType: DocumentType = documentType ?? "BANK_STATEMENT"
+  const isInvoice = normalizedDocType === "INVOICE"
+  const isBankStatement = normalizedDocType === "BANK_STATEMENT" || normalizedDocType === "EXPENSE"
+  const isStockMovement = normalizedDocType === "PRIMKA" || normalizedDocType === "IZDATNICA"
   const bankAccountId = selectedBankAccount || selectedAccountId
   const handleAccountChange = onBankAccountChange || onAccountChange
   const handleDiscard = () => {
@@ -110,7 +110,7 @@ export function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white w-[90vw] h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="bg-surface w-[90vw] h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-4">
@@ -118,7 +118,7 @@ export function ConfirmationModal({
             <select
               value={normalizedDocType}
               onChange={(e) => onDocumentTypeChange?.(e.target.value as DocumentType)}
-              className="text-sm border border-default rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-border-focus"
+              className="text-sm border border-default rounded-lg px-3 py-1.5 bg-surface focus:ring-2 focus:ring-border-focus"
             >
               <option value="BANK_STATEMENT">Bankovni izvod</option>
               <option value="INVOICE">Račun</option>

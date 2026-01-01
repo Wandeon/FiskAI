@@ -9,6 +9,7 @@ import {
 } from "@/lib/compliance/certificate-monitor"
 import { db } from "@/lib/db"
 import { CertificateNotificationStatus } from "@prisma/client"
+import { isValidationError, formatValidationError } from "@/lib/api/validation"
 
 // Retry configuration
 const MAX_RETRY_ATTEMPTS = 3
@@ -139,6 +140,9 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error("Certificate check error:", error)
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     return NextResponse.json(
       {
         success: false,
@@ -241,7 +245,8 @@ async function retryPendingNotifications(results: {
         })
       } else {
         // Schedule next retry with exponential backoff
-        const retryDelay = RETRY_DELAYS[newAttemptCount - 1] || RETRY_DELAYS[RETRY_DELAYS.length - 1]
+        const retryDelay =
+          RETRY_DELAYS[newAttemptCount - 1] || RETRY_DELAYS[RETRY_DELAYS.length - 1]
         const nextRetryAt = new Date(Date.now() + retryDelay)
 
         await db.certificateNotification.update({
@@ -329,7 +334,10 @@ async function sendNewNotification(
     })
 
     // If the record already existed (not PENDING or attemptCount > 0), another instance owns it
-    if (notification.status !== CertificateNotificationStatus.PENDING || notification.attemptCount > 0) {
+    if (
+      notification.status !== CertificateNotificationStatus.PENDING ||
+      notification.attemptCount > 0
+    ) {
       results.skipped.push({
         companyId: cert.companyId,
         daysRemaining: cert.daysRemaining,
@@ -339,7 +347,9 @@ async function sendNewNotification(
     }
   } catch (claimError) {
     // Unique constraint violation means another instance claimed it
-    console.warn(`Could not claim notification for ${cert.companyId} (${notificationDay} days): already claimed`)
+    console.warn(
+      `Could not claim notification for ${cert.companyId} (${notificationDay} days): already claimed`
+    )
     results.skipped.push({
       companyId: cert.companyId,
       daysRemaining: cert.daysRemaining,

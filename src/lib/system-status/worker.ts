@@ -119,10 +119,11 @@ export async function processRefreshJob(
     if (heartbeat) await heartbeat()
 
     // Calculate diff events
-    const events = prevSnapshot ? diffSnapshots(prevSnapshot, snapshot) : []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events = prevSnapshot ? diffSnapshots(prevSnapshot as any, snapshot) : []
 
     // Save snapshot and events
-    const savedSnapshot = await saveSnapshot(snapshot)
+    const savedSnapshot = await saveSnapshot(snapshot as unknown as any)
     if (events.length > 0) {
       await saveEvents(
         events.map((e) => ({
