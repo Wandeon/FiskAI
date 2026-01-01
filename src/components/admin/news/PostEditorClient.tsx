@@ -3,7 +3,36 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronUp, Save, Eye, X } from "lucide-react"
-import type { NewsPost, NewsItem, NewsCategory } from "@/lib/db/schema/news"
+
+// Local types for news data (containment: removed @/lib/db/schema/news import)
+interface NewsPost {
+  id: string
+  slug: string
+  title: string
+  content: string
+  excerpt: string | null
+  categoryId: string | null
+  tags: unknown
+  featuredImageUrl: string | null
+  featuredImageSource: string | null
+  status: string
+  publishedAt: Date | null
+  aiPasses: unknown
+}
+
+interface NewsItem {
+  id: string
+  originalTitle: string
+  originalContent: string | null
+  sourceUrl: string
+}
+
+interface NewsCategory {
+  id: string
+  slug: string
+  nameHr: string
+  parentId: string | null
+}
 
 interface PostEditorClientProps {
   post: NewsPost
@@ -33,7 +62,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
     pass3: false,
   })
 
-  const aiPasses = (post.aiPasses as any) || {}
+  const aiPasses = (post.aiPasses as Record<string, unknown>) || {}
 
   const handleSave = async (publish: boolean = false) => {
     setSaving(true)
@@ -238,6 +267,7 @@ export default function PostEditorClient({ post, sourceItems, categories }: Post
               className="mb-2 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--foreground)]"
             />
             {formData.featuredImageUrl && (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={formData.featuredImageUrl}
                 alt="Preview"
