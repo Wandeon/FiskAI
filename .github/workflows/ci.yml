@@ -111,9 +111,7 @@ jobs:
   test-integration:
     name: Integration Tests (DB)
     runs-on: ubuntu-latest
-    # Skip: Requires Prisma 7 config file setup for migrations
-    # TODO: Configure prisma.config.ts for CI migrations (issue #TBD)
-    if: false
+    # Enabled: Integration tests now block the build (Phase 0 Architecture Containment)
     services:
       postgres:
         image: postgres:16
@@ -177,8 +175,8 @@ jobs:
     # Build is the deploy blocker - catches actual compilation errors
     # Added security as dependency per issue #324
     # Added typecheck as dependency per Phase 0 Architecture Containment
-    # Note: test-integration skipped until Prisma 7 config is set up
-    needs: [lint, typecheck, test, security]
+    # Added test-integration per Phase 0 Task 5 - integration tests now block builds
+    needs: [lint, typecheck, test, test-integration, security]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
