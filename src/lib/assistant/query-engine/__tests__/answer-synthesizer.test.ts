@@ -20,16 +20,17 @@ describe("Answer Synthesizer", () => {
     id: "rule-1",
     conceptSlug: "pdv-stopa",
     titleHr: "Opća stopa PDV-a",
-    bodyHr: "Opća stopa poreza na dodanu vrijednost u Hrvatskoj iznosi 25%.",
     explanationHr: "Primjenjuje se na većinu proizvoda i usluga.",
     value: "25",
     valueType: "percentage",
-    authority: "LAW",
+    authorityLevel: "LAW",
+    status: "PUBLISHED",
     confidence: 0.95,
     effectiveFrom: new Date("2013-01-01"),
     effectiveUntil: null,
     appliesWhen: null,
     obligationType: "OBLIGATION",
+    sourcePointers: [],
   }
 
   it("should synthesize answer from single rule", { skip: SKIP_TESTS }, async () => {

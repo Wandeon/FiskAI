@@ -38,7 +38,7 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
   // 2. Decrypt certificate and setup secure cleanup
   // Security: Use try-finally to ensure sensitive data is zeroed even on errors
   let p12Buffer: Buffer | null = null
-  let credentials: { privateKeyPem: string; certPem: string } | null = null
+  let credentials: { privateKeyPem: string; certificatePem: string } | null = null
 
   try {
     const decryptedPayload = decryptWithEnvelope(

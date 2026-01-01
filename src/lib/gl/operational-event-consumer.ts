@@ -23,8 +23,8 @@ async function loadPostingRule(event: {
   const rule = await db.postingRule.findFirst({
     where: {
       companyId: event.companyId,
-      sourceType: event.sourceType,
-      eventType: event.eventType,
+      sourceType: event.sourceType as Prisma.OperationalSourceType,
+      eventType: event.eventType as Prisma.OperationalEventType,
       isActive: true,
     },
     select: {

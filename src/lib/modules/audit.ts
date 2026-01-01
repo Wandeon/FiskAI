@@ -92,7 +92,7 @@ export function detectEntitlementChanges(
   metadata?: { ipAddress?: string; userAgent?: string; reason?: string }
 ): EntitlementAuditEntry[] {
   const entries: EntitlementAuditEntry[] = []
-  const previousModules = previous?.modules ?? {}
+  const previousModules = previous?.modules ?? ({} as Record<ModuleKey, ModuleEntitlement | null>)
   const currentModules = current.modules
 
   // Check for plan changes
