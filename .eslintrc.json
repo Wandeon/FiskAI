@@ -100,7 +100,11 @@
         "src/lib/**/*.tsx",
         "src/components/**/*.ts",
         "src/components/**/*.tsx",
-        "src/stores/**/*.ts"
+        "src/stores/**/*.ts",
+        "src/contexts/**/*.ts",
+        "src/contexts/**/*.tsx",
+        "src/hooks/**/*.ts",
+        "src/hooks/**/*.tsx"
       ],
       "excludedFiles": [
         "src/domain/**/*",
