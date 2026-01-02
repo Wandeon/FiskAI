@@ -12,6 +12,27 @@ import {
 } from "./modules/permissions"
 import { parseTenantFlags, type TenantFeatureFlags } from "./config/features"
 
+// Re-export from new capabilities module for Enterprise Hardening
+export {
+  // Types
+  type CapabilityState,
+  type CapabilityInput,
+  type CapabilityBlocker,
+  type CapabilityAction,
+  type CapabilityResponse,
+  type CapabilityRequest,
+  type CapabilityMetadata,
+  // Registry
+  CAPABILITY_REGISTRY,
+  CAPABILITY_BY_ID,
+  getCapabilityMetadata,
+  getCapabilitiesByDomain,
+  getCapabilitiesAffectingEntity,
+  // Resolver
+  resolveCapability,
+  resolveCapabilities,
+} from "./capabilities/index"
+
 export type LegalForm = "OBRT_PAUSAL" | "OBRT_REAL" | "OBRT_VAT" | "JDOO" | "DOO"
 export type { ModuleKey, PermissionAction }
 

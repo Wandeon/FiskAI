@@ -47,7 +47,7 @@ export async function detectEuTransaction(tx: BankTransaction): Promise<EuDetect
     }
 
     // Check if EU country
-    if (EU_COUNTRY_CODES.includes(ibanCountry as any)) {
+    if ((EU_COUNTRY_CODES as readonly string[]).includes(ibanCountry)) {
       const { EU_COUNTRY_NAMES } = await import("./constants")
       return {
         isEu: true,

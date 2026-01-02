@@ -29,7 +29,10 @@ type ParsedPage = {
 }
 
 /** CAMT XML amount field - can be number, string, or object with currency attribute */
-type CamtAmountValue = number | string | { "@_Ccy"?: string; "#text"?: string; "_text"?: string; "$t"?: string }
+type CamtAmountValue =
+  | number
+  | string
+  | { "@_Ccy"?: string; "#text"?: string; _text?: string; $t?: string }
 
 /** CAMT XML balance entry structure */
 interface CamtBalance {
@@ -234,7 +237,8 @@ async function handleXml(jobId: string) {
   const openingBal = extractAmountValue(openingBalRaw)
   const closingBal = extractAmountValue(closingBalRaw)
   const firstAmt = balances[0]?.Amt
-  const currency = (typeof firstAmt === "object" && firstAmt !== null ? firstAmt["@_Ccy"] : undefined) || "EUR"
+  const currency =
+    (typeof firstAmt === "object" && firstAmt !== null ? firstAmt["@_Ccy"] : undefined) || "EUR"
 
   const entries: CamtEntry[] = Array.isArray(stmt.Ntry) ? stmt.Ntry : stmt.Ntry ? [stmt.Ntry] : []
 
@@ -291,7 +295,9 @@ async function handleXml(jobId: string) {
         const cdtDbt = entry?.CdtDbtInd === "CRDT" ? "INCOMING" : "OUTGOING"
         const dateStr = entry?.BookgDt?.Dt || entry?.ValDt?.Dt || statementDate
         const related = entry?.NtryDtls?.TxDtls || []
-        const details: CamtTransactionDetails | undefined = Array.isArray(related) ? related[0] : related
+        const details: CamtTransactionDetails | undefined = Array.isArray(related)
+          ? related[0]
+          : related
         const ref =
           entry?.NtryRef ||
           details?.Refs?.EndToEndId ||
@@ -562,7 +568,10 @@ async function callWorkhorseModel(pageText: string): Promise<Omit<ParsedPage, "p
 
 async function extractPdfTextPerPage(buffer: Buffer): Promise<string[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pdf-parse is dynamically imported and lacks TypeScript definitions
-  let pdfParse: (buffer: Buffer, options?: { pagerender?: (pageData: PdfPageData) => Promise<string> }) => Promise<unknown>
+  let pdfParse: (
+    buffer: Buffer,
+    options?: { pagerender?: (pageData: PdfPageData) => Promise<string> }
+  ) => Promise<unknown>
   try {
     pdfParse = (await import("pdf-parse")).default
   } catch (error) {

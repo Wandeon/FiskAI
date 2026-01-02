@@ -3,6 +3,11 @@ import { PrismaClient, AuditAction, Prisma, PeriodStatus } from "@prisma/client"
 import { AsyncLocalStorage } from "node:async_hooks"
 import { getAuditContext } from "./audit-context"
 import { computeAuditChecksum } from "./audit-utils"
+import {
+  assertPeriodWritable,
+  assertPeriodWritableBulk,
+  AccountingPeriodLockedError as PeriodLockedError,
+} from "./period-locking"
 
 // Context for current request
 export type TenantContext = {
@@ -1877,14 +1882,13 @@ export function withTenantIsolation(prisma: PrismaClient) {
             } as typeof args.data
           }
 
-          if (model in PERIOD_LOCK_MODELS) {
-            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
-              data: args.data as Record<string, unknown>,
-            })
-            if (companyId && date) {
-              await assertPeriodUnlocked(prismaBase, companyId, date, model)
-            }
-          }
+          // Period lock enforcement for all period-affecting entities
+          await assertPeriodWritable(
+            prismaBase,
+            model,
+            "create",
+            args.data as Record<string, unknown>
+          )
 
           if (model === "JournalEntry" && args.data && typeof args.data === "object") {
             const data = args.data as Record<string, unknown>
@@ -2080,15 +2084,14 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          if (model in PERIOD_LOCK_MODELS) {
-            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
-              data: args.data as Record<string, unknown>,
-              where: args.where as Record<string, unknown>,
-            })
-            if (companyId && date) {
-              await assertPeriodUnlocked(prismaBase, companyId, date, model)
-            }
-          }
+          // Period lock enforcement for all period-affecting entities
+          await assertPeriodWritable(
+            prismaBase,
+            model,
+            "update",
+            args.data as Record<string, unknown>,
+            args.where as Record<string, unknown>
+          )
 
           if (model === "EInvoice") {
             await enforceInvoiceImmutability(prismaBase, args)
@@ -2519,6 +2522,15 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("delete")
           }
 
+          // Period lock enforcement for all period-affecting entities
+          await assertPeriodWritable(
+            prismaBase,
+            model,
+            "delete",
+            undefined,
+            args.where as Record<string, unknown>
+          )
+
           if (model === "EInvoice") {
             await enforceInvoiceDeleteImmutability(
               prismaBase,
@@ -2697,15 +2709,6 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          if (model in PERIOD_LOCK_MODELS) {
-            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
-              where: args.where as Record<string, unknown>,
-            })
-            if (companyId && date) {
-              await assertPeriodUnlocked(prismaBase, companyId, date, model)
-            }
-          }
-
           const result = await query(args)
 
           // Audit logging for delete operations
@@ -2745,16 +2748,15 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          if (model in PERIOD_LOCK_MODELS) {
-            const entries = Array.isArray(args.data) ? args.data : [args.data]
-            for (const entry of entries) {
-              const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
-                data: entry as Record<string, unknown>,
-              })
-              if (companyId && date) {
-                await assertPeriodUnlocked(prismaBase, companyId, date, model)
-              }
-            }
+          // Period lock enforcement for all period-affecting entities
+          const entries = Array.isArray(args.data) ? args.data : [args.data]
+          for (const entry of entries) {
+            await assertPeriodWritable(
+              prismaBase,
+              model,
+              "create",
+              entry as Record<string, unknown>
+            )
           }
 
           return query(args)
@@ -2769,9 +2771,13 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("updateMany")
           }
 
-          await enforcePeriodLockForBulk(prismaBase, model, {
-            where: args.where as Record<string, unknown>,
-          })
+          // Period lock enforcement for all period-affecting entities
+          await assertPeriodWritableBulk(
+            prismaBase,
+            model,
+            "update",
+            args.where as Record<string, unknown>
+          )
 
           if (model === "EInvoice") {
             await enforceInvoiceUpdateManyImmutability(prismaBase, {
@@ -2864,6 +2870,14 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("deleteMany")
           }
 
+          // Period lock enforcement for all period-affecting entities
+          await assertPeriodWritableBulk(
+            prismaBase,
+            model,
+            "delete",
+            args.where as Record<string, unknown>
+          )
+
           if (model === "EInvoice") {
             const lockedInvoice = await prismaBase.eInvoice.findFirst({
               where: {
@@ -2953,10 +2967,6 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          await enforcePeriodLockForBulk(prismaBase, model, {
-            where: args.where as Record<string, unknown>,
-          })
-
           return query(args)
         },
         async upsert({ model, args, query }) {
@@ -2994,15 +3004,21 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          if (model in PERIOD_LOCK_MODELS) {
-            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
-              data: args.update as Record<string, unknown>,
-              where: args.where as Record<string, unknown>,
-            })
-            if (companyId && date) {
-              await assertPeriodUnlocked(prismaBase, companyId, date, model)
-            }
-          }
+          // Period lock enforcement for all period-affecting entities
+          // Check both create and update paths since upsert may do either
+          await assertPeriodWritable(
+            prismaBase,
+            model,
+            "create",
+            args.create as Record<string, unknown>
+          )
+          await assertPeriodWritable(
+            prismaBase,
+            model,
+            "update",
+            args.update as Record<string, unknown>,
+            args.where as Record<string, unknown>
+          )
 
           if (model === "EInvoice") {
             await enforceInvoiceImmutability(prismaBase, {

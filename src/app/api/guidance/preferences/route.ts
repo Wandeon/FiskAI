@@ -124,7 +124,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Otherwise, update individual fields
-    const updates: Record<string, any> = {}
+    const updates: Record<string, unknown> = {}
     if (levelFakturiranje) updates.levelFakturiranje = levelFakturiranje
     if (levelFinancije) updates.levelFinancije = levelFinancije
     if (levelEu) updates.levelEu = levelEu

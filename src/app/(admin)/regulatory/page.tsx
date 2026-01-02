@@ -301,7 +301,9 @@ export default async function RegulatoryDashboardPage() {
                     <div>
                       <div className="text-sm font-medium">{activity.summary}</div>
                       <div className="text-xs text-muted-foreground">
-                        {activity.completedAt ? new Date(activity.completedAt).toLocaleString() : "Pending"}
+                        {activity.completedAt
+                          ? new Date(activity.completedAt).toLocaleString()
+                          : "Pending"}
                       </div>
                     </div>
                   </div>

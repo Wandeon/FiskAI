@@ -24,7 +24,10 @@ function formatDate(value?: Date | null) {
 
 function money(value: unknown) {
   if (value === null || value === undefined) return ""
-  const num = typeof value === "object" && value !== null && "toNumber" in value ? (value as { toNumber(): number }).toNumber() : Number(value)
+  const num =
+    typeof value === "object" && value !== null && "toNumber" in value
+      ? (value as { toNumber(): number }).toNumber()
+      : Number(value)
   return Number.isFinite(num) ? num.toFixed(2) : ""
 }
 
