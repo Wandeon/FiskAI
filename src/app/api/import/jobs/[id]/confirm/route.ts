@@ -14,6 +14,13 @@ interface BankTransaction {
   counterpartyIban?: string
 }
 
+interface InvoiceLineItem {
+  description?: string
+  quantity?: number
+  unitPrice?: number
+  amount?: number
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
@@ -144,8 +151,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Build description from line items
-    const lineItemsDesc = (lineItems || [])
-      .map((item: any) => item.description)
+    const lineItemsDesc = ((lineItems || []) as InvoiceLineItem[])
+      .map((item) => item.description)
       .filter(Boolean)
       .join(", ")
     const description =

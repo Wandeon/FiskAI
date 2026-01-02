@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { Prisma } from "@prisma/client"
+import { Prisma, EInvoiceStatus } from "@prisma/client"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import {
   validateEN16931Compliance,
@@ -101,7 +101,7 @@ export async function GET(request: Request) {
     }
 
     if (status) {
-      whereClause.status = status
+      whereClause.status = status as EInvoiceStatus
     }
 
     const invoices = await db.eInvoice.findMany({

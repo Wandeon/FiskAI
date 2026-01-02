@@ -21,8 +21,9 @@ function formatDate(value?: Date | null) {
   return value.toISOString().slice(0, 10)
 }
 
-function money(value: number | string | null | undefined) {
-  const num = Number(value || 0)
+function money(value: unknown) {
+  if (value === null || value === undefined) return ""
+  const num = typeof value === "object" && value !== null && "toNumber" in value ? (value as { toNumber(): number }).toNumber() : Number(value)
   return Number.isFinite(num) ? num.toFixed(2) : ""
 }
 

@@ -196,7 +196,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
         }
 
         xml = generateZpXml(zpData)
-        formData = zpFormData
+        formData = zpData
         break
       }
 

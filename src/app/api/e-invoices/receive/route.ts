@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { Prisma } from "@prisma/client"
+import { Prisma, EInvoiceStatus } from "@prisma/client"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { IncomingInvoice } from "@/lib/e-invoice/types"
 import { logger } from "@/lib/logger"
@@ -276,15 +276,18 @@ export async function GET(request: Request) {
     }
 
     if (status) {
-      whereClause.status = status
+      whereClause.status = status as EInvoiceStatus
     }
 
-    if (fromDate) {
-      whereClause.issueDate = { ...whereClause.issueDate, gte: new Date(fromDate) }
-    }
-
-    if (toDate) {
-      whereClause.issueDate = { ...whereClause.issueDate, lte: new Date(toDate) }
+    if (fromDate || toDate) {
+      const issueDateFilter: { gte?: Date; lte?: Date } = {}
+      if (fromDate) {
+        issueDateFilter.gte = new Date(fromDate)
+      }
+      if (toDate) {
+        issueDateFilter.lte = new Date(toDate)
+      }
+      whereClause.issueDate = issueDateFilter
     }
 
     if (provider) {
