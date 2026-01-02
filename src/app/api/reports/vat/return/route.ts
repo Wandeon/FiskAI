@@ -11,8 +11,8 @@ import {
 
 const querySchema = z
   .object({
-    from: z.coerce.date({ required_error: "Datum 'from' je obavezan" }),
-    to: z.coerce.date({ required_error: "Datum 'to' je obavezan" }),
+    from: z.coerce.date({ message: "Datum 'from' je obavezan" }),
+    to: z.coerce.date({ message: "Datum 'to' je obavezan" }),
   })
   .refine((data) => data.from <= data.to, {
     message: "Datum 'from' mora biti prije datuma 'to'",
