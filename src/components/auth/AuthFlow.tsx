@@ -85,7 +85,9 @@ export function AuthFlow() {
                   email={auth.email}
                   onVerify={auth.verifyCode}
                   onResend={async () => {
-                    await auth.sendVerificationCode(auth.isNewUser ? "EMAIL_VERIFY" : "LOGIN_VERIFY")
+                    await auth.sendVerificationCode(
+                      auth.isNewUser ? "EMAIL_VERIFY" : "LOGIN_VERIFY"
+                    )
                   }}
                   onBack={auth.goBack}
                   isLoading={auth.isLoading}

@@ -22,7 +22,10 @@ function formatDate(date: Date | null | undefined): string {
 
 function formatDecimal(value: unknown): string {
   if (value === null || value === undefined) return "0.00"
-  const num = typeof value === "object" && "toNumber" in value ? (value as { toNumber(): number }).toNumber() : Number(value)
+  const num =
+    typeof value === "object" && "toNumber" in value
+      ? (value as { toNumber(): number }).toNumber()
+      : Number(value)
   return Number.isFinite(num) ? num.toFixed(2) : "0.00"
 }
 

@@ -204,7 +204,9 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                   <Switch
                     id="remind-7"
                     checked={emailPrefs.remind7Days}
-                    onCheckedChange={(checked) => void saveEmailPreferences({ remind7Days: checked })}
+                    onCheckedChange={(checked) =>
+                      void saveEmailPreferences({ remind7Days: checked })
+                    }
                     disabled={isSaving}
                   />
                 </div>
@@ -216,7 +218,9 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                   <Switch
                     id="remind-3"
                     checked={emailPrefs.remind3Days}
-                    onCheckedChange={(checked) => void saveEmailPreferences({ remind3Days: checked })}
+                    onCheckedChange={(checked) =>
+                      void saveEmailPreferences({ remind3Days: checked })
+                    }
                     disabled={isSaving}
                   />
                 </div>
@@ -228,7 +232,9 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                   <Switch
                     id="remind-1"
                     checked={emailPrefs.remind1Day}
-                    onCheckedChange={(checked) => void saveEmailPreferences({ remind1Day: checked })}
+                    onCheckedChange={(checked) =>
+                      void saveEmailPreferences({ remind1Day: checked })
+                    }
                     disabled={isSaving}
                   />
                 </div>
@@ -240,7 +246,9 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                   <Switch
                     id="remind-day-of"
                     checked={emailPrefs.remindDayOf}
-                    onCheckedChange={(checked) => void saveEmailPreferences({ remindDayOf: checked })}
+                    onCheckedChange={(checked) =>
+                      void saveEmailPreferences({ remindDayOf: checked })
+                    }
                     disabled={isSaving}
                   />
                 </div>
@@ -278,7 +286,11 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                     Povezano
                   </Badge>
                 ) : (
-                  <Button variant="outline" size="sm" onClick={() => void handleGoogleCalendarConnect()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleGoogleCalendarConnect()}
+                  >
                     <Calendar className="h-4 w-4 mr-2" />
                     Poveži
                   </Button>
@@ -294,7 +306,11 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                     Preuzmite kalendar datoteku koju možete uvesti u bilo koji kalendar aplikaciju
                   </p>
                 </div>
-                <Button variant="secondary" onClick={() => void handleExportICS()} className="w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  onClick={() => void handleExportICS()}
+                  className="w-full sm:w-auto"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Preuzmi ICS datoteku
                 </Button>

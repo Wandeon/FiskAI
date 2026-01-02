@@ -116,7 +116,8 @@ export async function getTenantDetail(companyId: string): Promise<TenantDetail |
       onboardingStep,
       tutorialProgress: 0, // TODO: Calculate from tutorial_progress table
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- featureFlags is JSON column with dynamic structure
-      competenceLevel: (company.featureFlags as Record<string, unknown>)?.competence as string || "beginner",
+      competenceLevel:
+        ((company.featureFlags as Record<string, unknown>)?.competence as string) || "beginner",
       lastLoginAt: owner?.updatedAt || null,
       thirtyDayActivity: recentActivity,
     },

@@ -2,7 +2,13 @@ import { Suspense } from "react"
 import dynamic from "next/dynamic"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { getCachedTenantList } from "@/lib/cache"
-import type { TenantFilters, TenantSort, TenantPagination, TenantSortField, TenantSortOrder } from "@/lib/admin/tenant-list"
+import type {
+  TenantFilters,
+  TenantSort,
+  TenantPagination,
+  TenantSortField,
+  TenantSortOrder,
+} from "@/lib/admin/tenant-list"
 
 // Dynamic import for heavy TenantListView component
 const TenantListView = dynamic(
