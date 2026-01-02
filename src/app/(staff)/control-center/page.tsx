@@ -74,26 +74,9 @@ async function getQueueItems(
       break
     }
     case "AccountingPeriod": {
-      const periods = await db.accountingPeriod.findMany({
-        where: {
-          companyId: { in: assignedCompanyIds },
-          status: "OPEN",
-        },
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          endDate: true,
-          company: { select: { name: true } },
-        },
-        take: 10,
-      })
-      entities = periods.map((p) => ({
-        id: p.id,
-        title: `${p.company.name} - ${p.name}`,
-        status: p.status,
-        timestamp: p.endDate.toISOString(),
-      }))
+      // Period lock requests - placeholder for Phase 2
+      // Will query accountingPeriod with OPEN status
+      entities = []
       break
     }
     case "Invitation": {

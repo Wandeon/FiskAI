@@ -28,7 +28,7 @@ describe("resolveCapabilitiesForUser", () => {
 
   it("should return UNAUTHORIZED for unauthenticated users", async () => {
     const { auth } = await import("@/lib/auth")
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const result = await resolveCapabilitiesForUser(["INV-001"])
 

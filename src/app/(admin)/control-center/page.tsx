@@ -36,53 +36,15 @@ async function getQueueItems(
       break
     }
     case "RegulatoryConflict": {
-      // RTL conflicts - check if regulatoryRule table exists
-      try {
-        const conflicts = await db.regulatoryRule.findMany({
-          where: { status: "CONFLICT" },
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            createdAt: true,
-          },
-          take: 10,
-        })
-        entities = conflicts.map((c) => ({
-          id: c.id,
-          title: c.title,
-          status: c.status,
-          timestamp: c.createdAt.toISOString(),
-        }))
-      } catch {
-        // Table may not exist
-        entities = []
-      }
+      // RTL conflicts - placeholder for Phase 2
+      // Will query regulatoryRule with NEEDS_REVIEW status
+      entities = []
       break
     }
     case "NewsPost": {
-      // Pending news posts - check if newsPost table exists
-      try {
-        const posts = await db.newsPost.findMany({
-          where: { status: "PENDING_REVIEW" },
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            createdAt: true,
-          },
-          take: 10,
-        })
-        entities = posts.map((p) => ({
-          id: p.id,
-          title: p.title,
-          status: p.status,
-          timestamp: p.createdAt.toISOString(),
-        }))
-      } catch {
-        // Table may not exist
-        entities = []
-      }
+      // Pending news posts - placeholder for Phase 2
+      // Will query news_posts with pending status
+      entities = []
       break
     }
     case "FailedJob": {
