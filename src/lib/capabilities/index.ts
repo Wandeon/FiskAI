@@ -40,3 +40,6 @@ export {
 
 // Actions module
 export * from "./actions"
+
+// Client-side hooks and utilities
+export { revalidateCapabilities } from "@/hooks/use-capabilities"
