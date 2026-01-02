@@ -297,7 +297,7 @@ For very large datasets, you may need to run it multiple times.
   }
 }
 
-main().catch((err) => {
+void main().catch((err) => {
   console.error("Pipeline fix failed:", err)
-  closeCliDb().finally(() => process.exit(1))
+  void closeCliDb().finally(() => process.exit(1))
 })

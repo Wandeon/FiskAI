@@ -62,7 +62,7 @@ export function EuTransactionReview({ companyId }: Props) {
   )
 
   useEffect(() => {
-    fetchUnconfirmedTransactions()
+    void fetchUnconfirmedTransactions()
   }, [])
 
   async function fetchUnconfirmedTransactions() {
@@ -368,7 +368,7 @@ export function EuTransactionReview({ companyId }: Props) {
                         />
                         <Button
                           variant="outline"
-                          onClick={() => handleValidateVies(tx.id)}
+                          onClick={() => void handleValidateVies(tx.id)}
                           disabled={
                             processingId === tx.id || validatingViesId === tx.id || !vatIds[tx.id]
                           }
@@ -407,7 +407,7 @@ export function EuTransactionReview({ companyId }: Props) {
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="destructive"
-                        onClick={() => handleReject(tx.id)}
+                        onClick={() => void handleReject(tx.id)}
                         disabled={processingId === tx.id}
                       >
                         {processingId === tx.id ? (
@@ -419,7 +419,7 @@ export function EuTransactionReview({ companyId }: Props) {
                       </Button>
                       <Button
                         variant="default"
-                        onClick={() => handleConfirm(tx.id)}
+                        onClick={() => void handleConfirm(tx.id)}
                         disabled={processingId === tx.id || !selectedCountries[tx.id]}
                         className="bg-success hover:bg-green-700"
                       >

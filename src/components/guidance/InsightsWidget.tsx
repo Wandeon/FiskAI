@@ -53,7 +53,7 @@ export function InsightsWidget({ className }: InsightsWidgetProps) {
         setIsLoading(false)
       }
     }
-    fetchInsights()
+    void fetchInsights()
   }, [])
 
   if (isLoading) {

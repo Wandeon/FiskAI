@@ -644,7 +644,7 @@ async function main() {
   }
 }
 
-main()
+void main()
   .catch(async (error) => {
     console.error("[seed] Error:", error)
     await pool.end()

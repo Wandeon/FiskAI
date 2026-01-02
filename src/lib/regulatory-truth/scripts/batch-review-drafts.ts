@@ -279,7 +279,7 @@ Examples:
   }
 }
 
-main().catch((err) => {
+void main().catch((err) => {
   console.error("Batch review failed:", err)
-  closeCliDb().finally(() => process.exit(1))
+  void closeCliDb().finally(() => process.exit(1))
 })

@@ -30,7 +30,7 @@ export default function FormsPage() {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
 
   useEffect(() => {
-    fetchForms()
+    void fetchForms()
   }, [])
 
   async function fetchForms() {
@@ -222,7 +222,7 @@ export default function FormsPage() {
           isOpen={showGenerateDialog}
           onClose={() => setShowGenerateDialog(false)}
           onGenerated={() => {
-            fetchForms() // Refresh the list
+            void fetchForms() // Refresh the list
           }}
         />
       )}

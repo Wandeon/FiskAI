@@ -262,7 +262,7 @@ export function StaffClientMessages({
                 Cancel
               </Button>
               <Button
-                onClick={createTicket}
+                onClick={() => void createTicket()}
                 disabled={isCreating || !newTicketTitle.trim() || !newTicketBody.trim()}
               >
                 {isCreating ? "Creating..." : "Start Conversation"}
@@ -302,7 +302,7 @@ export function StaffClientMessages({
                   {filteredTickets.map((ticket) => (
                     <button
                       key={ticket.id}
-                      onClick={() => loadTicketMessages(ticket.id)}
+                      onClick={() => void loadTicketMessages(ticket.id)}
                       className={cn(
                         "w-full text-left p-4 hover:bg-accent transition-colors",
                         selectedTicket?.id === ticket.id && "bg-accent"
@@ -355,7 +355,7 @@ export function StaffClientMessages({
                   </div>
                   <Select
                     value={selectedTicket.status}
-                    onValueChange={(status) => updateTicketStatus(selectedTicket.id, status)}
+                    onValueChange={(status) => void updateTicketStatus(selectedTicket.id, status)}
                   >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue />
@@ -420,13 +420,13 @@ export function StaffClientMessages({
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault()
-                          sendMessage()
+                          void sendMessage()
                         }
                       }}
                       className="min-h-[60px] resize-none"
                     />
                     <Button
-                      onClick={sendMessage}
+                      onClick={() => void sendMessage()}
                       disabled={isLoading || !newMessage.trim()}
                       className="self-end"
                     >

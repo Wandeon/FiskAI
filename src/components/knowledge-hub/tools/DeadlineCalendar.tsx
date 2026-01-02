@@ -184,7 +184,7 @@ export function DeadlineCalendar({ year }: DeadlineCalendarProps) {
       }
     }
 
-    fetchObligations()
+    void fetchObligations()
   }, [year])
 
   const getDeadlinesForMonth = (month: number) => {

@@ -31,7 +31,7 @@ export function CardPaymentModal({ items, total, readerId, onClose, onComplete }
     }).format(price)
 
   useEffect(() => {
-    startPayment()
+    void startPayment()
   }, [])
 
   async function startPayment() {

@@ -75,7 +75,7 @@ export function PosdWizard({ companyId }: Props) {
         setIsLoading(false)
       }
     }
-    fetchIncomeSummary()
+    void fetchIncomeSummary()
   }, [year])
 
   // Step 1: Income Summary
@@ -527,7 +527,7 @@ export function PosdWizard({ companyId }: Props) {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={handleDownloadPdf}
+                onClick={() => void handleDownloadPdf()}
                 disabled={isGeneratingPdf || isGeneratingXml}
               >
                 {isGeneratingPdf ? (
@@ -545,7 +545,7 @@ export function PosdWizard({ companyId }: Props) {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={handleDownloadXml}
+                onClick={() => void handleDownloadXml()}
                 disabled={isGeneratingPdf || isGeneratingXml}
               >
                 {isGeneratingXml ? (

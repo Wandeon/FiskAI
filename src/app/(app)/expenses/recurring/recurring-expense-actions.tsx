@@ -60,7 +60,7 @@ export function RecurringExpenseActions({ expense }: { expense: RecurringExpense
               <button
                 onClick={() => {
                   setIsOpen(false)
-                  handleToggle()
+                  void handleToggle()
                 }}
                 disabled={isToggling}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[var(--surface-secondary)] disabled:opacity-50"
@@ -80,7 +80,7 @@ export function RecurringExpenseActions({ expense }: { expense: RecurringExpense
               <button
                 onClick={() => {
                   setIsOpen(false)
-                  handleDelete()
+                  void handleDelete()
                 }}
                 disabled={isDeleting}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-danger-text hover:bg-danger-bg disabled:opacity-50"

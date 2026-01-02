@@ -72,13 +72,13 @@ export function AIFeedback({
       setSelectedFeedback(feedback)
       setShowNotes(true)
     } else {
-      submitFeedback(feedback)
+      void submitFeedback(feedback)
     }
   }
 
   const handleNotesSubmit = () => {
     if (selectedFeedback) {
-      submitFeedback(selectedFeedback, true)
+      void submitFeedback(selectedFeedback, true)
     }
   }
 
@@ -122,7 +122,7 @@ export function AIFeedback({
             size="sm"
             onClick={() => {
               if (selectedFeedback) {
-                submitFeedback(selectedFeedback, false)
+                void submitFeedback(selectedFeedback, false)
               }
             }}
             disabled={isSubmitting}

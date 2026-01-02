@@ -125,7 +125,7 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
     }
 
     if (isOpen) {
-      generateQR()
+      void generateQR()
     }
   }, [isOpen, result])
 

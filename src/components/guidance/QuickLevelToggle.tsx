@@ -50,7 +50,7 @@ export function QuickLevelToggle({ className, variant = "dropdown" }: QuickLevel
         setIsLoading(false)
       }
     }
-    fetchLevel()
+    void fetchLevel()
   }, [])
 
   const handleSetLevel = async (level: CompetenceLevel) => {
@@ -76,7 +76,7 @@ export function QuickLevelToggle({ className, variant = "dropdown" }: QuickLevel
     const handleToggle = () => {
       const currentIndex = levels.indexOf(currentLevel)
       const nextIndex = (currentIndex + 1) % levels.length
-      handleSetLevel(levels[nextIndex])
+      void handleSetLevel(levels[nextIndex])
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {

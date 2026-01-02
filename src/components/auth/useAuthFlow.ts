@@ -122,52 +122,54 @@ export function useAuthFlow() {
     // Check for callbackUrl in query params
     const callbackUrl = searchParams?.get("callbackUrl")
 
-    setTimeout(async () => {
-      try {
-        // Fetch the session to get the latest system role securely
-        const session = await getSession()
-        const role = (session?.user?.systemRole as "USER" | "STAFF" | "ADMIN") || "USER"
+    setTimeout(() => {
+      void (async () => {
+        try {
+          // Fetch the session to get the latest system role securely
+          const session = await getSession()
+          const role = (session?.user?.systemRole as "USER" | "STAFF" | "ADMIN") || "USER"
 
-        // If we have a valid callbackUrl, use it
-        if (callbackUrl) {
-          try {
-            const url = new URL(callbackUrl)
-            // Basic security check: ensure it's http/https and matches our domain structure ideally
-            // For now, we trust NextAuth's internal handling, but since we are doing manual redirection:
-            if (url.protocol.startsWith("http")) {
-              window.location.href = url.toString()
-              return
+          // If we have a valid callbackUrl, use it
+          if (callbackUrl) {
+            try {
+              const url = new URL(callbackUrl)
+              // Basic security check: ensure it's http/https and matches our domain structure ideally
+              // For now, we trust NextAuth's internal handling, but since we are doing manual redirection:
+              if (url.protocol.startsWith("http")) {
+                window.location.href = url.toString()
+                return
+              }
+            } catch {
+              // Invalid URL, fall through to role-based redirect
             }
-          } catch {
-            // Invalid URL, fall through to role-based redirect
           }
+
+          // Construct the correct URL based on the user's role and current environment
+          const destinationBase = getRedirectUrlForSystemRole(role, window.location.href)
+
+          // If the destination hostname is different (e.g., app.fiskai.hr vs fiskai.hr),
+          // use window.location.href to ensure a full redirect that picks up cookies correctly
+          const currentHost = window.location.host
+          const destUrl = new URL(destinationBase)
+
+          // Add /dashboard if it's not already there (getRedirectUrlForSystemRole returns base domain)
+          if (
+            !destUrl.pathname.startsWith("/dashboard") &&
+            !destUrl.pathname.startsWith("/select-role")
+          ) {
+            destUrl.pathname = "/dashboard"
+          }
+
+          if (destUrl.host !== currentHost) {
+            window.location.href = destUrl.toString()
+          } else {
+            router.push(destUrl.pathname + destUrl.search)
+          }
+        } catch {
+          // Fallback to simple dashboard redirect
+          router.push("/dashboard")
         }
-
-        // Construct the correct URL based on the user's role and current environment
-        const destinationBase = getRedirectUrlForSystemRole(role, window.location.href)
-
-        // If the destination hostname is different (e.g., app.fiskai.hr vs fiskai.hr),
-        // use window.location.href to ensure a full redirect that picks up cookies correctly
-        const currentHost = window.location.host
-        const destUrl = new URL(destinationBase)
-
-        // Add /dashboard if it's not already there (getRedirectUrlForSystemRole returns base domain)
-        if (
-          !destUrl.pathname.startsWith("/dashboard") &&
-          !destUrl.pathname.startsWith("/select-role")
-        ) {
-          destUrl.pathname = "/dashboard"
-        }
-
-        if (destUrl.host !== currentHost) {
-          window.location.href = destUrl.toString()
-        } else {
-          router.push(destUrl.pathname + destUrl.search)
-        }
-      } catch {
-        // Fallback to simple dashboard redirect
-        router.push("/dashboard")
-      }
+      })()
     }, 1500)
   }, [router, searchParams])
 
@@ -194,7 +196,7 @@ export function useAuthFlow() {
         }
 
         // Success - redirect based on role
-        handleSuccess()
+        void handleSuccess()
       } catch {
         setError("Greška pri prijavi")
       }
@@ -278,7 +280,7 @@ export function useAuthFlow() {
           }
         }
 
-        handleSuccess()
+        void handleSuccess()
         return true
       } catch {
         setError("Greška pri verifikaciji")
@@ -349,7 +351,7 @@ export function useAuthFlow() {
           return false
         }
 
-        handleSuccess()
+        void handleSuccess()
         return true
       } catch {
         setError("Greška pri resetiranju lozinke")
@@ -430,7 +432,7 @@ export function useAuthFlow() {
       }
 
       // Success - redirect based on role
-      handleSuccess()
+      void handleSuccess()
     } catch (error) {
       console.error("Passkey authentication error:", error)
       if (error instanceof Error && error.name === "NotAllowedError") {

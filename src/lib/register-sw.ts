@@ -25,7 +25,7 @@ export function registerServiceWorker() {
         if ("sync" in registration) {
           // Request sync when online
           window.addEventListener("online", () => {
-            ;(registration as ServiceWorkerRegistration & { sync: SyncManager }).sync
+            void (registration as ServiceWorkerRegistration & { sync: SyncManager }).sync
               .register("sync-offline-data")
               .catch((err: Error) => console.log("Background sync registration failed:", err))
           })

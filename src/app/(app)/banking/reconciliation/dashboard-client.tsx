@@ -334,13 +334,13 @@ export function ReconciliationDashboard({
                             disabled={!candidate || loadingTransactionId === txn.id}
                             onClick={() => {
                               if (candidate && candidateType === "invoice" && invoiceCandidate) {
-                                handleMatch(txn.id, invoiceCandidate.invoiceId, "invoice")
+                                void handleMatch(txn.id, invoiceCandidate.invoiceId, "invoice")
                               } else if (
                                 candidate &&
                                 candidateType === "expense" &&
                                 expenseCandidate
                               ) {
-                                handleMatch(txn.id, expenseCandidate.expenseId, "expense")
+                                void handleMatch(txn.id, expenseCandidate.expenseId, "expense")
                               }
                             }}
                           >

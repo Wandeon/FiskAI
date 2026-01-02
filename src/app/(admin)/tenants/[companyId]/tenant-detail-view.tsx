@@ -129,9 +129,9 @@ export function TenantDetailView({ tenant }: { tenant: TenantDetail }) {
 
   // Fetch users on mount
   useEffect(() => {
-    fetchUsers()
-    fetchActivityLogs()
-    fetchSubscriptionHistory()
+    void fetchUsers()
+    void fetchActivityLogs()
+    void fetchSubscriptionHistory()
   }, [])
 
   const fetchUsers = async () => {
@@ -344,7 +344,7 @@ export function TenantDetailView({ tenant }: { tenant: TenantDetail }) {
       setAddUserModalOpen(false)
       setNewUserEmail("")
       setNewUserRole("MEMBER")
-      fetchUsers()
+      void fetchUsers()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to add user")
     } finally {
@@ -375,7 +375,7 @@ export function TenantDetailView({ tenant }: { tenant: TenantDetail }) {
       }
 
       toast.success("User removed successfully")
-      fetchUsers()
+      void fetchUsers()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove user")
     } finally {
@@ -411,7 +411,7 @@ export function TenantDetailView({ tenant }: { tenant: TenantDetail }) {
       setChangeRoleModalOpen(false)
       setSelectedUser(null)
       setNewRole("")
-      fetchUsers()
+      void fetchUsers()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to change role")
     } finally {

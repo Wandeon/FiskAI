@@ -64,7 +64,7 @@ export function BulkOperations() {
   })
 
   useEffect(() => {
-    fetchClients()
+    void fetchClients()
   }, [])
 
   const fetchClients = async () => {
@@ -261,7 +261,7 @@ export function BulkOperations() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Button
-              onClick={() => handleBulkExport("all")}
+              onClick={() => void handleBulkExport("all")}
               disabled={exporting || selectedClients.size === 0}
               className="gap-2"
             >
@@ -269,7 +269,7 @@ export function BulkOperations() {
               All Data
             </Button>
             <Button
-              onClick={() => handleBulkExport("invoices")}
+              onClick={() => void handleBulkExport("invoices")}
               disabled={exporting || selectedClients.size === 0}
               variant="outline"
               className="gap-2"
@@ -278,7 +278,7 @@ export function BulkOperations() {
               Invoices
             </Button>
             <Button
-              onClick={() => handleBulkExport("expenses")}
+              onClick={() => void handleBulkExport("expenses")}
               disabled={exporting || selectedClients.size === 0}
               variant="outline"
               className="gap-2"
@@ -287,7 +287,7 @@ export function BulkOperations() {
               Expenses
             </Button>
             <Button
-              onClick={() => handleBulkExport("kpr")}
+              onClick={() => void handleBulkExport("kpr")}
               disabled={exporting || selectedClients.size === 0}
               variant="outline"
               className="gap-2"
@@ -311,7 +311,7 @@ export function BulkOperations() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Button
-              onClick={() => handleGenerateReport("overview")}
+              onClick={() => void handleGenerateReport("overview")}
               disabled={exporting}
               className="gap-2"
             >
@@ -319,7 +319,7 @@ export function BulkOperations() {
               Overview
             </Button>
             <Button
-              onClick={() => handleGenerateReport("kpr")}
+              onClick={() => void handleGenerateReport("kpr")}
               disabled={exporting}
               variant="outline"
               className="gap-2"
@@ -328,7 +328,7 @@ export function BulkOperations() {
               KPR Report
             </Button>
             <Button
-              onClick={() => handleGenerateReport("pending-review")}
+              onClick={() => void handleGenerateReport("pending-review")}
               disabled={exporting}
               variant="outline"
               className="gap-2"
@@ -337,7 +337,7 @@ export function BulkOperations() {
               Pending Review
             </Button>
             <Button
-              onClick={() => handleGenerateReport("deadlines")}
+              onClick={() => void handleGenerateReport("deadlines")}
               disabled={exporting}
               variant="outline"
               className="gap-2"

@@ -316,7 +316,7 @@ export async function harvestIntegrations(projectRoot: string): Promise<Harveste
 // CLI entry point
 if (require.main === module) {
   const projectRoot = process.argv[2] || process.cwd()
-  harvestIntegrations(projectRoot).then((result) => {
+  void harvestIntegrations(projectRoot).then((result) => {
     console.log(JSON.stringify(result, null, 2))
   })
 }

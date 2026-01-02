@@ -18,11 +18,11 @@ export function AuthFlow() {
   const auth = useAuthFlow()
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" })
+    void signIn("google", { callbackUrl: "/dashboard" })
   }
 
   const handleForgotPassword = () => {
-    auth.startPasswordReset()
+    void auth.startPasswordReset()
   }
 
   const handlePasskeyAuth = async () => {
@@ -85,7 +85,7 @@ export function AuthFlow() {
                   email={auth.email}
                   onVerify={auth.verifyCode}
                   onResend={() =>
-                    auth.sendVerificationCode(auth.isNewUser ? "EMAIL_VERIFY" : "LOGIN_VERIFY")
+                    void auth.sendVerificationCode(auth.isNewUser ? "EMAIL_VERIFY" : "LOGIN_VERIFY")
                   }
                   onBack={auth.goBack}
                   isLoading={auth.isLoading}
@@ -99,7 +99,7 @@ export function AuthFlow() {
                   email={auth.email}
                   onSubmit={auth.resetPassword}
                   onVerify={auth.verifyCode}
-                  onResend={() => auth.sendVerificationCode("PASSWORD_RESET")}
+                  onResend={() => void auth.sendVerificationCode("PASSWORD_RESET")}
                   onBack={auth.goBack}
                   isLoading={auth.isLoading}
                   error={auth.error}

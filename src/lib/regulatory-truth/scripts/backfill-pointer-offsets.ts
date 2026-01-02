@@ -183,6 +183,6 @@ async function main() {
   }
 }
 
-main()
+void main()
 
 export { backfillPointerOffsets }

@@ -126,7 +126,7 @@ export function ChecklistItem({
                 variant="secondary"
                 onClick={(e) => {
                   e.preventDefault()
-                  handleComplete()
+                  void handleComplete()
                 }}
                 disabled={isLoading}
                 className="h-7 text-xs"
@@ -150,15 +150,15 @@ export function ChecklistItem({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => handleSnooze(1)}>
+                  <DropdownMenuItem onClick={() => void handleSnooze(1)}>
                     <Clock className="h-3 w-3 mr-2" />
                     Odgodi 1 dan
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSnooze(3)}>
+                  <DropdownMenuItem onClick={() => void handleSnooze(3)}>
                     <Clock className="h-3 w-3 mr-2" />
                     Odgodi 3 dana
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSnooze(7)}>
+                  <DropdownMenuItem onClick={() => void handleSnooze(7)}>
                     <Clock className="h-3 w-3 mr-2" />
                     Odgodi 1 tjedan
                   </DropdownMenuItem>
@@ -171,7 +171,7 @@ export function ChecklistItem({
                 variant="ghost"
                 onClick={(e) => {
                   e.preventDefault()
-                  handleDismiss()
+                  void handleDismiss()
                 }}
                 disabled={isLoading}
                 className="h-7 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"

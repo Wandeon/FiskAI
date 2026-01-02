@@ -41,7 +41,7 @@ export function AIStatsWidget({ operation, className }: AIStatsWidgetProps) {
       }
     }
 
-    fetchStats()
+    void fetchStats()
   }, [operation])
 
   if (loading) {
@@ -185,7 +185,7 @@ export function CompactAIStats({ operation, className }: CompactAIStatsProps) {
       }
     }
 
-    fetchStats()
+    void fetchStats()
   }, [operation])
 
   if (!stats || stats.total === 0) return null

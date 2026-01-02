@@ -54,7 +54,7 @@ export function ConfirmationDialog({
     if (shouldShowConfirmation) {
       setOpen(true)
     } else {
-      handleConfirm()
+      void handleConfirm()
     }
   }
 

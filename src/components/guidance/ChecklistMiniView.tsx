@@ -43,7 +43,7 @@ export function ChecklistMiniView({ collapsed = false, className }: ChecklistMin
         setIsLoading(false)
       }
     }
-    fetchStats()
+    void fetchStats()
   }, [])
 
   const pending = stats ? stats.total - stats.completed : 0

@@ -80,7 +80,7 @@ export function PaymentSlipModal({ obligation, onClose }: Props) {
   }, [obligation])
 
   useEffect(() => {
-    fetchPaymentSlip()
+    void fetchPaymentSlip()
   }, [fetchPaymentSlip])
 
   async function copyToClipboard() {
@@ -157,7 +157,7 @@ Opis: ${slip.description}`
 
           {/* Actions */}
           <ModalFooter>
-            <Button variant="outline" onClick={copyToClipboard}>
+            <Button variant="outline" onClick={() => void copyToClipboard()}>
               {copied ? (
                 <>
                   <Check className="h-4 w-4 mr-2" />

@@ -173,7 +173,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
     if (!files || files.length === 0) return
     const file = files[0]
     setFileName(file.name)
-    uploadFile(file)
+    void uploadFile(file)
   }
 
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
@@ -289,7 +289,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
             <div className="flex items-center gap-2 text-xs text-foreground">
               <Button
                 size="sm"
-                onClick={() => uploadFile(pendingFile, true)}
+                onClick={() => void uploadFile(pendingFile, true)}
                 disabled={status === "uploading"}
               >
                 Prepiši i nastavi

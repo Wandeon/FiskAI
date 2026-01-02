@@ -87,14 +87,14 @@ export function AssistantContainer({
       if (source) {
         console.log(`[Assistant] Query from source: ${source}`)
       }
-      submit(initialQuery)
+      void submit(initialQuery)
     }
   }, [initialQuery, hasAutoSubmitted, state.status, submit, source])
 
   // Record answers for CTA tracking
   useEffect(() => {
     if (state.activeAnswer && state.activeQuery) {
-      recordAnswer(state.activeAnswer, state.activeQuery)
+      void recordAnswer(state.activeAnswer, state.activeQuery)
     }
   }, [state.activeAnswer, state.activeQuery, recordAnswer])
 
@@ -105,10 +105,18 @@ export function AssistantContainer({
   const hasAnswer = state.status === "COMPLETE" || state.status === "PARTIAL_COMPLETE"
   const isDark = variant === "dark"
 
-  // Handle submit from input
+  // Handle submit from input (async for AssistantInput)
   const handleSubmit = useCallback(
     async (query: string) => {
       await submit(query)
+    },
+    [submit]
+  )
+
+  // Wrapper for sync callbacks (SuggestionChips)
+  const handleSuggestionSelect = useCallback(
+    (query: string) => {
+      void submit(query)
     },
     [submit]
   )
@@ -163,7 +171,7 @@ export function AssistantContainer({
       {isIdle && (
         <SuggestionChips
           suggestions={SUGGESTIONS[surface]}
-          onSelect={handleSubmit}
+          onSelect={handleSuggestionSelect}
           variant={variant}
         />
       )}

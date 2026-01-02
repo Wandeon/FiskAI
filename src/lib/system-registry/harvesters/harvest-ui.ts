@@ -101,7 +101,7 @@ export async function harvestUI(projectRoot: string): Promise<HarvesterResult> {
 // CLI entry point
 if (require.main === module) {
   const projectRoot = process.argv[2] || process.cwd()
-  harvestUI(projectRoot).then((result) => {
+  void harvestUI(projectRoot).then((result) => {
     console.log(JSON.stringify(result, null, 2))
   })
 }

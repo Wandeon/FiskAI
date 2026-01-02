@@ -251,7 +251,7 @@ export async function harvestQueues(projectRoot: string): Promise<HarvesterResul
 // CLI entry point
 if (require.main === module) {
   const projectRoot = process.argv[2] || process.cwd()
-  harvestQueues(projectRoot).then((result) => {
+  void harvestQueues(projectRoot).then((result) => {
     console.log(JSON.stringify(result, null, 2))
   })
 }

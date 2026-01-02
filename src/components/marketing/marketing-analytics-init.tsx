@@ -41,12 +41,12 @@ export function useMarketingAnalytics() {
 
     switch (event) {
       case "free_trial":
-        import("@/lib/marketing-analytics").then(({ trackFreeTrialConversion }) => {
+        void import("@/lib/marketing-analytics").then(({ trackFreeTrialConversion }) => {
           trackFreeTrialConversion(segment, properties?.plan as string)
         })
         break
       case "demo_request":
-        import("@/lib/marketing-analytics").then(({ trackDemoRequest }) => {
+        void import("@/lib/marketing-analytics").then(({ trackDemoRequest }) => {
           trackDemoRequest(
             properties?.businessType as string,
             properties?.invoiceCount as string,
@@ -55,7 +55,7 @@ export function useMarketingAnalytics() {
         })
         break
       case "signup":
-        import("@/lib/marketing-analytics").then(({ trackRegistrationComplete }) => {
+        void import("@/lib/marketing-analytics").then(({ trackRegistrationComplete }) => {
           trackRegistrationComplete(
             properties?.email as string,
             properties?.businessType as string,
@@ -64,7 +64,7 @@ export function useMarketingAnalytics() {
         })
         break
       case "contact":
-        import("@/lib/marketing-analytics").then(({ trackContactFormSubmission }) => {
+        void import("@/lib/marketing-analytics").then(({ trackContactFormSubmission }) => {
           trackContactFormSubmission(
             properties?.formType as "demo" | "support" | "general" | "sales",
             properties?.topic as string
@@ -78,7 +78,7 @@ export function useMarketingAnalytics() {
     signalType: "security" | "privacy" | "gdpr" | "sla" | "testimonial" | "case_study",
     details?: string
   ) => {
-    import("@/lib/marketing-analytics").then(({ trackTrustSignal }) => {
+    void import("@/lib/marketing-analytics").then(({ trackTrustSignal }) => {
       trackTrustSignal(signalType, details)
     })
   }
@@ -87,7 +87,7 @@ export function useMarketingAnalytics() {
     type: "call" | "email" | "chat",
     urgency?: "standard" | "urgent"
   ) => {
-    import("@/lib/marketing-analytics").then(({ trackSupportInteraction }) => {
+    void import("@/lib/marketing-analytics").then(({ trackSupportInteraction }) => {
       trackSupportInteraction(type, urgency)
     })
   }

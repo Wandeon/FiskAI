@@ -105,7 +105,7 @@ export function POSDCalculatorClient() {
 
     const file = e.dataTransfer.files[0]
     if (file) {
-      processFile(file)
+      void processFile(file)
     }
   }, [])
 
@@ -113,7 +113,7 @@ export function POSDCalculatorClient() {
     setError(null)
     const file = e.target.files?.[0]
     if (file) {
-      processFile(file)
+      void processFile(file)
     }
   }, [])
 

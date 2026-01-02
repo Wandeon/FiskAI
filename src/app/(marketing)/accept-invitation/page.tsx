@@ -81,7 +81,7 @@ export default function AcceptInvitationPage() {
       }
     }
 
-    verifyToken()
+    void verifyToken()
   }, [token])
 
   async function onSubmit(data: RegisterInput) {

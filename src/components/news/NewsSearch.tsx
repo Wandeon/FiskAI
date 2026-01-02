@@ -78,7 +78,7 @@ export function NewsSearch({ initialQuery = "" }: NewsSearchProps) {
 
   useEffect(() => {
     if (query) {
-      performSearch(query)
+      void performSearch(query)
     }
   }, [query, performSearch])
 

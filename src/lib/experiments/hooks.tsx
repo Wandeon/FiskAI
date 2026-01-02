@@ -50,7 +50,7 @@ export function useExperiment(experimentId: string) {
       }
     }
 
-    assignUser()
+    void assignUser()
   }, [experimentId])
 
   return {

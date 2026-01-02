@@ -39,7 +39,7 @@ export function ChecklistWidget({ initialItems, initialStats }: ChecklistWidgetP
       }
     }
 
-    fetchChecklist()
+    void fetchChecklist()
   }, [initialItems])
 
   const handleComplete = async (reference: string) => {

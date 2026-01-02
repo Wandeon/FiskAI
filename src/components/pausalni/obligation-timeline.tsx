@@ -52,7 +52,7 @@ export function ObligationTimeline({ companyId }: Props) {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   useEffect(() => {
-    fetchObligations()
+    void fetchObligations()
   }, [])
 
   async function fetchObligations() {

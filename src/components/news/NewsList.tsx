@@ -45,7 +45,7 @@ export function NewsList() {
       }
     }
 
-    fetchNews()
+    void fetchNews()
   }, [category])
 
   return (
