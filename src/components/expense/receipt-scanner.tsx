@@ -101,14 +101,14 @@ export function ReceiptScanner({ onExtracted, onCancel }: ReceiptScannerProps) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      processImage(file)
+      void processImage(file)
     }
   }
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      processImage(file)
+      void processImage(file)
     }
   }
 

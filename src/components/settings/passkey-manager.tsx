@@ -28,7 +28,7 @@ export function PasskeyManager() {
     )
 
     // Load passkeys
-    loadPasskeys()
+    void loadPasskeys()
   }, [])
 
   async function loadPasskeys() {
@@ -150,7 +150,7 @@ export function PasskeyManager() {
             Passkeys omogućuju brzu i sigurnu prijavu bez lozinke
           </p>
         </div>
-        <Button onClick={handleAddPasskey} disabled={loading} className="flex items-center gap-2">
+        <Button onClick={() => void handleAddPasskey()} disabled={loading} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Dodaj passkey
         </Button>
@@ -184,7 +184,7 @@ export function PasskeyManager() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDeletePasskey(passkey.id)}
+                onClick={() => void handleDeletePasskey(passkey.id)}
                 className="text-danger-text hover:text-danger-text"
               >
                 <Trash2 className="h-4 w-4" />

@@ -43,7 +43,7 @@ export function ExpenseActions({ expense }: { expense: Expense }) {
       {canPay && (
         <select
           onChange={(e) => {
-            if (e.target.value) handlePay(e.target.value as PaymentMethod)
+            if (e.target.value) void handlePay(e.target.value as PaymentMethod)
           }}
           className="rounded-md border-default text-sm"
           disabled={isLoading}
@@ -55,7 +55,7 @@ export function ExpenseActions({ expense }: { expense: Expense }) {
           <option value="OTHER">Ostalo</option>
         </select>
       )}
-      <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
+      <Button variant="destructive" onClick={() => void handleDelete()} disabled={isLoading}>
         Obriši
       </Button>
     </div>

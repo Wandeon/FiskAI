@@ -135,7 +135,7 @@ export function ReconciliationDashboard({
           ? "Transakcija je povezana s računom"
           : "Transakcija je povezana s troškom"
       )
-      mutate()
+      void mutate()
     } catch (err) {
       setStatusType("error")
       setStatusMessage(err instanceof Error ? err.message : "Greška pri povezivanju")
@@ -334,13 +334,13 @@ export function ReconciliationDashboard({
                             disabled={!candidate || loadingTransactionId === txn.id}
                             onClick={() => {
                               if (candidate && candidateType === "invoice" && invoiceCandidate) {
-                                handleMatch(txn.id, invoiceCandidate.invoiceId, "invoice")
+                                void handleMatch(txn.id, invoiceCandidate.invoiceId, "invoice")
                               } else if (
                                 candidate &&
                                 candidateType === "expense" &&
                                 expenseCandidate
                               ) {
-                                handleMatch(txn.id, expenseCandidate.expenseId, "expense")
+                                void handleMatch(txn.id, expenseCandidate.expenseId, "expense")
                               }
                             }}
                           >

@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
       }
     }
 
-    validateToken()
+    void validateToken()
   }, [token, router])
 
   async function onSubmit(data: ResetPasswordInput) {

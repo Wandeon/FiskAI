@@ -125,15 +125,15 @@ export function Notifications({
   }, [])
 
   useEffect(() => {
-    const interval = setInterval(fetchNotifications, 60000)
-    fetchNotifications()
+    const interval = setInterval(() => void fetchNotifications(), 60000)
+    void fetchNotifications()
     return () => clearInterval(interval)
   }, [fetchNotifications])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (open) {
-        fetchNotifications()
+        void fetchNotifications()
         if (unreadCount > 0) {
           setUnreadCount(0)
           void markAsRead()

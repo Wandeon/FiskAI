@@ -156,7 +156,7 @@ Examples:
   process.exit(0)
 }
 
-main().catch((error) => {
+void main().catch((error) => {
   console.error("Error:", error)
-  closeCliDb().finally(() => process.exit(1))
+  void closeCliDb().finally(() => process.exit(1))
 })

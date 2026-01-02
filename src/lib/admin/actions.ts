@@ -367,7 +367,7 @@ export async function exportTenantData(
     }
 
     // Log audit event (fire-and-forget)
-    logAudit({
+    void logAudit({
       companyId,
       userId: admin.id,
       action: "EXPORT",

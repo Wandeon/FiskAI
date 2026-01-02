@@ -100,7 +100,7 @@ export async function harvestAll(projectRoot: string): Promise<FullHarvestResult
 // CLI entry point
 if (require.main === module) {
   const projectRoot = process.argv[2] || process.cwd()
-  harvestAll(projectRoot).then((result) => {
+  void harvestAll(projectRoot).then((result) => {
     console.log(JSON.stringify(result, null, 2))
   })
 }

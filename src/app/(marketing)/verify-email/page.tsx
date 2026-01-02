@@ -63,7 +63,7 @@ export default function VerifyEmailPage() {
       }
     }
 
-    verify()
+    void verify()
   }, [token, router])
 
   async function handleResend() {

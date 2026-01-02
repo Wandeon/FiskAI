@@ -86,11 +86,11 @@ export function ComplianceTrafficLight({ className }: { className?: string }) {
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
-    fetchUpcomingDeadlines().then(setInfo)
+    void fetchUpcomingDeadlines().then(setInfo)
     // Refresh every 5 minutes
     const interval = setInterval(
       () => {
-        fetchUpcomingDeadlines().then(setInfo)
+        void fetchUpcomingDeadlines().then(setInfo)
       },
       5 * 60 * 1000
     )

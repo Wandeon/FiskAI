@@ -50,7 +50,7 @@ export function PlanSettingsForm({ company }: { company: Company }) {
         setHistoricalDataDetails(result.details || null)
       }
     }
-    checkData()
+    void checkData()
   }, [company.id])
 
   const toggleEntitlement = (key: ModuleKey) => {

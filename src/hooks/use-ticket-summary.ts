@@ -26,8 +26,8 @@ export function useTicketSummary() {
         if (!cancelled) setLoading(false)
       }
     }
-    load()
-    const id = setInterval(load, 60000)
+    void load()
+    const id = setInterval(() => void load(), 60000)
     return () => {
       cancelled = true
       clearInterval(id)

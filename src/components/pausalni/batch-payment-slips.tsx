@@ -39,7 +39,7 @@ export function BatchPaymentSlips({ month, year, onClose }: Props) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    fetchBatchSlips()
+    void fetchBatchSlips()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year])
 
@@ -140,7 +140,7 @@ ${allText}
                 <p className="text-xs text-[var(--muted)] mt-1">({slips.length} uplatnice)</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copyAllToClipboard}>
+                <Button variant="outline" size="sm" onClick={() => void copyAllToClipboard()}>
                   {copiedIndex === -1 ? (
                     <>
                       <Check className="h-4 w-4 mr-2" />
@@ -225,7 +225,7 @@ ${allText}
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => copyToClipboard(item.slip, index)}
+                    onClick={() => void copyToClipboard(item.slip, index)}
                   >
                     {copiedIndex === index ? (
                       <>

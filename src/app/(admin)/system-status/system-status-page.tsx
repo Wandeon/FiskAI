@@ -192,9 +192,9 @@ export function SystemStatusPage({
   }, [])
 
   useEffect(() => {
-    fetchWorkerHealth()
+    void fetchWorkerHealth()
     // Refresh worker health every 30 seconds
-    const interval = setInterval(fetchWorkerHealth, 30000)
+    const interval = setInterval(() => void fetchWorkerHealth(), 30000)
     return () => clearInterval(interval)
   }, [fetchWorkerHealth])
 
@@ -214,7 +214,7 @@ export function SystemStatusPage({
       } else if (data.status === "PENDING" || data.status === "RUNNING") {
         // Continue polling only if component is still mounted
         if (mountedRef.current) {
-          setTimeout(() => pollJobStatus(jobId), 2000)
+          setTimeout(() => void pollJobStatus(jobId), 2000)
         }
       }
     } catch (error) {
@@ -243,7 +243,7 @@ export function SystemStatusPage({
         // Async job started or already running
         setRefreshJobId(data.jobId)
         // Start polling
-        setTimeout(() => pollJobStatus(data.jobId), 2000)
+        setTimeout(() => void pollJobStatus(data.jobId), 2000)
       } else {
         setRefreshError(data.error || "Failed to start refresh")
         setIsRefreshing(false)

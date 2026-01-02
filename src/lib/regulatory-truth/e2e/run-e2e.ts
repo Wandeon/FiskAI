@@ -82,4 +82,4 @@ Verdicts:
   }
 }
 
-main()
+void main()

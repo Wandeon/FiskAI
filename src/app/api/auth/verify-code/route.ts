@@ -80,8 +80,8 @@ export async function POST(request: Request) {
     })
 
     // Reset rate limits on success
-    resetRateLimit(rateLimitKey)
-    resetRateLimit(`otp_send_${emailLower}`)
+    void resetRateLimit(rateLimitKey)
+    void resetRateLimit(`otp_send_${emailLower}`)
 
     if (type === "EMAIL_VERIFY") {
       // Mark email as verified

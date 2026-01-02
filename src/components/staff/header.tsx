@@ -33,8 +33,8 @@ export function StaffHeader() {
       }
     }
 
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 60000)
+    void fetchNotifications()
+    const interval = setInterval(() => void fetchNotifications(), 60000)
     return () => clearInterval(interval)
   }, [])
 
@@ -150,7 +150,7 @@ function StaffUserMenu({ user }: StaffUserMenuProps) {
           </div>
           <div className="border-t border-[var(--border)] p-1">
             <button
-              onClick={handleLogout}
+              onClick={() => void handleLogout()}
               disabled={isPending}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-danger-600 hover:bg-danger-50 transition-colors disabled:opacity-50"
             >

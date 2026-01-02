@@ -141,7 +141,7 @@ export function OibInput({
     }
 
     setLastLookupValue(value)
-    performLookup(value)
+    void performLookup(value)
   }
 
   // Auto-fetch when 11 digits are present and we haven't already tried this value
@@ -155,7 +155,7 @@ export function OibInput({
       validateOib(value) // Only auto-fetch if checksum is valid
     ) {
       setLastLookupValue(value)
-      performLookup(value)
+      void performLookup(value)
     }
   }, [isLookingUp, lastLookupValue, performLookup, value])
 

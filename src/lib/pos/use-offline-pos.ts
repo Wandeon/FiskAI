@@ -129,7 +129,7 @@ export function useOfflinePos(options: UseOfflinePosOptions = {}): UseOfflinePos
       setOnline(isNowOnline)
       if (isNowOnline) {
         // Auto-sync when back online
-        syncPendingSales()
+        void syncPendingSales()
       }
     })
 
@@ -138,7 +138,7 @@ export function useOfflinePos(options: UseOfflinePosOptions = {}): UseOfflinePos
 
   // Load pending count on mount
   useEffect(() => {
-    updatePendingCount()
+    void updatePendingCount()
   }, [updatePendingCount])
 
   const queueSale = useCallback(

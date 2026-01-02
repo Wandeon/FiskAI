@@ -144,7 +144,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
               className="h-10 w-full rounded-md border border-default px-3"
               {...register("vatCategory")}
               onChange={(e) => {
-                register("vatCategory").onChange(e)
+                void register("vatCategory").onChange(e)
                 handleVatCategoryChange(e)
               }}
             >

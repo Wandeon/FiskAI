@@ -136,7 +136,7 @@ export async function harvestWorkers(projectRoot: string): Promise<HarvesterResu
 // CLI entry point
 if (require.main === module) {
   const projectRoot = process.argv[2] || process.cwd()
-  harvestWorkers(projectRoot).then((result) => {
+  void harvestWorkers(projectRoot).then((result) => {
     console.log(JSON.stringify(result, null, 2))
   })
 }

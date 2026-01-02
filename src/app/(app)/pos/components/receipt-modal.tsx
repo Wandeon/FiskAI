@@ -125,7 +125,7 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
     }
 
     if (isOpen) {
-      generateQR()
+      void generateQR()
     }
   }, [isOpen, result])
 
@@ -140,7 +140,7 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
   useEffect(() => {
     return () => {
       if (printer) {
-        printer.disconnect()
+        void printer.disconnect()
       }
     }
   }, [printer])
@@ -224,7 +224,7 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={connectUsbPrinter}
+                onClick={() => void connectUsbPrinter()}
                 className="text-muted-foreground"
               >
                 Povezi USB termal pisac
@@ -234,7 +234,7 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
 
           {/* Print buttons */}
           <div className="flex justify-center gap-2">
-            <Button variant="outline" onClick={printThermal} disabled={isPrinting}>
+            <Button variant="outline" onClick={() => void printThermal()} disabled={isPrinting}>
               {isPrinting ? "Ispisuje..." : printerConnected ? "Ispisi termal" : "Ispisi racun"}
             </Button>
             {result.pdfUrl && (

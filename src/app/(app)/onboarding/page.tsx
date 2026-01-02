@@ -146,7 +146,7 @@ export default function OnboardingPage() {
       }
     }
 
-    loadExistingData()
+    void loadExistingData()
   }, [hydrate, wizardAnswers, setStage])
 
   if (isLoading) {

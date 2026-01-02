@@ -237,4 +237,4 @@ async function main() {
 }
 
 // Run if executed directly
-main()
+void main()

@@ -89,7 +89,7 @@ Examples:
   }
 }
 
-main().catch((err) => {
+void main().catch((err) => {
   console.error("Script failed:", err)
-  closeCliDb().finally(() => process.exit(1))
+  void closeCliDb().finally(() => process.exit(1))
 })

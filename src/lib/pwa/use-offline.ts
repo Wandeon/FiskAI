@@ -56,7 +56,7 @@ export function usePendingSyncCount() {
       setCount(pendingCount)
     }
 
-    updateCount()
+    void updateCount()
 
     // Update count periodically
     const interval = setInterval(updateCount, 5000)
@@ -66,7 +66,7 @@ export function usePendingSyncCount() {
   // Process sync queue when coming back online
   useEffect(() => {
     if (online) {
-      processSyncQueue().then(async () => {
+      void processSyncQueue().then(async () => {
         const pendingCount = await getPendingSyncCount()
         setCount(pendingCount)
       })
@@ -120,7 +120,7 @@ export function useOfflineData<T>(
   }, [storeName, companyId, enabled])
 
   useEffect(() => {
-    fetchData()
+    void fetchData()
   }, [fetchData])
 
   return {
@@ -180,7 +180,7 @@ export function useOfflineItem<T>(
   }, [storeName, id, companyId, enabled])
 
   useEffect(() => {
-    fetchData()
+    void fetchData()
   }, [fetchData])
 
   return {
@@ -279,7 +279,7 @@ export function useBackgroundSync() {
   // Auto-sync when coming back online
   useEffect(() => {
     if (online) {
-      sync()
+      void sync()
     }
   }, [online, sync])
 

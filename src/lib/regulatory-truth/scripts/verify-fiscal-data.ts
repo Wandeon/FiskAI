@@ -242,7 +242,7 @@ async function verifyFiscalData(): Promise<VerificationResult[]> {
 
 // CLI runner
 if (require.main === module) {
-  verifyFiscalData()
+  void verifyFiscalData()
     .then((results) => {
       console.log("\n" + "=".repeat(80))
       console.log("VERIFICATION SUMMARY")
@@ -302,7 +302,7 @@ if (require.main === module) {
 
       console.log("\n")
 
-      pool.end()
+      void pool.end()
       process.exit(0)
     })
     .catch(async (error) => {
