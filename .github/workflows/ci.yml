@@ -333,7 +333,7 @@ jobs:
         run: npx prisma db push --accept-data-loss
 
       - name: Run acceptance tests
-        run: node --import tsx --test acceptance/**/*.test.ts
+        run: node --import tsx --test acceptance/*.test.ts
 
   architecture-check:
     name: Architecture Compliance
