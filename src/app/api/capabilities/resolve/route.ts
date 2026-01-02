@@ -51,7 +51,9 @@ interface ApiResponse {
  *
  * Resolve capabilities to determine what actions are available.
  */
-export async function POST(request: Request): Promise<NextResponse<ApiResponse | { error: string }>> {
+export async function POST(
+  request: Request
+): Promise<NextResponse<ApiResponse | { error: string }>> {
   try {
     // Authenticate
     const session = await auth()
@@ -99,13 +101,21 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse |
 
     // Handle batch mode
     if (body.capabilities && Array.isArray(body.capabilities)) {
-      const results = await resolveCapabilities(db as unknown as PrismaClient, body.capabilities, userContext)
+      const results = await resolveCapabilities(
+        db as unknown as PrismaClient,
+        body.capabilities,
+        userContext
+      )
       return NextResponse.json({ results })
     }
 
     // Handle single capability
     if (body.capability) {
-      const result = await resolveCapability(db as unknown as PrismaClient, body.capability, userContext)
+      const result = await resolveCapability(
+        db as unknown as PrismaClient,
+        body.capability,
+        userContext
+      )
       return NextResponse.json({ result })
     }
 
@@ -173,11 +183,7 @@ function buildPermissions(systemRole: string, companyRole: string): string[] {
       break
 
     case "MEMBER":
-      permissions.push(
-        "invoicing:write",
-        "expenses:write",
-        "banking:write"
-      )
+      permissions.push("invoicing:write", "expenses:write", "banking:write")
       break
 
     case "VIEWER":
@@ -187,11 +193,7 @@ function buildPermissions(systemRole: string, companyRole: string): string[] {
 
   // System role overrides
   if (systemRole === "ADMIN" || systemRole === "STAFF") {
-    permissions.push(
-      "admin:periods",
-      "admin:users",
-      "admin:system"
-    )
+    permissions.push("admin:periods", "admin:users", "admin:system")
   }
 
   return [...new Set(permissions)] // Deduplicate

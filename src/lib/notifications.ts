@@ -372,14 +372,14 @@ export async function getNotificationCenterFeed({
     // Add checklist deadlines to notifications
     const checklistAlerts: NotificationItem[] = []
     try {
-      const urgentItems = (checklistItems?.items || []).filter(
-        (item) => {
-          const itemRecord = item as unknown as Record<string, unknown>
-          return !itemRecord.completedAt &&
-            !itemRecord.dismissedAt &&
-            (item.urgency === "critical" || item.urgency === "soon")
-        }
-      )
+      const urgentItems = (checklistItems?.items || []).filter((item) => {
+        const itemRecord = item as unknown as Record<string, unknown>
+        return (
+          !itemRecord.completedAt &&
+          !itemRecord.dismissedAt &&
+          (item.urgency === "critical" || item.urgency === "soon")
+        )
+      })
 
       for (const item of urgentItems.slice(0, 3)) {
         const isOverdue = item.urgency === "critical"

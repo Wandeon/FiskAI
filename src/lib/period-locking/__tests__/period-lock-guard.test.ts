@@ -133,10 +133,16 @@ describe("assertPeriodWritable", () => {
     })
 
     await expect(
-      assertPeriodWritable(mockPrisma, "Expense", "update", {
-        companyId: "company-1",
-        date: new Date("2024-01-15"),
-      }, { id: "expense-1" })
+      assertPeriodWritable(
+        mockPrisma,
+        "Expense",
+        "update",
+        {
+          companyId: "company-1",
+          date: new Date("2024-01-15"),
+        },
+        { id: "expense-1" }
+      )
     ).rejects.toThrow(AccountingPeriodLockedError)
   })
 })
@@ -181,11 +187,7 @@ describe("checkPeriodWritable", () => {
 
 describe("AccountingPeriodLockedError", () => {
   it("should have correct error properties", () => {
-    const error = new AccountingPeriodLockedError(
-      "EInvoice",
-      new Date("2024-01-15"),
-      "LOCKED"
-    )
+    const error = new AccountingPeriodLockedError("EInvoice", new Date("2024-01-15"), "LOCKED")
 
     expect(error.code).toBe("PERIOD_LOCKED")
     expect(error.model).toBe("EInvoice")
@@ -195,11 +197,7 @@ describe("AccountingPeriodLockedError", () => {
   })
 
   it("should be serializable to JSON", () => {
-    const error = new AccountingPeriodLockedError(
-      "Expense",
-      new Date("2024-06-30"),
-      "CLOSED"
-    )
+    const error = new AccountingPeriodLockedError("Expense", new Date("2024-06-30"), "CLOSED")
 
     const json = error.toJSON()
     expect(json.code).toBe("PERIOD_LOCKED")
