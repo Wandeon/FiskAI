@@ -11,11 +11,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import {
-  ControlCenterShell,
-  QueueRenderer,
-  type QueueItem,
-} from "@/components/capability"
+import { ControlCenterShell, QueueRenderer, type QueueItem } from "@/components/capability"
 import { resolveCapabilitiesForUser } from "@/lib/capabilities/server"
 import { CLIENT_QUEUES } from "./queues"
 
@@ -23,9 +19,7 @@ export const metadata = {
   title: "Control Center | FiskAI",
 }
 
-async function getQueueItems(
-  queue: (typeof CLIENT_QUEUES)[number]
-): Promise<QueueItem[]> {
+async function getQueueItems(queue: (typeof CLIENT_QUEUES)[number]): Promise<QueueItem[]> {
   const session = await auth()
   if (!session?.user?.id) return []
 
@@ -52,11 +46,12 @@ async function getQueueItems(
       const invoices = await db.eInvoice.findMany({
         where: {
           companyId,
-          status: queue.id === "draft-invoices"
-            ? "DRAFT"
-            : queue.id === "pending-fiscalization"
-            ? "PENDING_FISCALIZATION"
-            : { in: ["FISCALIZED", "SENT"] },
+          status:
+            queue.id === "draft-invoices"
+              ? "DRAFT"
+              : queue.id === "pending-fiscalization"
+                ? "PENDING_FISCALIZATION"
+                : { in: ["FISCALIZED", "SENT"] },
         },
         select: {
           id: true,

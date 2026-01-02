@@ -11,11 +11,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import {
-  ControlCenterShell,
-  QueueRenderer,
-  type QueueItem,
-} from "@/components/capability"
+import { ControlCenterShell, QueueRenderer, type QueueItem } from "@/components/capability"
 import { resolveCapabilitiesForUser } from "@/lib/capabilities/server"
 import { ADMIN_QUEUES } from "./queues"
 
@@ -23,9 +19,7 @@ export const metadata = {
   title: "Admin Control Center | FiskAI",
 }
 
-async function getQueueItems(
-  queue: (typeof ADMIN_QUEUES)[number]
-): Promise<QueueItem[]> {
+async function getQueueItems(queue: (typeof ADMIN_QUEUES)[number]): Promise<QueueItem[]> {
   let entities: Array<{ id: string; title: string; status: string; timestamp: string }> = []
 
   switch (queue.entityType) {
