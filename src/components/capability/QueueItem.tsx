@@ -17,9 +17,10 @@ import type { QueueItem as QueueItemType } from "./types"
 interface Props {
   item: QueueItemType
   showDiagnostics?: boolean
+  onActionComplete?: () => void
 }
 
-export function QueueItemCard({ item, showDiagnostics = false }: Props) {
+export function QueueItemCard({ item, showDiagnostics = false, onActionComplete }: Props) {
   // Find the primary capability (first READY, or first in list)
   const primaryCapability =
     item.capabilities.find((c) => c.state === "READY") || item.capabilities[0]
@@ -61,7 +62,10 @@ export function QueueItemCard({ item, showDiagnostics = false }: Props) {
                   key={`${cap.capability}-${action.id}`}
                   action={action}
                   capabilityId={cap.capability}
+                  entityId={item.id}
+                  entityType={item.type}
                   showDiagnostics={showDiagnostics}
+                  onSuccess={onActionComplete}
                 />
               ))
           )}
