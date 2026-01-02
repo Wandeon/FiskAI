@@ -44,10 +44,18 @@ export interface ActionButtonProps {
   action: CapabilityAction
   /** Capability ID for diagnostics */
   capabilityId: string
-  /** Click handler - only called if action is enabled */
-  onClick?: () => void
+  /** Entity ID if operating on an existing entity */
+  entityId?: string
+  /** Entity type (e.g., "Invoice") */
+  entityType?: string
   /** Show diagnostics overlay */
   showDiagnostics?: boolean
+  /** Additional parameters to pass to the action executor */
+  params?: Record<string, unknown>
+  /** Callback invoked on successful execution */
+  onSuccess?: () => void
+  /** Callback invoked on failed execution */
+  onError?: (error: string) => void
 }
 
 /**
