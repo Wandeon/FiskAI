@@ -6,6 +6,44 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      include: [
+        "src/domain/**/*.ts",
+        "src/application/**/*.ts",
+        "src/infrastructure/**/*.ts",
+        "src/interfaces/**/*.ts",
+      ],
+      exclude: ["**/__tests__/**", "**/*.test.ts", "**/index.ts"],
+      thresholds: {
+        // Critical domain modules require high coverage
+        "src/domain/shared/**/*.ts": {
+          statements: 80,
+          branches: 75,
+          functions: 80,
+          lines: 80,
+        },
+        "src/domain/tax/**/*.ts": {
+          statements: 80,
+          branches: 75,
+          functions: 80,
+          lines: 80,
+        },
+        "src/domain/invoicing/**/*.ts": {
+          statements: 75,
+          branches: 70,
+          functions: 75,
+          lines: 75,
+        },
+        "src/domain/fiscalization/**/*.ts": {
+          statements: 75,
+          branches: 70,
+          functions: 75,
+          lines: 75,
+        },
+      },
+    },
     exclude: [
       "**/node_modules/**",
       "**/dist/**",

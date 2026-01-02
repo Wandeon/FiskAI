@@ -95,8 +95,8 @@ export function InvoiceEditor({ data, onChange }: InvoiceEditorProps) {
       const updated = { ...prev, [field]: value }
       // Auto-calculate amount when quantity or unit price changes using domain adapter
       if (field === "quantity" || field === "unitPrice") {
-        const qty = field === "quantity" ? value : prev.quantity || 0
-        const price = field === "unitPrice" ? value : prev.unitPrice || 0
+        const qty = Number(field === "quantity" ? value : prev.quantity || 0)
+        const price = Number(field === "unitPrice" ? value : prev.unitPrice || 0)
         const lineDisplay = calculateLineDisplay({
           description: "",
           quantity: qty,
