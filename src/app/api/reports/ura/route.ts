@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { createControlSum } from "@/lib/exports/control-sum"
 import { fetchUraRows, uraToCsv } from "@/lib/reports/ura-ira"
 import { lockAccountingPeriodsForRange } from "@/lib/period-locking/service"
+
+const querySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,19 +17,11 @@ export async function GET(request: NextRequest) {
     const company = await requireCompany(user.id!)
 
     const { searchParams } = new URL(request.url)
+    const query = parseQuery(searchParams, querySchema)
+    const { from, to } = query
+
     const fromParam = searchParams.get("from")
     const toParam = searchParams.get("to")
-
-    const from = fromParam ? new Date(fromParam) : undefined
-    const to = toParam ? new Date(toParam) : undefined
-
-    if (fromParam && isNaN(from?.getTime() ?? NaN)) {
-      return NextResponse.json({ error: "Neispravan datum 'from'" }, { status: 400 })
-    }
-
-    if (toParam && isNaN(to?.getTime() ?? NaN)) {
-      return NextResponse.json({ error: "Neispravan datum 'to'" }, { status: 400 })
-    }
 
     const rows = await fetchUraRows(company.id, from, to)
 
@@ -44,6 +43,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("URA export error:", error)
     return NextResponse.json({ error: "Neuspješan URA izvoz" }, { status: 500 })
   }
