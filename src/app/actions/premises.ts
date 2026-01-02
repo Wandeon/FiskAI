@@ -47,7 +47,7 @@ export async function createPremises(input: unknown): Promise<ActionResult> {
   try {
     const validated = createPremisesSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -106,7 +106,7 @@ export async function updatePremises(id: unknown, input: unknown): Promise<Actio
 
     const validated = updatePremisesSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -213,7 +213,7 @@ export async function createDevice(input: unknown): Promise<ActionResult> {
   try {
     const validated = createDeviceSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -287,7 +287,7 @@ export async function updateDevice(id: unknown, input: unknown): Promise<ActionR
 
     const validated = updateDeviceSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 

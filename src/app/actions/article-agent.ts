@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { ArticleStatus } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { createArticleJob } from "@/lib/article-agent/orchestrator"
 import { publishArticle } from "@/lib/article-agent/steps/publish"
@@ -43,7 +44,7 @@ export async function createJob(input: unknown): Promise<ActionResult<{ jobId: s
   try {
     const validated = createJobSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+      return { success: false, error: validated.error.issues[0]?.message || "Invalid input" }
     }
     const data = validated.data
 
@@ -184,7 +185,7 @@ export async function getJobs(options?: unknown): Promise<ActionResult> {
   try {
     const validated = getJobsSchema.safeParse(options ?? {})
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Invalid options" }
+      return { success: false, error: validated.error.issues[0]?.message || "Invalid options" }
     }
     const opts = validated.data
 
@@ -195,13 +196,7 @@ export async function getJobs(options?: unknown): Promise<ActionResult> {
     const jobs = await db.articleJob.findMany({
       where: {
         ...(opts.status && {
-          status: opts.status as
-            | "PENDING"
-            | "DRAFTING"
-            | "NEEDS_REVIEW"
-            | "APPROVED"
-            | "PUBLISHED"
-            | "REJECTED",
+          status: opts.status as ArticleStatus,
         }),
         ...(opts.type && { type: opts.type }),
       },
@@ -372,7 +367,7 @@ export async function lockParagraph(
   try {
     const validated = paragraphActionSchema.safeParse({ jobId, paragraphIndex })
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+      return { success: false, error: validated.error.issues[0]?.message || "Invalid input" }
     }
     const { jobId: validatedJobId, paragraphIndex: validatedIndex } = validated.data
 
@@ -421,7 +416,7 @@ export async function unlockParagraph(
   try {
     const validated = paragraphActionSchema.safeParse({ jobId, paragraphIndex })
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+      return { success: false, error: validated.error.issues[0]?.message || "Invalid input" }
     }
     const { jobId: validatedJobId, paragraphIndex: validatedIndex } = validated.data
 

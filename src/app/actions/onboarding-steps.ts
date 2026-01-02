@@ -64,7 +64,16 @@ export async function advanceOnboardingStep(
   const currentStep = company.onboardingStep || 1
   if (validatedTargetStep > currentStep + 1) return { success: false, error: "Cannot skip steps" }
   if (validatedTargetStep <= currentStep) return { success: true }
-  const isCurrentStepValid = await validateStep(company, currentStep)
+  const isCurrentStepValid = await validateStep(
+    {
+      name: company.name,
+      oib: company.oib,
+      legalForm: company.legalForm,
+      email: company.email,
+      featureFlags: company.featureFlags as Record<string, unknown> | null,
+    },
+    currentStep
+  )
   if (!isCurrentStepValid) return { success: false, error: "Current step is not complete" }
   await db.company.update({
     where: { id: company.id },

@@ -72,7 +72,7 @@ export async function createBankAccount(input: unknown): Promise<ActionResult<{ 
   try {
     const validated = createBankAccountSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -135,7 +135,7 @@ export async function updateBankAccount(id: unknown, input: unknown): Promise<Ac
 
     const validated = updateBankAccountSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -245,7 +245,7 @@ export async function importBankStatement(
       transactions,
     })
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const { bankAccountId: validatedBankAccountId, transactions: validatedTransactions } =
       validated.data
@@ -374,7 +374,7 @@ export async function matchTransaction(
   try {
     const validated = matchTransactionSchema.safeParse({ transactionId, type, matchId })
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const {
       transactionId: validatedTransactionId,

@@ -41,7 +41,7 @@ export async function validateCertificateAction(
   try {
     const validated = uploadCertificateSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 
@@ -92,7 +92,7 @@ export async function saveCertificateAction(
   try {
     const validated = uploadCertificateSchema.safeParse(input)
     if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message || "Neispravni podaci" }
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
     }
     const data = validated.data
 

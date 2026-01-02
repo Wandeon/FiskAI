@@ -25,7 +25,7 @@ const posItemSchema = z.object({
 
 const processPosSaleSchema = z.object({
   items: z.array(posItemSchema).min(1, "Račun mora imati barem jednu stavku"),
-  paymentMethod: z.enum(["CASH", "CARD", "BANK_TRANSFER", "OTHER"]),
+  paymentMethod: z.enum(["CASH", "CARD"]),
   buyerId: z.string().uuid().optional().nullable(),
   stripePaymentIntentId: z.string().optional(),
 })
@@ -36,7 +36,7 @@ export async function processPosSale(input: unknown): Promise<ProcessPosSaleResu
   if (!validated.success) {
     return {
       success: false,
-      error: validated.error.errors[0]?.message || "Neispravni podaci",
+      error: validated.error.issues[0]?.message || "Neispravni podaci",
     }
   }
   const data = validated.data
