@@ -361,7 +361,7 @@ export async function verifyAgainstRTL(
       const typedRows = pointerQuery.rows as SourcePointerRow[]
       rtlResult.sourcePointerIds = typedRows.map((r) => r.id)
       rtlResult.evidenceIds = [...new Set(typedRows.map((r) => r.evidenceId))]
-      rtlResult.lastRTLExtraction = typedRows[0].fetchedAt
+      rtlResult.lastRTLExtraction = typedRows[0].fetchedAt.toISOString()
 
       // Look for matching values
       for (const pointer of typedRows) {

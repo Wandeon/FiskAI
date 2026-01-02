@@ -1,7 +1,7 @@
 // src/app/api/admin/regulatory-truth/conflicts/[id]/resolve/route.ts
 
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import { db, Prisma } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import {
   parseParams,
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Conflict is not open" }, { status: 400 })
     }
 
-    let resolutionData: any = conflict.resolution
+    let resolutionData: Prisma.JsonValue = conflict.resolution
 
     if (action === "accept") {
       // Accept the arbiter's recommendation

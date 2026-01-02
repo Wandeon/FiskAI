@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import type { TruthHealthSnapshot } from "@prisma/client"
 import {
   collectTruthHealthMetrics,
   storeTruthHealthSnapshot,
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
     const currentMetrics = await collectTruthHealthMetrics()
 
     // Optionally get historical snapshots
-    let history: any[] = []
+    let history: TruthHealthSnapshot[] = []
     if (includeHistory) {
       history = await db.truthHealthSnapshot.findMany({
         orderBy: { timestamp: "desc" },

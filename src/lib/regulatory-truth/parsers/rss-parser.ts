@@ -75,10 +75,22 @@ function parseAtom(data: ParsedRSSData): RSSItem[] {
   }
 
   for (const entry of data.feed.entry) {
-    const title = entry.title?.[0]?._ || entry.title?.[0] || null
-    const link = entry.link?.[0]?.$?.href || entry.link?.[0] || null
+    const titleItem = entry.title?.[0]
+    const title =
+      titleItem && typeof titleItem === "object" && "_" in titleItem
+        ? (titleItem as { _: string })._
+        : (titleItem as string | undefined) ?? null
+    const linkItem = entry.link?.[0]
+    const link =
+      linkItem && typeof linkItem === "object" && "$" in linkItem
+        ? (linkItem as { $?: { href?: string } }).$?.href ?? null
+        : (linkItem as string | undefined) ?? null
     const updated = entry.updated?.[0] || entry.published?.[0] || null
-    const summary = entry.summary?.[0]?._ || entry.summary?.[0] || null
+    const summaryItem = entry.summary?.[0]
+    const summary =
+      summaryItem && typeof summaryItem === "object" && "_" in summaryItem
+        ? (summaryItem as { _: string })._
+        : (summaryItem as string | undefined) ?? null
 
     if (link) {
       items.push({

@@ -8,6 +8,14 @@ type RouteContext = {
   params: Promise<{ companyId: string }>
 }
 
+interface SubscriptionChanges {
+  subscriptionStatus?: string
+  subscriptionPlan?: string
+  subscriptionCurrentPeriodStart?: string
+  subscriptionCurrentPeriodEnd?: string
+  stripeSubscriptionId?: string
+}
+
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     await requireAdmin()
@@ -29,7 +37,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const history = subscriptionLogs
       .filter((log) => {
         if (!log.changes) return false
-        const changes = log.changes as any
+        const changes = log.changes as SubscriptionChanges
 
         return (
           changes.subscriptionStatus ||
@@ -40,7 +48,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         )
       })
       .map((log) => {
-        const changes = log.changes as any
+        const changes = log.changes as SubscriptionChanges
 
         return {
           id: log.id,

@@ -313,13 +313,6 @@ export async function updateSupportTicket(ticketId: string, input: UpdateSupport
       if (validated.priority !== undefined) updateData.priority = validated.priority
       if (validated.status !== undefined) {
         updateData.status = validated.status
-        // If status is being changed to RESOLVED/CLOSED, update resolvedAt
-        if (
-          validated.status === SupportTicketStatus.RESOLVED ||
-          validated.status === SupportTicketStatus.CLOSED
-        ) {
-          updateData.resolvedAt = new Date()
-        }
       }
 
       const ticket = await db.supportTicket.update({

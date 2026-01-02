@@ -128,8 +128,10 @@ interface AgingInvoice {
   invoiceNumber: string | null
   issueDate: Date | null
   dueDate: Date | null
-  totalAmount: number | string
+  totalAmount: number | string | { toString(): string }
   buyer?: { name: string } | null
+  // Allow additional fields from Prisma EInvoice model
+  [key: string]: unknown
 }
 
 interface AgingPdfDocumentProps {

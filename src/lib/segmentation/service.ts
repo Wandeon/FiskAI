@@ -362,7 +362,7 @@ export async function trackMembershipChange(
       segmentId,
       companyId,
       joined,
-      attributeSnapshot: attributes as any,
+      attributeSnapshot: (attributes as Prisma.InputJsonValue) ?? Prisma.JsonNull,
     },
   })
 }

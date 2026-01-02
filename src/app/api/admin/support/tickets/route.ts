@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { db } from "@/lib/db"
+import { db, Prisma } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { getIpFromHeaders, getUserAgentFromHeaders, logAudit } from "@/lib/audit"
 import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     const { status, priority, companyId, search } = parseQuery(url.searchParams, ticketQuerySchema)
 
     // Build where clause
-    const where: any = {}
+    const where: Prisma.SupportTicketWhereInput = {}
 
     if (status && status !== "ALL") {
       where.status = status as SupportTicketStatus
@@ -186,7 +186,7 @@ export async function PATCH(request: Request) {
             after: serializeTicket(updatedTicket),
             action,
             reason: reason || "Admin bulk action",
-          } as any,
+          } as Prisma.JsonValue,
           ipAddress,
           userAgent,
         })

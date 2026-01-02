@@ -319,7 +319,7 @@ async function handleXml(jobId: string) {
           reference: ref,
           counterpartyName: counterparty,
           counterpartyIban: iban,
-          matchStatus: "UNMATCHED",
+          matchStatus: MatchStatus.UNMATCHED,
           confidenceScore: 0,
         }
       }),

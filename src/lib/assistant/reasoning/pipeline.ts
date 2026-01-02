@@ -52,12 +52,16 @@ function parseTurnoverBand(band: string): number | undefined {
   return undefined
 }
 
+interface RuleWithAuthority {
+  authority?: string
+  [key: string]: unknown
+}
+
 /**
  * Group rules by authority level for analysis
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function groupRulesByAuthority(rules: any[]): Record<string, any[]> {
-  const grouped: Record<string, any[]> = {}
+function groupRulesByAuthority<T extends RuleWithAuthority>(rules: T[]): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {}
   for (const rule of rules) {
     const authority = rule.authority || "UNKNOWN"
     if (!grouped[authority]) {

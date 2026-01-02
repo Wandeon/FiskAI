@@ -30,6 +30,12 @@ type RuleWithSourcePointers = RegulatoryRule & {
   })[]
 }
 
+interface ConflictResolution {
+  strategy?: string
+  rationaleHr?: string
+  rationaleEn?: string
+}
+
 type ConflictWithRules = RegulatoryConflict & {
   itemA: RuleWithSourcePointers
   itemB: RuleWithSourcePointers
@@ -311,16 +317,16 @@ export function ConflictsView({ conflicts, total, page, pageSize, userId }: Conf
                     <div className="text-sm space-y-1">
                       <div>
                         <span className="font-medium">Strategy:</span>{" "}
-                        {(conflict.resolution as any).strategy}
+                        {(conflict.resolution as ConflictResolution).strategy}
                       </div>
                       <div>
                         <span className="font-medium">Rationale (HR):</span>{" "}
-                        {(conflict.resolution as any).rationaleHr}
+                        {(conflict.resolution as ConflictResolution).rationaleHr}
                       </div>
-                      {(conflict.resolution as any).rationaleEn && (
+                      {(conflict.resolution as ConflictResolution).rationaleEn && (
                         <div>
                           <span className="font-medium">Rationale (EN):</span>{" "}
-                          {(conflict.resolution as any).rationaleEn}
+                          {(conflict.resolution as ConflictResolution).rationaleEn}
                         </div>
                       )}
                       {conflict.confidence && (

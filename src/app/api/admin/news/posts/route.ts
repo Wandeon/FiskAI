@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
     let query = drizzleDb.select().from(newsPosts)
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Drizzle query builder returns complex union type
+      query = query.where(and(...conditions)) as typeof query
     }
 
     const posts = await query.orderBy(desc(newsPosts.createdAt)).limit(100)

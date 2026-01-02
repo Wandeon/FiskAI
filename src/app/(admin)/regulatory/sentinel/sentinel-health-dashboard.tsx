@@ -43,7 +43,7 @@ interface SentinelHealthData {
       startedAt: string
       completedAt: string
       duration: number | null
-      output: any
+      output: Record<string, unknown> | null
     } | null
     recent: Array<{
       id: string

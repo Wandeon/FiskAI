@@ -41,7 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const post = posts[0]
-    const aiPasses = (post.aiPasses as any) || {}
+    const aiPasses = (post.aiPasses as Record<string, unknown>) || {}
 
     // Fetch source items
     const sources = await drizzleDb

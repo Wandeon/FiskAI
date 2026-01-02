@@ -162,6 +162,8 @@ interface InvoiceForFiscalization {
     premisesCode?: string
     deviceCode?: string
     vatRegistered?: boolean
+    // Allow additional DB fields
+    [key: string]: unknown
   }
 }
 

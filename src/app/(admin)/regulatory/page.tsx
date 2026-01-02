@@ -21,6 +21,14 @@ import Link from "next/link"
 
 export const revalidate = 60 // 1 minute cache
 
+interface RecentActivity {
+  id: string
+  type: string
+  completedAt: Date | null
+  confidence: number | null
+  summary: string
+}
+
 async function getDashboardData() {
   // Get status from API
   const statusUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
@@ -283,7 +291,7 @@ export default async function RegulatoryDashboardPage() {
             <div className="text-center py-8 text-muted-foreground">No recent activity</div>
           ) : (
             <div className="space-y-4">
-              {status.recentActivity.map((activity: any) => (
+              {(status.recentActivity as RecentActivity[]).map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"

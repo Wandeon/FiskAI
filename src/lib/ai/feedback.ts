@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 
@@ -33,7 +34,7 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
         entityId: input.entityId,
         operation: input.operation,
         feedback: input.feedback,
-        correction: (input.correction ?? undefined) as any,
+        correction: (input.correction as Prisma.InputJsonValue) ?? undefined,
         notes: input.notes || null,
       },
     })

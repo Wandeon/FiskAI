@@ -252,7 +252,7 @@ interface TenantExportData {
     name: string | null
     role: string
     createdAt: Date
-    lastLogin: Date
+    lastLogin: Date | null
   }>
   statistics: {
     totalInvoices: number
