@@ -2,13 +2,33 @@ import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 import mime from "mime-types"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { db } from "@/lib/db"
 import { downloadFromR2 } from "@/lib/r2-client"
+import { parseParams, isValidationError, formatValidationError } from "@/lib/api/validation"
+
+// Schema for route params
+const paramsSchema = z.object({
+  id: z.string().uuid("Invalid import job ID format"),
+})
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+  const rawParams = await params
+
+  // Validate params using parseParams
+  let validatedParams: z.infer<typeof paramsSchema>
+  try {
+    validatedParams = parseParams(rawParams, paramsSchema)
+  } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
+    throw error
+  }
+  const { id } = validatedParams
+
   const user = await requireAuth()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
@@ -58,7 +78,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
         "Content-Disposition": `inline; filename="${job.originalName}"`,
       },
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "File not found" }, { status: 404 })
   }
 }

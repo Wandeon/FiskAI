@@ -1,24 +1,32 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getFiscalProvider, calculateZKI, validateZKIInput } from "@/lib/e-invoice"
 import type { FiscalInvoice, PaymentMethodCode } from "@/lib/e-invoice"
 import { revalidatePath } from "next/cache"
 import { validateTransition } from "@/lib/invoice-status-validation"
-import { validateStatusTransition, getTransitionError } from "@/lib/e-invoice-status"
 import { recordRevenueRegisterEntry } from "@/lib/invoicing/events"
+
+const uuidSchema = z.string().uuid()
 
 /**
  * Fiscalize an invoice with Croatian Tax Authority (CIS)
  *
  * This action:
  * 1. Validates the invoice is ready for fiscalization
- * 2. Calculates ZKI (Zaštitni Kod Izdavatelja)
+ * 2. Calculates ZKI (Zastitni Kod Izdavatelja)
  * 3. Sends to fiscalization provider
  * 4. Updates invoice with JIR and ZKI
  */
-export async function fiscalizeInvoice(invoiceId: string) {
+export async function fiscalizeInvoice(invoiceId: unknown) {
+  const validated = uuidSchema.safeParse(invoiceId)
+  if (!validated.success) {
+    return { success: false, error: "Nevazeci ID racuna" }
+  }
+  const validatedInvoiceId = validated.data
+
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
@@ -26,7 +34,7 @@ export async function fiscalizeInvoice(invoiceId: string) {
     // Get invoice with all required data
     const invoice = await db.eInvoice.findFirst({
       where: {
-        id: invoiceId,
+        id: validatedInvoiceId,
         companyId: company.id,
       },
       include: {
@@ -173,7 +181,7 @@ export async function fiscalizeInvoice(invoiceId: string) {
     if (!result.success) {
       // Update invoice status to error
       await db.eInvoice.update({
-        where: { id: invoiceId },
+        where: { id: validatedInvoiceId },
         data: {
           status: "ERROR",
           providerError: result.error,
@@ -188,7 +196,7 @@ export async function fiscalizeInvoice(invoiceId: string) {
 
     // Update invoice with fiscalization data
     await db.eInvoice.update({
-      where: { id: invoiceId },
+      where: { id: validatedInvoiceId },
       data: {
         status: "FISCALIZED",
         jir: result.jir,
@@ -198,10 +206,10 @@ export async function fiscalizeInvoice(invoiceId: string) {
       },
     })
 
-    await recordRevenueRegisterEntry(invoiceId)
+    await recordRevenueRegisterEntry(validatedInvoiceId)
 
     revalidatePath("/e-invoices")
-    revalidatePath(`/e-invoices/${invoiceId}`)
+    revalidatePath(`/e-invoices/${validatedInvoiceId}`)
 
     return {
       success: true,
@@ -220,14 +228,20 @@ export async function fiscalizeInvoice(invoiceId: string) {
 /**
  * Check fiscalization status
  */
-export async function checkFiscalStatus(invoiceId: string) {
+export async function checkFiscalStatus(invoiceId: unknown) {
+  const validated = uuidSchema.safeParse(invoiceId)
+  if (!validated.success) {
+    return { success: false, error: "Nevazeci ID racuna" }
+  }
+  const validatedInvoiceId = validated.data
+
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
   try {
     const invoice = await db.eInvoice.findFirst({
       where: {
-        id: invoiceId,
+        id: validatedInvoiceId,
         companyId: company.id,
       },
       select: {
@@ -276,14 +290,20 @@ export async function checkFiscalStatus(invoiceId: string) {
  * NOTE: This is typically not allowed in Croatian system.
  * Instead, you should issue a credit note.
  */
-export async function cancelFiscalizedInvoice(invoiceId: string) {
+export async function cancelFiscalizedInvoice(invoiceId: unknown) {
+  const validated = uuidSchema.safeParse(invoiceId)
+  if (!validated.success) {
+    return { success: false, error: "Nevazeci ID racuna" }
+  }
+  const validatedInvoiceId = validated.data
+
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
 
   try {
     const invoice = await db.eInvoice.findFirst({
       where: {
-        id: invoiceId,
+        id: validatedInvoiceId,
         companyId: company.id,
       },
       select: {
@@ -319,14 +339,14 @@ export async function cancelFiscalizedInvoice(invoiceId: string) {
 
     // Update invoice status
     await db.eInvoice.update({
-      where: { id: invoiceId },
+      where: { id: validatedInvoiceId },
       data: {
         status: "REJECTED", // or create a CANCELLED status
       },
     })
 
     revalidatePath("/e-invoices")
-    revalidatePath(`/e-invoices/${invoiceId}`)
+    revalidatePath(`/e-invoices/${validatedInvoiceId}`)
 
     return { success: true }
   } catch (error) {

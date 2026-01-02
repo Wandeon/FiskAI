@@ -7,12 +7,13 @@ import { revalidatePath } from "next/cache"
 import { MatchKind, MatchSource, MatchStatus } from "@prisma/client"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { getIpFromHeaders, getUserAgentFromHeaders, logAudit } from "@/lib/audit"
+import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
 
 const bodySchema = z
   .object({
-    transactionId: z.string().min(1),
-    invoiceId: z.string().min(1).optional(),
-    expenseId: z.string().min(1).optional(),
+    transactionId: z.string().cuid("Invalid transaction ID format"),
+    invoiceId: z.string().cuid("Invalid invoice ID format").optional(),
+    expenseId: z.string().cuid("Invalid expense ID format").optional(),
   })
   .refine((data) => data.invoiceId || data.expenseId, {
     message: "Either invoiceId or expenseId must be provided",
@@ -34,13 +35,21 @@ export async function POST(request: Request) {
     userId: user.id!,
   })
 
-  const body = await request.json().catch(() => null)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Neispravan zahtjev" }, { status: 400 })
-  }
+  let transactionId: string
+  let invoiceId: string | undefined
+  let expenseId: string | undefined
 
-  const { transactionId, invoiceId, expenseId } = parsed.data
+  try {
+    const parsed = await parseBody(request, bodySchema)
+    transactionId = parsed.transactionId
+    invoiceId = parsed.invoiceId
+    expenseId = parsed.expenseId
+  } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
+    throw error
+  }
 
   const transaction = await db.bankTransaction.findFirst({
     where: { id: transactionId, companyId: company.id },

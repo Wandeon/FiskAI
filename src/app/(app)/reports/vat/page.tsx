@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { protectRoute } from "@/lib/visibility/route-protection"
+import { calculateVatReportTotals } from "@/lib/reports/vat-totals"
 
 export default async function VatReportPage({
   searchParams,
@@ -63,33 +64,12 @@ export default async function VatReportPage({
         })
       : []
 
-  // Calculate totals
-  const outputVat = {
-    net: invoices.reduce((sum, i) => sum + Number(i.netAmount), 0),
-    vat: invoices.reduce((sum, i) => sum + Number(i.vatAmount), 0),
-    total: invoices.reduce((sum, i) => sum + Number(i.totalAmount), 0),
-  }
-
-  const inputVat = uraInputs.length
-    ? {
-        deductible: uraInputs.reduce((sum, input) => sum + Number(input.deductibleVatAmount), 0),
-        nonDeductible: uraInputs.reduce(
-          (sum, input) => sum + Number(input.nonDeductibleVatAmount),
-          0
-        ),
-        total: uraInputs.reduce((sum, input) => sum + Number(input.vatAmount), 0),
-      }
-    : {
-        deductible: expenses
-          .filter((e) => e.vatDeductible)
-          .reduce((sum, e) => sum + Number(e.vatAmount), 0),
-        nonDeductible: expenses
-          .filter((e) => !e.vatDeductible)
-          .reduce((sum, e) => sum + Number(e.vatAmount), 0),
-        total: expenses.reduce((sum, e) => sum + Number(e.vatAmount), 0),
-      }
-
-  const vatPayable = outputVat.vat - inputVat.deductible
+  // Calculate totals using Money class for precise arithmetic
+  const { outputVat, inputVat, vatPayable } = calculateVatReportTotals(
+    invoices,
+    uraInputs,
+    expenses
+  )
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR" }).format(n)

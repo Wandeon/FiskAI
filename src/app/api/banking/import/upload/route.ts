@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 import { createHash } from "crypto"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
@@ -11,6 +12,39 @@ import { scanBuffer } from "@/lib/security/virus-scanner"
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024 // 20MB safety cap
 const ALLOWED_EXTENSIONS = ["pdf", "xml"]
+
+// Schema for accountId validation
+const accountIdSchema = z.string().uuid("Invalid bank account ID format")
+
+/**
+ * Validates a bank statement file from FormData
+ */
+function validateBankStatementFile(
+  file: FormDataEntryValue | null
+): { success: true; file: File; extension: string } | { success: false; error: string } {
+  if (!file || !(file instanceof File)) {
+    return { success: false, error: "File is required" }
+  }
+
+  const fileName = file.name || "upload"
+  const extension = fileName.split(".").pop()?.toLowerCase() || ""
+
+  // Validate file extension
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    return { success: false, error: "Only PDF or XML files are supported" }
+  }
+
+  // Validate file size
+  if (file.size === 0) {
+    return { success: false, error: "Empty file" }
+  }
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { success: false, error: "File too large (max 20MB)" }
+  }
+
+  return { success: true, file, extension }
+}
 
 export async function POST(request: Request) {
   let company, userId
@@ -34,30 +68,34 @@ export async function POST(request: Request) {
   })
 
   const formData = await request.formData()
-  const file = formData.get("file")
-  const accountId = formData.get("accountId") as string | null
-  if (!(file instanceof Blob) || !accountId) {
-    return NextResponse.json({ error: "Missing file or account" }, { status: 400 })
+  const fileEntry = formData.get("file")
+  const accountIdEntry = formData.get("accountId")
+
+  // Validate file
+  const fileValidation = validateBankStatementFile(fileEntry)
+  if (!fileValidation.success) {
+    return NextResponse.json({ error: fileValidation.error }, { status: 400 })
   }
+  const { file, extension } = fileValidation
+
+  // Validate accountId
+  if (!accountIdEntry || typeof accountIdEntry !== "string") {
+    return NextResponse.json({ error: "Bank account ID is required" }, { status: 400 })
+  }
+
+  const accountIdResult = accountIdSchema.safeParse(accountIdEntry)
+  if (!accountIdResult.success) {
+    return NextResponse.json({ error: "Invalid bank account ID format" }, { status: 400 })
+  }
+  const accountId = accountIdResult.data
 
   const account = await db.bankAccount.findUnique({ where: { id: accountId } })
   if (!account || account.companyId !== company.id) {
     return NextResponse.json({ error: "Invalid bank account" }, { status: 400 })
   }
 
-  const fileName = (file as File).name || "upload"
-  const extension = fileName.split(".").pop()?.toLowerCase() || ""
-  if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return NextResponse.json({ error: "Only PDF or XML files are supported" }, { status: 400 })
-  }
-
+  const fileName = file.name || "upload"
   const arrayBuffer = await file.arrayBuffer()
-  if (arrayBuffer.byteLength === 0) {
-    return NextResponse.json({ error: "Empty file" }, { status: 400 })
-  }
-  if (arrayBuffer.byteLength > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "File too large (max 20MB)" }, { status: 413 })
-  }
 
   const buffer = Buffer.from(arrayBuffer)
   const checksum = createHash("sha256").update(buffer).digest("hex")

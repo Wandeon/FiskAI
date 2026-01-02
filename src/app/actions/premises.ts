@@ -1,24 +1,41 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
 
-interface CreatePremisesInput {
-  companyId: string
-  code: number
-  name: string
-  address?: string
-  isDefault?: boolean
-}
+// Zod schemas for validation
+const createPremisesSchema = z.object({
+  companyId: z.string().uuid(),
+  code: z.number().int().positive("Kod mora biti pozitivan broj"),
+  name: z.string().min(1, "Naziv je obavezan"),
+  address: z.string().optional(),
+  isDefault: z.boolean().optional(),
+})
 
-interface CreateDeviceInput {
-  companyId: string
-  businessPremisesId: string
-  code: number
-  name: string
-  isDefault?: boolean
-}
+const updatePremisesSchema = z.object({
+  code: z.number().int().positive("Kod mora biti pozitivan broj").optional(),
+  name: z.string().min(1, "Naziv je obavezan").optional(),
+  address: z.string().optional(),
+  isDefault: z.boolean().optional(),
+})
+
+const createDeviceSchema = z.object({
+  companyId: z.string().uuid(),
+  businessPremisesId: z.string().uuid(),
+  code: z.number().int().positive("Kod mora biti pozitivan broj"),
+  name: z.string().min(1, "Naziv je obavezan"),
+  isDefault: z.boolean().optional(),
+})
+
+const updateDeviceSchema = z.object({
+  code: z.number().int().positive("Kod mora biti pozitivan broj").optional(),
+  name: z.string().min(1, "Naziv je obavezan").optional(),
+  isDefault: z.boolean().optional(),
+})
+
+const uuidSchema = z.string().uuid()
 
 interface ActionResult {
   success: boolean
@@ -26,32 +43,33 @@ interface ActionResult {
   data?: unknown
 }
 
-export async function createPremises(input: CreatePremisesInput): Promise<ActionResult> {
+export async function createPremises(input: unknown): Promise<ActionResult> {
   try {
+    const validated = createPremisesSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
-      // Validate code is positive
-      if (input.code < 1) {
-        return { success: false, error: "Kod mora biti pozitivan broj" }
-      }
-
       // Check for duplicate code
       const existing = await db.businessPremises.findUnique({
         where: {
           companyId_code: {
             companyId: company.id,
-            code: input.code,
+            code: data.code,
           },
         },
       })
 
       if (existing) {
-        return { success: false, error: `Poslovni prostor s kodom ${input.code} već postoji` }
+        return { success: false, error: `Poslovni prostor s kodom ${data.code} već postoji` }
       }
 
       // If this should be default, unset other defaults first
-      if (input.isDefault) {
+      if (data.isDefault) {
         await db.businessPremises.updateMany({
           where: { companyId: company.id, isDefault: true },
           data: { isDefault: false },
@@ -61,10 +79,10 @@ export async function createPremises(input: CreatePremisesInput): Promise<Action
       const premises = await db.businessPremises.create({
         data: {
           companyId: company.id,
-          code: input.code,
-          name: input.name,
-          address: input.address,
-          isDefault: input.isDefault ?? false,
+          code: data.code,
+          name: data.name,
+          address: data.address,
+          isDefault: data.isDefault ?? false,
           isActive: true,
         },
       })
@@ -78,47 +96,56 @@ export async function createPremises(input: CreatePremisesInput): Promise<Action
   }
 }
 
-export async function updatePremises(
-  id: string,
-  input: Partial<Omit<CreatePremisesInput, "companyId">>
-): Promise<ActionResult> {
+export async function updatePremises(id: unknown, input: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID poslovnog prostora" }
+    }
+    const validatedId = idResult.data
+
+    const validated = updatePremisesSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
       const existing = await db.businessPremises.findFirst({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
       if (!existing) {
         return { success: false, error: "Poslovni prostor nije pronađen" }
       }
 
       // Check for duplicate code if code is being changed
-      if (input.code && input.code !== existing.code) {
+      if (data.code && data.code !== existing.code) {
         const duplicate = await db.businessPremises.findUnique({
           where: {
             companyId_code: {
               companyId: company.id,
-              code: input.code,
+              code: data.code,
             },
           },
         })
         if (duplicate) {
-          return { success: false, error: `Poslovni prostor s kodom ${input.code} već postoji` }
+          return { success: false, error: `Poslovni prostor s kodom ${data.code} već postoji` }
         }
       }
 
       // If this should be default, unset other defaults first
-      if (input.isDefault) {
+      if (data.isDefault) {
         await db.businessPremises.updateMany({
-          where: { companyId: company.id, isDefault: true, id: { not: id } },
+          where: { companyId: company.id, isDefault: true, id: { not: validatedId } },
           data: { isDefault: false },
         })
       }
 
       const premises = await db.businessPremises.update({
-        where: { id },
-        data: input,
+        where: { id: validatedId },
+        data,
       })
 
       revalidatePath("/settings/premises")
@@ -130,14 +157,20 @@ export async function updatePremises(
   }
 }
 
-export async function deletePremises(id: string): Promise<ActionResult> {
+export async function deletePremises(id: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID poslovnog prostora" }
+    }
+    const validatedId = idResult.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
       // Check if premises has any devices
       const deviceCount = await db.paymentDevice.count({
-        where: { businessPremisesId: id, companyId: company.id },
+        where: { businessPremisesId: validatedId, companyId: company.id },
       })
 
       if (deviceCount > 0) {
@@ -149,7 +182,7 @@ export async function deletePremises(id: string): Promise<ActionResult> {
 
       // Check if premises has any invoice sequences
       const sequenceCount = await db.invoiceSequence.count({
-        where: { businessPremisesId: id, companyId: company.id },
+        where: { businessPremisesId: validatedId, companyId: company.id },
       })
 
       if (sequenceCount > 0) {
@@ -160,7 +193,7 @@ export async function deletePremises(id: string): Promise<ActionResult> {
       }
 
       const deleted = await db.businessPremises.deleteMany({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
 
       if (deleted.count === 0) {
@@ -176,18 +209,19 @@ export async function deletePremises(id: string): Promise<ActionResult> {
   }
 }
 
-export async function createDevice(input: CreateDeviceInput): Promise<ActionResult> {
+export async function createDevice(input: unknown): Promise<ActionResult> {
   try {
+    const validated = createDeviceSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
-      // Validate code is positive
-      if (input.code < 1) {
-        return { success: false, error: "Kod mora biti pozitivan broj" }
-      }
-
       const premises = await db.businessPremises.findFirst({
-        where: { id: input.businessPremisesId, companyId: company.id },
+        where: { id: data.businessPremisesId, companyId: company.id },
       })
 
       if (!premises) {
@@ -198,8 +232,8 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
       const existing = await db.paymentDevice.findUnique({
         where: {
           businessPremisesId_code: {
-            businessPremisesId: input.businessPremisesId,
-            code: input.code,
+            businessPremisesId: data.businessPremisesId,
+            code: data.code,
           },
         },
       })
@@ -207,15 +241,15 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
       if (existing) {
         return {
           success: false,
-          error: `Naplatni uređaj s kodom ${input.code} već postoji u ovom poslovnom prostoru`,
+          error: `Naplatni uređaj s kodom ${data.code} već postoji u ovom poslovnom prostoru`,
         }
       }
 
       // If this should be default, unset other defaults first
-      if (input.isDefault) {
+      if (data.isDefault) {
         await db.paymentDevice.updateMany({
           where: {
-            businessPremisesId: input.businessPremisesId,
+            businessPremisesId: data.businessPremisesId,
             companyId: company.id,
             isDefault: true,
           },
@@ -226,10 +260,10 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
       const device = await db.paymentDevice.create({
         data: {
           companyId: company.id,
-          businessPremisesId: input.businessPremisesId,
-          code: input.code,
-          name: input.name,
-          isDefault: input.isDefault ?? false,
+          businessPremisesId: data.businessPremisesId,
+          code: data.code,
+          name: data.name,
+          isDefault: data.isDefault ?? false,
           isActive: true,
         },
       })
@@ -243,52 +277,61 @@ export async function createDevice(input: CreateDeviceInput): Promise<ActionResu
   }
 }
 
-export async function updateDevice(
-  id: string,
-  input: Partial<Omit<CreateDeviceInput, "companyId" | "businessPremisesId">>
-): Promise<ActionResult> {
+export async function updateDevice(id: unknown, input: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID naplatnog uređaja" }
+    }
+    const validatedId = idResult.data
+
+    const validated = updateDeviceSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
       const existing = await db.paymentDevice.findFirst({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
       if (!existing) {
         return { success: false, error: "Naplatni uređaj nije pronađen" }
       }
 
       // Check for duplicate code if code is being changed
-      if (input.code && input.code !== existing.code) {
+      if (data.code && data.code !== existing.code) {
         const duplicate = await db.paymentDevice.findUnique({
           where: {
             businessPremisesId_code: {
               businessPremisesId: existing.businessPremisesId,
-              code: input.code,
+              code: data.code,
             },
           },
         })
         if (duplicate) {
-          return { success: false, error: `Naplatni uređaj s kodom ${input.code} već postoji` }
+          return { success: false, error: `Naplatni uređaj s kodom ${data.code} već postoji` }
         }
       }
 
       // If this should be default, unset other defaults first
-      if (input.isDefault) {
+      if (data.isDefault) {
         await db.paymentDevice.updateMany({
           where: {
             businessPremisesId: existing.businessPremisesId,
             companyId: company.id,
             isDefault: true,
-            id: { not: id },
+            id: { not: validatedId },
           },
           data: { isDefault: false },
         })
       }
 
       const device = await db.paymentDevice.update({
-        where: { id },
-        data: input,
+        where: { id: validatedId },
+        data,
       })
 
       revalidatePath("/settings/premises")
@@ -300,13 +343,19 @@ export async function updateDevice(
   }
 }
 
-export async function deleteDevice(id: string): Promise<ActionResult> {
+export async function deleteDevice(id: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID naplatnog uređaja" }
+    }
+    const validatedId = idResult.data
+
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
       const deleted = await db.paymentDevice.deleteMany({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
 
       if (deleted.count === 0) {
@@ -322,10 +371,12 @@ export async function deleteDevice(id: string): Promise<ActionResult> {
   }
 }
 
-export async function getDefaultPremisesAndDevice(_companyId: string): Promise<{
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function getDefaultPremisesAndDevice(_companyId: unknown): Promise<{
   premises: { id: string; code: number; name: string } | null
   device: { id: string; code: number; name: string } | null
 }> {
+  // Note: _companyId is ignored - we get company from auth context
   const user = await requireAuth()
 
   return requireCompanyWithContext(user.id!, async (company) => {

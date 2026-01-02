@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { fetchKpr } from "@/lib/reports/kpr"
 import { KprPdfDocument } from "@/lib/reports/kpr-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
+
+const querySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  groupByMonth: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,12 +21,8 @@ export async function GET(request: NextRequest) {
     const company = await requireCompany(user.id!)
 
     const { searchParams } = new URL(request.url)
-    const fromParam = searchParams.get("from")
-    const toParam = searchParams.get("to")
-    const groupByMonth = searchParams.get("groupByMonth") === "true"
-
-    const from = fromParam ? new Date(fromParam) : undefined
-    const to = toParam ? new Date(toParam) : undefined
+    const query = parseQuery(searchParams, querySchema)
+    const { from, to, groupByMonth } = query
 
     const summary = await fetchKpr(company.id, from, to)
 
@@ -41,6 +48,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("KPR PDF export error:", error)
     return NextResponse.json({ error: "Neuspješan KPR PDF izvoz" }, { status: 500 })
   }

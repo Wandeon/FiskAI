@@ -1,8 +1,11 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { requireAuth, getCurrentCompany } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
+
+const stepSchema = z.number().int().min(1).max(10)
 
 export async function getValidatedOnboardingStep(): Promise<number> {
   const user = await requireAuth()
@@ -11,7 +14,15 @@ export async function getValidatedOnboardingStep(): Promise<number> {
   return company.onboardingStep || 1
 }
 
-async function validateStep(company: any, step: number): Promise<boolean> {
+interface CompanyValidationData {
+  name?: string | null
+  oib?: string | null
+  legalForm?: string | null
+  email?: string | null
+  featureFlags?: Record<string, unknown> | null
+}
+
+async function validateStep(company: CompanyValidationData, step: number): Promise<boolean> {
   const featureFlags = company.featureFlags as Record<string, unknown> | null
   switch (step) {
     case 1:
@@ -39,17 +50,35 @@ async function validateStep(company: any, step: number): Promise<boolean> {
 }
 
 export async function advanceOnboardingStep(
-  targetStep: number
+  targetStep: unknown
 ): Promise<{ success: boolean; error?: string }> {
+  const validated = stepSchema.safeParse(targetStep)
+  if (!validated.success) {
+    return { success: false, error: "Invalid step number" }
+  }
+  const validatedTargetStep = validated.data
+
   const user = await requireAuth()
   const company = await getCurrentCompany(user.id!)
   if (!company) return { success: false, error: "No company found" }
   const currentStep = company.onboardingStep || 1
-  if (targetStep > currentStep + 1) return { success: false, error: "Cannot skip steps" }
-  if (targetStep <= currentStep) return { success: true }
-  const isCurrentStepValid = await validateStep(company, currentStep)
+  if (validatedTargetStep > currentStep + 1) return { success: false, error: "Cannot skip steps" }
+  if (validatedTargetStep <= currentStep) return { success: true }
+  const isCurrentStepValid = await validateStep(
+    {
+      name: company.name,
+      oib: company.oib,
+      legalForm: company.legalForm,
+      email: company.email,
+      featureFlags: company.featureFlags as Record<string, unknown> | null,
+    },
+    currentStep
+  )
   if (!isCurrentStepValid) return { success: false, error: "Current step is not complete" }
-  await db.company.update({ where: { id: company.id }, data: { onboardingStep: targetStep } })
+  await db.company.update({
+    where: { id: company.id },
+    data: { onboardingStep: validatedTargetStep },
+  })
   revalidatePath("/onboarding")
   return { success: true }
 }

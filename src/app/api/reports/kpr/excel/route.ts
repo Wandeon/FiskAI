@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { fetchKpr } from "@/lib/reports/kpr"
 import { kprToExcel } from "@/lib/reports/kpr-excel"
+
+const querySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,11 +16,8 @@ export async function GET(request: NextRequest) {
     const company = await requireCompany(user.id!)
 
     const { searchParams } = new URL(request.url)
-    const fromParam = searchParams.get("from")
-    const toParam = searchParams.get("to")
-
-    const from = fromParam ? new Date(fromParam) : undefined
-    const to = toParam ? new Date(toParam) : undefined
+    const query = parseQuery(searchParams, querySchema)
+    const { from, to } = query
 
     const summary = await fetchKpr(company.id, from, to)
     const excel = kprToExcel(summary, company.name, company.oib, from, to)
@@ -28,6 +32,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("KPR Excel export error:", error)
     return NextResponse.json({ error: "Neuspješan KPR Excel izvoz" }, { status: 500 })
   }

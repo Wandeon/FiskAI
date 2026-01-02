@@ -1,25 +1,48 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { requireAuth, requireCompanyWithContext } from "@/lib/auth-utils"
 import { getNextInvoiceNumber } from "@/lib/invoice-numbering"
 import { canCreateInvoice } from "@/lib/billing/stripe"
 import { Prisma, PaymentMethod } from "@prisma/client"
 import { revalidatePath } from "next/cache"
-import type { ProcessPosSaleInput, ProcessPosSaleResult } from "@/types/pos"
+import type { ProcessPosSaleResult } from "@/types/pos"
 import { fiscalizePosSale } from "@/lib/fiscal/pos-fiscalize"
 import { recordRevenueRegisterEntry } from "@/lib/invoicing/events"
 import { ensureOrganizationForContact } from "@/lib/master-data/contact-master-data"
 
 const Decimal = Prisma.Decimal
 
-export async function processPosSale(input: ProcessPosSaleInput): Promise<ProcessPosSaleResult> {
-  // Validation - do this BEFORE auth to allow testing
-  if (!input.items || input.items.length === 0) {
-    return { success: false, error: "Račun mora imati barem jednu stavku" }
-  }
+// Zod schema for POS sale input validation
+const posItemSchema = z.object({
+  productId: z.string().optional(),
+  description: z.string().min(1, "Opis je obavezan"),
+  quantity: z.number().positive("Količina mora biti pozitivna"),
+  unitPrice: z.number().min(0, "Cijena mora biti pozitivna ili nula"),
+  vatRate: z.number().min(0).max(100),
+})
 
-  if (input.paymentMethod === "CARD" && !input.stripePaymentIntentId) {
+const processPosSaleSchema = z.object({
+  items: z.array(posItemSchema).min(1, "Račun mora imati barem jednu stavku"),
+  paymentMethod: z.enum(["CASH", "CARD"]),
+  buyerId: z.string().uuid().optional().nullable(),
+  stripePaymentIntentId: z.string().optional(),
+})
+
+export async function processPosSale(input: unknown): Promise<ProcessPosSaleResult> {
+  // Validate input
+  const validated = processPosSaleSchema.safeParse(input)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.issues[0]?.message || "Neispravni podaci",
+    }
+  }
+  const data = validated.data
+
+  // Additional business logic validation
+  if (data.paymentMethod === "CARD" && !data.stripePaymentIntentId) {
     return { success: false, error: "Payment Intent ID je obavezan za kartično plaćanje" }
   }
 
@@ -53,7 +76,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
       const numbering = await getNextInvoiceNumber(company.id, undefined, undefined, issueDate)
 
       // Calculate line items
-      const lineItems = input.items.map((item, index) => {
+      const lineItems = data.items.map((item, index) => {
         const quantity = new Decimal(item.quantity)
         const unitPrice = new Decimal(item.unitPrice)
         const vatRate = new Decimal(item.vatRate)
@@ -78,8 +101,8 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
       const vatAmount = lineItems.reduce((sum, l) => sum.add(l.vatAmount), new Decimal(0))
       const totalAmount = netAmount.add(vatAmount)
 
-      const buyerOrganizationId = input.buyerId
-        ? await ensureOrganizationForContact(company.id, input.buyerId)
+      const buyerOrganizationId = data.buyerId
+        ? await ensureOrganizationForContact(company.id, data.buyerId)
         : null
 
       // Create invoice
@@ -90,7 +113,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           direction: "OUTBOUND",
           invoiceNumber: numbering.invoiceNumber,
           internalReference: numbering.internalReference,
-          buyerId: input.buyerId || null,
+          buyerId: data.buyerId || null,
           buyerOrganizationId,
           issueDate,
           currency: "EUR",
@@ -98,7 +121,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           vatAmount,
           totalAmount,
           status: "PENDING_FISCALIZATION",
-          paymentMethod: input.paymentMethod as PaymentMethod,
+          paymentMethod: data.paymentMethod as PaymentMethod,
           lines: { create: lineItems },
         },
         include: { lines: true },
@@ -111,7 +134,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           invoiceNumber: invoice.invoiceNumber,
           issueDate: invoice.issueDate,
           totalAmount: Number(invoice.totalAmount),
-          paymentMethod: input.paymentMethod,
+          paymentMethod: data.paymentMethod,
         },
         company: {
           id: company.id,
@@ -157,7 +180,7 @@ export async function processPosSale(input: ProcessPosSaleInput): Promise<Proces
           invoiceNumber: invoice.invoiceNumber,
           totalAmount: Number(invoice.totalAmount),
           issueDate: invoice.issueDate.toISOString(),
-          paymentMethod: input.paymentMethod,
+          paymentMethod: data.paymentMethod,
           items: invoice.lines.map((line) => ({
             description: line.description,
             quantity: Number(line.quantity),

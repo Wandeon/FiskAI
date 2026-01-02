@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { VatPdfDocument } from "@/lib/reports/vat-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { lockAccountingPeriodsForRange } from "@/lib/period-locking/service"
+
+const querySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,8 +21,7 @@ export async function GET(request: NextRequest) {
     setTenantContext({ companyId: company.id, userId: user.id! })
 
     const { searchParams } = new URL(request.url)
-    const fromParam = searchParams.get("from")
-    const toParam = searchParams.get("to")
+    const query = parseQuery(searchParams, querySchema)
 
     // Default to current quarter
     const now = new Date()
@@ -23,8 +29,8 @@ export async function GET(request: NextRequest) {
     const defaultFrom = new Date(now.getFullYear(), quarter * 3, 1)
     const defaultTo = new Date(now.getFullYear(), quarter * 3 + 3, 0)
 
-    const dateFrom = fromParam ? new Date(fromParam) : defaultFrom
-    const dateTo = toParam ? new Date(toParam) : defaultTo
+    const dateFrom = query.from ?? defaultFrom
+    const dateTo = query.to ?? defaultTo
 
     // Get invoices (output VAT)
     const invoices = await db.eInvoice.findMany({
@@ -90,6 +96,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("VAT PDF export error:", error)
     return NextResponse.json({ error: "Neuspješan PDV PDF izvoz" }, { status: 500 })
   }

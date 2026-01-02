@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { ProfitLossPdfDocument } from "@/lib/reports/profit-loss-pdf"
 import { renderToBuffer } from "@react-pdf/renderer"
+
+const querySchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,15 +20,14 @@ export async function GET(request: NextRequest) {
     setTenantContext({ companyId: company.id, userId: user.id! })
 
     const { searchParams } = new URL(request.url)
-    const fromParam = searchParams.get("from")
-    const toParam = searchParams.get("to")
+    const query = parseQuery(searchParams, querySchema)
 
     const now = new Date()
     const defaultFrom = new Date(now.getFullYear(), 0, 1) // Start of year
     const defaultTo = now
 
-    const dateFrom = fromParam ? new Date(fromParam) : defaultFrom
-    const dateTo = toParam ? new Date(toParam) : defaultTo
+    const dateFrom = query.from ?? defaultFrom
+    const dateTo = query.to ?? defaultTo
 
     const [invoices, expenses] = await Promise.all([
       db.eInvoice.findMany({
@@ -71,6 +77,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("Profit/Loss PDF export error:", error)
     return NextResponse.json({ error: "Neuspješan izvoz dobit/gubitak PDF-a" }, { status: 500 })
   }

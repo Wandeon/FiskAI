@@ -1,5 +1,6 @@
 "use server"
 
+import { z } from "zod"
 import { db, runWithTenant } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { revalidatePath } from "next/cache"
@@ -16,29 +17,44 @@ interface ActionResult<T = unknown> {
   data?: T
 }
 
-interface CreateBankAccountInput {
-  name: string
-  iban: string
-  bankName: string
-  currency?: string
-  currentBalance?: number
-}
+// Zod schemas for validation
+const createBankAccountSchema = z.object({
+  name: z.string().min(1, "Naziv je obavezan"),
+  iban: z.string().min(1, "IBAN je obavezan"),
+  bankName: z.string().min(1, "Naziv banke je obavezan"),
+  currency: z.string().optional(),
+  currentBalance: z.number().optional(),
+})
 
-interface UpdateBankAccountInput {
-  name?: string
-  bankName?: string
-  isDefault?: boolean
-}
+const updateBankAccountSchema = z.object({
+  name: z.string().min(1).optional(),
+  bankName: z.string().min(1).optional(),
+  isDefault: z.boolean().optional(),
+})
 
-interface ImportTransactionInput {
-  date: Date
-  description: string
-  amount: number
-  balance: number
-  reference?: string
-  counterpartyName?: string
-  counterpartyIban?: string
-}
+const importTransactionSchema = z.object({
+  date: z.coerce.date(),
+  description: z.string().min(1),
+  amount: z.number(),
+  balance: z.number(),
+  reference: z.string().optional(),
+  counterpartyName: z.string().optional(),
+  counterpartyIban: z.string().optional(),
+})
+
+const importBankStatementSchema = z.object({
+  bankAccountId: z.string().uuid(),
+  format: z.nativeEnum(ImportFormat),
+  transactions: z.array(importTransactionSchema).min(1, "Nema transakcija za uvoz"),
+})
+
+const matchTransactionSchema = z.object({
+  transactionId: z.string().uuid(),
+  type: z.enum(["invoice", "expense"]),
+  matchId: z.string().uuid(),
+})
+
+const uuidSchema = z.string().uuid()
 
 /**
  * Validate Croatian IBAN format
@@ -52,10 +68,14 @@ function validateIBAN(iban: string): boolean {
 /**
  * Create a new bank account
  */
-export async function createBankAccount(
-  data: CreateBankAccountInput
-): Promise<ActionResult<{ id: string }>> {
+export async function createBankAccount(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    const validated = createBankAccountSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
@@ -105,18 +125,27 @@ export async function createBankAccount(
 /**
  * Update bank account details
  */
-export async function updateBankAccount(
-  id: string,
-  data: UpdateBankAccountInput
-): Promise<ActionResult> {
+export async function updateBankAccount(id: unknown, input: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID računa" }
+    }
+    const validatedId = idResult.data
+
+    const validated = updateBankAccountSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const data = validated.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify account exists and belongs to company
       const existing = await db.bankAccount.findFirst({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
 
       if (!existing) {
@@ -128,7 +157,7 @@ export async function updateBankAccount(
         await db.bankAccount.updateMany({
           where: {
             companyId: company.id,
-            id: { not: id },
+            id: { not: validatedId },
           },
           data: { isDefault: false },
         })
@@ -140,12 +169,12 @@ export async function updateBankAccount(
       if (data.isDefault !== undefined) updateData.isDefault = data.isDefault
 
       await db.bankAccount.update({
-        where: { id },
+        where: { id: validatedId },
         data: updateData,
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/${id}`)
+      revalidatePath(`/banking/${validatedId}`)
       return { success: true }
     })
   } catch (error) {
@@ -157,15 +186,21 @@ export async function updateBankAccount(
 /**
  * Delete a bank account (only if no transactions linked)
  */
-export async function deleteBankAccount(id: string): Promise<ActionResult> {
+export async function deleteBankAccount(id: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(id)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID računa" }
+    }
+    const validatedId = idResult.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify account exists and belongs to company
       const account = await db.bankAccount.findFirst({
-        where: { id, companyId: company.id },
+        where: { id: validatedId, companyId: company.id },
       })
 
       if (!account) {
@@ -174,7 +209,7 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
 
       // Check for linked transactions
       const transactionCount = await db.bankTransaction.count({
-        where: { bankAccountId: id },
+        where: { bankAccountId: validatedId },
       })
 
       if (transactionCount > 0) {
@@ -184,7 +219,7 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
         }
       }
 
-      await db.bankAccount.delete({ where: { id } })
+      await db.bankAccount.delete({ where: { id: validatedId } })
 
       revalidatePath("/banking")
       return { success: true }
@@ -199,34 +234,41 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
  * Import bank statement transactions
  */
 export async function importBankStatement(
-  bankAccountId: string,
-  format: ImportFormat,
-  transactions: ImportTransactionInput[]
+  bankAccountId: unknown,
+  format: unknown,
+  transactions: unknown
 ): Promise<ActionResult<{ count: number }>> {
   try {
+    const validated = importBankStatementSchema.safeParse({
+      bankAccountId,
+      format,
+      transactions,
+    })
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const { bankAccountId: validatedBankAccountId, transactions: validatedTransactions } =
+      validated.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify bank account exists and belongs to company
       const bankAccount = await db.bankAccount.findFirst({
-        where: { id: bankAccountId, companyId: company.id },
+        where: { id: validatedBankAccountId, companyId: company.id },
       })
 
       if (!bankAccount) {
         return { success: false, error: "Bankovni račun nije pronađen" }
       }
 
-      if (!transactions || transactions.length === 0) {
-        return { success: false, error: "Nema transakcija za uvoz" }
-      }
-
       // Create import record and transactions in a transaction
       const result = await db.$transaction(async (tx) => {
         const checksumPayload = JSON.stringify({
-          bankAccountId,
-          format,
-          transactions: transactions.map((txn) => ({
+          bankAccountId: validatedBankAccountId,
+          format: validated.data.format,
+          transactions: validatedTransactions.map((txn) => ({
             date: txn.date.toISOString(),
             description: txn.description,
             amount: txn.amount,
@@ -239,7 +281,7 @@ export async function importBankStatement(
         const checksum = createHash("sha256").update(checksumPayload).digest("hex")
 
         const existingImport = await tx.statementImport.findFirst({
-          where: { bankAccountId, fileChecksum: checksum },
+          where: { bankAccountId: validatedBankAccountId, fileChecksum: checksum },
         })
         if (existingImport) {
           return { importId: existingImport.id, count: 0, deduplicated: true }
@@ -248,11 +290,11 @@ export async function importBankStatement(
         const statementImport = await tx.statementImport.create({
           data: {
             companyId: company.id,
-            bankAccountId,
-            fileName: `import-${new Date().toISOString()}.${format.toLowerCase()}`,
+            bankAccountId: validatedBankAccountId,
+            fileName: `import-${new Date().toISOString()}.${validated.data.format.toLowerCase()}`,
             fileChecksum: checksum,
-            format,
-            transactionCount: transactions.length,
+            format: validated.data.format,
+            transactionCount: validatedTransactions.length,
             importedBy: user.id!,
             metadata: {
               source: "manual_csv",
@@ -262,11 +304,11 @@ export async function importBankStatement(
 
         // Create transactions
         let importedCount = 0
-        for (const txn of transactions) {
+        for (const txn of validatedTransactions) {
           // Check if transaction already exists (by date, amount, and reference)
           const existing = await tx.bankTransaction.findFirst({
             where: {
-              bankAccountId,
+              bankAccountId: validatedBankAccountId,
               date: txn.date,
               amount: new Decimal(txn.amount),
               reference: txn.reference || null,
@@ -279,7 +321,7 @@ export async function importBankStatement(
           await tx.bankTransaction.create({
             data: {
               companyId: company.id,
-              bankAccountId,
+              bankAccountId: validatedBankAccountId,
               statementImportId: statementImport.id,
               date: txn.date,
               description: txn.description,
@@ -295,12 +337,12 @@ export async function importBankStatement(
         }
 
         // Update bank account balance with the latest transaction balance
-        if (transactions.length > 0) {
-          const latestTransaction = transactions.reduce((latest, txn) =>
+        if (validatedTransactions.length > 0) {
+          const latestTransaction = validatedTransactions.reduce((latest, txn) =>
             txn.date > latest.date ? txn : latest
           )
           await tx.bankAccount.update({
-            where: { id: bankAccountId },
+            where: { id: validatedBankAccountId },
             data: {
               currentBalance: new Decimal(latestTransaction.balance),
               lastSyncAt: new Date(),
@@ -312,7 +354,7 @@ export async function importBankStatement(
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/${bankAccountId}`)
+      revalidatePath(`/banking/${validatedBankAccountId}`)
       return { success: true, data: { count: result.count } }
     })
   } catch (error) {
@@ -325,18 +367,28 @@ export async function importBankStatement(
  * Manually match a transaction to an invoice or expense
  */
 export async function matchTransaction(
-  transactionId: string,
-  type: "invoice" | "expense",
-  matchId: string
+  transactionId: unknown,
+  type: unknown,
+  matchId: unknown
 ): Promise<ActionResult> {
   try {
+    const validated = matchTransactionSchema.safeParse({ transactionId, type, matchId })
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0]?.message || "Neispravni podaci" }
+    }
+    const {
+      transactionId: validatedTransactionId,
+      type: validatedType,
+      matchId: validatedMatchId,
+    } = validated.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify transaction exists and belongs to company
       const transaction = await db.bankTransaction.findFirst({
-        where: { id: transactionId, companyId: company.id },
+        where: { id: validatedTransactionId, companyId: company.id },
         include: {
           matchRecords: {
             orderBy: { createdAt: "desc" },
@@ -359,16 +411,16 @@ export async function matchTransaction(
       }
 
       // Verify the match entity exists
-      if (type === "invoice") {
+      if (validatedType === "invoice") {
         const invoice = await db.eInvoice.findFirst({
-          where: { id: matchId, companyId: company.id },
+          where: { id: validatedMatchId, companyId: company.id },
         })
         if (!invoice) {
           return { success: false, error: "Račun nije pronađen" }
         }
-      } else if (type === "expense") {
+      } else if (validatedType === "expense") {
         const expense = await db.expense.findFirst({
-          where: { id: matchId, companyId: company.id },
+          where: { id: validatedMatchId, companyId: company.id },
         })
         if (!expense) {
           return { success: false, error: "Trošak nije pronađen" }
@@ -379,11 +431,11 @@ export async function matchTransaction(
       await db.matchRecord.create({
         data: {
           companyId: company.id,
-          bankTransactionId: transactionId,
+          bankTransactionId: validatedTransactionId,
           matchStatus: MatchStatus.MANUAL_MATCHED,
-          matchKind: type === "invoice" ? MatchKind.INVOICE : MatchKind.EXPENSE,
-          matchedInvoiceId: type === "invoice" ? matchId : undefined,
-          matchedExpenseId: type === "expense" ? matchId : undefined,
+          matchKind: validatedType === "invoice" ? MatchKind.INVOICE : MatchKind.EXPENSE,
+          matchedInvoiceId: validatedType === "invoice" ? validatedMatchId : undefined,
+          matchedExpenseId: validatedType === "expense" ? validatedMatchId : undefined,
           confidenceScore: 100,
           reason: "Manual match",
           source: MatchSource.MANUAL,
@@ -405,21 +457,21 @@ export async function matchTransaction(
         userId: user.id!,
         action: "UPDATE",
         entity: "BankTransaction",
-        entityId: transactionId,
-        reason: type === "invoice" ? "bank_match_invoice" : "bank_match_expense",
+        entityId: validatedTransactionId,
+        reason: validatedType === "invoice" ? "bank_match_invoice" : "bank_match_expense",
         changes: {
           before: beforeMatch,
           after: {
             matchStatus: MatchStatus.MANUAL_MATCHED,
-            matchKind: type === "invoice" ? MatchKind.INVOICE : MatchKind.EXPENSE,
-            matchedInvoiceId: type === "invoice" ? matchId : null,
-            matchedExpenseId: type === "expense" ? matchId : null,
+            matchKind: validatedType === "invoice" ? MatchKind.INVOICE : MatchKind.EXPENSE,
+            matchedInvoiceId: validatedType === "invoice" ? validatedMatchId : null,
+            matchedExpenseId: validatedType === "expense" ? validatedMatchId : null,
           },
         },
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/transactions/${transactionId}`)
+      revalidatePath(`/banking/transactions/${validatedTransactionId}`)
       return { success: true }
     })
   } catch (error) {
@@ -431,15 +483,21 @@ export async function matchTransaction(
 /**
  * Remove match from a transaction
  */
-export async function unmatchTransaction(transactionId: string): Promise<ActionResult> {
+export async function unmatchTransaction(transactionId: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(transactionId)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID transakcije" }
+    }
+    const validatedTransactionId = idResult.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify transaction exists and belongs to company
       const transaction = await db.bankTransaction.findFirst({
-        where: { id: transactionId, companyId: company.id },
+        where: { id: validatedTransactionId, companyId: company.id },
         include: {
           matchRecords: {
             orderBy: { createdAt: "desc" },
@@ -460,7 +518,7 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
       await db.matchRecord.create({
         data: {
           companyId: company.id,
-          bankTransactionId: transactionId,
+          bankTransactionId: validatedTransactionId,
           matchStatus: MatchStatus.UNMATCHED,
           matchKind: MatchKind.UNMATCH,
           source: MatchSource.MANUAL,
@@ -474,7 +532,7 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
         userId: user.id!,
         action: "UPDATE",
         entity: "BankTransaction",
-        entityId: transactionId,
+        entityId: validatedTransactionId,
         reason: "bank_unmatch",
         changes: {
           before: {
@@ -493,7 +551,7 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/transactions/${transactionId}`)
+      revalidatePath(`/banking/transactions/${validatedTransactionId}`)
       return { success: true }
     })
   } catch (error) {
@@ -505,15 +563,21 @@ export async function unmatchTransaction(transactionId: string): Promise<ActionR
 /**
  * Mark a transaction as ignored
  */
-export async function ignoreTransaction(transactionId: string): Promise<ActionResult> {
+export async function ignoreTransaction(transactionId: unknown): Promise<ActionResult> {
   try {
+    const idResult = uuidSchema.safeParse(transactionId)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID transakcije" }
+    }
+    const validatedTransactionId = idResult.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify transaction exists and belongs to company
       const transaction = await db.bankTransaction.findFirst({
-        where: { id: transactionId, companyId: company.id },
+        where: { id: validatedTransactionId, companyId: company.id },
       })
 
       if (!transaction) {
@@ -523,7 +587,7 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
       await db.matchRecord.create({
         data: {
           companyId: company.id,
-          bankTransactionId: transactionId,
+          bankTransactionId: validatedTransactionId,
           matchStatus: MatchStatus.IGNORED,
           matchKind: MatchKind.IGNORE,
           source: MatchSource.MANUAL,
@@ -533,7 +597,7 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/transactions/${transactionId}`)
+      revalidatePath(`/banking/transactions/${validatedTransactionId}`)
       return { success: true }
     })
   } catch (error) {
@@ -546,16 +610,22 @@ export async function ignoreTransaction(transactionId: string): Promise<ActionRe
  * Automatically match unmatched transactions
  */
 export async function autoMatchTransactions(
-  bankAccountId: string
+  bankAccountId: unknown
 ): Promise<ActionResult<{ count: number }>> {
   try {
+    const idResult = uuidSchema.safeParse(bankAccountId)
+    if (!idResult.success) {
+      return { success: false, error: "Nevažeći ID bankovnog računa" }
+    }
+    const validatedBankAccountId = idResult.data
+
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
     return runWithTenant({ companyId: company.id, userId: user.id! }, async () => {
       // Verify bank account exists
       const bankAccount = await db.bankAccount.findFirst({
-        where: { id: bankAccountId, companyId: company.id },
+        where: { id: validatedBankAccountId, companyId: company.id },
       })
 
       if (!bankAccount) {
@@ -564,12 +634,12 @@ export async function autoMatchTransactions(
 
       const result = await runAutoMatchTransactions({
         companyId: company.id,
-        bankAccountId,
+        bankAccountId: validatedBankAccountId,
         userId: user.id!,
       })
 
       revalidatePath("/banking")
-      revalidatePath(`/banking/${bankAccountId}`)
+      revalidatePath(`/banking/${validatedBankAccountId}`)
       return { success: true, data: { count: result.matchedCount } }
     })
   } catch (error) {

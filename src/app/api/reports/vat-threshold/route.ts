@@ -2,10 +2,25 @@
 // API endpoint for VAT threshold report data
 
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import {
+  parseQuery,
+  parseBody,
+  isValidationError,
+  formatValidationError,
+} from "@/lib/api/validation"
 import { db } from "@/lib/db"
 import { logger } from "@/lib/logger"
 import { calculateVatThresholdProgress } from "@/lib/reports/kpr-generator"
+
+const querySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+})
+
+const postBodySchema = z.object({
+  action: z.enum(["recalculate"]),
+})
 
 export async function GET(request: Request) {
   try {
@@ -13,8 +28,8 @@ export async function GET(request: Request) {
     const company = await requireCompany(user.id!)
 
     const { searchParams } = new URL(request.url)
-    const yearParam = searchParams.get("year")
-    const year = parseInt(yearParam || new Date().getFullYear().toString(), 10)
+    const query = parseQuery(searchParams, querySchema)
+    const year = query.year ?? new Date().getFullYear()
 
     // Get VAT threshold progress data
     const thresholdData = await calculateVatThresholdProgress(company.id, year)
@@ -116,6 +131,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(reportData)
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     logger.error({ error }, "Failed to generate VAT threshold report")
 
     return NextResponse.json({ error: "Failed to generate VAT threshold report" }, { status: 500 })
@@ -128,7 +146,7 @@ export async function POST(request: Request) {
     const user = await requireAuth()
     const company = await requireCompany(user.id!)
 
-    const { action } = await request.json()
+    const { action } = await parseBody(request, postBodySchema)
 
     switch (action) {
       case "recalculate":
@@ -148,11 +166,11 @@ export async function POST(request: Request) {
           message: "Recalculation scheduled",
           timestamp: new Date().toISOString(),
         })
-
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     logger.error({ error }, "Failed to process VAT threshold action")
 
     return NextResponse.json({ error: "Failed to process action" }, { status: 500 })

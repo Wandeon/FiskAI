@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { generatePdvFormForPeriod, validatePdvFormData } from "@/lib/reports/pdv-xml-generator"
+
+const querySchema = z
+  .object({
+    from: z.coerce.date({ message: "Datum 'from' je obavezan" }),
+    to: z.coerce.date({ message: "Datum 'to' je obavezan" }),
+  })
+  .refine((data) => data.from <= data.to, {
+    message: "Datum 'from' mora biti prije datuma 'to'",
+    path: ["from"],
+  })
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,27 +20,8 @@ export async function GET(request: NextRequest) {
     const company = await requireCompany(user.id!)
 
     const { searchParams } = new URL(request.url)
-    const fromParam = searchParams.get("from")
-    const toParam = searchParams.get("to")
-
-    if (!fromParam || !toParam) {
-      return NextResponse.json({ error: "Datumi 'from' i 'to' su obavezni" }, { status: 400 })
-    }
-
-    const dateFrom = new Date(fromParam)
-    const dateTo = new Date(toParam)
-
-    // Validate dates
-    if (isNaN(dateFrom.getTime()) || isNaN(dateTo.getTime())) {
-      return NextResponse.json({ error: "Nevaljani datumi" }, { status: 400 })
-    }
-
-    if (dateFrom > dateTo) {
-      return NextResponse.json(
-        { error: "Datum 'from' mora biti prije datuma 'to'" },
-        { status: 400 }
-      )
-    }
+    const query = parseQuery(searchParams, querySchema)
+    const { from: dateFrom, to: dateTo } = query
 
     // Generate PDV form
     const { xml, data } = await generatePdvFormForPeriod(company.id, dateFrom, dateTo)
@@ -54,6 +47,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
     console.error("PDV XML export error:", error)
     return NextResponse.json({ error: "Neuspjesan PDV XML izvoz" }, { status: 500 })
   }
