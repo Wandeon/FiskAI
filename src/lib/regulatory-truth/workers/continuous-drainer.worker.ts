@@ -566,8 +566,8 @@ async function shutdown(signal: string): Promise<void> {
   process.exit(0)
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"))
-process.on("SIGINT", () => shutdown("SIGINT"))
+process.on("SIGTERM", () => void shutdown("SIGTERM"))
+process.on("SIGINT", () => void shutdown("SIGINT"))
 
 // Start
 startContinuousDraining().catch((error) => {

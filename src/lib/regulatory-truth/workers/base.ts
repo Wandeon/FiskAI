@@ -116,9 +116,9 @@ export function createWorker<T>(
   )
 
   // Handle permanently failed jobs (all retries exhausted)
-  worker.on("failed", async (job, err) => {
+  worker.on("failed", (job, err) => {
     if (job && job.attemptsMade >= (job.opts.attempts || 3)) {
-      await moveToDeadLetterQueue(job, err, queueName, options.name)
+      void moveToDeadLetterQueue(job, err, queueName, options.name)
     }
   })
 
@@ -146,6 +146,6 @@ export function setupGracefulShutdown(workers: Worker[]): void {
     process.exit(0)
   }
 
-  process.on("SIGTERM", () => shutdown("SIGTERM"))
-  process.on("SIGINT", () => shutdown("SIGINT"))
+  process.on("SIGTERM", () => void shutdown("SIGTERM"))
+  process.on("SIGINT", () => void shutdown("SIGINT"))
 }

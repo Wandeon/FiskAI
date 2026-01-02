@@ -32,7 +32,7 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
 
     if (pendingIds.length === 0) return
 
-    const interval = setInterval(async () => {
+    const pollJobs = async () => {
       for (const id of pendingIds) {
         try {
           const res = await fetch(`/api/import/jobs/${id}`)
@@ -61,7 +61,8 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
           console.error("Poll failed", e)
         }
       }
-    }, 2000)
+    }
+    const interval = setInterval(() => void pollJobs(), 2000)
 
     return () => clearInterval(interval)
   }, [jobs])

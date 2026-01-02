@@ -118,7 +118,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
       clearInterval(poller)
       setPoller(null)
     }
-    const interval = setInterval(async () => {
+    const pollJob = async () => {
       try {
         const res = await fetch(`/api/banking/import/jobs/${id}`)
         const json = await res.json()
@@ -165,7 +165,8 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
       } catch (error) {
         console.warn("Polling failed", error)
       }
-    }, 3000)
+    }
+    const interval = setInterval(() => void pollJob(), 3000)
     setPoller(interval)
   }
 

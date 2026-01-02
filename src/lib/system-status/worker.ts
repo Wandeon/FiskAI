@@ -254,7 +254,7 @@ export function createSystemStatusWorker(): Worker<RefreshJobPayload> {
   )
 
   // Configure retry behavior
-  worker.on("failed", async (job, err) => {
+  worker.on("failed", (job, err) => {
     if (!job) return
 
     const attemptsMade = job.attemptsMade
@@ -267,15 +267,18 @@ export function createSystemStatusWorker(): Worker<RefreshJobPayload> {
 
     // Move to dead letter queue after max attempts
     if (attemptsMade >= maxAttempts) {
-      await deadletterQueue.add("failed", {
-        originalQueue: "system-status",
-        jobId: job.id,
-        jobName: job.name,
-        data: job.data,
-        error: err.message,
-        failedAt: new Date().toISOString(),
-      })
-      console.log(`[system-status-worker] Job ${job.id} moved to dead letter queue`)
+      void deadletterQueue
+        .add("failed", {
+          originalQueue: "system-status",
+          jobId: job.id,
+          jobName: job.name,
+          data: job.data,
+          error: err.message,
+          failedAt: new Date().toISOString(),
+        })
+        .then(() =>
+          console.log(`[system-status-worker] Job ${job.id} moved to dead letter queue`)
+        )
     } else if (isTransientError(err)) {
       console.log(`[system-status-worker] Job ${job.id} will be retried (transient error)`)
     } else {
@@ -307,6 +310,6 @@ export function setupGracefulShutdown(worker: Worker): void {
     process.exit(0)
   }
 
-  process.on("SIGTERM", () => shutdown("SIGTERM"))
-  process.on("SIGINT", () => shutdown("SIGINT"))
+  process.on("SIGTERM", () => void shutdown("SIGTERM"))
+  process.on("SIGINT", () => void shutdown("SIGINT"))
 }
