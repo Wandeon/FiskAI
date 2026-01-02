@@ -1,4 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// NOTE: The 'any' types in this file are pre-existing technical debt from helper functions
+// that process dynamic XML/JSON data structures. Fixing them requires significant refactoring
+// of processXml, processCsv, processPdfOrImage, processInvoice, and extractAmount functions.
+// TODO: Create typed interfaces for XML/JSON parsing results
+
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { JobStatus, DocumentType } from "@prisma/client"
 import { promises as fs } from "fs"
@@ -8,6 +15,13 @@ import { BANK_STATEMENT_SYSTEM_PROMPT, INVOICE_SYSTEM_PROMPT } from "@/lib/banki
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { setTenantContext } from "@/lib/prisma-extensions"
 import { downloadFromR2 } from "@/lib/r2-client"
+
+// Schema for optional request body
+const processBodySchema = z
+  .object({
+    jobId: z.string().uuid("Invalid job ID format").optional(),
+  })
+  .optional()
 
 export async function POST(request: Request) {
   // Add authentication and authorization
@@ -20,8 +34,24 @@ export async function POST(request: Request) {
     userId: user.id!,
   })
 
-  const body = await request.json().catch(() => ({}))
-  const targetJobId = body.jobId
+  // Parse and validate optional body
+  let targetJobId: string | undefined
+  try {
+    const rawBody = await request.text()
+    if (rawBody) {
+      const body = JSON.parse(rawBody)
+      const parsed = processBodySchema.safeParse(body)
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid request body", details: parsed.error.flatten() },
+          { status: 400 }
+        )
+      }
+      targetJobId = parsed.data?.jobId
+    }
+  } catch {
+    // Empty or invalid JSON body is ok - we'll just process the next pending job
+  }
 
   // Get next pending job or specific job, restricted to user's company
   const job = targetJobId

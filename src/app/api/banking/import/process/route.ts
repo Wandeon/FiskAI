@@ -2,37 +2,29 @@ import { NextResponse } from "next/server"
 import { processNextImportJob } from "@/lib/banking/import/processor"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { setTenantContext } from "@/lib/prisma-extensions"
-import { db } from "@/lib/db"
+import { bankingLogger } from "@/lib/logger"
 
+/**
+ * POST /api/banking/import/process
+ *
+ * Triggers processing of the next pending import job for the authenticated user's company.
+ * This endpoint requires authentication - no test mode bypass is allowed.
+ */
 export async function POST() {
-  // For testing, allow first company without auth
+  // Require authentication - no test mode bypass
   let company, userId
 
   try {
     const user = await requireAuth()
-    if (user) {
-      userId = user.id!
-      const userCompany = await requireCompany(userId)
-      if (!userCompany) {
-        return NextResponse.json({ error: "Company not found" }, { status: 404 })
-      }
-      company = userCompany
-    } else {
-      // Fallback for testing: get first company
-      company = await db.company.findFirst()
-      if (!company) {
-        return NextResponse.json({ error: "No company found" }, { status: 404 })
-      }
-      userId = "test-user-" + Date.now()
+    userId = user.id!
+    const userCompany = await requireCompany(userId)
+    if (!userCompany) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 })
     }
+    company = userCompany
   } catch (authError) {
-    // If auth fails, try first company for testing
-    console.warn("[bank-import-process] auth failed, using test mode:", authError)
-    company = await db.company.findFirst()
-    if (!company) {
-      return NextResponse.json({ error: "No company found" }, { status: 404 })
-    }
-    userId = "test-user-" + Date.now()
+    bankingLogger.warn({ error: authError }, "Bank import process authentication failed")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   setTenantContext({

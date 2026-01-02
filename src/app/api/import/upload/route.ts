@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createHash } from "crypto"
+import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
@@ -11,6 +12,43 @@ import { scanBuffer } from "@/lib/security/virus-scanner"
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ["pdf", "xml", "csv", "jpg", "jpeg", "png", "heic", "webp"]
 
+// Schema for optional formData fields
+const bankAccountIdSchema = z.string().uuid("Invalid bank account ID format").optional()
+const documentTypeSchema = z.nativeEnum(DocumentType).optional()
+
+/**
+ * Validates an import file from FormData
+ */
+function validateImportFile(
+  file: FormDataEntryValue | null
+): { success: true; file: File; extension: string } | { success: false; error: string } {
+  if (!file || !(file instanceof File)) {
+    return { success: false, error: "File is required" }
+  }
+
+  const fileName = file.name || "upload"
+  const extension = fileName.split(".").pop()?.toLowerCase() || ""
+
+  // Validate file extension
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    return {
+      success: false,
+      error: `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}`,
+    }
+  }
+
+  // Validate file size
+  if (file.size === 0) {
+    return { success: false, error: "Empty file" }
+  }
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { success: false, error: "File too large (max 20MB)" }
+  }
+
+  return { success: true, file, extension }
+}
+
 export async function POST(request: Request) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
@@ -21,33 +59,39 @@ export async function POST(request: Request) {
   })
 
   const formData = await request.formData()
-  const file = formData.get("file")
-  const bankAccountId = formData.get("bankAccountId") as string | null
-  const documentTypeOverride = formData.get("documentType") as string | null
+  const fileEntry = formData.get("file")
+  const bankAccountIdEntry = formData.get("bankAccountId")
+  const documentTypeEntry = formData.get("documentType")
 
-  if (!(file instanceof Blob)) {
-    return NextResponse.json({ error: "Missing file" }, { status: 400 })
+  // Validate file
+  const fileValidation = validateImportFile(fileEntry)
+  if (!fileValidation.success) {
+    return NextResponse.json({ error: fileValidation.error }, { status: 400 })
+  }
+  const { file } = fileValidation
+  const fileName = file.name || "upload"
+
+  // Validate optional bankAccountId if provided
+  let bankAccountId: string | null = null
+  if (bankAccountIdEntry && typeof bankAccountIdEntry === "string" && bankAccountIdEntry !== "") {
+    const result = bankAccountIdSchema.safeParse(bankAccountIdEntry)
+    if (!result.success) {
+      return NextResponse.json({ error: "Invalid bank account ID format" }, { status: 400 })
+    }
+    bankAccountId = result.data ?? null
   }
 
-  const fileName = (file as File).name || "upload"
-  const extension = fileName.split(".").pop()?.toLowerCase() || ""
-
-  if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return NextResponse.json(
-      {
-        error: `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}`,
-      },
-      { status: 400 }
-    )
+  // Validate optional documentType if provided
+  let documentTypeOverride: DocumentType | null = null
+  if (documentTypeEntry && typeof documentTypeEntry === "string" && documentTypeEntry !== "") {
+    const result = documentTypeSchema.safeParse(documentTypeEntry)
+    if (!result.success) {
+      return NextResponse.json({ error: "Invalid document type" }, { status: 400 })
+    }
+    documentTypeOverride = result.data ?? null
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  if (arrayBuffer.byteLength === 0) {
-    return NextResponse.json({ error: "Empty file" }, { status: 400 })
-  }
-  if (arrayBuffer.byteLength > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "File too large (max 20MB)" }, { status: 413 })
-  }
 
   const buffer = Buffer.from(arrayBuffer)
   const checksum = createHash("sha256").update(buffer).digest("hex")
@@ -72,7 +116,7 @@ export async function POST(request: Request) {
 
   // Detect document type
   const detection = detectDocumentType(fileName, file.type)
-  const documentType = (documentTypeOverride as DocumentType | null) || detection.type
+  const documentType = documentTypeOverride || detection.type
 
   // Create import job
   const job = await db.importJob.create({

@@ -2,10 +2,51 @@
 // POST endpoint for restoring company data from backup
 
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { getCurrentUser, getCurrentCompany } from "@/lib/auth-utils"
-import { validateBackupData } from "@/lib/backup/export"
+import { validateBackupData, BackupData } from "@/lib/backup/export"
 import { restoreCompanyData, parseBackupJson, RestoreMode } from "@/lib/backup/restore"
 import { logger } from "@/lib/logger"
+
+// Maximum backup file size: 50MB
+const MAX_BACKUP_SIZE = 50 * 1024 * 1024
+const ALLOWED_TYPES = ["application/json", "text/plain"]
+
+// Schema for JSON body restore
+const restoreBodySchema = z.object({
+  data: z.union([z.string(), z.record(z.string(), z.unknown())]),
+  mode: z.enum(["merge", "replace"]).optional().default("merge"),
+  skipContacts: z.boolean().optional().default(false),
+  skipProducts: z.boolean().optional().default(false),
+  skipInvoices: z.boolean().optional().default(false),
+  skipExpenses: z.boolean().optional().default(false),
+})
+
+/**
+ * Validates a backup file from FormData
+ */
+function validateBackupFile(
+  file: FormDataEntryValue | null
+): { success: true; file: File } | { success: false; error: string } {
+  if (!file || !(file instanceof File)) {
+    return { success: false, error: "No backup file provided" }
+  }
+
+  // Allow JSON files or files with no type (common for .json uploads)
+  if (file.type && !ALLOWED_TYPES.includes(file.type) && !file.name.endsWith(".json")) {
+    return { success: false, error: "Invalid file type. Only JSON backup files are allowed" }
+  }
+
+  if (file.size > MAX_BACKUP_SIZE) {
+    return { success: false, error: `Backup file too large. Maximum size: 50MB` }
+  }
+
+  if (file.size === 0) {
+    return { success: false, error: "Empty backup file" }
+  }
+
+  return { success: true, file }
+}
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +62,7 @@ export async function POST(request: Request) {
 
     // Parse the request body
     const contentType = request.headers.get("content-type") || ""
-    let backupData
+    let backupData: BackupData | Record<string, unknown>
     let mode: RestoreMode = "merge"
     let skipContacts = false
     let skipProducts = false
@@ -31,16 +72,24 @@ export async function POST(request: Request) {
     if (contentType.includes("multipart/form-data")) {
       // Handle file upload
       const formData = await request.formData()
-      const file = formData.get("file") as File | null
+      const fileEntry = formData.get("file")
 
-      if (!file) {
-        return NextResponse.json({ error: "No backup file provided" }, { status: 400 })
+      // Validate the backup file
+      const validation = validateBackupFile(fileEntry)
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error }, { status: 400 })
       }
 
-      const fileContent = await file.text()
-      backupData = parseBackupJson(fileContent)
+      const fileContent = await validation.file.text()
 
-      // Get options from form data
+      // Validate JSON parsing
+      try {
+        backupData = parseBackupJson(fileContent)
+      } catch {
+        return NextResponse.json({ error: "Invalid JSON in backup file" }, { status: 400 })
+      }
+
+      // Get and validate options from form data
       const modeParam = formData.get("mode") as string | null
       if (modeParam === "replace" || modeParam === "merge") {
         mode = modeParam
@@ -50,41 +99,62 @@ export async function POST(request: Request) {
       skipInvoices = formData.get("skipInvoices") === "true"
       skipExpenses = formData.get("skipExpenses") === "true"
     } else {
-      // Handle JSON body
-      const body = await request.json()
+      // Handle JSON body with Zod validation
+      let body: unknown
+      try {
+        body = await request.json()
+      } catch {
+        return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+      }
 
-      if (!body.data) {
-        return NextResponse.json({ error: "No backup data provided" }, { status: 400 })
+      const parsed = restoreBodySchema.safeParse(body)
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid request body", details: parsed.error.flatten() },
+          { status: 400 }
+        )
       }
 
       // If data is a string, parse it
-      if (typeof body.data === "string") {
-        backupData = parseBackupJson(body.data)
+      if (typeof parsed.data.data === "string") {
+        try {
+          backupData = parseBackupJson(parsed.data.data)
+        } catch {
+          return NextResponse.json({ error: "Invalid JSON in backup data string" }, { status: 400 })
+        }
       } else {
-        backupData = body.data
+        backupData = parsed.data.data
         // Convert date strings to Date objects
-        if (backupData.createdAt && typeof backupData.createdAt === "string") {
-          backupData.createdAt = new Date(backupData.createdAt)
+        if (
+          backupData &&
+          typeof backupData === "object" &&
+          "createdAt" in backupData &&
+          typeof backupData.createdAt === "string"
+        ) {
+          ;(backupData as Record<string, unknown>).createdAt = new Date(
+            backupData.createdAt as string
+          )
         }
       }
 
-      if (body.mode === "replace" || body.mode === "merge") {
-        mode = body.mode
-      }
-      skipContacts = body.skipContacts === true
-      skipProducts = body.skipProducts === true
-      skipInvoices = body.skipInvoices === true
-      skipExpenses = body.skipExpenses === true
+      mode = parsed.data.mode
+      skipContacts = parsed.data.skipContacts
+      skipProducts = parsed.data.skipProducts
+      skipInvoices = parsed.data.skipInvoices
+      skipExpenses = parsed.data.skipExpenses
     }
 
-    // Validate the backup data
-    const validation = validateBackupData(backupData)
+    // Validate the backup data structure
+    const validation = validateBackupData(backupData as BackupData)
     if (!validation.valid) {
       return NextResponse.json(
         { error: "Invalid backup data", details: validation.errors },
         { status: 400 }
       )
     }
+
+    // After validation, we know backupData is a valid BackupData
+    const validatedBackupData = backupData as BackupData
 
     logger.info(
       {
@@ -101,7 +171,7 @@ export async function POST(request: Request) {
     )
 
     // Perform the restore
-    const result = await restoreCompanyData(backupData, {
+    const result = await restoreCompanyData(validatedBackupData, {
       companyId: company.id,
       userId: user.id!,
       mode,
