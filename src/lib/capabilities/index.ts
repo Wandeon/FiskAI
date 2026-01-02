@@ -30,3 +30,10 @@ export {
 
 // Resolver
 export { resolveCapability, resolveCapabilities } from "./resolver"
+
+// Server utilities (for server components)
+export {
+  resolveCapabilitiesForUser,
+  resolveCapabilityForUser,
+  resolveCapabilitiesByDomain,
+} from "./server"
