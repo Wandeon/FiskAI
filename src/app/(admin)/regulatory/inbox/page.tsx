@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth-utils"
-import { db, Prisma } from "@/lib/db"
+import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { redirect } from "next/navigation"
 import { InboxView } from "./inbox-view"
 

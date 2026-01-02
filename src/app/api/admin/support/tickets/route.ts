@@ -3,10 +3,10 @@
 
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { db, Prisma } from "@/lib/db"
+import { db } from "@/lib/db"
+import { Prisma, SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { getIpFromHeaders, getUserAgentFromHeaders, logAudit } from "@/lib/audit"
-import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
 import {
   parseQuery,
   parseBody,

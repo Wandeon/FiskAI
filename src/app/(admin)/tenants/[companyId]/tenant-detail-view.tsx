@@ -79,8 +79,8 @@ interface SubscriptionHistory {
   timestamp: Date
   action: string
   changes: {
-    status?: string
-    plan?: string
+    status?: { from?: string; to?: string }
+    plan?: { from?: string; to?: string }
     periodStart?: string
     periodEnd?: string
     stripeId?: string

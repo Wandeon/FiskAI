@@ -352,8 +352,8 @@ export async function exportTenantData(
       exportedAt: new Date().toISOString(),
       exportedBy: {
         id: admin.id,
-        email: admin.email,
-        name: admin.name,
+        email: admin.email || "",
+        name: admin.name || null,
       },
       company: {
         id: company.id,

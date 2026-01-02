@@ -149,13 +149,13 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
 interface InvoiceForFiscalization {
   invoiceNumber: string
   issueDate: Date
-  totalAmount: number | string
+  totalAmount: number | string | { toString(): string }
   paymentMethod?: string
   operatorOib?: string
   lines: Array<{
-    vatRate: number | string
-    netAmount: number | string
-    vatAmount: number | string
+    vatRate: number | string | { toString(): string }
+    netAmount: number | string | { toString(): string }
+    vatAmount: number | string | { toString(): string }
   }>
   company: {
     oib: string
@@ -165,6 +165,8 @@ interface InvoiceForFiscalization {
     // Allow additional DB fields
     [key: string]: unknown
   }
+  // Allow additional DB fields from EInvoice model
+  [key: string]: unknown
 }
 
 function mapToFiscalInvoice(invoice: InvoiceForFiscalization): FiscalInvoiceData {

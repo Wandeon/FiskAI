@@ -113,7 +113,15 @@ export async function GET(request: NextRequest) {
       sortOrder,
     })
 
-    const response: any = {
+    const response: {
+      deadlines: typeof deadlines
+      pagination: {
+        limit: number
+        offset: number
+        returned: number
+        total?: number
+      }
+    } = {
       deadlines,
       pagination: {
         limit,

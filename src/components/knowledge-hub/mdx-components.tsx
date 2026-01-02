@@ -1,5 +1,5 @@
 // src/components/knowledge-hub/mdx-components.tsx
-import { isValidElement, type ReactNode } from "react"
+import { isValidElement, type ReactNode, type HTMLAttributes } from "react"
 import { slugifyHeading } from "@/lib/knowledge-hub/slugify"
 import { PersonalizedSection } from "./guide/PersonalizedSection"
 import { FAQ } from "./guide/FAQ"
@@ -41,7 +41,7 @@ import {
 } from "@/components/fiscal"
 
 // HTML element overrides
-function H1(props: any) {
+function H1(props: HTMLAttributes<HTMLHeadingElement>) {
   return <h1 className="text-3xl font-bold mb-6" {...props} />
 }
 
@@ -56,7 +56,7 @@ function nodeToText(node: ReactNode): string {
   return ""
 }
 
-function H2(props: any) {
+function H2(props: HTMLAttributes<HTMLHeadingElement>) {
   const { children, id, ...rest } = props
   const resolvedId = id ?? slugifyHeading(nodeToText(children))
   return (
@@ -66,7 +66,7 @@ function H2(props: any) {
   )
 }
 
-function H3(props: any) {
+function H3(props: HTMLAttributes<HTMLHeadingElement>) {
   const { children, id, ...rest } = props
   const resolvedId = id ?? slugifyHeading(nodeToText(children))
   return (
@@ -76,7 +76,7 @@ function H3(props: any) {
   )
 }
 
-function Table(props: any) {
+function Table(props: HTMLAttributes<HTMLTableElement>) {
   return (
     <div className="overflow-x-auto my-4 rounded-lg border border-white/10">
       <table className="min-w-full border-collapse" {...props} />
@@ -84,7 +84,7 @@ function Table(props: any) {
   )
 }
 
-function Th(props: any) {
+function Th(props: HTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className="border-b border-white/10 bg-surface-elevated/80 px-4 py-2 text-left font-medium text-white"
@@ -93,7 +93,7 @@ function Th(props: any) {
   )
 }
 
-function Td(props: any) {
+function Td(props: HTMLAttributes<HTMLTableCellElement>) {
   return <td className="border-b border-white/10 bg-surface/5 px-4 py-2 text-white/90" {...props} />
 }
 

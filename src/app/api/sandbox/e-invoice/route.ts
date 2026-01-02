@@ -4,12 +4,24 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import type { Company } from "@prisma/client"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { getFiscalProvider, testFiscalProvider } from "@/lib/e-invoice/fiscal-provider"
 import { FiscalConfig } from "@/lib/e-invoice/fiscal-types"
 import { validateCroatianCompliance } from "@/lib/compliance/en16931-validator"
 import { logger } from "@/lib/logger"
 import { oibSchema } from "@/lib/validations/oib"
+
+interface InvoiceData {
+  invoiceNumber: string
+  netAmount: number
+  vatAmount: number
+  totalAmount: number
+  issueDate: string
+  buyerName: string
+  buyerOib: string
+  sellerOib: string
+}
 
 const sandboxTestSchema = z.object({
   type: z.enum(["connection", "invoice", "status", "cancel"]),
@@ -91,7 +103,7 @@ export async function POST(request: Request) {
 }
 
 // Test fiscal provider connection
-async function testConnection(company: any) {
+async function testConnection(company: Company) {
   try {
     const config = {
       provider: "mock", // Always use mock for sandbox
@@ -127,7 +139,7 @@ async function testConnection(company: any) {
 }
 
 // Test invoice creation and fiscalization
-async function testInvoice(company: any, invoiceData: any) {
+async function testInvoice(company: Company, invoiceData: InvoiceData) {
   try {
     // Validate using Croatian compliance rules
     // We'll create a temporary invoice object for validation
@@ -163,7 +175,8 @@ async function testInvoice(company: any, invoiceData: any) {
         oib: invoiceData.buyerOib,
       },
       // Add other required fields with default values
-    } as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- temp invoice object for validation only
+    } as Record<string, unknown>
 
     // Validate compliance
     const complianceResult = validateCroatianCompliance(tempInvoice)
@@ -263,7 +276,7 @@ async function testInvoice(company: any, invoiceData: any) {
 }
 
 // Test status check
-async function testStatus(company: any, jir: string) {
+async function testStatus(company: Company, jir: string) {
   try {
     const fiscalProvider = getFiscalProvider({ provider: "mock" })
     const result = await fiscalProvider.getStatus(jir)
@@ -296,7 +309,7 @@ async function testStatus(company: any, jir: string) {
 }
 
 // Test cancellation
-async function testCancel(company: any, jir: string) {
+async function testCancel(company: Company, jir: string) {
   try {
     const fiscalProvider = getFiscalProvider({ provider: "mock" })
     const result = await fiscalProvider.cancel(jir)

@@ -65,7 +65,7 @@ export function TransactionEditor({
     }
   }
 
-  const updateEditForm = (field: keyof ExtractedTransaction, value: any) => {
+  const updateEditForm = (field: keyof ExtractedTransaction, value: ExtractedTransaction[keyof ExtractedTransaction]) => {
     setEditForm((prev) => ({ ...prev, [field]: value }))
   }
 

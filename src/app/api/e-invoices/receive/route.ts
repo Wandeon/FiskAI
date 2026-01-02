@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { db } from "@/lib/db"
+import { db, Prisma } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { IncomingInvoice } from "@/lib/e-invoice/types"
 import { logger } from "@/lib/logger"
@@ -269,7 +269,7 @@ export async function GET(request: Request) {
     const toDate = searchParams.get("toDate")
     const provider = searchParams.get("provider")
 
-    const whereClause: any = {
+    const whereClause: Prisma.EInvoiceWhereInput = {
       companyId: company.id,
       direction: "INBOUND", // Only inbound (received) invoices
     }

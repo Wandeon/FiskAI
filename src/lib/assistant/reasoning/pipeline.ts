@@ -54,6 +54,7 @@ function parseTurnoverBand(band: string): number | undefined {
 
 interface RuleWithAuthority {
   authority?: string
+  authorityLevel?: string
   [key: string]: unknown
 }
 
@@ -63,7 +64,7 @@ interface RuleWithAuthority {
 function groupRulesByAuthority<T extends RuleWithAuthority>(rules: T[]): Record<string, T[]> {
   const grouped: Record<string, T[]> = {}
   for (const rule of rules) {
-    const authority = rule.authority || "UNKNOWN"
+    const authority = rule.authority || rule.authorityLevel || "UNKNOWN"
     if (!grouped[authority]) {
       grouped[authority] = []
     }
@@ -275,7 +276,7 @@ export async function* buildAnswerWithReasoning(
     })
 
     // Group rules by concept and authority for comparison
-    const rulesByAuthority = groupRulesByAuthority(finalRules)
+    const rulesByAuthority = groupRulesByAuthority(finalRules as unknown as RuleWithAuthority[])
 
     yield factory.emit({
       stage: "ANALYSIS",

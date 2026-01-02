@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const filters: ExperimentFilters = {
-      status: searchParams.get("status") as any,
+      status: searchParams.get("status") as ExperimentFilters["status"],
       search: searchParams.get("search") || undefined,
       activeOnly: searchParams.get("activeOnly") === "true",
     }

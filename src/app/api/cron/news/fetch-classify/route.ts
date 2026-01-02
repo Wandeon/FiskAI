@@ -53,7 +53,7 @@ interface FetchClassifyResult {
 /**
  * Extract image URL and source from RSS item
  */
-function extractImageFromRSS(item: any): { url?: string; source?: string } {
+function extractImageFromRSS(item: Record<string, unknown>): { url?: string; source?: string } {
   try {
     // Priority 1: media:content
     if (item["media:content"]) {

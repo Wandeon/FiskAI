@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     const postCount = Number(countResult[0]?.count || 0)
 
     // Also search newsItems if includeItems is true and we have a search query
-    let items: any[] = []
+    let items: Array<Record<string, unknown>> = []
     let itemCount = 0
 
     if (includeItems && query && query.length >= 2) {

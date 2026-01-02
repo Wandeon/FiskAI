@@ -4,7 +4,7 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { euTransaction } from "@/lib/db/schema/pausalni"
 import { eq, and, desc } from "drizzle-orm"
 import { processTransactionsForEu } from "@/lib/pausalni/eu-detection"
-import { db } from "@/lib/db"
+import { db, Prisma } from "@/lib/db"
 import {
   parseQuery,
   parseBody,
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     const startDate = new Date(year, month ? month - 1 : 0, 1)
     const endDate = new Date(year, month ? month : 12, 0)
 
-    const whereClause: any = {
+    const whereClause: Prisma.BankTransactionWhereInput = {
       companyId: company.id,
       date: {
         gte: startDate,

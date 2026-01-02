@@ -133,7 +133,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
     }
 
     let xml: string
-    let formData: any
+    let formData: Record<string, unknown>
     let validationErrors: string[] = []
 
     // Generate form based on type
@@ -224,7 +224,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
         periodYear,
         format: "XML",
         fileHash,
-        formData: formData as any,
+        formData,
         submittedToPorezna: false,
       })
       .returning()

@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { db } from "@/lib/db"
+import { db, Prisma } from "@/lib/db"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import {
   validateEN16931Compliance,
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get("offset") || "0", 10)
 
     // Fetch invoices to check
-    const whereClause: any = {
+    const whereClause: Prisma.EInvoiceWhereInput = {
       companyId: company.id,
     }
 

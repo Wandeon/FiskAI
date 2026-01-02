@@ -310,7 +310,7 @@ async function handleXml(jobId: string) {
 
         return {
           companyId: job.companyId,
-          bankAccountId: job.bankAccountId,
+          bankAccountId: bankAccountId,
           statementImportId: statementImport.id,
           date: new Date(dateStr),
           description: typeof description === "string" ? description : JSON.stringify(description),
