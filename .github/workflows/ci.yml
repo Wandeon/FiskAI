@@ -294,7 +294,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
@@ -325,6 +325,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+
+      - name: Enable pgvector extension
+        run: PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Apply schema
         run: npx prisma db push --accept-data-loss
