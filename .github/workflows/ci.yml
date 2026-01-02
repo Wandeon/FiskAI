@@ -64,10 +64,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Run ESLint on scoped paths
-          npx eslint "src/app/(admin)/**/*.ts" "src/app/(admin)/**/*.tsx" \
-            --format json \
-            --output-file eslint-ratchet-report.json || true
+          # Run ESLint on scoped paths (use find to handle parentheses in path)
+          find "src/app/(admin)" -name "*.ts" -o -name "*.tsx" | \
+            xargs npx eslint --format json > eslint-ratchet-report.json 2>&1 || true
 
           # Verify output exists
           if [ ! -s eslint-ratchet-report.json ]; then
