@@ -1,7 +1,6 @@
 // src/lib/regulatory-truth/watchdog/orchestrator.ts
 
 import { runSentinel, fetchDiscoveredItems } from "../agents/sentinel"
-import type { DiscoveryPriority } from "@prisma/client"
 import { runExtractor } from "../agents/extractor"
 import { runComposer, groupSourcePointersByDomain } from "../agents/composer"
 import { runReviewer, autoApproveEligibleRules } from "../agents/reviewer"
@@ -105,7 +104,7 @@ async function runScoutPhase(): Promise<PhaseResult> {
 
       try {
         // Run sentinel for this endpoint's hierarchy
-        const result = await runSentinel(endpoint.priority)
+        const result = await runSentinel()
         itemsProcessed += result.endpointsChecked
         console.log(`[watchdog] Scouted ${endpoint.name}: ${result.newItemsDiscovered} new items`)
       } catch (error) {
