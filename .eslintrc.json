@@ -93,7 +93,12 @@
       }
     },
     {
-      "files": ["src/app/(admin)/**/*.ts", "src/app/(admin)/**/*.tsx"],
+      "files": [
+        "src/app/(admin)/**/*.ts",
+        "src/app/(admin)/**/*.tsx",
+        "src/app/api/admin/**/*.ts",
+        "src/app/api/admin/**/*.tsx"
+      ],
       "rules": {
         "@typescript-eslint/no-explicit-any": "warn"
       }
