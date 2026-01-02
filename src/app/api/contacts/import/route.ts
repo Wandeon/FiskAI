@@ -4,22 +4,30 @@ import { db } from "@/lib/db"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { upsertOrganizationFromContact } from "@/lib/master-data/organization-service"
+import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
 
 const rowSchema = z.object({
   type: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
-  name: z.string().min(1),
-  oib: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  oib: z
+    .string()
+    .regex(/^[0-9]{11}$/, "OIB must be exactly 11 digits")
+    .optional()
+    .or(z.literal("")),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  phone: z.string().max(50, "Phone number too long").optional(),
+  address: z.string().max(255, "Address too long").optional(),
+  city: z.string().max(100, "City name too long").optional(),
+  postalCode: z.string().max(20, "Postal code too long").optional(),
+  country: z.string().max(100, "Country name too long").optional(),
   paymentTermsDays: z.number().int().min(0).max(365).optional(),
 })
 
 const importSchema = z.object({
-  rows: z.array(rowSchema).max(500),
+  rows: z
+    .array(rowSchema)
+    .min(1, "At least one contact is required")
+    .max(500, "Maximum 500 contacts per import"),
 })
 
 export async function POST(request: Request) {
@@ -36,13 +44,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No company found" }, { status: 404 })
     }
 
-    const body = await request.json()
-    const parsed = importSchema.safeParse(body)
-    if (!parsed.success) {
+    // Use parseBody for consistent validation
+    let parsed: z.infer<typeof importSchema>
+    try {
+      parsed = await parseBody(request, importSchema)
+    } catch (error) {
+      if (isValidationError(error)) {
+        return NextResponse.json(formatValidationError(error), { status: 400 })
+      }
       return NextResponse.json({ error: "Neispravni podaci" }, { status: 400 })
     }
 
-    const rows = parsed.data.rows.filter((row) => row.name.trim().length > 0)
+    const rows = parsed.rows.filter((row) => row.name.trim().length > 0)
     if (rows.length === 0) {
       return NextResponse.json({ error: "Prazan CSV" }, { status: 400 })
     }

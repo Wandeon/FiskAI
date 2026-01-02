@@ -4,18 +4,26 @@ import { db } from "@/lib/db"
 import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { sanitizeCsvValue } from "@/lib/csv-sanitize"
+import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
 
 const rowSchema = z.object({
-  name: z.string().min(1),
-  sku: z.string().optional(),
-  unit: z.string().optional(),
-  price: z.number().optional(),
-  vatRate: z.number().optional(),
-  vatCategory: z.string().optional(),
+  name: z.string().min(1, "Product name is required").max(255, "Product name too long"),
+  sku: z.string().max(100, "SKU too long").optional(),
+  unit: z.string().max(20, "Unit too long").optional(),
+  price: z.number().min(0, "Price cannot be negative").optional(),
+  vatRate: z
+    .number()
+    .min(0, "VAT rate cannot be negative")
+    .max(100, "VAT rate cannot exceed 100%")
+    .optional(),
+  vatCategory: z.string().max(10, "VAT category too long").optional(),
 })
 
 const importSchema = z.object({
-  rows: z.array(rowSchema).max(500),
+  rows: z
+    .array(rowSchema)
+    .min(1, "At least one product is required")
+    .max(500, "Maximum 500 products per import"),
 })
 
 export async function POST(request: Request) {
@@ -23,13 +31,18 @@ export async function POST(request: Request) {
     const user = await requireAuth()
 
     return requireCompanyWithContext(user.id!, async (company) => {
-      const body = await request.json()
-      const parsed = importSchema.safeParse(body)
-      if (!parsed.success) {
+      // Use parseBody for consistent validation
+      let parsed: z.infer<typeof importSchema>
+      try {
+        parsed = await parseBody(request, importSchema)
+      } catch (error) {
+        if (isValidationError(error)) {
+          return NextResponse.json(formatValidationError(error), { status: 400 })
+        }
         return NextResponse.json({ error: "Neispravni podaci" }, { status: 400 })
       }
 
-      const rows = parsed.data.rows.filter((row) => row.name.trim().length > 0)
+      const rows = parsed.rows.filter((row) => row.name.trim().length > 0)
       if (rows.length === 0) {
         return NextResponse.json({ error: "Prazan CSV" }, { status: 400 })
       }
