@@ -19,6 +19,9 @@ import { db } from "@/lib/db"
 const hasDatabase = !!process.env.DATABASE_URL
 
 describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
+  // Use unique identifiers to avoid test isolation issues
+  const testRunId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
   // Test fixture IDs for cleanup
   const createdIds: {
     evidenceIds: string[]
@@ -41,8 +44,8 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     // 1. Create Source
     const source = await (db as any).source.create({
       data: {
-        name: "Test Narodne Novine",
-        url: "https://test.nn.hr",
+        name: `Test Narodne Novine ${testRunId}`,
+        url: `https://test.nn.hr/${testRunId}`,
         authorityLevel: "LAW",
         priority: 1,
       },
@@ -53,18 +56,18 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     const evidence = await db.evidence.create({
       data: {
         sourceId: source.id,
-        url: "https://test.nn.hr/clanci/123",
-        contentHash: `test-hash-${Date.now()}`,
+        url: `https://test.nn.hr/clanci/${testRunId}`,
+        contentHash: `test-hash-${testRunId}`,
         rawContent: "Članak 38. Opća stopa poreza na dodanu vrijednost iznosi 25%.",
         fetchedAt: new Date(),
       } as any,
     })
     createdIds.evidenceIds.push(evidence.id)
 
-    // 3. Create Concept
+    // 3. Create Concept (unique slug per test run)
     const concept = await db.concept.create({
       data: {
-        slug: "pdv-opca-stopa-test",
+        slug: `pdv-opca-stopa-test-${testRunId}`,
         nameHr: "PDV opća stopa",
         nameEn: "VAT standard rate",
         description: "Opća stopa poreza na dodanu vrijednost",
@@ -73,9 +76,10 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     })
     createdIds.conceptIds.push(concept.id)
 
-    // 4. Create RegulatoryRule
+    // 4. Create RegulatoryRule (unique conceptSlug per test run)
     const rule = await db.regulatoryRule.create({
       data: {
+        conceptSlug: `pdv-opca-stopa-test-${testRunId}`,
         conceptId: concept.id,
         titleHr: "Opća stopa PDV-a",
         titleEn: "VAT Standard Rate",

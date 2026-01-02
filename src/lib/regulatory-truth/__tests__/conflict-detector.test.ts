@@ -145,6 +145,8 @@ describe("conflict-detector", () => {
     })
 
     it("does not detect conflict when values are the same", async () => {
+      // Use different effectiveFrom to avoid unique constraint collision with newRule
+      // (unique key is conceptSlug + effectiveFrom + status)
       const sameValueRule = await db.regulatoryRule.create({
         data: {
           conceptSlug: testConceptSlug,
@@ -155,7 +157,7 @@ describe("conflict-detector", () => {
           appliesWhen: JSON.stringify({ op: "true" }),
           value: "25", // Same as existing rule
           valueType: "percentage",
-          effectiveFrom: new Date("2024-06-01"),
+          effectiveFrom: new Date("2024-07-01"), // Different from newRule's 2024-06-01
           effectiveUntil: new Date("2024-12-31"),
           status: "DRAFT",
           confidence: 0.9,
@@ -166,7 +168,7 @@ describe("conflict-detector", () => {
         id: sameValueRule.id,
         conceptSlug: testConceptSlug,
         value: "25",
-        effectiveFrom: new Date("2024-06-01"),
+        effectiveFrom: new Date("2024-07-01"), // Match sameValueRule's effectiveFrom
         effectiveUntil: new Date("2024-12-31"),
         authorityLevel: "GUIDANCE",
         articleNumber: null,
