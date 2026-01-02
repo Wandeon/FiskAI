@@ -93,7 +93,7 @@ export function SentinelHealthDashboard({ initialData }: { initialData: Sentinel
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
-    const interval = setInterval(refresh, 30000)
+    const interval = setInterval(() => void refresh(), 30000)
     return () => clearInterval(interval)
   }, [])
 
