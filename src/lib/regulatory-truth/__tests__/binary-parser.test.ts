@@ -156,7 +156,7 @@ describe("Binary Document Parser", () => {
       assert.ok(result.text.includes("Header1"))
       assert.ok(result.text.includes("Row1Col1"))
       assert.ok(result.text.includes("TestSheet"))
-      assert.ok(result.metadata?.sheetNames?.includes("TestSheet"))
+      assert.ok((result.metadata?.sheetNames as string[] | undefined)?.includes("TestSheet"))
     })
 
     test("handles multi-sheet XLSX", async () => {
