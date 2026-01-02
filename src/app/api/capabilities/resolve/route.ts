@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import type { PrismaClient } from "@prisma/client"
 import {
   resolveCapability,
   resolveCapabilities,
@@ -59,13 +60,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse |
     }
 
     // Get user's company and permissions
-    const user = await db.user.findUnique({
+    const userWithCompanies = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
         id: true,
         systemRole: true,
         companies: {
-          where: { isActive: true },
           select: {
             companyId: true,
             role: true,
@@ -76,20 +76,20 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse |
       },
     })
 
-    if (!user) {
+    if (!userWithCompanies) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const membership = user.companies[0]
+    const membership = userWithCompanies.companies[0]
     if (!membership) {
       return NextResponse.json({ error: "No active company membership" }, { status: 403 })
     }
 
     // Build user context with permissions
-    const permissions = buildPermissions(user.systemRole, membership.role)
+    const permissions = buildPermissions(userWithCompanies.systemRole, membership.role)
 
     const userContext = {
-      userId: user.id,
+      userId: userWithCompanies.id,
       companyId: membership.companyId,
       permissions,
     }
@@ -99,13 +99,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse |
 
     // Handle batch mode
     if (body.capabilities && Array.isArray(body.capabilities)) {
-      const results = await resolveCapabilities(db, body.capabilities, userContext)
+      const results = await resolveCapabilities(db as unknown as PrismaClient, body.capabilities, userContext)
       return NextResponse.json({ results })
     }
 
     // Handle single capability
     if (body.capability) {
-      const result = await resolveCapability(db, body.capability, userContext)
+      const result = await resolveCapability(db as unknown as PrismaClient, body.capability, userContext)
       return NextResponse.json({ result })
     }
 
