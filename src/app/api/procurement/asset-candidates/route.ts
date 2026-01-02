@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { AssetCategory } from "@prisma/client"
+import { AssetCategory, Prisma } from "@prisma/client"
 
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { setTenantContext } from "@/lib/prisma-extensions"
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     acquisitionDate: parsed.data.acquisitionDate,
     acquisitionCost: parsed.data.acquisitionCost,
     usefulLifeMonths: parsed.data.usefulLifeMonths,
-    metadata: (parsed.data.metadata as any) ?? undefined,
+    metadata: (parsed.data.metadata as Prisma.JsonValue) ?? undefined,
   })
 
   return NextResponse.json({ candidate })

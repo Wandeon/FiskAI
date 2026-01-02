@@ -98,7 +98,7 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
     })
 
     // Sign XML
-    const signedXml = signXML(xml, credentials as any)
+    const signedXml = signXML(xml, credentials)
 
     // Store signed XML
     await db.fiscalRequest.update({
@@ -146,7 +146,30 @@ export async function executeFiscalRequest(request: FiscalRequest): Promise<Pipe
   }
 }
 
-function mapToFiscalInvoice(invoice: any): FiscalInvoiceData {
+interface InvoiceForFiscalization {
+  invoiceNumber: string
+  issueDate: Date
+  totalAmount: number | string | { toString(): string }
+  paymentMethod?: string | null
+  operatorOib?: string | null
+  lines: Array<{
+    vatRate: number | string | { toString(): string }
+    netAmount: number | string | { toString(): string }
+    vatAmount: number | string | { toString(): string }
+  }>
+  company: {
+    oib: string
+    premisesCode?: string
+    deviceCode?: string
+    vatRegistered?: boolean
+    // Allow additional DB fields
+    [key: string]: unknown
+  }
+  // Allow additional DB fields from EInvoice model
+  [key: string]: unknown
+}
+
+function mapToFiscalInvoice(invoice: InvoiceForFiscalization): FiscalInvoiceData {
   // Extract VAT breakdown from invoice lines
   const vatMap = new Map<number, { base: number; vat: number }>()
 

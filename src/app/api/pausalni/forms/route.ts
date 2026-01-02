@@ -12,10 +12,11 @@ import {
   formatValidationError,
 } from "@/lib/api/validation"
 import { formsQuerySchema, formGenerateBodySchema } from "@/app/api/pausalni/_schemas"
-import { generatePdvFormForPeriod, validatePdvFormData } from "@/lib/pausalni/forms/pdv-generator"
+import { generatePdvFormForPeriod, validatePdvFormData, type PdvFormData } from "@/lib/pausalni/forms/pdv-generator"
 import {
   generatePdvSFormForPeriod,
   validatePdvSFormData,
+  type PdvSFormData,
 } from "@/lib/pausalni/forms/pdv-s-generator"
 import {
   generateZpXml,
@@ -133,7 +134,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
     }
 
     let xml: string
-    let formData: any
+    let formData: PdvFormData | PdvSFormData | ZpFormData | undefined
     let validationErrors: string[] = []
 
     // Generate form based on type
@@ -195,7 +196,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
         }
 
         xml = generateZpXml(zpData)
-        formData = zpFormData
+        formData = zpData
         break
       }
 
@@ -224,7 +225,7 @@ export const POST = withApiLogging(async (request: NextRequest) => {
         periodYear,
         format: "XML",
         fileHash,
-        formData: formData as any,
+        formData,
         submittedToPorezna: false,
       })
       .returning()

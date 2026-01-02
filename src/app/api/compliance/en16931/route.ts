@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { Prisma, EInvoiceStatus } from "@prisma/client"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import {
   validateEN16931Compliance,
@@ -95,12 +96,12 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get("offset") || "0", 10)
 
     // Fetch invoices to check
-    const whereClause: any = {
+    const whereClause: Prisma.EInvoiceWhereInput = {
       companyId: company.id,
     }
 
     if (status) {
-      whereClause.status = status
+      whereClause.status = status as EInvoiceStatus
     }
 
     const invoices = await db.eInvoice.findMany({

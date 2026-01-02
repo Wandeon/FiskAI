@@ -1,11 +1,11 @@
 "use client"
 
 import { CheckCircle2 } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, type TargetAndTransition } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 export function DemoInvoice({ reduce }: { reduce: boolean }) {
-  const pulse = reduce
+  const pulse: TargetAndTransition | undefined = reduce
     ? undefined
     : {
         opacity: [0.6, 1, 0.6],
@@ -23,7 +23,7 @@ export function DemoInvoice({ reduce }: { reduce: boolean }) {
           <motion.span
             aria-hidden
             className="h-2 w-2 rounded-full bg-interactive"
-            animate={pulse as any}
+            animate={pulse}
           />
           <span className="text-[10px] font-semibold text-interactive">Spremno</span>
         </div>
@@ -55,7 +55,7 @@ export function DemoInvoice({ reduce }: { reduce: boolean }) {
         </div>
         <motion.div
           className="inline-flex items-center rounded-md bg-interactive px-3 py-2 text-xs font-semibold text-white"
-          animate={pulse as any}
+          animate={pulse}
         >
           Pošalji PDF
         </motion.div>

@@ -36,6 +36,7 @@ export const newsCategories = pgTable(
     id: varchar("id", { length: 50 }).primaryKey(),
     slug: varchar("slug", { length: 100 }).notNull().unique(),
     nameHr: varchar("name_hr", { length: 200 }).notNull(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Self-referential FK requires any for drizzle-orm
     parentId: varchar("parent_id", { length: 50 }).references((): any => newsCategories.id),
     icon: varchar("icon", { length: 50 }),
     color: varchar("color", { length: 20 }),

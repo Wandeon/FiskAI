@@ -7,6 +7,13 @@ import { GitBranch, Calendar, FileText } from "lucide-react"
 import type { RuleRelease } from "@prisma/client"
 import Link from "next/link"
 
+interface AuditTrail {
+  sourceEvidenceCount?: number
+  sourcePointerCount?: number
+  reviewCount?: number
+  humanApprovals?: number
+}
+
 type ReleaseWithCount = RuleRelease & {
   _count: {
     rules: number
@@ -143,25 +150,25 @@ export function ReleasesView({ releases }: ReleasesViewProps) {
                       <div>
                         <span className="text-muted-foreground">Evidence:</span>{" "}
                         <span className="font-medium">
-                          {(release.auditTrail as any).sourceEvidenceCount || 0}
+                          {(release.auditTrail as AuditTrail).sourceEvidenceCount || 0}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Source Pointers:</span>{" "}
                         <span className="font-medium">
-                          {(release.auditTrail as any).sourcePointerCount || 0}
+                          {(release.auditTrail as AuditTrail).sourcePointerCount || 0}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Reviews:</span>{" "}
                         <span className="font-medium">
-                          {(release.auditTrail as any).reviewCount || 0}
+                          {(release.auditTrail as AuditTrail).reviewCount || 0}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Human Approvals:</span>{" "}
                         <span className="font-medium">
-                          {(release.auditTrail as any).humanApprovals || 0}
+                          {(release.auditTrail as AuditTrail).humanApprovals || 0}
                         </span>
                       </div>
                     </div>

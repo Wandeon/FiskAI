@@ -28,9 +28,20 @@ export async function GET() {
       .from(newsCategories)
       .orderBy(asc(newsCategories.sortOrder), asc(newsCategories.nameHr))
 
+    interface CategoryNode {
+      id: string
+      slug: string
+      nameHr: string
+      parentId: string | null
+      icon: string | null
+      color: string | null
+      sortOrder: number | null
+      children: CategoryNode[]
+    }
+
     // Build category tree
-    const categoryMap = new Map()
-    const rootCategories: any[] = []
+    const categoryMap = new Map<string, CategoryNode>()
+    const rootCategories: CategoryNode[] = []
 
     // First pass: create map of all categories
     allCategories.forEach((category) => {
@@ -43,6 +54,8 @@ export async function GET() {
     // Second pass: build tree structure
     allCategories.forEach((category) => {
       const categoryWithChildren = categoryMap.get(category.id)
+      if (!categoryWithChildren) return
+
       if (category.parentId) {
         const parent = categoryMap.get(category.parentId)
         if (parent) {

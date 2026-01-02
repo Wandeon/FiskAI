@@ -11,9 +11,34 @@ export interface RSSItem {
 }
 
 /**
+ * Parsed XML structure from xml2js for RSS feeds
+ */
+interface ParsedRSSData {
+  rss?: {
+    channel?: Array<{
+      item?: Array<{
+        title?: string[]
+        link?: string[]
+        pubDate?: string[]
+        description?: string[]
+      }>
+    }>
+  }
+  feed?: {
+    entry?: Array<{
+      title?: Array<string | { _: string }>
+      link?: Array<string | { $?: { href?: string } }>
+      updated?: string[]
+      published?: string[]
+      summary?: Array<string | { _: string }>
+    }>
+  }
+}
+
+/**
  * Parse an RSS 2.0 feed
  */
-function parseRSS2(data: any): RSSItem[] {
+function parseRSS2(data: ParsedRSSData): RSSItem[] {
   const items: RSSItem[] = []
 
   if (!data.rss?.channel?.[0]?.item) {
@@ -42,7 +67,7 @@ function parseRSS2(data: any): RSSItem[] {
 /**
  * Parse an Atom feed
  */
-function parseAtom(data: any): RSSItem[] {
+function parseAtom(data: ParsedRSSData): RSSItem[] {
   const items: RSSItem[] = []
 
   if (!data.feed?.entry) {
@@ -50,10 +75,22 @@ function parseAtom(data: any): RSSItem[] {
   }
 
   for (const entry of data.feed.entry) {
-    const title = entry.title?.[0]?._ || entry.title?.[0] || null
-    const link = entry.link?.[0]?.$?.href || entry.link?.[0] || null
+    const titleItem = entry.title?.[0]
+    const title =
+      titleItem && typeof titleItem === "object" && "_" in titleItem
+        ? (titleItem as { _: string })._
+        : (titleItem as string | undefined) ?? null
+    const linkItem = entry.link?.[0]
+    const link =
+      linkItem && typeof linkItem === "object" && "$" in linkItem
+        ? (linkItem as { $?: { href?: string } }).$?.href ?? null
+        : (linkItem as string | undefined) ?? null
     const updated = entry.updated?.[0] || entry.published?.[0] || null
-    const summary = entry.summary?.[0]?._ || entry.summary?.[0] || null
+    const summaryItem = entry.summary?.[0]
+    const summary =
+      summaryItem && typeof summaryItem === "object" && "_" in summaryItem
+        ? (summaryItem as { _: string })._
+        : (summaryItem as string | undefined) ?? null
 
     if (link) {
       items.push({

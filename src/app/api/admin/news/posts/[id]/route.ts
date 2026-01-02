@@ -78,7 +78,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await parseBody(request, updatePostBodySchema)
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Partial<typeof newsPosts.$inferInsert> = {
       updatedAt: new Date(),
     }
 

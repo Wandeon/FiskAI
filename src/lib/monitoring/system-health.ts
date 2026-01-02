@@ -155,7 +155,7 @@ export async function checkDatabaseHealth(): Promise<DatabaseHealth> {
     const pingTime = new Date().getTime() - start
 
     // Get database version
-    const result: any = await db.$queryRaw`SELECT version()`
+    const result = await db.$queryRaw`SELECT version()` as { version: string }[]
     const version = result?.[0]?.version || "unknown"
 
     return {

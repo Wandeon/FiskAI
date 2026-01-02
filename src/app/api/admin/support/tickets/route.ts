@@ -4,9 +4,9 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { Prisma, SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { getIpFromHeaders, getUserAgentFromHeaders, logAudit } from "@/lib/audit"
-import { SupportTicketStatus, SupportTicketPriority } from "@prisma/client"
 import {
   parseQuery,
   parseBody,
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     const { status, priority, companyId, search } = parseQuery(url.searchParams, ticketQuerySchema)
 
     // Build where clause
-    const where: any = {}
+    const where: Prisma.SupportTicketWhereInput = {}
 
     if (status && status !== "ALL") {
       where.status = status as SupportTicketStatus
@@ -182,11 +182,9 @@ export async function PATCH(request: Request) {
           entity: "SupportTicket",
           entityId: ticket.id,
           changes: {
-            before: serializeTicket(ticket),
-            after: serializeTicket(updatedTicket),
-            action,
-            reason: reason || "Admin bulk action",
-          } as any,
+            before: serializeTicket(ticket) as Record<string, unknown>,
+            after: serializeTicket(updatedTicket) as Record<string, unknown>,
+          },
           ipAddress,
           userAgent,
         })

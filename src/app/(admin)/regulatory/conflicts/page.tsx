@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { redirect } from "next/navigation"
 import { ConflictsView } from "./conflicts-view"
 
@@ -27,7 +28,7 @@ export default async function RegulatoryConflictsPage({
   const pageSize = 20
 
   // Get conflicts
-  const where: any = {}
+  const where: Prisma.RegulatoryConflictWhereInput = {}
 
   if (statusFilter) {
     where.status = statusFilter

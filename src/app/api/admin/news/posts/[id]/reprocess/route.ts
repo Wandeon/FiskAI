@@ -3,7 +3,7 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsPostSources, newsItems } from "@/lib/db/schema/news"
 import { eq } from "drizzle-orm"
 import { getCurrentUser } from "@/lib/auth-utils"
-import { classifyNewsItem, writeArticle, reviewArticle, rewriteArticle } from "@/lib/news/pipeline"
+import { classifyNewsItem, writeArticle, reviewArticle, rewriteArticle, type ReviewFeedback } from "@/lib/news/pipeline"
 import { z } from "zod"
 import {
   parseParams,
@@ -41,7 +41,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const post = posts[0]
-    const aiPasses = (post.aiPasses as any) || {}
+    interface AiPassesData {
+      pass1?: { timestamp: string; title: string; content: string; classification?: unknown }
+      pass2?: ReviewFeedback & { timestamp: string }
+      pass3?: { timestamp: string; content: string }
+    }
+    const aiPasses = (post.aiPasses as AiPassesData) || {}
 
     // Fetch source items
     const sources = await drizzleDb

@@ -13,6 +13,11 @@ interface BankAccount {
   iban: string
 }
 
+interface ExtractedData {
+  transactions: unknown[]
+  [key: string]: unknown
+}
+
 interface ImportClientProps {
   bankAccounts: BankAccount[]
   initialJobs: ImportJobState[]
@@ -22,7 +27,7 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
   const [jobs, setJobs] = useState<ImportJobState[]>(initialJobs)
   const [selectedAccountId, setSelectedAccountId] = useState<string>(bankAccounts[0]?.id || "")
   const [modalJob, setModalJob] = useState<ImportJobState | null>(null)
-  const [modalData, setModalData] = useState<any>(null)
+  const [modalData, setModalData] = useState<ExtractedData | null>(null)
 
   // Poll for job status updates
   useEffect(() => {
@@ -32,7 +37,7 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
 
     if (pendingIds.length === 0) return
 
-    const interval = setInterval(async () => {
+    const pollJobs = async () => {
       for (const id of pendingIds) {
         try {
           const res = await fetch(`/api/import/jobs/${id}`)
@@ -61,7 +66,8 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
           console.error("Poll failed", e)
         }
       }
-    }, 2000)
+    }
+    const interval = setInterval(() => void pollJobs(), 2000)
 
     return () => clearInterval(interval)
   }, [jobs])
@@ -126,7 +132,7 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
               )
             )
           }
-        } catch (e) {
+        } catch {
           setJobs((prev) =>
             prev.map((j) =>
               j.id === tempId
@@ -161,32 +167,35 @@ export function ImportClient({ bankAccounts, initialJobs }: ImportClientProps) {
   )
 
   const handleConfirm = useCallback(
-    async (jobId: string, editedData: any) => {
-      const res = await fetch(`/api/import/jobs/${jobId}/confirm`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transactions: editedData.transactions,
-          bankAccountId: selectedAccountId,
-        }),
-      })
+    (jobId: string, editedData?: unknown) => {
+      const extracted = editedData as ExtractedData | undefined
+      void (async () => {
+        const res = await fetch(`/api/import/jobs/${jobId}/confirm`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transactions: extracted?.transactions,
+            bankAccountId: selectedAccountId,
+          }),
+        })
 
-      const data = await res.json()
-      if (data.success) {
-        setJobs((prev) =>
-          prev.map((j) =>
-            j.id === jobId
-              ? {
-                  ...j,
-                  status: "CONFIRMED" as JobStatus,
-                  transactionCount: data.transactionCount,
-                }
-              : j
+        const result = await res.json()
+        if (result.success) {
+          setJobs((prev) =>
+            prev.map((j) =>
+              j.id === jobId
+                ? {
+                    ...j,
+                    status: "CONFIRMED" as JobStatus,
+                    transactionCount: result.transactionCount,
+                  }
+                : j
+            )
           )
-        )
-        setModalJob(null)
-        setModalData(null)
-      }
+          setModalJob(null)
+          setModalData(null)
+        }
+      })()
     },
     [selectedAccountId]
   )

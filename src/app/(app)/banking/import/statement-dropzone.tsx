@@ -1,14 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import {
-  UploadCloud,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  ShieldCheck,
-  TriangleAlert,
-} from "lucide-react"
+import { UploadCloud, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { BankAccount } from "@prisma/client"
 
@@ -25,7 +18,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
   const [message, setMessage] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const [jobId, setJobId] = useState<string | null>(null)
+  const [_jobId, setJobId] = useState<string | null>(null)
   const [jobStatus, setJobStatus] = useState<string | null>(null)
   const [progressText, setProgressText] = useState<string | null>(null)
   const [poller, setPoller] = useState<NodeJS.Timeout | null>(null)
@@ -118,7 +111,7 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
       clearInterval(poller)
       setPoller(null)
     }
-    const interval = setInterval(async () => {
+    const pollJob = async () => {
       try {
         const res = await fetch(`/api/banking/import/jobs/${id}`)
         const json = await res.json()
@@ -165,7 +158,8 @@ export function StatementDropzone({ accounts, lastByAccount }: DropzoneProps) {
       } catch (error) {
         console.warn("Polling failed", error)
       }
-    }, 3000)
+    }
+    const interval = setInterval(() => void pollJob(), 3000)
     setPoller(interval)
   }
 

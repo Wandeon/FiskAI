@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { getCurrentUser } from "@/lib/auth-utils"
 import {
   parseParams,
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Conflict is not open" }, { status: 400 })
     }
 
-    let resolutionData: any = conflict.resolution
+    let resolutionData: Prisma.JsonValue = conflict.resolution
 
     if (action === "accept") {
       // Accept the arbiter's recommendation
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: {
         status: "RESOLVED",
-        resolution: resolutionData,
+        resolution: resolutionData as Prisma.InputJsonValue,
         resolvedBy: user.id,
         resolvedAt: new Date(),
       },

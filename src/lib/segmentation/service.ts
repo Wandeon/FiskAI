@@ -5,7 +5,7 @@
  */
 
 import { db as prisma } from "@/lib/db"
-import type { Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import type {
   SegmentRules,
   CompanyAttributes,
@@ -362,7 +362,7 @@ export async function trackMembershipChange(
       segmentId,
       companyId,
       joined,
-      attributeSnapshot: attributes as any,
+      attributeSnapshot: (attributes as unknown as Prisma.InputJsonValue) ?? Prisma.JsonNull,
     },
   })
 }

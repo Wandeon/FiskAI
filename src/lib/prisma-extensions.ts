@@ -1822,7 +1822,7 @@ function queueAuditLog(
   })
 
   // Process queue asynchronously
-  setImmediate(() => processAuditQueue(prismaBase))
+  setImmediate(() => void processAuditQueue(prismaBase))
 }
 
 // Extension to automatically add companyId filter to queries

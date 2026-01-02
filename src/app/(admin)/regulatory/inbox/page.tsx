@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { redirect } from "next/navigation"
 import { InboxView } from "./inbox-view"
 
@@ -27,7 +28,7 @@ export default async function RegulatoryInboxPage({
   const pageSize = 20
 
   // Get rules pending review
-  const where: any = {
+  const where: Prisma.RegulatoryRuleWhereInput = {
     status: "PENDING_REVIEW",
   }
 

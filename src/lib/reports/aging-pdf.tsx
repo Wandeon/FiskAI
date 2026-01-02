@@ -124,15 +124,25 @@ const styles = StyleSheet.create({
   },
 })
 
+interface AgingInvoice {
+  invoiceNumber: string | null
+  issueDate: Date | null
+  dueDate: Date | null
+  totalAmount: number | string | { toString(): string }
+  buyer?: { name: string } | null
+  // Allow additional fields from Prisma EInvoice model
+  [key: string]: unknown
+}
+
 interface AgingPdfDocumentProps {
   companyName: string
   companyOib: string
   aging: {
-    current: any[]
-    days30: any[]
-    days60: any[]
-    days90: any[]
-    over90: any[]
+    current: AgingInvoice[]
+    days30: AgingInvoice[]
+    days60: AgingInvoice[]
+    days90: AgingInvoice[]
+    over90: AgingInvoice[]
   }
   totals: {
     current: number

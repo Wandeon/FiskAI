@@ -5,6 +5,22 @@ import { setTenantContext } from "@/lib/prisma-extensions"
 import { ensureOrganizationForContact } from "@/lib/master-data/contact-master-data"
 import { ImportFormat, Prisma } from "@prisma/client"
 
+interface BankTransaction {
+  date: string
+  description: string
+  amount: number
+  reference?: string
+  counterpartyName?: string
+  counterpartyIban?: string
+}
+
+interface InvoiceLineItem {
+  description?: string
+  quantity?: number
+  unitPrice?: number
+  amount?: number
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth()
   const company = await requireCompany(user.id!)
@@ -64,7 +80,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // Write transactions to database
     if (transactions && transactions.length > 0) {
       await db.bankTransaction.createMany({
-        data: transactions.map((t: any) => ({
+        data: transactions.map((t: BankTransaction) => ({
           companyId: company.id,
           bankAccountId,
           statementImportId: statementImport.id,
@@ -135,8 +151,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Build description from line items
-    const lineItemsDesc = (lineItems || [])
-      .map((item: any) => item.description)
+    const lineItemsDesc = ((lineItems || []) as InvoiceLineItem[])
+      .map((item) => item.description)
       .filter(Boolean)
       .join(", ")
     const description =

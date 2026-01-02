@@ -52,14 +52,19 @@ function parseTurnoverBand(band: string): number | undefined {
   return undefined
 }
 
+interface RuleWithAuthority {
+  authority?: string
+  authorityLevel?: string
+  [key: string]: unknown
+}
+
 /**
  * Group rules by authority level for analysis
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function groupRulesByAuthority(rules: any[]): Record<string, any[]> {
-  const grouped: Record<string, any[]> = {}
+function groupRulesByAuthority<T extends RuleWithAuthority>(rules: T[]): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {}
   for (const rule of rules) {
-    const authority = rule.authority || "UNKNOWN"
+    const authority = rule.authority || rule.authorityLevel || "UNKNOWN"
     if (!grouped[authority]) {
       grouped[authority] = []
     }
@@ -271,7 +276,7 @@ export async function* buildAnswerWithReasoning(
     })
 
     // Group rules by concept and authority for comparison
-    const rulesByAuthority = groupRulesByAuthority(finalRules)
+    const rulesByAuthority = groupRulesByAuthority(finalRules as unknown as RuleWithAuthority[])
 
     yield factory.emit({
       stage: "ANALYSIS",
@@ -364,8 +369,13 @@ export async function* buildAnswerWithReasoning(
         }
       }
 
-      // Calculate decision coverage
-      decisionCoverage = calculateDecisionCoverage(topic, providedDimensions, context as any)
+      // Calculate decision coverage - convert CompanyContext to Record<string, string>
+      const userProfile: Record<string, string> | undefined = context
+        ? Object.fromEntries(
+            Object.entries(context).filter(([, v]) => v !== undefined) as [string, string][]
+          )
+        : undefined
+      decisionCoverage = calculateDecisionCoverage(topic, providedDimensions, userProfile)
 
       terminalOutcome = decisionCoverage.terminalOutcome as
         | "ANSWER"
