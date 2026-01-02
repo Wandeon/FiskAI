@@ -3,8 +3,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyWebhookSignature } from "@/lib/regulatory-truth/webhooks/signature-verification"
-import { processWebhookEvent } from "@/lib/regulatory-truth/webhooks/processor"
 import { logAuditEvent } from "@/lib/regulatory-truth/utils/audit-log"
+import { publishEvent, OutboxEventTypes } from "@/lib/outbox"
 
 /**
  * Webhook receiver endpoint for regulatory truth notifications
@@ -123,11 +123,9 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Process webhook event asynchronously
-    // This returns immediately and processes in background
-    processWebhookEvent(webhookEvent.id).catch((error) => {
-      console.error(`[webhook] Failed to process event ${webhookEvent.id}:`, error)
-    })
+    // Publish event for guaranteed delivery via outbox pattern
+    // The outbox worker will process this event in the background
+    await publishEvent(OutboxEventTypes.WEBHOOK_RECEIVED, { webhookEventId: webhookEvent.id })
 
     const duration = Date.now() - startTime
     console.log(

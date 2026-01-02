@@ -2,9 +2,10 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { createArticleJob, runArticleJob } from "@/lib/article-agent/orchestrator"
+import { createArticleJob } from "@/lib/article-agent/orchestrator"
 import { publishArticle } from "@/lib/article-agent/steps/publish"
 import { requireAuth } from "@/lib/auth-utils"
+import { publishEvent, OutboxEventTypes } from "@/lib/outbox"
 import type { ArticleType } from "@prisma/client"
 
 interface ActionResult<T = unknown> {
@@ -58,16 +59,9 @@ export async function startJob(jobId: string): Promise<ActionResult> {
       return { success: false, error: "Job not found" }
     }
 
-    // Run in background (don't await)
-    runArticleJob(jobId).catch((error) => {
-      console.error(`Job ${jobId} failed:`, error)
-      db.articleJob
-        .update({
-          where: { id: jobId },
-          data: { status: "REJECTED" },
-        })
-        .catch(console.error)
-    })
+    // Publish event for guaranteed delivery via outbox pattern
+    // The outbox worker will process this event and run the job
+    await publishEvent(OutboxEventTypes.ARTICLE_JOB_STARTED, { jobId })
 
     revalidatePath("/article-agent")
     revalidatePath(`/article-agent/${jobId}`)
@@ -162,6 +156,7 @@ export async function getJobs(options?: {
 
     const jobs = await db.articleJob.findMany({
       where: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(options?.status && { status: options.status as any }),
         ...(options?.type && { type: options.type }),
       },
@@ -269,7 +264,7 @@ export async function publishJob(jobId: string): Promise<
 /**
  * Reject a job
  */
-export async function rejectJob(jobId: string, reason?: string): Promise<ActionResult> {
+export async function rejectJob(jobId: string, _reason?: string): Promise<ActionResult> {
   try {
     await requireAuth()
 
@@ -396,22 +391,14 @@ export async function triggerRewrite(jobId: string): Promise<ActionResult> {
       return { success: false, error: "Max iterations reached" }
     }
 
-    // Update status to trigger rewrite
+    // Update status to trigger rewrite and publish event for guaranteed delivery
     await db.articleJob.update({
       where: { id: jobId },
       data: { status: "DRAFTING" },
     })
 
-    // Run job in background
-    runArticleJob(jobId).catch((error) => {
-      console.error(`Job ${jobId} rewrite failed:`, error)
-      db.articleJob
-        .update({
-          where: { id: jobId },
-          data: { status: "NEEDS_REVIEW" },
-        })
-        .catch(console.error)
-    })
+    // Publish event for guaranteed delivery via outbox pattern
+    await publishEvent(OutboxEventTypes.ARTICLE_JOB_REWRITE, { jobId })
 
     revalidatePath(`/article-agent/${jobId}`)
 

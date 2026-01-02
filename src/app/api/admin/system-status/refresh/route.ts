@@ -21,6 +21,7 @@ import {
   releaseRefreshLock,
   getRunningJobByDedupeKey,
 } from "@/lib/system-status/store"
+import { publishEvent, OutboxEventTypes } from "@/lib/outbox"
 
 // Constants
 const SYNC_TIMEOUT_MS = 15_000 // 15 seconds
@@ -90,11 +91,12 @@ export async function POST(request: NextRequest) {
 
     // If async mode requested, return immediately with job ID
     if (mode === "async") {
-      // In a real implementation, we would enqueue to a background worker here
-      // For now, we'll start the job but not wait for it
-      // Task 6 will implement the actual worker
-      processRefreshAsync(job.id, user.id, timeoutSeconds, DEDUPE_KEY).catch((error) => {
-        console.error("[system-status-refresh] Async job error:", error)
+      // Publish event for guaranteed delivery via outbox pattern
+      await publishEvent(OutboxEventTypes.SYSTEM_STATUS_REFRESH, {
+        jobId: job.id,
+        userId: user.id,
+        timeoutSeconds,
+        lockKey: DEDUPE_KEY,
       })
 
       return NextResponse.json(
@@ -136,6 +138,7 @@ export async function POST(request: NextRequest) {
       const events = prevSnapshot ? diffSnapshots(prevSnapshot as any, snapshot) : []
 
       // Save snapshot and events
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const savedSnapshot = await saveSnapshot(snapshot as unknown as any)
       if (events.length > 0) {
         await saveEvents(
@@ -172,10 +175,12 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       // Check if this was a timeout
       if (error instanceof Error && error.message === "SYNC_TIMEOUT") {
-        // Switch to async mode
-        // In real implementation, we'd enqueue to a background worker
-        processRefreshAsync(job.id, user.id, ASYNC_TIMEOUT_SECONDS, DEDUPE_KEY).catch((err) => {
-          console.error("[system-status-refresh] Async fallback error:", err)
+        // Switch to async mode - publish event for guaranteed delivery
+        await publishEvent(OutboxEventTypes.SYSTEM_STATUS_REFRESH, {
+          jobId: job.id,
+          userId: user.id,
+          timeoutSeconds: ASYNC_TIMEOUT_SECONDS,
+          lockKey: DEDUPE_KEY,
         })
 
         return NextResponse.json(
@@ -217,56 +222,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Process refresh asynchronously.
- * In a real implementation, this would be handled by a background worker (Task 6).
- * For now, this runs in the same process but doesn't block the response.
- */
-async function processRefreshAsync(
-  jobId: string,
-  userId: string,
-  timeoutSeconds: number,
-  lockKey: string
-): Promise<void> {
-  try {
-    await updateRefreshJob(jobId, {
-      status: "RUNNING",
-      startedAt: new Date(),
-    })
-
-    const snapshot = await computeSystemStatusSnapshot({
-      requestedByUserId: userId,
-      timeoutSeconds,
-    })
-
-    const prevSnapshot = await getCurrentSnapshot()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const events = prevSnapshot ? diffSnapshots(prevSnapshot as any, snapshot) : []
-
-    const savedSnapshot = await saveSnapshot(snapshot as unknown as any)
-    if (events.length > 0) {
-      await saveEvents(
-        events.map((e) => ({
-          ...e,
-          requestedByUserId: userId,
-        }))
-      )
-    }
-
-    await updateRefreshJob(jobId, {
-      status: "SUCCEEDED",
-      finishedAt: new Date(),
-      snapshotId: savedSnapshot.id,
-    })
-  } catch (error) {
-    console.error("[system-status-refresh] Async processing error:", error)
-    await updateRefreshJob(jobId, {
-      status: "FAILED",
-      finishedAt: new Date(),
-      error: error instanceof Error ? error.message : String(error),
-    })
-  } finally {
-    // Always release lock, even if saveSnapshot, saveEvents, or updateRefreshJob fail
-    await releaseRefreshLock(lockKey)
-  }
-}
+// Note: The processRefreshAsync function has been replaced by the outbox pattern.
+// Async processing is now handled by the outbox worker via handleSystemStatusRefresh.
