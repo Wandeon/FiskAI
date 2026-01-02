@@ -1,12 +1,12 @@
 "use server"
 
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { createArticleJob } from "@/lib/article-agent/orchestrator"
 import { publishArticle } from "@/lib/article-agent/steps/publish"
 import { requireAuth } from "@/lib/auth-utils"
 import { publishEvent, OutboxEventTypes } from "@/lib/outbox"
-import type { ArticleType } from "@prisma/client"
 
 interface ActionResult<T = unknown> {
   success: boolean
@@ -14,27 +14,46 @@ interface ActionResult<T = unknown> {
   data?: T
 }
 
+// Zod schemas for validation
+const uuidSchema = z.string().uuid()
+
+const createJobSchema = z.object({
+  type: z.enum(["NEWS", "GUIDE", "COMPARISON"]),
+  sourceUrls: z.array(z.string().url()).min(1, "At least one source URL is required"),
+  topic: z.string().optional(),
+  maxIterations: z.number().int().positive().optional(),
+})
+
+const getJobsSchema = z.object({
+  status: z.string().optional(),
+  type: z.enum(["NEWS", "GUIDE", "COMPARISON"]).optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().positive().max(100).optional(),
+})
+
+const paragraphActionSchema = z.object({
+  jobId: z.string().uuid(),
+  paragraphIndex: z.number().int().min(0),
+})
+
 /**
  * Create a new article generation job
  */
-export async function createJob(input: {
-  type: ArticleType
-  sourceUrls: string[]
-  topic?: string
-  maxIterations?: number
-}): Promise<ActionResult<{ jobId: string }>> {
+export async function createJob(input: unknown): Promise<ActionResult<{ jobId: string }>> {
   try {
+    const validated = createJobSchema.safeParse(input)
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+    }
+    const data = validated.data
+
     await requireAuth()
 
-    if (!input.sourceUrls || input.sourceUrls.length === 0) {
-      return { success: false, error: "At least one source URL is required" }
-    }
-
     const job = await createArticleJob({
-      type: input.type,
-      sourceUrls: input.sourceUrls,
-      topic: input.topic,
-      maxIterations: input.maxIterations,
+      type: data.type,
+      sourceUrls: data.sourceUrls,
+      topic: data.topic,
+      maxIterations: data.maxIterations,
     })
 
     revalidatePath("/article-agent")
@@ -49,11 +68,17 @@ export async function createJob(input: {
 /**
  * Start processing an article job
  */
-export async function startJob(jobId: string): Promise<ActionResult> {
+export async function startJob(jobId: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
-    const job = await db.articleJob.findUnique({ where: { id: jobId } })
+    const job = await db.articleJob.findUnique({ where: { id: validatedJobId } })
 
     if (!job) {
       return { success: false, error: "Job not found" }
@@ -61,10 +86,10 @@ export async function startJob(jobId: string): Promise<ActionResult> {
 
     // Publish event for guaranteed delivery via outbox pattern
     // The outbox worker will process this event and run the job
-    await publishEvent(OutboxEventTypes.ARTICLE_JOB_STARTED, { jobId })
+    await publishEvent(OutboxEventTypes.ARTICLE_JOB_STARTED, { jobId: validatedJobId })
 
     revalidatePath("/article-agent")
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -76,12 +101,18 @@ export async function startJob(jobId: string): Promise<ActionResult> {
 /**
  * Get job status and basic info
  */
-export async function getJobStatus(jobId: string): Promise<ActionResult> {
+export async function getJobStatus(jobId: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       include: {
         drafts: {
           orderBy: { iteration: "desc" },
@@ -105,11 +136,17 @@ export async function getJobStatus(jobId: string): Promise<ActionResult> {
 /**
  * Get job with full verification data
  */
-export async function getJobWithVerification(jobId: string) {
+export async function getJobWithVerification(jobId: unknown) {
+  const validated = uuidSchema.safeParse(jobId)
+  if (!validated.success) {
+    throw new Error("Invalid job ID")
+  }
+  const validatedJobId = validated.data
+
   await requireAuth()
 
   const job = await db.articleJob.findUnique({
-    where: { id: jobId },
+    where: { id: validatedJobId },
     include: {
       factSheet: {
         include: { claims: true },
@@ -143,26 +180,34 @@ export async function getJobWithVerification(jobId: string) {
 /**
  * Get list of all article jobs
  */
-export async function getJobs(options?: {
-  status?: string
-  type?: ArticleType
-  cursor?: string
-  limit?: number
-}): Promise<ActionResult> {
+export async function getJobs(options?: unknown): Promise<ActionResult> {
   try {
+    const validated = getJobsSchema.safeParse(options ?? {})
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors[0]?.message || "Invalid options" }
+    }
+    const opts = validated.data
+
     await requireAuth()
 
-    const limit = Math.min(options?.limit ?? 20, 100)
+    const limit = Math.min(opts.limit ?? 20, 100)
 
     const jobs = await db.articleJob.findMany({
       where: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(options?.status && { status: options.status as any }),
-        ...(options?.type && { type: options.type }),
+        ...(opts.status && {
+          status: opts.status as
+            | "PENDING"
+            | "DRAFTING"
+            | "NEEDS_REVIEW"
+            | "APPROVED"
+            | "PUBLISHED"
+            | "REJECTED",
+        }),
+        ...(opts.type && { type: opts.type }),
       },
       orderBy: { createdAt: "desc" },
       take: limit + 1,
-      ...(options?.cursor && { cursor: { id: options.cursor }, skip: 1 }),
+      ...(opts.cursor && { cursor: { id: opts.cursor }, skip: 1 }),
     })
 
     const hasMore = jobs.length > limit
@@ -179,12 +224,18 @@ export async function getJobs(options?: {
 /**
  * Approve a job and mark it ready for publishing
  */
-export async function approveJob(jobId: string): Promise<ActionResult> {
+export async function approveJob(jobId: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
     })
 
     if (!job) {
@@ -196,12 +247,12 @@ export async function approveJob(jobId: string): Promise<ActionResult> {
     }
 
     await db.articleJob.update({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       data: { status: "APPROVED" },
     })
 
     revalidatePath("/article-agent")
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -216,7 +267,7 @@ export async function approveJob(jobId: string): Promise<ActionResult> {
  * For NEWS type: Creates entry in news_posts table
  * For other types: Creates MDX file in appropriate content directory
  */
-export async function publishJob(jobId: string): Promise<
+export async function publishJob(jobId: unknown): Promise<
   ActionResult<{
     slug: string
     publishedAt: string
@@ -224,10 +275,16 @@ export async function publishJob(jobId: string): Promise<
   }>
 > {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
     })
 
     if (!job) {
@@ -241,7 +298,7 @@ export async function publishJob(jobId: string): Promise<
     const result = await publishArticle(job)
 
     revalidatePath("/article-agent")
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
     revalidatePath("/vijesti")
 
     return {
@@ -264,12 +321,26 @@ export async function publishJob(jobId: string): Promise<
 /**
  * Reject a job
  */
-export async function rejectJob(jobId: string, _reason?: string): Promise<ActionResult> {
+export async function rejectJob(jobId: unknown, reason?: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
+    // Validate reason if provided
+    if (reason !== undefined) {
+      const reasonResult = z.string().optional().safeParse(reason)
+      if (!reasonResult.success) {
+        return { success: false, error: "Invalid reason" }
+      }
+    }
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
     })
 
     if (!job) {
@@ -277,12 +348,12 @@ export async function rejectJob(jobId: string, _reason?: string): Promise<Action
     }
 
     await db.articleJob.update({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       data: { status: "REJECTED" },
     })
 
     revalidatePath("/article-agent")
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -294,12 +365,21 @@ export async function rejectJob(jobId: string, _reason?: string): Promise<Action
 /**
  * Lock a specific paragraph to prevent rewriting
  */
-export async function lockParagraph(jobId: string, paragraphIndex: number): Promise<ActionResult> {
+export async function lockParagraph(
+  jobId: unknown,
+  paragraphIndex: unknown
+): Promise<ActionResult> {
   try {
+    const validated = paragraphActionSchema.safeParse({ jobId, paragraphIndex })
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+    }
+    const { jobId: validatedJobId, paragraphIndex: validatedIndex } = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       include: {
         drafts: {
           orderBy: { iteration: "desc" },
@@ -316,13 +396,13 @@ export async function lockParagraph(jobId: string, paragraphIndex: number): Prom
       where: {
         draftId_index: {
           draftId: job.drafts[0].id,
-          index: paragraphIndex,
+          index: validatedIndex,
         },
       },
       data: { isLocked: true },
     })
 
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -335,14 +415,20 @@ export async function lockParagraph(jobId: string, paragraphIndex: number): Prom
  * Unlock a specific paragraph to allow rewriting
  */
 export async function unlockParagraph(
-  jobId: string,
-  paragraphIndex: number
+  jobId: unknown,
+  paragraphIndex: unknown
 ): Promise<ActionResult> {
   try {
+    const validated = paragraphActionSchema.safeParse({ jobId, paragraphIndex })
+    if (!validated.success) {
+      return { success: false, error: validated.error.errors[0]?.message || "Invalid input" }
+    }
+    const { jobId: validatedJobId, paragraphIndex: validatedIndex } = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       include: {
         drafts: {
           orderBy: { iteration: "desc" },
@@ -359,13 +445,13 @@ export async function unlockParagraph(
       where: {
         draftId_index: {
           draftId: job.drafts[0].id,
-          index: paragraphIndex,
+          index: validatedIndex,
         },
       },
       data: { isLocked: false },
     })
 
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -377,11 +463,17 @@ export async function unlockParagraph(
 /**
  * Trigger a rewrite iteration for a job
  */
-export async function triggerRewrite(jobId: string): Promise<ActionResult> {
+export async function triggerRewrite(jobId: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
-    const job = await db.articleJob.findUnique({ where: { id: jobId } })
+    const job = await db.articleJob.findUnique({ where: { id: validatedJobId } })
 
     if (!job) {
       return { success: false, error: "Job not found" }
@@ -393,14 +485,14 @@ export async function triggerRewrite(jobId: string): Promise<ActionResult> {
 
     // Update status to trigger rewrite and publish event for guaranteed delivery
     await db.articleJob.update({
-      where: { id: jobId },
+      where: { id: validatedJobId },
       data: { status: "DRAFTING" },
     })
 
     // Publish event for guaranteed delivery via outbox pattern
-    await publishEvent(OutboxEventTypes.ARTICLE_JOB_REWRITE, { jobId })
+    await publishEvent(OutboxEventTypes.ARTICLE_JOB_REWRITE, { jobId: validatedJobId })
 
-    revalidatePath(`/article-agent/${jobId}`)
+    revalidatePath(`/article-agent/${validatedJobId}`)
 
     return { success: true }
   } catch (error) {
@@ -412,12 +504,18 @@ export async function triggerRewrite(jobId: string): Promise<ActionResult> {
 /**
  * Delete a job and all related data
  */
-export async function deleteJob(jobId: string): Promise<ActionResult> {
+export async function deleteJob(jobId: unknown): Promise<ActionResult> {
   try {
+    const validated = uuidSchema.safeParse(jobId)
+    if (!validated.success) {
+      return { success: false, error: "Invalid job ID" }
+    }
+    const validatedJobId = validated.data
+
     await requireAuth()
 
     const job = await db.articleJob.findUnique({
-      where: { id: jobId },
+      where: { id: validatedJobId },
     })
 
     if (!job) {
@@ -430,7 +528,7 @@ export async function deleteJob(jobId: string): Promise<ActionResult> {
     }
 
     await db.articleJob.delete({
-      where: { id: jobId },
+      where: { id: validatedJobId },
     })
 
     revalidatePath("/article-agent")
