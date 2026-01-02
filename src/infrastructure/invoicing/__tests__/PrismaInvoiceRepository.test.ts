@@ -25,7 +25,8 @@ import { prisma } from "@/lib/db"
 import { PrismaInvoiceRepository } from "../PrismaInvoiceRepository"
 
 // Type the mock for better type safety
-const mockPrisma = vi.mocked(prisma)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPrisma = prisma as any
 
 describe("PrismaInvoiceRepository", () => {
   let repository: PrismaInvoiceRepository

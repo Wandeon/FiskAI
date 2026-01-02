@@ -265,15 +265,16 @@ jobs:
       - name: Check domain has no infra imports
         run: |
           echo "Checking domain layer purity..."
-          if grep -r '@prisma/client' src/domain/ 2>/dev/null; then
+          # Only check TypeScript files, not markdown documentation
+          if grep -r --include='*.ts' --include='*.tsx' '@prisma/client' src/domain/ 2>/dev/null; then
             echo "::error::Domain cannot import @prisma/client"
             exit 1
           fi
-          if grep -r 'from "@/lib/db"' src/domain/ 2>/dev/null; then
+          if grep -r --include='*.ts' --include='*.tsx' 'from "@/lib/db"' src/domain/ 2>/dev/null; then
             echo "::error::Domain cannot import from @/lib/db"
             exit 1
           fi
-          if grep -rE 'from "next/' src/domain/ 2>/dev/null; then
+          if grep -rE --include='*.ts' --include='*.tsx' 'from "next/' src/domain/ 2>/dev/null; then
             echo "::error::Domain cannot import Next.js"
             exit 1
           fi
