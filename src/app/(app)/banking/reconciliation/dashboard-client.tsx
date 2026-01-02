@@ -135,7 +135,7 @@ export function ReconciliationDashboard({
           ? "Transakcija je povezana s računom"
           : "Transakcija je povezana s troškom"
       )
-      mutate()
+      void mutate()
     } catch (err) {
       setStatusType("error")
       setStatusMessage(err instanceof Error ? err.message : "Greška pri povezivanju")

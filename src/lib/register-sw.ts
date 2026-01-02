@@ -15,7 +15,7 @@ export function registerServiceWorker() {
         navigator.serviceWorker.addEventListener("message", (event) => {
           if (event.data?.type === "SYNC_OFFLINE_DATA") {
             // Trigger sync of offline data from IndexedDB
-            processSyncQueue().then((result) => {
+            void processSyncQueue().then((result) => {
               console.log("Sync completed:", result)
             })
           }

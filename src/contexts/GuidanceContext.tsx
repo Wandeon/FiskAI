@@ -60,7 +60,7 @@ export function GuidanceProvider({ children }: { children: ReactNode }) {
         setIsLoading(false)
       }
     }
-    fetchPreferences()
+    void fetchPreferences()
   }, [])
 
   const getLevel = useCallback(
