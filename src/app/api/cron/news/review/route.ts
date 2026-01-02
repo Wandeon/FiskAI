@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
         // Get existing aiPasses
         const aiPasses =
           typeof post.aiPasses === "object" && post.aiPasses !== null
-            ? (post.aiPasses as Record<string, any>)
+            ? (post.aiPasses as Record<string, unknown>)
             : {}
 
         // Update post with review feedback
