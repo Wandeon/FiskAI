@@ -4,7 +4,25 @@ import { z } from "zod"
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { createCashIn, createCashOut } from "@/lib/cash/cash-service"
-import { parseBody, isValidationError, formatValidationError } from "@/lib/api/validation"
+import {
+  parseBody,
+  parseQuery,
+  isValidationError,
+  formatValidationError,
+} from "@/lib/api/validation"
+
+const querySchema = z.object({
+  from: z
+    .string()
+    .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date format for 'from'" })
+    .transform((s) => new Date(s))
+    .optional(),
+  to: z
+    .string()
+    .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date format for 'to'" })
+    .transform((s) => new Date(s))
+    .optional(),
+})
 
 const createCashEntrySchema = z.object({
   type: z.enum(["in", "out"]),
@@ -18,32 +36,44 @@ export async function GET(request: NextRequest) {
   const company = await requireCompany(user.id!)
   const companyId = company.id
 
-  const { searchParams } = new URL(request.url)
-  const from = searchParams.get("from")
-  const to = searchParams.get("to")
+  try {
+    const { searchParams } = new URL(request.url)
+    const { from, to } = parseQuery(searchParams, querySchema)
 
-  const dateFilter = {
-    ...(from ? { gte: new Date(from) } : {}),
-    ...(to ? { lte: new Date(to) } : {}),
+    const dateFilter = {
+      ...(from ? { gte: from } : {}),
+      ...(to ? { lte: to } : {}),
+    }
+
+    const [cashIn, cashOut] = await Promise.all([
+      db.cashIn.findMany({
+        where: {
+          companyId,
+          ...(Object.keys(dateFilter).length ? { businessDate: dateFilter } : {}),
+        },
+        orderBy: { businessDate: "desc" },
+      }),
+      db.cashOut.findMany({
+        where: {
+          companyId,
+          ...(Object.keys(dateFilter).length ? { businessDate: dateFilter } : {}),
+        },
+        orderBy: { businessDate: "desc" },
+      }),
+    ])
+
+    const entries = [
+      ...cashIn.map((e) => ({ ...e, type: "in" as const })),
+      ...cashOut.map((e) => ({ ...e, type: "out" as const })),
+    ].sort((a, b) => b.businessDate.getTime() - a.businessDate.getTime())
+
+    return NextResponse.json({ entries })
+  } catch (error) {
+    if (isValidationError(error)) {
+      return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
+    throw error
   }
-
-  const [cashIn, cashOut] = await Promise.all([
-    db.cashIn.findMany({
-      where: { companyId, ...(Object.keys(dateFilter).length ? { businessDate: dateFilter } : {}) },
-      orderBy: { businessDate: "desc" },
-    }),
-    db.cashOut.findMany({
-      where: { companyId, ...(Object.keys(dateFilter).length ? { businessDate: dateFilter } : {}) },
-      orderBy: { businessDate: "desc" },
-    }),
-  ])
-
-  const entries = [
-    ...cashIn.map((e) => ({ ...e, type: "in" as const })),
-    ...cashOut.map((e) => ({ ...e, type: "out" as const })),
-  ].sort((a, b) => b.businessDate.getTime() - a.businessDate.getTime())
-
-  return NextResponse.json({ entries })
 }
 
 export async function POST(request: NextRequest) {
