@@ -1,9 +1,13 @@
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { resolveCapabilityForUser } from "@/lib/capabilities/server"
+import { BlockerDisplay } from "@/components/capability"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { InvoiceForm } from "./invoice-form"
+import { redirect } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 
 const TYPE_LABELS: Record<string, string> = {
   INVOICE: "Račun",
@@ -28,6 +32,27 @@ export default async function NewInvoicePage({
     userId: user.id!,
   })
 
+  // Check capability before allowing access
+  const capability = await resolveCapabilityForUser("INV-001", {
+    entityType: "EInvoice",
+  })
+
+  if (capability.state === "UNAUTHORIZED") {
+    redirect("/control-center")
+  }
+
+  if (capability.state === "BLOCKED") {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Nije moguće kreirati račun</h1>
+        <BlockerDisplay blockers={capability.blockers} />
+        <Link href="/control-center">
+          <Button>Povratak na Kontrolni centar</Button>
+        </Link>
+      </div>
+    )
+  }
+
   // Get contacts for buyer dropdown
   const contacts = await db.contact.findMany({
     where: { companyId: company.id },
@@ -50,10 +75,15 @@ export default async function NewInvoicePage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Novi {title.toLowerCase()}</h1>
-          <p className="text-secondary">Kreirajte novi {title.toLowerCase()}</p>
+          <p className="text-muted-foreground">
+            Spremi nacrt, zatim koristi Kontrolni centar za daljnje akcije.
+          </p>
         </div>
-        <Link href="/invoices">
-          <Button variant="outline">← Natrag</Button>
+        <Link href="/control-center">
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kontrolni centar
+          </Button>
         </Link>
       </div>
 
