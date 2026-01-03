@@ -109,14 +109,25 @@ This model will **stay in core** because it's not RTL-only.
 
 **Conclusion:** Evidence and EvidenceArtifact are append-only in production. The `deletedAt` field exists for future soft-delete capability but is not currently used.
 
-**Recommendation:** Add a guard in code to prevent accidental hard deletes:
+**Enforcement:** Mechanical guard added via Prisma extension in `src/lib/db/regulatory.ts`:
 
 ```typescript
-// In dbReg wrapper or Evidence repository
-export async function deleteEvidence(id: string) {
-  throw new Error("Hard delete of Evidence is prohibited. Use soft delete via deletedAt.")
-}
+// dbReg is extended to block Evidence hard-deletes
+const extendedClient = baseClient.$extends({
+  query: {
+    evidence: {
+      delete() {
+        throw new Error("Evidence hard-delete is prohibited...")
+      },
+      deleteMany() {
+        throw new Error("Evidence hard-delete is prohibited...")
+      },
+    },
+  },
+})
 ```
+
+**Test cleanup:** Tests use raw SQL (`$executeRaw`) to bypass the extension for cleanup.
 
 ---
 

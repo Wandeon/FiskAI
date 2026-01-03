@@ -8,10 +8,42 @@ import { PrismaClient } from "../../generated/regulatory-client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
 
+/**
+ * Create an extended Prisma client with Evidence hard-delete prohibition.
+ * Evidence is append-only to preserve regulatory audit chain integrity.
+ */
+function createExtendedClient(pool: Pool) {
+  const baseClient = new PrismaClient({ adapter: new PrismaPg(pool) })
+
+  return baseClient.$extends({
+    query: {
+      evidence: {
+        delete() {
+          throw new Error(
+            "Evidence hard-delete is prohibited. " +
+              "Evidence is append-only to preserve regulatory audit chain. " +
+              "Use soft-delete via deletedAt if you need to mark evidence as inactive."
+          )
+        },
+        deleteMany() {
+          throw new Error(
+            "Evidence hard-delete is prohibited. " +
+              "Evidence is append-only to preserve regulatory audit chain. " +
+              "Use soft-delete via deletedAt if you need to mark evidence as inactive."
+          )
+        },
+      },
+    },
+  })
+}
+
+// Extended client type (with Evidence delete prohibition)
+type ExtendedRegulatoryClient = ReturnType<typeof createExtendedClient>
+
 // Global singleton for regulatory database pool and client
 const globalForRegulatory = globalThis as unknown as {
   regulatoryPool: Pool | undefined
-  regulatoryClient: PrismaClient | undefined
+  regulatoryClient: ExtendedRegulatoryClient | undefined
 }
 
 /**
@@ -59,9 +91,8 @@ const regulatoryPool =
 
 // Regulatory Prisma client - NO tenant isolation
 // RTL tables don't have companyId, they're system-wide
-const dbReg =
-  globalForRegulatory.regulatoryClient ??
-  new PrismaClient({ adapter: new PrismaPg(regulatoryPool) })
+// Extended with Evidence hard-delete prohibition (see createExtendedClient)
+const dbReg = globalForRegulatory.regulatoryClient ?? createExtendedClient(regulatoryPool)
 
 // Cache in development to survive hot-reload
 if (process.env.NODE_ENV !== "production") {

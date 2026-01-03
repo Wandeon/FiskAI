@@ -15,6 +15,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { buildAnswer } from "../query-engine/answer-builder"
 import { validateResponse } from "../validation"
 import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 
 // Skip these tests if no database is available
 const hasDatabase = !!process.env.DATABASE_URL
@@ -119,8 +120,10 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     for (const id of createdIds.conceptIds) {
       await db.concept.delete({ where: { id } }).catch(() => {})
     }
+    // Use raw SQL for Evidence cleanup - bypasses the hard-delete prohibition extension
+    // (Evidence is append-only in production, but tests need cleanup)
     for (const id of createdIds.evidenceIds) {
-      await db.evidence.delete({ where: { id } }).catch(() => {})
+      await dbReg.$executeRaw`DELETE FROM "Evidence" WHERE id = ${id}`.catch(() => {})
     }
     for (const id of createdIds.sourceIds) {
       await (db as any).source.delete({ where: { id } }).catch(() => {})

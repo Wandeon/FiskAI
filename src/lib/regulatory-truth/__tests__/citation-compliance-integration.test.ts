@@ -164,9 +164,13 @@ describe("Citation Compliance (Integration)", () => {
     await db.regulatoryRule.deleteMany({
       where: { id: { in: createdIds.ruleIds } },
     })
-    await dbReg.evidence.deleteMany({
-      where: { id: { in: createdIds.evidenceIds } },
-    })
+    // Use raw SQL for Evidence cleanup - bypasses the hard-delete prohibition extension
+    // (Evidence is append-only in production, but tests need cleanup)
+    if (createdIds.evidenceIds.length > 0) {
+      await dbReg.$executeRawUnsafe(
+        `DELETE FROM "Evidence" WHERE id IN (${createdIds.evidenceIds.map((id) => `'${id}'`).join(",")})`
+      )
+    }
     console.log(`[citation-integration] Cleaned up ${createdIds.ruleIds.length} test fixtures`)
   })
 
