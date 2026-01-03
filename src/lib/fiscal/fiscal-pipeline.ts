@@ -1,12 +1,14 @@
 // src/lib/fiscal/fiscal-pipeline.ts
 import { db } from "@/lib/db"
-import { FiscalRequest } from "@prisma/client"
+import { FiscalRequest, Prisma } from "@prisma/client"
 import { randomFillSync } from "crypto"
 import { decryptWithEnvelope } from "./envelope-encryption"
 import { parseP12Certificate, forgeToPem } from "./certificate-parser"
 import { buildRacunRequest, buildStornoRequest, FiscalInvoiceData } from "./xml-builder"
 import { signXML } from "./xml-signer"
 import { submitToPorezna } from "./porezna-client"
+
+const Decimal = Prisma.Decimal
 
 export interface PipelineResult {
   success: boolean
@@ -171,18 +173,19 @@ interface InvoiceForFiscalization {
 
 function mapToFiscalInvoice(invoice: InvoiceForFiscalization): FiscalInvoiceData {
   // Extract VAT breakdown from invoice lines
-  const vatMap = new Map<number, { base: number; vat: number }>()
+  const vatMap = new Map<string, { base: Prisma.Decimal; vat: Prisma.Decimal }>()
 
   for (const line of invoice.lines) {
-    const rate = Number(line.vatRate)
-    const existing = vatMap.get(rate) || { base: 0, vat: 0 }
-    existing.base += Number(line.netAmount)
-    existing.vat += Number(line.vatAmount)
-    vatMap.set(rate, existing)
+    const rateKey =
+      line.vatRate instanceof Decimal ? line.vatRate.toFixed(2) : new Decimal(line.vatRate).toFixed(2)
+    const existing = vatMap.get(rateKey) || { base: new Decimal(0), vat: new Decimal(0) }
+    existing.base = existing.base.add(new Decimal(line.netAmount))
+    existing.vat = existing.vat.add(new Decimal(line.vatAmount))
+    vatMap.set(rateKey, existing)
   }
 
-  const vatBreakdown = Array.from(vatMap.entries()).map(([rate, amounts]) => ({
-    rate,
+  const vatBreakdown = Array.from(vatMap.entries()).map(([rateKey, amounts]) => ({
+    rate: Number(rateKey),
     baseAmount: amounts.base,
     vatAmount: amounts.vat,
   }))
@@ -192,7 +195,7 @@ function mapToFiscalInvoice(invoice: InvoiceForFiscalization): FiscalInvoiceData
     premisesCode: invoice.company.premisesCode || "1",
     deviceCode: invoice.company.deviceCode || "1",
     issueDate: invoice.issueDate,
-    totalAmount: Number(invoice.totalAmount),
+    totalAmount: new Decimal(invoice.totalAmount),
     vatRegistered: invoice.company.vatRegistered ?? true,
     vatBreakdown,
     paymentMethod: invoice.paymentMethod || "G",

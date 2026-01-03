@@ -3,6 +3,10 @@ import { create } from "xmlbuilder2"
 import { calculateZKI } from "@/lib/e-invoice/zki"
 import { validateOib } from "@/lib/validations/oib"
 import { formatAmount, formatDateTime, generateUUID } from "./utils"
+import { Prisma } from "@prisma/client"
+import { moneyToMinorUnits } from "@/lib/money"
+
+const Decimal = Prisma.Decimal
 
 const NAMESPACE = "http://www.apis-it.hr/fin/2012/types/f73"
 const SCHEMA_LOCATION = "http://www.apis-it.hr/fin/2012/types/f73 FiskalizacijaSchema.xsd"
@@ -12,21 +16,21 @@ export interface FiscalInvoiceData {
   premisesCode: string
   deviceCode: string
   issueDate: Date
-  totalAmount: number
+  totalAmount: Prisma.Decimal
   vatRegistered: boolean
   vatBreakdown?: Array<{
     rate: number
-    baseAmount: number
-    vatAmount: number
+    baseAmount: Prisma.Decimal
+    vatAmount: Prisma.Decimal
   }>
   consumptionTax?: Array<{
     rate: number
-    baseAmount: number
-    amount: number
+    baseAmount: Prisma.Decimal
+    amount: Prisma.Decimal
   }>
-  exemptAmount?: number
-  marginAmount?: number
-  notTaxableAmount?: number
+  exemptAmount?: Prisma.Decimal
+  marginAmount?: Prisma.Decimal
+  notTaxableAmount?: Prisma.Decimal
   paymentMethod: string
   operatorOib: string
   subsequentDelivery?: boolean
@@ -60,6 +64,7 @@ export function buildRacunRequest(
   // IMPORTANT: invoice.totalAmount is in decimal form (e.g., 100.00 for 100 EUR)
   // ZKI calculation expects cents (smallest currency unit), so we multiply by 100
   // Example: 100.00 EUR -> 10000 cents -> formatted as "100,00" in ZKI string
+  const totalAmountMinor = moneyToMinorUnits(invoice.totalAmount, 2)
   const zki = calculateZKI(
     {
       oib,
@@ -67,7 +72,7 @@ export function buildRacunRequest(
       invoiceNumber: String(invoice.invoiceNumber),
       premisesCode: invoice.premisesCode,
       deviceCode: invoice.deviceCode,
-      totalAmount: Math.round(invoice.totalAmount * 100),
+      totalAmount: totalAmountMinor,
     },
     privateKeyPem
   )
@@ -192,11 +197,11 @@ export function buildStornoRequest(
   // Storno invoice has negative amounts
   const stornoInvoice: FiscalInvoiceData = {
     ...originalInvoice,
-    totalAmount: -Math.abs(originalInvoice.totalAmount),
+    totalAmount: originalInvoice.totalAmount.abs().mul(new Decimal("-1")),
     vatBreakdown: originalInvoice.vatBreakdown?.map((v) => ({
       ...v,
-      baseAmount: -Math.abs(v.baseAmount),
-      vatAmount: -Math.abs(v.vatAmount),
+      baseAmount: v.baseAmount.abs().mul(new Decimal("-1")),
+      vatAmount: v.vatAmount.abs().mul(new Decimal("-1")),
     })),
     specificPurpose: `STORNO ${originalJir}`,
   }

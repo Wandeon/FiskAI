@@ -238,6 +238,7 @@ model Company {
   revenueRegisterEntries         RevenueRegisterEntry[]
   invoiceEvents                  InvoiceEvent[]
   matchRecords                   MatchRecord[]
+  unappliedPayments              UnappliedPayment[]
   accountMappings                AccountMapping[]
   exportProfiles                 ExportProfile[]
   exportJobs                     ExportJob[]
@@ -1173,6 +1174,8 @@ model EInvoice {
   convertedFromId        String?
   correctsInvoiceId      String?
   paidAt                 DateTime?
+  paidAmount             Decimal                @default(0) @db.Decimal(12, 2)
+  paymentStatus          InvoicePaymentStatus   @default(UNPAID)
   bankAccount            String?
   includeBarcode         Boolean                @default(true)
   importJobId            String?                @unique
@@ -1608,6 +1611,7 @@ model FixedAssetCandidate {
   companyId      String
   expenseId      String
   expenseLineId  String                    @unique
+  fixedAssetId   String?
   description    String
   amount         Decimal                   @db.Decimal(10, 2)
   currency       String                    @default("EUR")
@@ -1618,10 +1622,12 @@ model FixedAssetCandidate {
   reviewedAt     DateTime?
   expense        Expense                   @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   expenseLine    ExpenseLine               @relation(fields: [expenseLineId], references: [id], onDelete: Cascade)
+  fixedAsset     FixedAsset?               @relation(fields: [fixedAssetId], references: [id], onDelete: SetNull)
   company        Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([expenseId])
+  @@index([fixedAssetId])
 }
 
 model ExpenseCategory {
@@ -1855,6 +1861,7 @@ model BankTransaction {
   matchedInvoice             EInvoice?         @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
   counterpartyOrganization   Organization?     @relation("BankTransactionCounterpartyOrganization", fields: [counterpartyOrganizationId], references: [id], onDelete: SetNull)
   matchRecords               MatchRecord[]
+  unappliedPayment           UnappliedPayment?
 
   @@index([companyId])
   @@index([bankAccountId])
@@ -1888,6 +1895,22 @@ model MatchRecord {
   @@index([bankTransactionId])
   @@index([matchStatus])
   @@index([matchKind])
+  @@index([createdAt])
+}
+
+model UnappliedPayment {
+  id                String          @id @default(cuid())
+  companyId         String
+  bankTransactionId String          @unique
+  amount            Decimal         @db.Decimal(12, 2)
+  currency          String          @default("EUR")
+  reason            String?
+  createdAt         DateTime        @default(now())
+
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankTransaction BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
   @@index([createdAt])
 }
 
@@ -3105,6 +3128,12 @@ enum EInvoiceStatus {
   REJECTED
   ARCHIVED
   ERROR
+}
+
+enum InvoicePaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
 }
 
 enum InvoiceType {
@@ -5220,6 +5249,9 @@ model Artifact {
   storageKey        String
   checksum          String
   checksumAlgorithm String       @default("SHA256")
+  generatorVersion  String       @default("unknown")
+  inputHash         String?
+  generationMeta    Json?
   createdById       String?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
@@ -5671,6 +5703,7 @@ model FixedAsset {
   depreciationEntries  DepreciationEntry[]
   disposalEvents       DisposalEvent[]
   assetCandidates      AssetCandidate[]
+  fixedAssetCandidates FixedAssetCandidate[]
 
   @@index([companyId])
   @@index([status])

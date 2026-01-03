@@ -1,5 +1,6 @@
 export type RuleTableKey =
   | "VAT"
+  | "INCOME_TAX"
   | "MUNICIPALITY_INCOME_TAX"
   | "CONTRIBUTIONS"
   | "PER_DIEM"
@@ -20,6 +21,21 @@ export interface VatRuleData {
     label: string
     description?: string
   }>
+}
+
+export interface IncomeTaxBracket {
+  min: number
+  max: number | null
+  rate: number
+  description?: string
+}
+
+export interface IncomeTaxRuleData {
+  year: number
+  lastVerified: string
+  source: string
+  personalAllowance: number
+  brackets: IncomeTaxBracket[]
 }
 
 export interface MunicipalityIncomeTaxEntry {
@@ -120,6 +136,7 @@ export interface JoppdCodebookData {
 
 export type RuleDataByTableKey =
   | VatRuleData
+  | IncomeTaxRuleData
   | MunicipalityIncomeTaxData
   | ContributionsRuleData
   | PerDiemRuleData
@@ -132,6 +149,11 @@ export type CalculationInputByTableKey =
       netAmount?: number
       rate?: number
       rateLabel?: string
+    }
+  | {
+      tableKey: "INCOME_TAX"
+      monthlyTaxBase: number
+      personalAllowance?: number
     }
   | {
       tableKey: "MUNICIPALITY_INCOME_TAX"

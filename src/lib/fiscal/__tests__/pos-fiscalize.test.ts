@@ -1,5 +1,6 @@
 import { describe, it } from "node:test"
 import assert from "node:assert"
+import { Prisma } from "@prisma/client"
 import { fiscalizePosSale, type PosFiscalInput } from "../pos-fiscalize"
 
 describe("fiscalizePosSale", () => {
@@ -8,7 +9,7 @@ describe("fiscalizePosSale", () => {
       id: "inv-1",
       invoiceNumber: "2025-1-1-00001",
       issueDate: new Date("2025-01-15T14:30:00"),
-      totalAmount: 125.0,
+      totalAmount: new Prisma.Decimal("125.00"),
       paymentMethod: "CASH",
     },
     company: {

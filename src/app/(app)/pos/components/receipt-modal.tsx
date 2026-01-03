@@ -113,7 +113,9 @@ export function ReceiptModal({ isOpen, result, companyInfo, onNewSale, onClose }
           zki: result.zki,
           invoiceNumber: result.invoice.invoiceNumber,
           issuerOib: result.issuerOib,
-          amount: result.invoice.totalAmount,
+          amount: Number.isFinite(result.invoice.totalAmount)
+            ? result.invoice.totalAmount.toFixed(2)
+            : "0.00",
           dateTime: new Date(result.invoice.issueDate),
         }
         const dataUrl = await generateFiscalQRCode(qrData)

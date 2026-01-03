@@ -1,0 +1,135 @@
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice1 create + PDF",
+  "input": {
+    "buyer": {
+      "name": "EU Client GmbH",
+      "vatNumber": "DE123456789",
+      "country": "DE"
+    },
+    "invoice": {
+      "issueDate": "2026-01-05T00:00:00.000Z",
+      "invoiceNumber": "1-1-1"
+    },
+    "lines": [
+      {
+        "description": "Consulting",
+        "quantity": 1,
+        "unitPrice": 1000,
+        "vatRate": 0
+      }
+    ]
+  },
+  "process": [
+    {
+      "file": "src/lib/invoice-numbering.ts",
+      "fn": "getNextInvoiceNumber"
+    },
+    {
+      "file": "src/lib/vat/output-calculator.ts",
+      "fn": "buildVatLineTotals"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create"
+    },
+    {
+      "file": "src/lib/pdf/generate-invoice-pdf-artifact.ts",
+      "fn": "generateInvoicePdfArtifact"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwtoc4b000c6fwaggwl1vce",
+        "fields": {
+          "invoiceNumber": "1-1-1",
+          "status": "SENT"
+        }
+      },
+      {
+        "model": "EInvoiceLine",
+        "id": "cmjwtoc4m000d6fwawn5i0p91",
+        "fields": {
+          "vatRate": "0.00",
+          "vatAmount": "0.00"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "cmjwtocpc000g6fwa6597hjyp",
+        "type": "PDF",
+        "fileName": "racun-1-1-1.pdf",
+        "checksum": "e5e81541dee0d946a6f131ed48276b40dee829b88887fed38107cd911ba40bdb",
+        "storageKey": "attachments/cmjwtobum00016fwalo7ga79w/2000/01/f5750c4d_e5e81541dee0d946a6f131ed48276b40dee829b88887fed38107cd911ba40bdb.pdf",
+        "generatorVersion": "invoice-pdf@1",
+        "inputHash": "81f8496b09fc89c1540f0424644f7e6d93691635648177079ff42faabdd7dc1e"
+      }
+    ],
+    "notes": {
+      "pdfContainsReverseChargeNote": false
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice2 fiscalize + sabotage + credit note",
+  "input": {
+    "invoice2": {
+      "invoiceNumber": "2-1-1",
+      "totalAmount": "230.00"
+    },
+    "fiscalize": {
+      "demo": true,
+      "paymentMethod": "CASH"
+    },
+    "sabotage": {
+      "update": {
+        "totalAmount": "1.00"
+      }
+    },
+    "creditNote": {
+      "correctsInvoiceId": "cmjwtodet000q6fwaobyghkr4",
+      "fullRefund": true
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/fiscal/pos-fiscalize.ts",
+      "fn": "fiscalizePosSale"
+    },
+    {
+      "file": "src/lib/prisma-extensions.ts",
+      "fn": "enforceInvoiceImmutability"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create (CREDIT_NOTE)"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwtodet000q6fwaobyghkr4",
+        "fields": {
+          "jir": "DEMO-55a5817c3a7348f124d40f788d0afb6a",
+          "fiscalizedAt": "2026-01-02T12:00:38.142Z"
+        }
+      },
+      {
+        "model": "EInvoice",
+        "id": "cmjwtodlf000y6fwa7co5q5jq",
+        "fields": {
+          "correctsInvoiceId": "cmjwtodet000q6fwaobyghkr4",
+          "totalAmount": "-230.00"
+        }
+      }
+    ],
+    "notes": {
+      "sabotageError": "InvoiceImmutabilityError: Issued invoices are immutable. Attempted to update fields [totalAmount] on invoice in status PENDING_FISCALIZATION. Use a credit note for corrections."
+    }
+  }
+}

@@ -54,6 +54,8 @@ const toDecimal = (value: Prisma.Decimal | number | string) =>
 
 const toPeriodEnd = (startDate: Date, months: number) => subDays(addMonths(startDate, months), 1)
 
+const monthStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1)
+
 export const buildDepreciationEntries = (
   input: DepreciationEntriesInput
 ): DepreciationEntryDraft[] => {
@@ -79,17 +81,18 @@ export const buildDepreciationEntries = (
   const entries: DepreciationEntryDraft[] = []
   let accumulated = new Decimal(0)
   let remaining = depreciableBase
+  const scheduleStartDate = monthStart(input.acquisitionDate)
 
   for (let index = 0; index < periodCount; index += 1) {
     const monthsInPeriod =
       index === periodCount - 1 ? totalMonths - periodMonths * (periodCount - 1) : periodMonths
     const rawAmount = depreciableBase.mul(monthsInPeriod).div(totalMonths)
     const amount =
-      index === periodCount - 1 ? remaining : rawAmount.toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+      index === periodCount - 1 ? remaining : rawAmount.toDecimalPlaces(2, Decimal.ROUND_DOWN)
     accumulated = accumulated.plus(amount)
     remaining = remaining.minus(amount)
 
-    const periodStart = addMonths(input.acquisitionDate, index * periodMonths)
+    const periodStart = addMonths(scheduleStartDate, index * periodMonths)
     const periodEnd = toPeriodEnd(periodStart, monthsInPeriod)
 
     entries.push({

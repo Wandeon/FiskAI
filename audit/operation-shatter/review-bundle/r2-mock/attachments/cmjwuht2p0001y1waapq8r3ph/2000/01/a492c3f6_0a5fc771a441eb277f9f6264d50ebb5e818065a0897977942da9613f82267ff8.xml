@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ObrazacJOPPD xmlns="http://e-porezna.porezna-uprava.hr/sheme/zahtjevi/ObrazacJOPPD/v1-1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://e-porezna.porezna-uprava.hr/sheme/zahtjevi/ObrazacJOPPD/v1-1 ObrazacJOPPD-v1-1.xsd" Original="true">
+  <Metapodaci>
+    <DatumIzvjesca>2026-02-28</DatumIzvjesca>
+    <OznakaIzvjesca>26059</OznakaIzvjesca>
+    <OznakaPodnositelja>1</OznakaPodnositelja>
+  </Metapodaci>
+  <StranaA>
+    <PodnositeljIzvjesca>
+      <OIB>39168380555</OIB>
+      <Naziv>Shatter d.o.o. 2026-01-02</Naziv>
+      <Adresa>Adresa nije unesena</Adresa>
+      <Email>info@fiskai.hr</Email>
+    </PodnositeljIzvjesca>
+    <BrojOsoba>1</BrojOsoba>
+    <BrojRedaka>1</BrojRedaka>
+    <I>3000.00</I>
+    <II>600.00</II>
+    <III>2400.00</III>
+    <IV>434.24</IV>
+    <V>1965.76</V>
+  </StranaA>
+  <StranaB>
+    <P>
+      <P1>12345678903</P1>
+      <P2>Direktor</P2>
+      <P3>01333</P3>
+      <P4>01333</P4>
+      <P5>2026-02-01</P5>
+      <P5>2026-02-28</P5>
+      <P6.1>0001</P6.1>
+      <P6.2>0001</P6.2>
+      <P7>0</P7>
+      <P8>0</P8>
+      <P9>1</P9>
+      <P10>160</P10>
+      <P11>3000.00</P11>
+      <P12>0.00</P12>
+      <P13.1>450.00</P13.1>
+      <P13.2>150.00</P13.2>
+      <P13.3>495.00</P13.3>
+      <P13.4>0.00</P13.4>
+      <P14>434.24</P14>
+      <P15>0.00</P15>
+      <P16>1965.76</P16>
+      <P17>1</P17>
+    </P>
+  </StranaB>
+</ObrazacJOPPD>

@@ -2,6 +2,7 @@ import { db } from "./db"
 import type { AuditAction } from "@prisma/client"
 import type { Prisma } from "@prisma/client"
 import { computeAuditChecksum } from "./audit-utils"
+import { getContext } from "./context"
 
 interface AuditLogParams {
   companyId: string
@@ -29,6 +30,7 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
     const timestamp = new Date()
     const actor = params.actor ?? params.userId ?? "system"
     const reason = params.reason ?? "unspecified"
+    const correlationId = getContext()?.requestId
     const checksum = computeAuditChecksum({
       actor,
       action: params.action,
@@ -38,6 +40,15 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
       timestamp: timestamp.toISOString(),
     })
 
+    const changes = params.changes
+      ? ({
+          ...(correlationId ? { correlationId } : {}),
+          ...params.changes,
+        } as Prisma.InputJsonValue)
+      : correlationId
+        ? ({ correlationId } as Prisma.InputJsonValue)
+        : undefined
+
     await db.auditLog.create({
       data: {
         companyId: params.companyId,
@@ -46,7 +57,7 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
         action: params.action,
         entity: params.entity,
         entityId: params.entityId,
-        changes: params.changes ? (params.changes as Prisma.InputJsonValue) : undefined,
+        changes,
         ipAddress: params.ipAddress ?? null,
         userAgent: params.userAgent ?? null,
         reason,

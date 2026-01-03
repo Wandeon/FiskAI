@@ -8,6 +8,7 @@ import {
   assertPeriodWritableBulk,
   AccountingPeriodLockedError as PeriodLockedError,
 } from "./period-locking"
+import { getContext } from "./context"
 
 // Context for current request
 export type TenantContext = {
@@ -481,8 +482,6 @@ const TENANT_MODELS = [
   "ExpenseCorrection",
   "FixedAssetCandidate",
   "FixedAsset",
-  "DepreciationSchedule",
-  "DepreciationEntry",
   "DisposalEvent",
   "AssetCandidate",
   "ExpenseCategory",
@@ -496,7 +495,6 @@ const TENANT_MODELS = [
   "ChartOfAccounts",
   "AccountingPeriod",
   "JournalEntry",
-  "JournalLine",
   "TrialBalance",
   "PostingRule",
   "OperationalEvent",
@@ -507,7 +505,6 @@ const TENANT_MODELS = [
   "PayoutLine",
   "Payslip",
   "JoppdSubmission",
-  "JoppdSubmissionLine",
   "PayslipArtifact",
   "CalculationSnapshot",
   "BankPaymentExport",
@@ -744,7 +741,9 @@ const INVOICE_MUTABLE_FIELDS_AFTER_ISSUE = new Set<string>([
   "providerStatus",
   "providerError",
   "ublXml",
+  "paidAmount",
   "paidAt",
+  "paymentStatus",
   "emailMessageId",
   "emailDeliveredAt",
   "emailOpenedAt",
@@ -1782,6 +1781,7 @@ function queueAuditLog(
   const entityId = result.id as string
   const context = getTenantContext()
   const auditContext = getAuditContext()
+  const correlationId = getContext()?.requestId
 
   if (!companyId || !entityId) return
 
@@ -1799,6 +1799,10 @@ function queueAuditLog(
     }
   } else {
     changes = { after: JSON.parse(JSON.stringify(result)) }
+  }
+
+  if (correlationId) {
+    changes = { correlationId, ...changes }
   }
 
   const timestamp = new Date()
@@ -1830,6 +1834,72 @@ function queueAuditLog(
   setImmediate(() => void processAuditQueue(prismaBase))
 }
 
+function extractEntityIdFromWhere(where: unknown): string | null {
+  if (!where || typeof where !== "object") return null
+  const record = where as Record<string, unknown>
+  if (typeof record.id === "string") return record.id
+  return null
+}
+
+async function logBlockedMutationAttempt(params: {
+  prismaBase: PrismaClient
+  model: string
+  action: AuditAction
+  entityId: string | null
+  companyId: string | null
+  attempted?: unknown
+  before?: Record<string, unknown> | null
+  error: unknown
+}) {
+  const context = getTenantContext()
+  const auditContext = getAuditContext()
+  const correlationId = getContext()?.requestId
+  const timestamp = new Date()
+  const actor = auditContext?.actorId ?? context?.userId ?? "system"
+  const reason = auditContext?.reason ?? "unspecified"
+
+  if (!params.companyId || !params.entityId) return
+
+  const changes: Record<string, unknown> = {
+    ...(correlationId ? { correlationId } : {}),
+    blocked: true,
+    error: params.error instanceof Error ? params.error.message : String(params.error),
+    errorName: params.error instanceof Error ? params.error.name : "UnknownError",
+    ...(params.before ? { before: JSON.parse(JSON.stringify(params.before)) } : {}),
+    ...(params.attempted !== undefined
+      ? { attempted: JSON.parse(JSON.stringify(params.attempted)) }
+      : {}),
+  }
+
+  const checksum = computeAuditChecksum({
+    actor,
+    action: params.action,
+    entity: params.model,
+    entityId: params.entityId,
+    reason,
+    timestamp: timestamp.toISOString(),
+  })
+
+  try {
+    await params.prismaBase.auditLog.create({
+      data: {
+        companyId: params.companyId,
+        userId: context?.userId ?? null,
+        actor,
+        action: params.action,
+        entity: params.model,
+        entityId: params.entityId,
+        changes: changes as Record<string, never>,
+        reason,
+        checksum,
+        timestamp,
+      },
+    })
+  } catch (error) {
+    console.error("[Audit] Failed to log blocked attempt:", error)
+  }
+}
+
 // Extension to automatically add companyId filter to queries
 export function withTenantIsolation(prisma: PrismaClient) {
   // Keep reference to base prisma for audit logging
@@ -1840,7 +1910,23 @@ export function withTenantIsolation(prisma: PrismaClient) {
       $allModels: {
         async findMany({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
+          if (context && model === "JoppdSubmissionLine") {
+            args.where = {
+              AND: [args.where ?? {}, { submission: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "DepreciationSchedule") {
+            args.where = {
+              AND: [args.where ?? {}, { asset: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "DepreciationEntry") {
+            args.where = {
+              AND: [args.where ?? {}, { asset: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "JournalLine") {
+            args.where = {
+              AND: [args.where ?? {}, { journalEntry: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -1850,7 +1936,23 @@ export function withTenantIsolation(prisma: PrismaClient) {
         },
         async findFirst({ model, args, query }) {
           const context = getTenantContext()
-          if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
+          if (context && model === "JoppdSubmissionLine") {
+            args.where = {
+              AND: [args.where ?? {}, { submission: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "DepreciationSchedule") {
+            args.where = {
+              AND: [args.where ?? {}, { asset: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "DepreciationEntry") {
+            args.where = {
+              AND: [args.where ?? {}, { asset: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && model === "JournalLine") {
+            args.where = {
+              AND: [args.where ?? {}, { journalEntry: { companyId: context.companyId } }],
+            } as typeof args.where
+          } else if (context && TENANT_MODELS.includes(model as (typeof TENANT_MODELS)[number])) {
             args.where = {
               ...args.where,
               companyId: context.companyId,
@@ -1862,6 +1964,33 @@ export function withTenantIsolation(prisma: PrismaClient) {
           // For findUnique, we verify after fetch instead of modifying where
           const result = await query(args)
           const context = getTenantContext()
+          if (context && result && model === "DepreciationSchedule") {
+            const assetId = (result as { assetId?: string }).assetId
+            if (!assetId) return null
+            const asset = await prismaBase.fixedAsset.findUnique({
+              where: { id: assetId },
+              select: { companyId: true },
+            })
+            if (!asset || asset.companyId !== context.companyId) return null
+          }
+          if (context && result && model === "DepreciationEntry") {
+            const assetId = (result as { assetId?: string }).assetId
+            if (!assetId) return null
+            const asset = await prismaBase.fixedAsset.findUnique({
+              where: { id: assetId },
+              select: { companyId: true },
+            })
+            if (!asset || asset.companyId !== context.companyId) return null
+          }
+          if (context && result && model === "JournalLine") {
+            const journalEntryId = (result as { journalEntryId?: string }).journalEntryId
+            if (!journalEntryId) return null
+            const entry = await prismaBase.journalEntry.findUnique({
+              where: { id: journalEntryId },
+              select: { companyId: true },
+            })
+            if (!entry || entry.companyId !== context.companyId) return null
+          }
           if (
             context &&
             result &&
@@ -1882,13 +2011,45 @@ export function withTenantIsolation(prisma: PrismaClient) {
             } as typeof args.data
           }
 
-          // Period lock enforcement for all period-affecting entities
-          await assertPeriodWritable(
-            prismaBase,
-            model,
-            "create",
-            args.data as Record<string, unknown>
-          )
+          if (context && (model === "DepreciationSchedule" || model === "DepreciationEntry")) {
+            const assetId = (args.data as Record<string, unknown> | undefined)?.assetId as string | undefined
+            if (assetId) {
+              const asset = await prismaBase.fixedAsset.findUnique({
+                where: { id: assetId },
+                select: { companyId: true },
+              })
+              // If asset is created within an ongoing transaction, prismaBase won't see it yet.
+              // In that case, allow the write to proceed and rely on FK + tenant-filtered reads.
+              if (asset && asset.companyId !== context.companyId) {
+                throw new Error("Tenant isolation violation: depreciation asset does not belong to tenant")
+              }
+            }
+          }
+
+          if (context && model === "JournalLine") {
+            const entryId = (args.data as Record<string, unknown> | undefined)?.journalEntryId as
+              | string
+              | undefined
+            if (entryId) {
+              const entry = await prismaBase.journalEntry.findUnique({
+                where: { id: entryId },
+                select: { companyId: true },
+              })
+              // Same transaction visibility caveat as DepreciationSchedule.
+              if (entry && entry.companyId !== context.companyId) {
+                throw new Error("Tenant isolation violation: journal entry does not belong to tenant")
+              }
+            }
+          }
+
+          if (model in PERIOD_LOCK_MODELS) {
+            const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+              data: args.data as Record<string, unknown>,
+            })
+            if (companyId && date) {
+              await assertPeriodUnlocked(prismaBase, companyId, date, model)
+            }
+          }
 
           if (model === "JournalEntry" && args.data && typeof args.data === "object") {
             const data = args.data as Record<string, unknown>
@@ -2084,38 +2245,65 @@ export function withTenantIsolation(prisma: PrismaClient) {
             }
           }
 
-          // Period lock enforcement for all period-affecting entities
-          await assertPeriodWritable(
-            prismaBase,
-            model,
-            "update",
-            args.data as Record<string, unknown>,
-            args.where as Record<string, unknown>
-          )
+          let companyIdForGuards: string | null =
+            (auditBeforeState?.companyId as string | undefined) ?? getTenantContext()?.companyId ??
+            null
+          const entityIdForAudit = extractEntityIdFromWhere(args.where)
 
-          if (model === "EInvoice") {
-            await enforceInvoiceImmutability(prismaBase, args)
-          }
+          try {
+            if (model in PERIOD_LOCK_MODELS) {
+              const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+                data: args.data as Record<string, unknown>,
+                where: args.where as Record<string, unknown>,
+              })
+              if (companyId) companyIdForGuards = companyId
+              if (companyId && date) {
+                await assertPeriodUnlocked(prismaBase, companyId, date, model)
+              }
+            }
 
-          if (model === "EInvoiceLine") {
-            await enforceInvoiceLineImmutability(
-              prismaBase,
-              args.where as Prisma.EInvoiceLineWhereInput,
-              "update"
-            )
-          }
+            if (model === "EInvoice") {
+              await enforceInvoiceImmutability(prismaBase, args)
+            }
 
-          // JOPPD IMMUTABILITY: Block updates on signed/submitted submissions
-          if (model === "JoppdSubmission") {
-            await enforceJoppdImmutability(prismaBase, args)
-          }
+            if (model === "EInvoiceLine") {
+              await enforceInvoiceLineImmutability(
+                prismaBase,
+                args.where as Prisma.EInvoiceLineWhereInput,
+                "update"
+              )
+            }
 
-          if (model === "JoppdSubmissionLine") {
-            await enforceJoppdLineImmutability(
-              prismaBase,
-              args.where as Prisma.JoppdSubmissionLineWhereInput,
-              "update"
-            )
+            // JOPPD IMMUTABILITY: Block updates on signed/submitted submissions
+            if (model === "JoppdSubmission") {
+              await enforceJoppdImmutability(prismaBase, args)
+            }
+
+            if (model === "JoppdSubmissionLine") {
+              await enforceJoppdLineImmutability(
+                prismaBase,
+                args.where as Prisma.JoppdSubmissionLineWhereInput,
+                "update"
+              )
+            }
+          } catch (error) {
+            if (
+              error instanceof AccountingPeriodLockedError ||
+              error instanceof InvoiceImmutabilityError ||
+              error instanceof JoppdImmutabilityError
+            ) {
+              await logBlockedMutationAttempt({
+                prismaBase,
+                model,
+                action: "UPDATE",
+                entityId: entityIdForAudit,
+                companyId: companyIdForGuards,
+                attempted: args.data,
+                before: auditBeforeState,
+                error,
+              })
+            }
+            throw error
           }
 
           if (model === "CalculationSnapshot") {
@@ -2522,45 +2710,80 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("delete")
           }
 
-          // Period lock enforcement for all period-affecting entities
-          await assertPeriodWritable(
-            prismaBase,
-            model,
-            "delete",
-            undefined,
-            args.where as Record<string, unknown>
-          )
-
-          if (model === "EInvoice") {
-            await enforceInvoiceDeleteImmutability(
-              prismaBase,
-              args.where as Prisma.EInvoiceWhereUniqueInput,
-              "delete"
-            )
+          let auditBeforeState: Record<string, unknown> | null = null
+          if (AUDITED_MODELS.includes(model as AuditedModel)) {
+            try {
+              const modelClient = (prismaBase as unknown as Record<string, unknown>)[
+                model.charAt(0).toLowerCase() + model.slice(1)
+              ] as
+                | {
+                    findUnique: (args: { where: unknown }) => Promise<unknown>
+                  }
+                | undefined
+              if (modelClient?.findUnique) {
+                const existing = await modelClient.findUnique({ where: args.where })
+                if (existing && typeof existing === "object") {
+                  auditBeforeState = existing as Record<string, unknown>
+                }
+              }
+            } catch {
+              // Best-effort only.
+            }
           }
 
-          if (model === "EInvoiceLine") {
-            await enforceInvoiceLineImmutability(
-              prismaBase,
-              args.where as Prisma.EInvoiceLineWhereInput,
-              "delete"
-            )
-          }
+          let companyIdForGuards: string | null =
+            (auditBeforeState?.companyId as string | undefined) ?? getTenantContext()?.companyId ??
+            null
+          const entityIdForAudit = extractEntityIdFromWhere(args.where)
 
-          // JOPPD IMMUTABILITY: Block deletion of signed/submitted submissions
-          if (model === "JoppdSubmission") {
-            await enforceJoppdDeleteImmutability(
-              prismaBase,
-              args.where as Prisma.JoppdSubmissionWhereUniqueInput
-            )
-          }
+          try {
+            if (model === "EInvoice") {
+              await enforceInvoiceDeleteImmutability(
+                prismaBase,
+                args.where as Prisma.EInvoiceWhereUniqueInput,
+                "delete"
+              )
+            }
 
-          if (model === "JoppdSubmissionLine") {
-            await enforceJoppdLineImmutability(
-              prismaBase,
-              args.where as Prisma.JoppdSubmissionLineWhereInput,
-              "delete"
-            )
+            if (model === "EInvoiceLine") {
+              await enforceInvoiceLineImmutability(
+                prismaBase,
+                args.where as Prisma.EInvoiceLineWhereInput,
+                "delete"
+              )
+            }
+
+            // JOPPD IMMUTABILITY: Block deletion of signed/submitted submissions
+            if (model === "JoppdSubmission") {
+              await enforceJoppdDeleteImmutability(
+                prismaBase,
+                args.where as Prisma.JoppdSubmissionWhereUniqueInput
+              )
+            }
+
+            if (model === "JoppdSubmissionLine") {
+              await enforceJoppdLineImmutability(
+                prismaBase,
+                args.where as Prisma.JoppdSubmissionLineWhereInput,
+                "delete"
+              )
+            }
+          } catch (error) {
+            if (
+              error instanceof InvoiceImmutabilityError ||
+              error instanceof JoppdImmutabilityError
+            ) {
+              await logBlockedMutationAttempt({
+                prismaBase,
+                model,
+                action: "DELETE",
+                entityId: entityIdForAudit,
+                companyId: companyIdForGuards,
+                before: auditBeforeState,
+                error,
+              })
+            }
+            throw error
           }
 
           if (model === "JournalEntry") {
@@ -2707,6 +2930,31 @@ export function withTenantIsolation(prisma: PrismaClient) {
               ...args.where,
               companyId: context.companyId,
             }
+          }
+
+          try {
+            if (model in PERIOD_LOCK_MODELS) {
+              const { companyId, date } = await resolvePeriodLockContext(prismaBase, model, {
+                where: args.where as Record<string, unknown>,
+              })
+              if (companyId) companyIdForGuards = companyId
+              if (companyId && date) {
+                await assertPeriodUnlocked(prismaBase, companyId, date, model)
+              }
+            }
+          } catch (error) {
+            if (error instanceof AccountingPeriodLockedError) {
+              await logBlockedMutationAttempt({
+                prismaBase,
+                model,
+                action: "DELETE",
+                entityId: entityIdForAudit,
+                companyId: companyIdForGuards,
+                before: auditBeforeState,
+                error,
+              })
+            }
+            throw error
           }
 
           const result = await query(args)

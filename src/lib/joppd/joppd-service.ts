@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { generateR2Key } from "@/lib/r2-client"
 import { uploadWithRetention } from "@/lib/r2-client-retention"
 import { getEffectiveRuleVersion } from "@/lib/fiscal-rules/service"
+import { recordStoredArtifact } from "@/lib/artifacts/service"
 
 import { generateJoppdXml, type JoppdLineInput } from "./joppd-generator"
 import { signJoppdXml, type SigningCredentials } from "./joppd-signer"
@@ -60,9 +61,9 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
     ruleVersionId: line.ruleVersionId ?? null,
     recipientName: line.employeeName ?? line.recipientName,
     recipientOib: line.employeeOib ?? line.recipientOib,
-    grossAmount: decimalToNumber(line.grossAmount),
-    netAmount: decimalToNumber(line.netAmount),
-    taxAmount: decimalToNumber(line.taxAmount),
+    grossAmount: line.grossAmount ? line.grossAmount.toFixed(2) : null,
+    netAmount: line.netAmount ? line.netAmount.toFixed(2) : null,
+    taxAmount: line.taxAmount ? line.taxAmount.toFixed(2) : null,
     originalLineId: correctionLookup[line.id] ?? null,
     lineData: line.joppdData,
   }))
@@ -75,6 +76,7 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
         periodMonth: payout.periodMonth,
         isCorrection: Boolean(input.correctionOfSubmissionId),
         correctedSubmissionId: input.correctionOfSubmissionId ?? null,
+        createdAt: payout.payoutDate,
       },
     })
 
@@ -108,7 +110,7 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
     periodMonth: payout.periodMonth,
     payoutId: payout.id,
     payoutDate: payout.payoutDate,
-    createdAt: submission.createdAt ?? new Date(),
+    createdAt: submission.createdAt ?? payout.payoutDate,
     correctionOfSubmissionId: input.correctionOfSubmissionId ?? null,
     lines: lineInputs,
   })
@@ -119,10 +121,37 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
   }
 
   const signedXml = signJoppdXml(xmlPayload, input.credentials)
-  const signedXmlHash = createHash("sha256").update(signedXml).digest("hex")
-  const storageKey = generateR2Key(input.companyId, signedXmlHash, `joppd-${submission.id}.xml`)
+  const signedXmlBuffer = Buffer.from(signedXml, "utf8")
+  const signedXmlHash = createHash("sha256").update(signedXmlBuffer).digest("hex")
 
-  await uploadWithRetention(r2Client, storageKey, Buffer.from(signedXml), "application/xml", {
+  const inputSnapshot = {
+    companyId: input.companyId,
+    payoutId: payout.id,
+    payoutDate: payout.payoutDate.toISOString(),
+    periodYear: payout.periodYear,
+    periodMonth: payout.periodMonth,
+    correctionOfSubmissionId: input.correctionOfSubmissionId ?? null,
+    lineCorrections: input.lineCorrections ?? {},
+    lines: lineInputs.map((line) => ({
+      lineNumber: line.lineNumber,
+      payoutLineId: line.payoutLineId,
+      ruleVersionId: line.ruleVersionId ?? null,
+      recipientName: line.recipientName ?? null,
+      recipientOib: line.recipientOib ?? null,
+      grossAmount: line.grossAmount ?? null,
+      netAmount: line.netAmount ?? null,
+      taxAmount: line.taxAmount ?? null,
+      originalLineId: line.originalLineId ?? null,
+      lineData: line.lineData ?? null,
+    })),
+  }
+  const inputHash = createHash("sha256").update(JSON.stringify(inputSnapshot)).digest("hex")
+
+  const period = `${payout.periodYear}-${String(payout.periodMonth).padStart(2, "0")}`
+  const fileName = `joppd-${payout.company.oib}-${period}-${payout.id}.xml`
+  const storageKey = generateR2Key(input.companyId, signedXmlHash, fileName)
+
+  await uploadWithRetention(r2Client, storageKey, signedXmlBuffer, "application/xml", {
     retentionYears: input.retentionYears,
     metadata: {
       "submission-id": submission.id,
@@ -131,6 +160,27 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
       "period-year": payout.periodYear.toString(),
       "period-month": payout.periodMonth.toString(),
     },
+  })
+
+  await recordStoredArtifact({
+    companyId: input.companyId,
+    type: "XML",
+    fileName,
+    contentType: "application/xml",
+    sizeBytes: signedXmlBuffer.length,
+    storageKey,
+    checksum: signedXmlHash,
+    generatorVersion: "joppd-xml@1",
+    inputHash,
+    generationMeta: {
+      artifactKind: "JOPPD_XML",
+      submissionId: submission.id,
+      payoutId: payout.id,
+      periodYear: payout.periodYear,
+      periodMonth: payout.periodMonth,
+    },
+    createdById: null,
+    reason: "joppd_xml_generate",
   })
 
   return prisma.joppdSubmission.update({
@@ -202,9 +252,9 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
     payoutLineId: line.id,
     recipientName: line.recipientName,
     recipientOib: line.recipientOib,
-    grossAmount: decimalToNumber(line.grossAmount),
-    netAmount: decimalToNumber(line.netAmount),
-    taxAmount: decimalToNumber(line.taxAmount),
+    grossAmount: line.grossAmount ? line.grossAmount.toFixed(2) : null,
+    netAmount: line.netAmount ? line.netAmount.toFixed(2) : null,
+    taxAmount: line.taxAmount ? line.taxAmount.toFixed(2) : null,
     originalLineId: correctionLookup[line.id] ?? originalLineLookup.get(line.id)?.id ?? null,
     lineData: line.joppdData,
   }))
@@ -251,7 +301,7 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
     periodMonth: payout.periodMonth,
     payoutId: payout.id,
     payoutDate: payout.payoutDate,
-    createdAt: submission.createdAt ?? new Date(),
+    createdAt: submission.createdAt ?? payout.payoutDate,
     correctionOfSubmissionId: originalSubmission.id,
     lines: lineInputs,
   })
@@ -351,11 +401,4 @@ export async function markJoppdRejected(id: string, rejectionReason?: string) {
 
     return updated
   })
-}
-
-function decimalToNumber(value: Prisma.Decimal | null): number | null {
-  if (!value) {
-    return null
-  }
-  return value.toNumber()
 }

@@ -5,6 +5,9 @@
 import { Builder } from "xml2js"
 import { db } from "@/lib/db"
 import { Money } from "@/domain/shared"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 // VAT rate in Croatia (25%)
 const VAT_RATE = 25
@@ -18,8 +21,8 @@ export const VAT_RATES = {
 
 export interface VatBreakdown {
   rate: number
-  baseAmount: number
-  vatAmount: number
+  baseAmount: string
+  vatAmount: string
 }
 
 export interface PdvFormData {
@@ -46,16 +49,16 @@ export interface PdvFormData {
     }
     // I.2 EU deliveries (zero-rated)
     euDeliveries: {
-      goods: number // Base amount
-      services: number // Base amount
+      goods: string // Base amount
+      services: string // Base amount
     }
     // I.3 Exports (zero-rated)
-    exports: number // Base amount
+    exports: string // Base amount
     // I.4 Exempt deliveries
-    exempt: number // Base amount
+    exempt: string // Base amount
     // I.5 Total output VAT
-    totalOutputVat: number
-    totalBaseOutput: number
+    totalOutputVat: string
+    totalBaseOutput: string
   }
 
   // Section II - Acquisitions (Input VAT)
@@ -74,30 +77,31 @@ export interface PdvFormData {
     // II.3 Imports
     imports: VatBreakdown
     // II.4 Non-deductible input VAT
-    nonDeductible: number
+    nonDeductible: string
     // II.5 Total input VAT (deductible)
-    totalInputVat: number
-    totalBaseInput: number
+    totalInputVat: string
+    totalBaseInput: string
   }
 
   // Section III - Calculation
   section3: {
-    outputVat: number // Total output VAT
-    inputVat: number // Total deductible input VAT
-    vatPayable: number // Positive = pay, negative = refund
+    outputVat: string // Total output VAT
+    inputVat: string // Total deductible input VAT
+    vatPayable: string // Positive = pay, negative = refund
   }
 
   // Section IV - Special provisions
   section4?: {
-    marginScheme?: number // Margin scheme transactions
-    travelAgency?: number // Travel agency transactions
-    usedGoods?: number // Used goods scheme
+    marginScheme?: string // Margin scheme transactions
+    travelAgency?: string // Travel agency transactions
+    usedGoods?: string // Used goods scheme
   }
 }
 
 export interface PdvXmlOptions {
   includeDeclaration?: boolean
   formattedOutput?: boolean
+  generatedAt?: Date
 }
 
 /**
@@ -108,9 +112,9 @@ export async function fetchVatReportData(
   dateFrom: Date,
   dateTo: Date
 ): Promise<{
-  outputVat: { net: number; vat: number; total: number }
-  inputVat: { deductible: number; nonDeductible: number; total: number }
-  vatPayable: number
+  outputVat: { net: string; vat: string; total: string }
+  inputVat: { deductible: string; nonDeductible: string; total: string }
+  vatPayable: string
 }> {
   // Get invoices (output VAT)
   const invoices = await db.eInvoice.findMany({
@@ -228,8 +232,101 @@ export async function preparePdvFormData(
     throw new Error("Company not found")
   }
 
-  // Get VAT data
-  const vatData = await fetchVatReportData(companyId, dateFrom, dateTo)
+  const invoices = await db.eInvoice.findMany({
+    where: {
+      companyId,
+      direction: "OUTBOUND",
+      issueDate: { gte: dateFrom, lte: dateTo },
+      status: { not: "DRAFT" },
+    },
+    include: {
+      buyer: { select: { vatNumber: true, country: true } },
+      lines: { select: { netAmount: true, vatAmount: true, vatRate: true } },
+    },
+  })
+
+  const uraInputs = await db.uraInput.findMany({
+    where: {
+      companyId,
+      date: { gte: dateFrom, lte: dateTo },
+    },
+    select: {
+      netAmount: true,
+      vatRate: true,
+      deductibleVatAmount: true,
+      nonDeductibleVatAmount: true,
+    },
+  })
+
+  let outBase25 = new Decimal(0)
+  let outVat25 = new Decimal(0)
+  let outBase13 = new Decimal(0)
+  let outVat13 = new Decimal(0)
+  let outBase5 = new Decimal(0)
+  let outVat5 = new Decimal(0)
+  let outEuGoods = new Decimal(0)
+  let outEuServices = new Decimal(0)
+
+  for (const inv of invoices) {
+    const buyerVat = (inv.buyer?.vatNumber ?? "").toUpperCase()
+    const isEuReverseCharge =
+      buyerVat.length > 0 &&
+      !buyerVat.startsWith("HR") &&
+      new Decimal(inv.vatAmount).equals(0) &&
+      inv.lines.some((l) => new Decimal(l.vatRate).equals(0))
+
+    if (isEuReverseCharge) {
+      outEuServices = outEuServices.plus(new Decimal(inv.netAmount))
+      continue
+    }
+
+    for (const line of inv.lines) {
+      const rate = new Decimal(line.vatRate)
+      if (rate.equals(VAT_RATES.STANDARD)) {
+        outBase25 = outBase25.plus(new Decimal(line.netAmount))
+        outVat25 = outVat25.plus(new Decimal(line.vatAmount))
+      } else if (rate.equals(VAT_RATES.REDUCED)) {
+        outBase13 = outBase13.plus(new Decimal(line.netAmount))
+        outVat13 = outVat13.plus(new Decimal(line.vatAmount))
+      } else if (rate.equals(VAT_RATES.SUPER_REDUCED)) {
+        outBase5 = outBase5.plus(new Decimal(line.netAmount))
+        outVat5 = outVat5.plus(new Decimal(line.vatAmount))
+      }
+    }
+  }
+
+  let inBase25 = new Decimal(0)
+  let inVat25 = new Decimal(0)
+  let inBase13 = new Decimal(0)
+  let inVat13 = new Decimal(0)
+  let inBase5 = new Decimal(0)
+  let inVat5 = new Decimal(0)
+  let nonDeductible = new Decimal(0)
+
+  for (const row of uraInputs) {
+    const rate = new Decimal(row.vatRate)
+    nonDeductible = nonDeductible.plus(new Decimal(row.nonDeductibleVatAmount))
+    if (rate.equals(VAT_RATES.STANDARD)) {
+      inBase25 = inBase25.plus(new Decimal(row.netAmount))
+      inVat25 = inVat25.plus(new Decimal(row.deductibleVatAmount))
+    } else if (rate.equals(VAT_RATES.REDUCED)) {
+      inBase13 = inBase13.plus(new Decimal(row.netAmount))
+      inVat13 = inVat13.plus(new Decimal(row.deductibleVatAmount))
+    } else if (rate.equals(VAT_RATES.SUPER_REDUCED)) {
+      inBase5 = inBase5.plus(new Decimal(row.netAmount))
+      inVat5 = inVat5.plus(new Decimal(row.deductibleVatAmount))
+    }
+  }
+
+  const totalOutputVat = outVat25.plus(outVat13).plus(outVat5)
+  const totalBaseOutput = outBase25.plus(outBase13).plus(outBase5).plus(outEuGoods).plus(outEuServices)
+  const totalInputVat = inVat25.plus(inVat13).plus(inVat5)
+  const totalBaseInput = inBase25.plus(inBase13).plus(inBase5)
+
+  const toMoneyString = (value: Prisma.Decimal) =>
+    value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2)
+
+  const vatPayable = totalOutputVat.sub(totalInputVat)
 
   // Determine period type (monthly vs quarterly)
   const monthDiff =
@@ -253,52 +350,63 @@ export async function preparePdvFormData(
     periodQuarter: isQuarterly ? periodQuarter : undefined,
     periodYear,
 
-    section1: {
-      domestic: {
-        standard: {
-          rate: VAT_RATES.STANDARD,
-          baseAmount: vatData.outputVat.net,
-          vatAmount: vatData.outputVat.vat,
-        },
-        reduced: { rate: VAT_RATES.REDUCED, baseAmount: 0, vatAmount: 0 },
-        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: 0, vatAmount: 0 },
-      },
-      euDeliveries: { goods: 0, services: 0 },
-      exports: 0,
-      exempt: 0,
-      totalOutputVat: vatData.outputVat.vat,
-      totalBaseOutput: vatData.outputVat.net,
+	    section1: {
+	      domestic: {
+	        standard: {
+	          rate: VAT_RATES.STANDARD,
+	          baseAmount: toMoneyString(outBase25),
+	          vatAmount: toMoneyString(outVat25),
+	        },
+	        reduced: {
+	          rate: VAT_RATES.REDUCED,
+	          baseAmount: toMoneyString(outBase13),
+	          vatAmount: toMoneyString(outVat13),
+	        },
+	        superReduced: {
+	          rate: VAT_RATES.SUPER_REDUCED,
+	          baseAmount: toMoneyString(outBase5),
+	          vatAmount: toMoneyString(outVat5),
+	        },
+	      },
+	      euDeliveries: { goods: toMoneyString(outEuGoods), services: toMoneyString(outEuServices) },
+	      exports: "0.00",
+	      exempt: "0.00",
+	      totalOutputVat: toMoneyString(totalOutputVat),
+      totalBaseOutput: toMoneyString(totalBaseOutput),
     },
 
     section2: {
       domestic: {
         standard: {
           rate: VAT_RATES.STANDARD,
-          // Reverse calculate base: vatAmount / 0.25 = vatAmount * 4
-          baseAmount: Money.fromString(String(vatData.inputVat.deductible))
-            .multiply("4")
-            .toDisplayNumber(),
-          vatAmount: vatData.inputVat.deductible,
+          baseAmount: toMoneyString(inBase25),
+          vatAmount: toMoneyString(inVat25),
         },
-        reduced: { rate: VAT_RATES.REDUCED, baseAmount: 0, vatAmount: 0 },
-        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: 0, vatAmount: 0 },
+        reduced: {
+          rate: VAT_RATES.REDUCED,
+          baseAmount: toMoneyString(inBase13),
+          vatAmount: toMoneyString(inVat13),
+        },
+        superReduced: {
+          rate: VAT_RATES.SUPER_REDUCED,
+          baseAmount: toMoneyString(inBase5),
+          vatAmount: toMoneyString(inVat5),
+        },
       },
       euAcquisitions: {
-        goods: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
-        services: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
+        goods: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
+        services: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
       },
-      imports: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
-      nonDeductible: vatData.inputVat.nonDeductible,
-      totalInputVat: vatData.inputVat.deductible,
-      totalBaseInput: Money.fromString(String(vatData.inputVat.deductible))
-        .multiply("4")
-        .toDisplayNumber(),
+      imports: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
+      nonDeductible: toMoneyString(nonDeductible),
+      totalInputVat: toMoneyString(totalInputVat),
+      totalBaseInput: toMoneyString(totalBaseInput),
     },
 
     section3: {
-      outputVat: vatData.outputVat.vat,
-      inputVat: vatData.inputVat.deductible,
-      vatPayable: vatData.vatPayable,
+      outputVat: toMoneyString(totalOutputVat),
+      inputVat: toMoneyString(totalInputVat),
+      vatPayable: toMoneyString(vatPayable),
     },
   }
 }
@@ -307,8 +415,8 @@ export async function preparePdvFormData(
  * Format amount for XML (2 decimal places)
  * Uses Money class for proper rounding
  */
-function formatAmount(amount: number): string {
-  return Money.fromString(String(amount)).round().toDisplayNumber().toFixed(2)
+function formatAmount(amount: string): string {
+  return new Decimal(amount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toString()
 }
 
 /**
@@ -319,6 +427,7 @@ function formatAmount(amount: number): string {
  */
 export function generatePdvXml(data: PdvFormData, options: PdvXmlOptions = {}): string {
   const { includeDeclaration = true, formattedOutput = true } = options
+  const generatedAt = options.generatedAt ?? new Date()
 
   // Format period
   const period =
@@ -334,8 +443,8 @@ export function generatePdvXml(data: PdvFormData, options: PdvXmlOptions = {}): 
         "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
       },
       Metapodaci: {
-        Datum: new Date().toISOString().split("T")[0],
-        Vrijeme: new Date().toISOString().split("T")[1].split(".")[0],
+        Datum: generatedAt.toISOString().split("T")[0],
+        Vrijeme: generatedAt.toISOString().split("T")[1].split(".")[0],
         Oblik: "PDV",
         Verzija: "1.0",
       },
@@ -497,21 +606,24 @@ export function validatePdvFormData(data: PdvFormData): {
   }
 
   // Validate amounts are not negative (except vatPayable which can be refund)
-  if (data.section1.totalOutputVat < 0) {
+  if (new Decimal(data.section1.totalOutputVat).lessThan(0)) {
     errors.push("Izlazni PDV ne moze biti negativan")
   }
 
-  if (data.section2.totalInputVat < 0) {
+  if (new Decimal(data.section2.totalInputVat).lessThan(0)) {
     errors.push("Ulazni PDV ne moze biti negativan")
   }
 
   // Verify section 3 calculation matches
-  const calculatedVatPayable = data.section3.outputVat - data.section3.inputVat
-  const tolerance = 0.02 // 2 cent tolerance for rounding
+  const calculatedVatPayable = new Decimal(data.section3.outputVat).sub(
+    new Decimal(data.section3.inputVat)
+  )
+  const reported = new Decimal(data.section3.vatPayable)
+  const tolerance = new Decimal("0.02") // 2 cent tolerance for rounding
 
-  if (Math.abs(calculatedVatPayable - data.section3.vatPayable) > tolerance) {
+  if (calculatedVatPayable.sub(reported).abs().greaterThan(tolerance)) {
     errors.push(
-      `PDV za uplatu/povrat (${data.section3.vatPayable}) ne odgovara izracunu (${calculatedVatPayable})`
+      `PDV za uplatu/povrat (${data.section3.vatPayable}) ne odgovara izracunu (${calculatedVatPayable.toFixed(2)})`
     )
   }
 

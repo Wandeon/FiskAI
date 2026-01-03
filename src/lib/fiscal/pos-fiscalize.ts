@@ -4,15 +4,20 @@ import { executeFiscalRequest } from "./fiscal-pipeline"
 import { FiscalStatus, FiscalMessageType } from "@prisma/client"
 import { buildFiscalRequestSnapshot } from "@/lib/fiscal/request-snapshot"
 import { buildFiscalResponseCreateInput } from "@/lib/fiscal/response-builder"
+import { Prisma } from "@prisma/client"
+import { createHash } from "crypto"
+import { moneyToMinorUnits } from "@/lib/money"
 
 const FORCE_DEMO_MODE = process.env.FISCAL_DEMO_MODE === "true"
+const DETERMINISTIC_MODE = process.env.DETERMINISTIC_MODE === "true"
+const Decimal = Prisma.Decimal
 
 export interface PosFiscalInput {
   invoice: {
     id: string
     invoiceNumber: string
     issueDate: Date
-    totalAmount: number
+    totalAmount: Prisma.Decimal
     paymentMethod: "CASH" | "CARD"
   }
   company: {
@@ -35,7 +40,7 @@ export async function fiscalizePosSale(input: PosFiscalInput): Promise<PosFiscal
   const { invoice, company } = input
 
   // Calculate ZKI (always required)
-  const totalInCents = Math.round(invoice.totalAmount * 100)
+  const totalInCents = moneyToMinorUnits(invoice.totalAmount, 2)
 
   const zkiInput = {
     oib: company.oib,
@@ -61,7 +66,20 @@ export async function fiscalizePosSale(input: PosFiscalInput): Promise<PosFiscal
   // Demo mode if: explicitly disabled, or FISCAL_DEMO_MODE env is set
   if (!company.fiscalEnabled || FORCE_DEMO_MODE) {
     // Demo mode - return mock JIR
-    const demoJir = `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const demoJir = DETERMINISTIC_MODE
+      ? `DEMO-${createHash("sha256")
+          .update(
+            [
+              company.oib,
+              invoice.invoiceNumber,
+              invoice.issueDate.toISOString(),
+              zki,
+              new Decimal(totalInCents).toFixed(0),
+            ].join("|")
+          )
+          .digest("hex")
+          .slice(0, 32)}`
+      : `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     // Still update invoice with demo data for testing
     await db.eInvoice.update({

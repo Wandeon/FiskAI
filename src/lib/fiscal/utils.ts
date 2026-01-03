@@ -1,6 +1,20 @@
 // src/lib/fiscal/utils.ts
+import { Prisma } from "@prisma/client"
 
-export function formatAmount(amount: number, decimals: number = 2): string {
+const Decimal = Prisma.Decimal
+
+export function formatAmount(
+  amount: number | Prisma.Decimal | string,
+  decimals: number = 2
+): string {
+  if (amount instanceof Decimal) {
+    return amount.toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP).toFixed(decimals)
+  }
+
+  if (typeof amount === "string") {
+    return new Decimal(amount).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP).toFixed(decimals)
+  }
+
   return amount.toFixed(decimals)
 }
 
