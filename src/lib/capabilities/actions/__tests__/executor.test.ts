@@ -27,6 +27,7 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("../registry", () => ({
   getActionHandler: vi.fn(),
+  registerActionHandler: vi.fn(),
 }))
 
 vi.mock("../../server", () => ({
@@ -35,6 +36,8 @@ vi.mock("../../server", () => ({
 
 // Mock the handlers import (side effect registration)
 vi.mock("../handlers/invoice", () => ({}))
+vi.mock("../handlers/expense", () => ({}))
+vi.mock("../handlers/bank", () => ({}))
 
 // Import mocked functions
 import { auth } from "@/lib/auth"
