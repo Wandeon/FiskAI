@@ -1,16 +1,17 @@
 // src/app/(app)/__tests__/page.test.tsx
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { redirect } from "next/navigation"
+import type { Session } from "next-auth"
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }))
 
-vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
-}))
+const mockAuth = vi.fn<[], Promise<Session | null>>()
 
-import { auth } from "@/lib/auth"
+vi.mock("@/lib/auth", () => ({
+  auth: () => mockAuth(),
+}))
 
 describe("App Root Page", () => {
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe("App Root Page", () => {
   })
 
   it("redirects to control-center when user is authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    mockAuth.mockResolvedValue({
       user: { id: "user-1", email: "test@example.com" },
       expires: new Date(Date.now() + 86400000).toISOString(),
     })
@@ -29,16 +30,7 @@ describe("App Root Page", () => {
   })
 
   it("redirects to login when user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null)
-
-    // Need to re-import to get fresh module
-    vi.resetModules()
-    vi.mock("next/navigation", () => ({
-      redirect: vi.fn(),
-    }))
-    vi.mock("@/lib/auth", () => ({
-      auth: vi.fn().mockResolvedValue(null),
-    }))
+    mockAuth.mockResolvedValue(null)
 
     const { default: Page } = await import("../page")
     await Page()

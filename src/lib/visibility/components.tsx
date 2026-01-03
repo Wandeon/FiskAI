@@ -126,9 +126,7 @@ export function VisibleNavItem({
       >
         {icon}
         <span className="flex-1">{label}</span>
-        {legacy && (
-          <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>
-        )}
+        {legacy && <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>}
       </Link>
     )
   }
@@ -152,9 +150,7 @@ export function VisibleNavItem({
       >
         <span className="opacity-60">{icon}</span>
         <span className="flex-1 opacity-60">{label}</span>
-        {legacy && (
-          <span className="text-xs text-[var(--muted)] mr-1">(legacy)</span>
-        )}
+        {legacy && <span className="text-xs text-[var(--muted)] mr-1">(legacy)</span>}
         <Lock className="h-3 w-3" />
       </div>
     )
@@ -175,9 +171,7 @@ export function VisibleNavItem({
     >
       {icon}
       <span className="flex-1">{label}</span>
-      {legacy && (
-        <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>
-      )}
+      {legacy && <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>}
     </Link>
   )
 }
