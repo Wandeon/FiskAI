@@ -78,6 +78,12 @@ export interface CapabilityAction {
 
   /** Is this the primary action? */
   primary?: boolean
+
+  /** Should this action require user confirmation before executing? */
+  requiresConfirmation?: boolean
+
+  /** Custom confirmation message (default: "Jeste li sigurni da zelite nastaviti?") */
+  confirmationMessage?: string
 }
 
 /**

@@ -5,20 +5,23 @@
  * Renders an action button based on capability resolution.
  * Disabled actions show the reason - never hidden.
  * Executes capability actions via the useCapabilityAction hook.
+ * Actions with requiresConfirmation show a dialog before executing.
  *
  * @module components/capability
  * @since Control Center Shells
  * @updated PHASE 2 - Capability-Driven Actions
+ * @updated PHASE 3 - Confirmation Dialog Support
  */
 
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Loader2 } from "lucide-react"
 import { useCapabilityAction } from "@/lib/capabilities/actions/useCapabilityAction"
 import { toast } from "@/lib/toast"
+import { ConfirmationDialog } from "./ConfirmationDialog"
 import type { ActionButtonProps } from "./types"
 
 export function ActionButton({
@@ -31,25 +34,37 @@ export function ActionButton({
   onSuccess,
   onError,
 }: ActionButtonProps) {
+  const [showConfirmation, setShowConfirmation] = useState(false)
+
   const { execute, isLoading } = useCapabilityAction({
     capabilityId,
     actionId: action.id,
     entityId,
     entityType,
     onSuccess: () => {
+      setShowConfirmation(false)
       toast.success("Success", `${action.label} completed`)
       onSuccess?.()
     },
     onError: (err) => {
+      setShowConfirmation(false)
       toast.error("Error", err)
       onError?.(err)
     },
   })
 
   const handleClick = async () => {
-    if (action.enabled && !isLoading) {
+    if (!action.enabled || isLoading) return
+
+    if (action.requiresConfirmation) {
+      setShowConfirmation(true)
+    } else {
       await execute({ id: entityId, ...params })
     }
+  }
+
+  const handleConfirm = async () => {
+    await execute({ id: entityId, ...params })
   }
 
   const isDisabled = !action.enabled || isLoading
@@ -71,6 +86,18 @@ export function ActionButton({
     </Button>
   )
 
+  const confirmationDialog = action.requiresConfirmation && (
+    <ConfirmationDialog
+      open={showConfirmation}
+      onOpenChange={setShowConfirmation}
+      title={`Potvrdi ${action.label}`}
+      description={action.confirmationMessage || "Jeste li sigurni da zelite nastaviti?"}
+      confirmLabel={action.label}
+      onConfirm={handleConfirm}
+      isLoading={isLoading}
+    />
+  )
+
   if (!action.enabled && action.disabledReason) {
     return (
       <TooltipProvider>
@@ -80,9 +107,15 @@ export function ActionButton({
             <p>{action.disabledReason}</p>
           </TooltipContent>
         </Tooltip>
+        {confirmationDialog}
       </TooltipProvider>
     )
   }
 
-  return button
+  return (
+    <>
+      {button}
+      {confirmationDialog}
+    </>
+  )
 }
