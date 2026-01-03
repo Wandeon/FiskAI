@@ -1,9 +1,12 @@
 import { requireAuth, requireCompany } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
+import { resolveCapabilityForUser } from "@/lib/capabilities/server"
+import { BlockerDisplay } from "@/components/capability"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ExpenseForm } from "./expense-form"
+import { redirect } from "next/navigation"
 
 export default async function NewExpensePage() {
   const user = await requireAuth()
@@ -13,6 +16,27 @@ export default async function NewExpensePage() {
     companyId: company.id,
     userId: user.id!,
   })
+
+  // Check capability before allowing access
+  const capability = await resolveCapabilityForUser("EXP-001", {
+    entityType: "Expense",
+  })
+
+  if (capability.state === "UNAUTHORIZED") {
+    redirect("/control-center")
+  }
+
+  if (capability.state === "BLOCKED") {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Nije moguće kreirati trošak</h1>
+        <BlockerDisplay blockers={capability.blockers} />
+        <Link href="/control-center">
+          <Button>Povratak na Kontrolni centar</Button>
+        </Link>
+      </div>
+    )
+  }
 
   const [vendors, categories] = await Promise.all([
     db.contact.findMany({
