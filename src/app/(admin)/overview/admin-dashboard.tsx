@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LegacyBanner } from "@/components/layout/LegacyBanner"
 import {
   Users,
   CreditCard,
@@ -36,6 +37,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   return (
     <div className="space-y-6">
+      <LegacyBanner message="Legacy overview. Use Control Center for platform operations." />
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
       {/* Quick Actions */}
