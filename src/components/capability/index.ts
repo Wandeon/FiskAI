@@ -21,3 +21,4 @@ export { SelectionProvider, useSelection, useSelectionOptional } from "./selecti
 export { BatchActionBar } from "./BatchActionBar"
 export type { BatchActionDefinition } from "./BatchActionBar"
 export { SelectableQueueItem } from "./SelectableQueueItem"
+export { ConfirmationDialog } from "./ConfirmationDialog"
