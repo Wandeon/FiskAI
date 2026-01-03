@@ -93,6 +93,8 @@ export interface VisibleNavItemProps {
   label: string
   /** Whether this item is currently active */
   isActive?: boolean
+  /** Whether this is a legacy route (shows visual indicator) */
+  legacy?: boolean
   /** Additional class name */
   className?: string
 }
@@ -103,6 +105,7 @@ export function VisibleNavItem({
   icon,
   label,
   isActive = false,
+  legacy = false,
   className,
 }: VisibleNavItemProps) {
   const visibility = useVisibilityOptional()
@@ -117,11 +120,13 @@ export function VisibleNavItem({
           isActive
             ? "bg-[var(--surface-secondary)] text-[var(--foreground)]"
             : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)]",
+          legacy && "opacity-60 italic",
           className
         )}
       >
         {icon}
-        <span>{label}</span>
+        <span className="flex-1">{label}</span>
+        {legacy && <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>}
       </Link>
     )
   }
@@ -138,12 +143,14 @@ export function VisibleNavItem({
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-lg cursor-not-allowed",
           "text-[var(--muted)] opacity-50",
+          legacy && "italic",
           className
         )}
         title={hint || undefined}
       >
         <span className="opacity-60">{icon}</span>
         <span className="flex-1 opacity-60">{label}</span>
+        {legacy && <span className="text-xs text-[var(--muted)] mr-1">(legacy)</span>}
         <Lock className="h-3 w-3" />
       </div>
     )
@@ -158,11 +165,13 @@ export function VisibleNavItem({
         isActive
           ? "bg-[var(--surface-secondary)] text-[var(--foreground)]"
           : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-secondary)]",
+        legacy && "opacity-60 italic",
         className
       )}
     >
       {icon}
-      <span>{label}</span>
+      <span className="flex-1">{label}</span>
+      {legacy && <span className="ml-auto text-xs text-[var(--muted)]">(legacy)</span>}
     </Link>
   )
 }

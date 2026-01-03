@@ -172,6 +172,7 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
                             }
                             label={item.name}
                             isActive={isActive}
+                            legacy={item.legacy}
                             className={cn(
                               "text-sm font-medium",
                               isActive
@@ -203,7 +204,8 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
                           isActive
                             ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
                             : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]",
-                          isCollapsed && "justify-center px-2"
+                          isCollapsed && "justify-center px-2",
+                          item.legacy && "opacity-60 italic"
                         )}
                       >
                         <Icon
@@ -216,6 +218,9 @@ export function Sidebar({ defaultCollapsed = false, user, company }: SidebarProp
                         {!isCollapsed && (
                           <>
                             <span className="flex-1">{item.name}</span>
+                            {item.legacy && (
+                              <span className="text-xs text-[var(--muted)]">(legacy)</span>
+                            )}
                             {item.badge !== undefined && item.badge > 0 && (
                               <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
                                 {item.badge}
