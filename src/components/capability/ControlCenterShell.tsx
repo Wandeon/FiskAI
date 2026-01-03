@@ -23,10 +23,10 @@ interface Props {
 export function ControlCenterShell({ title, role, children }: Props) {
   return (
     <DiagnosticsProvider>
-      <div className="container mx-auto py-6 space-y-6">
-        <header className="flex items-center justify-between border-b pb-4">
+      <div className="space-y-4 md:space-y-6">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
           <div>
-            <h1 className="text-2xl font-bold">{title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{title}</h1>
             <p className="text-sm text-muted-foreground">
               {role} Control Center - Capability-driven view
             </p>
@@ -34,7 +34,9 @@ export function ControlCenterShell({ title, role, children }: Props) {
           <DiagnosticsToggle />
         </header>
 
-        <main className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{children}</main>
+        <main className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+          {children}
+        </main>
       </div>
     </DiagnosticsProvider>
   )
