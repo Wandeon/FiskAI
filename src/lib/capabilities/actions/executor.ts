@@ -18,6 +18,8 @@ import type { ActionResult, ActionContext } from "./types"
 
 // Import handlers to register them
 import "./handlers/invoice"
+import "./handlers/expense"
+import "./handlers/bank"
 
 /**
  * Input for executing a capability action.
