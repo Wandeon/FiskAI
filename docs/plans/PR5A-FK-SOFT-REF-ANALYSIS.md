@@ -120,12 +120,47 @@ export async function deleteEvidence(id: string) {
 
 ---
 
-## Decision Required
+## Decisions Made
 
-**WebhookSubscription options:**
+### WebhookSubscription: Keep in Core with Soft Ref
 
-1. **Keep soft ref** - Add cleanup job, accept some orphan risk
-2. **Move to regulatory schema** - If it's primarily RTL, move it in Batch 2
-3. **Split the model** - Create separate models for RTL vs outbox webhooks
+**Decision:** Keep `WebhookSubscription` in core schema. Keep `sourceId` as a soft ref with validation and cleanup.
 
-Recommendation: Option 1 (keep soft ref with cleanup job) unless WebhookSubscription is > 80% RTL usage.
+**Rationale:**
+
+- Webhook subscriptions are **integration plumbing**, not regulatory truth
+- Moving to regulatory DB would mix "integration config" into the evidence vault
+- Would complicate access control and operations
+
+**Implementation:**
+
+1. ✅ Creation-time validation: `src/lib/regulatory-truth/webhooks/subscription-validation.ts`
+   - `validateAndCreateWebhookSubscription()` checks sourceId exists in dbReg before creating
+2. ✅ Orphan cleanup job: `scripts/cleanup-orphan-subscriptions.ts`
+   - Run periodically to clean up subscriptions referencing deleted sources
+
+### CoverageReport Cascade: Defer to Batch 2
+
+**Decision:** Do NOT implement code-level cascade now. Defer until CoverageReport moves to regulatory DB.
+
+**Rationale:**
+
+- App-level cascades are error-prone and hard to maintain
+- Evidence is append-only in practice, reducing immediate risk
+- FK + cascade will be restored when model moves to regulatory schema
+
+**Implementation:**
+
+1. ✅ Integrity checker flags CoverageReport orphans as non-fixable
+2. ✅ Treat orphans as release-blockers in staging
+3. Evidence deletes are blocked (append-only)
+
+### Integrity Checker: Made Safer
+
+**Changes:**
+
+- `--fix` now requires `--confirm` flag
+- Added `--dry-run` mode to preview changes
+- Issues categorized as fixable (optional fields) vs non-fixable (required fields)
+- Non-fixable orphans require manual review
+- Exit code 1 on any orphans found (fails CI)

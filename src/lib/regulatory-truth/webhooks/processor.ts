@@ -1,6 +1,7 @@
 // src/lib/regulatory-truth/webhooks/processor.ts
 
-import { db } from "@/lib/db"
+import { db } from "@/lib/db" // For WebhookEvent, WebhookSubscription (still in core)
+import { dbReg } from "@/lib/db/regulatory" // For Evidence, RegulatorySource (in regulatory)
 import { hashContent } from "../utils/content-hash"
 import { fetchWithRateLimit } from "../utils/rate-limiter"
 import { extractQueue, ocrQueue } from "../workers/queues"
@@ -22,14 +23,11 @@ export async function processWebhookEvent(eventId: string): Promise<void> {
 
   try {
     // Get webhook event
+    // NOTE: subscription.source FK removed - sourceId is now a soft ref to RegulatorySource in regulatory.prisma
     const event = await db.webhookEvent.findUnique({
       where: { id: eventId },
       include: {
-        subscription: {
-          include: {
-            source: true,
-          },
-        },
+        subscription: true,
       },
     })
 
@@ -90,7 +88,7 @@ export async function processWebhookEvent(eventId: string): Promise<void> {
       try {
         const evidence = await fetchAndCreateEvidence(
           url,
-          event.subscription.source?.id || null,
+          event.subscription.sourceId || null, // Soft ref to RegulatorySource
           event.title || null
         )
 

@@ -15,15 +15,14 @@
 - [x] Both Prisma schemas validate successfully
 - [x] Both Prisma clients generate successfully
 - [x] ESLint rule relaxed to warn (not error) during transition
-
-### In Progress
-
-- [ ] Migrating RTL code files to use `dbReg` for moved models
+- [x] Migrated 45 RTL files to use `dbReg` for moved models
+- [x] Smoke test passes
+- [x] PR created: https://github.com/Wandeon/FiskAI/pull/1297
 
 ### Remaining
 
-- [ ] Run full test suite
-- [ ] Create PR
+- [ ] CI passes full test suite
+- [ ] PR merged
 
 ## Executive Summary
 
