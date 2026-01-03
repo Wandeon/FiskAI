@@ -32,7 +32,7 @@ export interface ProcessExtractionResult {
  * Extract regulatory processes from content with numbered steps
  */
 export async function runProcessExtractor(evidenceId: string): Promise<ProcessExtractionResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 

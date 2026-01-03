@@ -30,7 +30,7 @@ async function main() {
   console.log()
 
   // Find mislabeled evidence records
-  const mislabeled = await db.evidence.findMany({
+  const mislabeled = await dbReg.evidence.findMany({
     where: {
       contentClass: "HTML", // Default value that was wrongly applied
       contentType: { notIn: ["html", "HTML"] }, // But contentType is not HTML
@@ -93,7 +93,7 @@ async function main() {
       // Preserve existing ocrMetadata and add fix timestamp
       const existingMetadata = (e.ocrMetadata as Record<string, unknown>) || {}
 
-      await db.evidence.update({
+      await dbReg.evidence.update({
         where: { id: e.id },
         data: {
           contentClass: correctClass,
@@ -119,7 +119,7 @@ async function main() {
   console.log(`Skipped: ${mislabeled.length - fixed - errors}`)
 
   // Verify fix
-  const remaining = await db.evidence.count({
+  const remaining = await dbReg.evidence.count({
     where: {
       contentClass: "HTML",
       contentType: { notIn: ["html", "HTML"] },

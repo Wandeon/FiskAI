@@ -34,7 +34,7 @@ export interface TransitionalExtractionResult {
 export async function runTransitionalExtractor(
   evidenceId: string
 ): Promise<TransitionalExtractionResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 

@@ -32,7 +32,7 @@ export interface InvariantResults {
  * This matches the algorithm used at write-time by sentinel/fetchers.
  */
 async function validateINV1(): Promise<InvariantResult> {
-  const evidence = await db.evidence.findMany({
+  const evidence = await dbReg.evidence.findMany({
     select: { id: true, contentHash: true, rawContent: true, contentType: true },
   })
 
@@ -121,8 +121,8 @@ async function validateINV2(): Promise<InvariantResult> {
  * (Validated by checking extraction rejection rate)
  */
 async function validateINV3(): Promise<InvariantResult> {
-  const rejections = await db.extractionRejected.count()
-  const noQuoteMatch = await db.extractionRejected.count({
+  const rejections = await dbReg.extractionRejected.count()
+  const noQuoteMatch = await dbReg.extractionRejected.count({
     where: { rejectionType: "NO_QUOTE_MATCH" },
   })
   const totalPointers = await db.sourcePointer.count()

@@ -84,7 +84,7 @@ async function runScoutPhase(): Promise<PhaseResult> {
     console.log("\n[watchdog] === SCOUT PHASE ===")
 
     // Get active endpoints
-    const endpoints = await db.regulatorySource.findMany({
+    const endpoints = await dbReg.regulatorySource.findMany({
       where: { isActive: true },
       orderBy: { hierarchy: "asc" },
     })
@@ -198,7 +198,7 @@ async function runProcessPhase(): Promise<PhaseResult> {
     console.log("\n[watchdog] === PROCESS PHASE ===")
 
     // Extract from unprocessed evidence
-    const unprocessedEvidence = await db.evidence.findMany({
+    const unprocessedEvidence = await dbReg.evidence.findMany({
       where: {
         sourcePointers: { none: {} },
       },

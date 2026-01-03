@@ -27,7 +27,7 @@ export interface ClassificationResult {
  * Classify content to determine which extractors to run
  */
 export async function classifyContent(evidenceId: string): Promise<ClassificationResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 

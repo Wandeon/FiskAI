@@ -15,6 +15,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { buildAnswer } from "../query-engine/answer-builder"
 import { validateResponse } from "../validation"
 import { db } from "@/lib/db"
+import { deleteOneEvidenceForTest } from "@/__tests__/helpers/db-cleanup"
 
 // Skip these tests if no database is available
 const hasDatabase = !!process.env.DATABASE_URL
@@ -119,8 +120,9 @@ describe.skipIf(!hasDatabase)("Fail-Closed Integration", () => {
     for (const id of createdIds.conceptIds) {
       await db.concept.delete({ where: { id } }).catch(() => {})
     }
+    // Use centralized test helper for Evidence cleanup
     for (const id of createdIds.evidenceIds) {
-      await db.evidence.delete({ where: { id } }).catch(() => {})
+      await deleteOneEvidenceForTest(id).catch(() => {})
     }
     for (const id of createdIds.sourceIds) {
       await (db as any).source.delete({ where: { id } }).catch(() => {})

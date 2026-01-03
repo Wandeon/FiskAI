@@ -19,7 +19,7 @@ export interface RepairResult {
  * This ensures hashes match what would be computed at write-time.
  */
 async function repairEvidenceHashes(): Promise<{ fixed: number; errors: string[] }> {
-  const evidence = await db.evidence.findMany({
+  const evidence = await dbReg.evidence.findMany({
     select: { id: true, contentHash: true, rawContent: true, contentType: true },
   })
 
@@ -32,7 +32,7 @@ async function repairEvidenceHashes(): Promise<{ fixed: number; errors: string[]
     if (correctHash !== e.contentHash) {
       try {
         const oldHash = e.contentHash
-        await db.evidence.update({
+        await dbReg.evidence.update({
           where: { id: e.id },
           data: { contentHash: correctHash },
         })

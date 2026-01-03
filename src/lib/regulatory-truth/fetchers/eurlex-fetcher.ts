@@ -126,7 +126,7 @@ export async function createEURLexEvidence(metadata: EURLexMetadata): Promise<st
   const contentHash = hashContent(rawContent)
 
   // Check if we already have this
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -136,12 +136,12 @@ export async function createEURLexEvidence(metadata: EURLexMetadata): Promise<st
   }
 
   // Find or create EUR-Lex source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "eur-lex" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "eur-lex",
         name: "EUR-Lex (Official EU Law)",
@@ -153,7 +153,7 @@ export async function createEURLexEvidence(metadata: EURLexMetadata): Promise<st
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: metadata.url,

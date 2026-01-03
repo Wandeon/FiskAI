@@ -201,6 +201,7 @@ model Company {
   joppdSubmissions               JoppdSubmission[]
   payoutLines                    PayoutLine[]
   calculationSnapshots           CalculationSnapshot[]
+  appliedRuleSnapshots           AppliedRuleSnapshot[]
   payslips                       Payslip[]
   payslipArtifacts               PayslipArtifact[]
   bankPaymentExports             BankPaymentExport[]
@@ -1574,7 +1575,7 @@ model Document {
   id          String         @id @default(cuid())
   companyId   String
   name        String
-  category    String         // expense, invoice, contract, other
+  category    String // expense, invoice, contract, other
   status      DocumentStatus @default(PENDING)
   totalAmount Decimal?       @db.Decimal(10, 2)
   currency    String?        @default("EUR")
@@ -1899,13 +1900,13 @@ model MatchRecord {
 }
 
 model UnappliedPayment {
-  id                String          @id @default(cuid())
+  id                String   @id @default(cuid())
   companyId         String
-  bankTransactionId String          @unique
-  amount            Decimal         @db.Decimal(12, 2)
-  currency          String          @default("EUR")
+  bankTransactionId String   @unique
+  amount            Decimal  @db.Decimal(12, 2)
+  currency          String   @default("EUR")
   reason            String?
-  createdAt         DateTime        @default(now())
+  createdAt         DateTime @default(now())
 
   company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bankTransaction BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Cascade)
@@ -2503,36 +2504,39 @@ model Payout {
 }
 
 model PayoutLine {
-  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId        String                @map("company_id")
-  payoutId         String                @map("payout_id") @db.Uuid
-  employeeId       String?               @map("employee_id")
-  lineNumber       Int                   @map("line_number")
-  employeeName     String?               @map("employee_name") @db.VarChar(200)
-  employeeOib      String?               @map("employee_oib") @db.VarChar(11)
-  employeeIban     String?               @map("employee_iban") @db.VarChar(34)
-  recipientName    String?               @map("recipient_name") @db.VarChar(200)
-  recipientOib     String?               @map("recipient_oib") @db.VarChar(11)
-  grossAmount      Decimal?              @map("gross_amount") @db.Decimal(12, 2)
-  netAmount        Decimal?              @map("net_amount") @db.Decimal(12, 2)
-  taxAmount        Decimal?              @map("tax_amount") @db.Decimal(12, 2)
-  currency         String                @default("EUR") @map("currency") @db.VarChar(3)
-  joppdData        Json?                 @map("joppd_data")
-  ruleVersionId    String?               @map("rule_version_id")
-  createdAt        DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
-  payout           Payout                @relation(fields: [payoutId], references: [id], onDelete: Cascade)
-  ruleVersion      RuleVersion?          @relation("PayoutLineRuleVersion", fields: [ruleVersionId], references: [id], onDelete: SetNull)
-  company          Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employee         Employee?             @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  submissions      JoppdSubmissionLine[]
-  payslips         Payslip[]
-  snapshots        CalculationSnapshot[]
-  bankPaymentLines BankPaymentLine[]
-  payslipArtifacts PayslipArtifact[]
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId             String                @map("company_id")
+  payoutId              String                @map("payout_id") @db.Uuid
+  employeeId            String?               @map("employee_id")
+  lineNumber            Int                   @map("line_number")
+  employeeName          String?               @map("employee_name") @db.VarChar(200)
+  employeeOib           String?               @map("employee_oib") @db.VarChar(11)
+  employeeIban          String?               @map("employee_iban") @db.VarChar(34)
+  recipientName         String?               @map("recipient_name") @db.VarChar(200)
+  recipientOib          String?               @map("recipient_oib") @db.VarChar(11)
+  grossAmount           Decimal?              @map("gross_amount") @db.Decimal(12, 2)
+  netAmount             Decimal?              @map("net_amount") @db.Decimal(12, 2)
+  taxAmount             Decimal?              @map("tax_amount") @db.Decimal(12, 2)
+  currency              String                @default("EUR") @map("currency") @db.VarChar(3)
+  joppdData             Json?                 @map("joppd_data")
+  ruleVersionId         String?               @map("rule_version_id")
+  appliedRuleSnapshotId String?               @map("applied_rule_snapshot_id")
+  createdAt             DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
+  payout                Payout                @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  ruleVersion           RuleVersion?          @relation("PayoutLineRuleVersion", fields: [ruleVersionId], references: [id], onDelete: SetNull)
+  appliedRuleSnapshot   AppliedRuleSnapshot?  @relation(fields: [appliedRuleSnapshotId], references: [id], onDelete: SetNull)
+  company               Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee              Employee?             @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  submissions           JoppdSubmissionLine[]
+  payslips              Payslip[]
+  snapshots             CalculationSnapshot[]
+  bankPaymentLines      BankPaymentLine[]
+  payslipArtifacts      PayslipArtifact[]
 
   @@index([companyId], map: "payout_line_company_idx")
   @@index([payoutId], map: "payout_line_payout_idx")
   @@index([ruleVersionId], map: "payout_line_rule_version_idx")
+  @@index([appliedRuleSnapshotId], map: "payout_line_snapshot_idx")
   @@index([employeeId], map: "payout_line_employee_idx")
   @@map("payout_line")
 }
@@ -2615,6 +2619,51 @@ model CalculationSnapshot {
   @@map("calculation_snapshot")
 }
 
+// =============================================================================
+// APPLIED RULE SNAPSHOT - Immutable record of regulatory rule at time of use
+// =============================================================================
+// When a PayoutLine or JoppdSubmissionLine is created, we snapshot the exact
+// rule version that was applied. This decouples core transactional records
+// from the regulatory DB while preserving audit trail.
+//
+// Key invariants:
+// - Immutable once created (no updates allowed - enforced by Prisma extension)
+// - ruleVersionId is a soft ref to regulatory DB (no FK constraint)
+// - companyId for tenant isolation (auto-injected by TENANT_MODELS extension)
+// - dataHash for deduplication within a tenant
+//
+// CREATION CONTRACT:
+// All snapshot creation MUST go through getOrCreateAppliedRuleSnapshot()
+// in src/lib/rules/applied-rule-snapshot-service.ts. Direct db.appliedRuleSnapshot.create()
+// is prohibited outside that service.
+//
+// effectiveFrom SEMANTICS:
+// This is a DATE-ONLY field representing the legal effective date of the rule
+// in Croatian regulatory context. It is NOT a timestamp. All DateTime values
+// are truncated to midnight UTC in the service layer. This matches how Croatian
+// tax regulations specify effective dates (e.g., "od 1. siječnja 2025.")
+
+model AppliedRuleSnapshot {
+  id            String   @id @default(cuid())
+  companyId     String   @map("company_id")
+  ruleVersionId String   @map("rule_version_id") // Soft ref to RuleVersion in regulatory DB
+  ruleTableKey  String   @map("rule_table_key") @db.VarChar(100) // e.g., "pausalni-doprinos-2025"
+  version       String   @db.VarChar(50) // e.g., "v1.0.0" or "2025-01-01"
+  effectiveFrom DateTime @map("effective_from") @db.Date // Legal date, NOT timestamp
+  dataHash      String   @map("data_hash") @db.VarChar(64) // SHA-256 of snapshotData for dedupe
+  snapshotData  Json     @map("snapshot_data") // Complete rule data at time of snapshot
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payoutLines          PayoutLine[]
+  joppdSubmissionLines JoppdSubmissionLine[]
+
+  @@unique([companyId, ruleVersionId, dataHash], map: "applied_rule_snapshot_dedupe_idx")
+  @@index([companyId, ruleTableKey, effectiveFrom], map: "applied_rule_snapshot_lookup_idx")
+  @@index([companyId, dataHash], map: "applied_rule_snapshot_hash_idx")
+  @@map("applied_rule_snapshot")
+}
+
 model BankPaymentExport {
   id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId    String            @map("company_id")
@@ -2689,24 +2738,27 @@ model JoppdSubmission {
 }
 
 model JoppdSubmissionLine {
-  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  submissionId     String                @map("submission_id") @db.Uuid
-  payoutLineId     String                @map("payout_line_id") @db.Uuid
-  lineNumber       Int                   @map("line_number")
-  lineData         Json?                 @map("line_data")
-  originalLineId   String?               @map("original_line_id") @db.Uuid
-  ruleVersionId    String?               @map("rule_version_id")
-  createdAt        DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
-  submission       JoppdSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  payoutLine       PayoutLine            @relation(fields: [payoutLineId], references: [id], onDelete: Restrict)
-  ruleVersion      RuleVersion?          @relation("JoppdSubmissionLineRuleVersion", fields: [ruleVersionId], references: [id], onDelete: SetNull)
-  originalLine     JoppdSubmissionLine?  @relation("JoppdLineCorrections", fields: [originalLineId], references: [id], onDelete: SetNull)
-  corrections      JoppdSubmissionLine[] @relation("JoppdLineCorrections")
-  bankPaymentLines BankPaymentLine[]
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId          String                @map("submission_id") @db.Uuid
+  payoutLineId          String                @map("payout_line_id") @db.Uuid
+  lineNumber            Int                   @map("line_number")
+  lineData              Json?                 @map("line_data")
+  originalLineId        String?               @map("original_line_id") @db.Uuid
+  ruleVersionId         String?               @map("rule_version_id")
+  appliedRuleSnapshotId String?               @map("applied_rule_snapshot_id")
+  createdAt             DateTime?             @default(now()) @map("created_at") @db.Timestamp(6)
+  submission            JoppdSubmission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  payoutLine            PayoutLine            @relation(fields: [payoutLineId], references: [id], onDelete: Restrict)
+  ruleVersion           RuleVersion?          @relation("JoppdSubmissionLineRuleVersion", fields: [ruleVersionId], references: [id], onDelete: SetNull)
+  appliedRuleSnapshot   AppliedRuleSnapshot?  @relation(fields: [appliedRuleSnapshotId], references: [id], onDelete: SetNull)
+  originalLine          JoppdSubmissionLine?  @relation("JoppdLineCorrections", fields: [originalLineId], references: [id], onDelete: SetNull)
+  corrections           JoppdSubmissionLine[] @relation("JoppdLineCorrections")
+  bankPaymentLines      BankPaymentLine[]
 
   @@index([submissionId], map: "joppd_submission_line_submission_idx")
   @@index([payoutLineId], map: "joppd_submission_line_payout_idx")
   @@index([ruleVersionId], map: "joppd_submission_line_rule_version_idx")
+  @@index([appliedRuleSnapshotId], map: "joppd_submission_line_snapshot_idx")
   @@map("joppd_submission_line")
 }
 
@@ -3467,22 +3519,7 @@ enum ConflictStatus {
   ESCALATED
 }
 
-enum AlertSeverity {
-  CRITICAL
-  HIGH
-  MEDIUM
-  LOW
-}
-
-enum AlertType {
-  SOURCE_CHANGED
-  SOURCE_UNAVAILABLE
-  RULE_SUPERSEDED
-  CONFLICT_DETECTED
-  DEADLINE_APPROACHING
-  CONFIDENCE_DEGRADED
-  COVERAGE_GAP
-}
+// AlertSeverity and AlertType moved to regulatory.prisma
 
 enum GraphEdgeType {
   AMENDS
@@ -3584,26 +3621,7 @@ enum TransitionPattern {
   TAXPAYER_CHOICE
 }
 
-model RegulatorySource {
-  id                 String    @id @default(cuid())
-  slug               String    @unique // e.g., "porezna-pausalni"
-  name               String // "Porezna uprava - Paušalno oporezivanje"
-  url                String
-  hierarchy          Int       @default(5) // 1=Ustav, 2=Zakon, 3=Podzakonski, 4=Pravilnik, 5=Uputa, 6=Mišljenje, 7=Praksa
-  fetchIntervalHours Int       @default(24)
-  lastFetchedAt      DateTime?
-  lastContentHash    String?
-  isActive           Boolean   @default(true)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  evidence             Evidence[]
-  monitoringAlerts     MonitoringAlert[]
-  webhookSubscriptions WebhookSubscription[]
-
-  @@index([isActive])
-  @@index([lastFetchedAt])
-}
+// RegulatorySource moved to regulatory.prisma
 
 model DiscoveryEndpoint {
   id                String                @id @default(cuid())
@@ -3675,80 +3693,7 @@ model DiscoveredItem {
   @@index([endpointId, nodeType]) // Grouping queries
 }
 
-model Evidence {
-  id            String    @id @default(cuid())
-  sourceId      String
-  fetchedAt     DateTime  @default(now())
-  contentHash   String
-  rawContent    String    @db.Text // Full HTML/PDF text
-  contentType   String    @default("html") // html, pdf, xml
-  url           String
-  hasChanged    Boolean   @default(false)
-  changeSummary String?
-  deletedAt     DateTime?
-
-  // Staleness tracking for regulatory compliance (GitHub issue #893)
-  lastVerifiedAt  DateTime? // Last time source URL was checked and content confirmed unchanged
-  expiresAt       DateTime? // Explicit expiration date for evidence (e.g., from effectiveUntil in rules)
-  sourceEtag      String? // ETag from source for change detection
-  sourceLastMod   DateTime? // Last-Modified header from source
-  verifyCount     Int       @default(0) // Number of times verified unchanged
-  stalenessStatus String    @default("FRESH") // FRESH, AGING, STALE, UNAVAILABLE, EXPIRED
-
-  // GitHub issue #1021: Track consecutive HEAD failures for grace period
-  consecutiveFailures Int @default(0) // Reset to 0 on success, increment on failure
-
-  // NEW: OCR support fields
-  contentClass          String  @default("HTML") // HTML, PDF_TEXT, PDF_SCANNED, DOC, XLSX, JSON
-  ocrMetadata           Json? // OCR processing metadata
-  primaryTextArtifactId String? // Points to canonical text artifact for Extractor
-
-  // Semantic similarity support for duplicate detection (GitHub issue #828)
-  embedding          Unsupported("vector(768)")? // Vector embedding for semantic duplicate detection
-  embeddingStatus    String                      @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  embeddingError     String? // Error message if embedding generation failed
-  embeddingAttempts  Int                         @default(0) // Number of embedding generation attempts
-  embeddingUpdatedAt DateTime? // Last embedding status update
-
-  source                 RegulatorySource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  sourcePointers         SourcePointer[]
-  agentRuns              AgentRun[]
-  extractionRejected     ExtractionRejected[]
-  artifacts              EvidenceArtifact[]
-  atomicClaims           AtomicClaim[]
-  processes              RegulatoryProcess[]
-  referenceTables        ReferenceTable[]
-  assets                 RegulatoryAsset[]
-  transitionalProvisions TransitionalProvision[]
-  coverageReport         CoverageReport?
-  comparisonMatrices     ComparisonMatrix[]
-
-  @@unique([url, contentHash])
-  @@index([sourceId])
-  @@index([fetchedAt])
-  @@index([contentHash])
-  @@index([contentClass])
-  @@index([stalenessStatus])
-  @@index([expiresAt])
-  @@index([lastVerifiedAt])
-  @@index([embeddingStatus]) // For retry queue queries
-}
-
-model EvidenceArtifact {
-  id          String   @id @default(cuid())
-  evidenceId  String
-  kind        String // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, TABLE_JSON
-  content     String   @db.Text
-  contentHash String
-  pageMap     Json? // Per-page metadata: [{page, confidence, method}]
-  createdAt   DateTime @default(now())
-
-  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
-
-  @@index([evidenceId])
-  @@index([kind])
-  @@index([createdAt])
-}
+// Evidence and EvidenceArtifact moved to regulatory.prisma
 
 model SourcePointer {
   id             String  @id @default(cuid())
@@ -3787,8 +3732,8 @@ model SourcePointer {
   endOffset   Int?
   matchType   SourcePointerMatchType? @default(PENDING_VERIFICATION)
 
-  evidence Evidence         @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
-  rules    RegulatoryRule[] @relation("RuleSourcePointers")
+  // evidence: FK removed - Evidence now in regulatory.prisma (soft ref via evidenceId)
+  rules RegulatoryRule[] @relation("RuleSourcePointers")
 
   @@index([evidenceId])
   @@index([domain])
@@ -3986,8 +3931,7 @@ model AtomicClaim {
   confidence    Float   @default(0.8)
 
   // Relations
-  evidenceId String
-  evidence   Evidence         @relation(fields: [evidenceId], references: [id])
+  evidenceId String // Soft ref to Evidence in regulatory.prisma
   ruleId     String?
   rule       RegulatoryRule?  @relation(fields: [ruleId], references: [id])
   exceptions ClaimException[]
@@ -4069,8 +4013,7 @@ model RegulatoryProcess {
   // Relations
   steps      ProcessStep[]
   assets     RegulatoryAsset[]
-  evidenceId String?
-  evidence   Evidence?         @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4125,9 +4068,8 @@ model ReferenceTable {
 
   // Provenance
   sourceUrl   String?
-  lastUpdated DateTime  @default(now())
-  evidenceId  String?
-  evidence    Evidence? @relation(fields: [evidenceId], references: [id])
+  lastUpdated DateTime @default(now())
+  evidenceId  String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4183,8 +4125,7 @@ model RegulatoryAsset {
 
   // Provenance
   sourceUrl  String
-  evidenceId String?
-  evidence   Evidence? @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4220,8 +4161,7 @@ model TransitionalProvision {
 
   // Provenance
   sourceArticle String
-  evidenceId    String
-  evidence      Evidence @relation(fields: [evidenceId], references: [id])
+  evidenceId    String // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4330,11 +4270,10 @@ model AgentRun {
   completedAt DateTime?
 
   // Optional relations based on what the agent processed
-  evidenceId String?
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
   ruleId     String?
 
-  evidence Evidence?       @relation(fields: [evidenceId], references: [id])
-  rule     RegulatoryRule? @relation(fields: [ruleId], references: [id])
+  rule RegulatoryRule? @relation(fields: [ruleId], references: [id])
 
   @@index([agentType])
   @@index([status])
@@ -4365,28 +4304,7 @@ model RegulatoryConflict {
   @@index([createdAt])
 }
 
-model MonitoringAlert {
-  id                  String        @id @default(cuid())
-  severity            AlertSeverity
-  type                AlertType
-  affectedRuleIds     String[]
-  sourceId            String?
-  description         String        @db.Text
-  autoAction          Json? // { action, executed, result }
-  humanActionRequired Boolean       @default(false)
-  acknowledgedBy      String?
-  acknowledgedAt      DateTime?
-  resolvedAt          DateTime?
-  createdAt           DateTime      @default(now())
-
-  source RegulatorySource? @relation(fields: [sourceId], references: [id])
-
-  @@index([severity])
-  @@index([type])
-  @@index([sourceId])
-  @@index([createdAt])
-  @@index([resolvedAt])
-}
+// MonitoringAlert moved to regulatory.prisma
 
 // =============================================================================
 // AUDIT LOG - Legal Defense Layer
@@ -4406,30 +4324,7 @@ model RegulatoryAuditLog {
   @@index([action])
 }
 
-// =============================================================================
-// CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking (Issue #789)
-// =============================================================================
-
-model ConflictResolutionAudit {
-  id         String   @id @default(cuid())
-  conflictId String
-  ruleAId    String?
-  ruleBId    String?
-  resolution String // RULE_A_PREVAILS, RULE_B_PREVAILS, MERGE_RULES, ESCALATE_TO_HUMAN
-  reason     String   @db.Text
-  resolvedBy String // ARBITER_AGENT, HUMAN, SYSTEM
-  resolvedAt DateTime @default(now())
-  metadata   Json? // { authorityComparison, sourceComparison, temporalAnalysis, aiArbitration }
-
-  @@index([conflictId])
-  @@index([ruleAId])
-  @@index([ruleBId])
-  @@index([resolvedAt])
-}
-
-// =============================================================================
-// CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking (Issue #789)
-// =============================================================================
+// ConflictResolutionAudit moved to regulatory.prisma
 
 // =============================================================================
 // HUMAN REVIEW QUEUE - Centralized review management (Issue #884)
@@ -4664,26 +4559,7 @@ model WatchdogAudit {
 }
 
 // =============================================================================
-// EXTRACTION REJECTED - Dead Letter Queue
-// =============================================================================
-
-model ExtractionRejected {
-  id            String    @id @default(cuid())
-  evidenceId    String
-  rejectionType String // e.g., "INVALID_PERCENTAGE", "QUOTE_NOT_IN_EVIDENCE", "INVALID_DATE"
-  rawOutput     Json // The raw LLM output that failed
-  errorDetails  String // Specific error message
-  attemptCount  Int       @default(1)
-  lastAttemptAt DateTime  @default(now())
-  resolvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-
-  evidence Evidence @relation(fields: [evidenceId], references: [id])
-
-  @@index([evidenceId])
-  @@index([rejectionType])
-  @@index([createdAt])
-}
+// ExtractionRejected moved to regulatory.prisma
 
 // =============================================================================
 // SOFT FAIL LOG - Track AI operation failures
@@ -4787,8 +4663,7 @@ model CoverageReport {
   reviewedAt       DateTime?
   reviewedBy       String?
 
-  // Relations
-  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  // Relations - evidenceId is soft ref to Evidence in regulatory.prisma
 
   @@unique([evidenceId])
   @@index([coverageScore])
@@ -4819,8 +4694,7 @@ model ComparisonMatrix {
   conclusion String? @db.Text
 
   // Provenance
-  evidenceId String?
-  evidence   Evidence? @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5309,7 +5183,7 @@ model ExperimentEvent {
 // Webhook subscriptions for regulatory sources
 model WebhookSubscription {
   id          String  @id @default(cuid())
-  sourceId    String? // Link to RegulatorySource if applicable
+  sourceId    String? // Soft ref to RegulatorySource in regulatory.prisma
   provider    String // e.g., "narodne-novine", "porezna-uprava", "fina", "custom"
   webhookType String // RSS_FEED, EMAIL_ALERT, HTTP_WEBHOOK, API_POLLING
   endpointUrl String? // External URL we're subscribed to
@@ -5334,8 +5208,7 @@ model WebhookSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  source RegulatorySource? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  // Relations - source: soft ref to RegulatorySource in regulatory.prisma
   events WebhookEvent[]
 
   @@index([provider])
@@ -5565,7 +5438,7 @@ enum AssetCandidateSource {
 
 model OutboxEvent {
   id          String            @id @default(cuid())
-  eventType   String            // e.g., "article_job.started", "webhook.received", "system_status.refresh"
+  eventType   String // e.g., "article_job.started", "webhook.received", "system_status.refresh"
   payload     Json
   status      OutboxEventStatus @default(PENDING)
   attempts    Int               @default(0)
@@ -5577,8 +5450,8 @@ model OutboxEvent {
   updatedAt   DateTime          @updatedAt
 
   @@index([status, scheduledAt]) // For polling pending events
-  @@index([eventType, status])   // For type-specific queries
-  @@index([createdAt])           // For cleanup/retention queries
+  @@index([eventType, status]) // For type-specific queries
+  @@index([createdAt]) // For cleanup/retention queries
 }
 
 enum OutboxEventStatus {

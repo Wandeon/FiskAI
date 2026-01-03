@@ -19,7 +19,7 @@ export async function createSyntheticConflict(): Promise<string | null> {
     console.log(`[heartbeat] Creating synthetic conflict: ${conflictId}`)
 
     // First, check if we have any evidence to reference
-    const evidenceRecords = await db.evidence.findMany({
+    const evidenceRecords = await dbReg.evidence.findMany({
       take: 2,
       orderBy: { fetchedAt: "desc" },
     })

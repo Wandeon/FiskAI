@@ -94,12 +94,12 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
     }
 
     // Find or create HNB source
-    let source = await db.regulatorySource.findFirst({
+    let source = await dbReg.regulatorySource.findFirst({
       where: { slug: "hnb" },
     })
 
     if (!source) {
-      source = await db.regulatorySource.create({
+      source = await dbReg.regulatorySource.create({
         data: {
           slug: "hnb",
           name: "Hrvatska narodna banka",
@@ -120,7 +120,7 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
       const contentHash = hashContent(rawContent, "application/json")
 
       // Check if we already have this exact data
-      const existingEvidence = await db.evidence.findFirst({
+      const existingEvidence = await dbReg.evidence.findFirst({
         where: { contentHash },
       })
 
@@ -130,7 +130,7 @@ export async function createHNBRules(date: Date = new Date()): Promise<HNBFetchR
       }
 
       // Create Evidence record
-      const evidence = await db.evidence.create({
+      const evidence = await dbReg.evidence.create({
         data: {
           sourceId: source.id,
           url: `${HNB_API_BASE}?datum-primjene=${dateStr}&valuta=${rate.valuta}`,

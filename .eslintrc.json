@@ -243,19 +243,37 @@
       "files": ["src/lib/regulatory-truth/**/*.ts", "src/lib/regulatory-truth/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
-          "error",
+          "warn",
           {
             "paths": [
               {
                 "name": "@/lib/db",
                 "importNames": ["db", "prisma"],
-                "message": "RTL modules must use dbReg (regulatory client), not db (core client). Import { dbReg } from '@/lib/db/regulatory'."
-              },
-              {
-                "name": "@/lib/db/core",
-                "message": "RTL modules must use dbReg (regulatory client), not db (core client). Import { dbReg } from '@/lib/db/regulatory'."
+                "message": "RTL modules should prefer dbReg for Evidence/EvidenceArtifact/MonitoringAlert/etc. Use db for RegulatoryRule/RuleVersion until batch 2+ migration."
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/lib/payroll/**/*.ts",
+        "src/lib/joppd/**/*.ts",
+        "src/lib/rules/**/*.ts",
+        "src/app/api/payouts/**/*.ts",
+        "src/app/api/joppd/**/*.ts"
+      ],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Property[key.name='include'] ObjectExpression Property[key.name='ruleVersion']",
+            "message": "Do not include ruleVersion relation on PayoutLine/JoppdSubmissionLine. Use appliedRuleSnapshot instead (PR#8+). The ruleVersion relation is deprecated."
+          },
+          {
+            "selector": "MemberExpression[property.name='ruleVersion'][object.name=/line/i]",
+            "message": "Do not access .ruleVersion on PayoutLine/JoppdSubmissionLine. Use .appliedRuleSnapshot instead. The ruleVersion relation is deprecated."
           }
         ]
       }

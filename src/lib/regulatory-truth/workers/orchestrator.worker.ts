@@ -34,7 +34,7 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
     switch (type) {
       case "pipeline-run": {
         // Kick off sentinel for all active sources
-        const sources = await db.regulatorySource.findMany({
+        const sources = await dbReg.regulatorySource.findMany({
           where: { isActive: true },
           select: { id: true, hierarchy: true },
         })
@@ -130,7 +130,7 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
             by: ["status"],
             _count: true,
           }),
-          db.evidence.count(),
+          dbReg.evidence.count(),
           db.sourcePointer.count(),
         ])
 

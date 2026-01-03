@@ -507,6 +507,7 @@ const TENANT_MODELS = [
   "JoppdSubmission",
   "PayslipArtifact",
   "CalculationSnapshot",
+  "AppliedRuleSnapshot",
   "BankPaymentExport",
   "BankPaymentLine",
   "ReportingStatus",
@@ -872,6 +873,21 @@ export class CalculationSnapshotImmutabilityError extends Error {
   constructor() {
     super("Cannot modify CalculationSnapshot records. Snapshots are immutable once created.")
     this.name = "CalculationSnapshotImmutabilityError"
+  }
+}
+
+/**
+ * Error thrown when attempting to modify AppliedRuleSnapshot records.
+ * AppliedRuleSnapshot captures the exact rule state at time of use and MUST NOT change.
+ */
+export class AppliedRuleSnapshotImmutabilityError extends Error {
+  constructor(operation: string) {
+    super(
+      `Cannot ${operation} AppliedRuleSnapshot records. ` +
+        "Snapshots are immutable once created to preserve audit integrity. " +
+        "Create a new snapshot if the rule has changed."
+    )
+    this.name = "AppliedRuleSnapshotImmutabilityError"
   }
 }
 
@@ -2012,7 +2028,9 @@ export function withTenantIsolation(prisma: PrismaClient) {
           }
 
           if (context && (model === "DepreciationSchedule" || model === "DepreciationEntry")) {
-            const assetId = (args.data as Record<string, unknown> | undefined)?.assetId as string | undefined
+            const assetId = (args.data as Record<string, unknown> | undefined)?.assetId as
+              | string
+              | undefined
             if (assetId) {
               const asset = await prismaBase.fixedAsset.findUnique({
                 where: { id: assetId },
@@ -2021,7 +2039,9 @@ export function withTenantIsolation(prisma: PrismaClient) {
               // If asset is created within an ongoing transaction, prismaBase won't see it yet.
               // In that case, allow the write to proceed and rely on FK + tenant-filtered reads.
               if (asset && asset.companyId !== context.companyId) {
-                throw new Error("Tenant isolation violation: depreciation asset does not belong to tenant")
+                throw new Error(
+                  "Tenant isolation violation: depreciation asset does not belong to tenant"
+                )
               }
             }
           }
@@ -2037,7 +2057,9 @@ export function withTenantIsolation(prisma: PrismaClient) {
               })
               // Same transaction visibility caveat as DepreciationSchedule.
               if (entry && entry.companyId !== context.companyId) {
-                throw new Error("Tenant isolation violation: journal entry does not belong to tenant")
+                throw new Error(
+                  "Tenant isolation violation: journal entry does not belong to tenant"
+                )
               }
             }
           }
@@ -2218,6 +2240,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("update")
           }
 
+          if (model === "AppliedRuleSnapshot") {
+            throw new AppliedRuleSnapshotImmutabilityError("update")
+          }
+
           // AUDIT: Capture before-state for audited models BEFORE the update
           // This is essential for complete audit trails showing what changed
           let auditBeforeState: Record<string, unknown> | null = null
@@ -2246,7 +2272,8 @@ export function withTenantIsolation(prisma: PrismaClient) {
           }
 
           let companyIdForGuards: string | null =
-            (auditBeforeState?.companyId as string | undefined) ?? getTenantContext()?.companyId ??
+            (auditBeforeState?.companyId as string | undefined) ??
+            getTenantContext()?.companyId ??
             null
           const entityIdForAudit = extractEntityIdFromWhere(args.where)
 
@@ -2710,6 +2737,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("delete")
           }
 
+          if (model === "AppliedRuleSnapshot") {
+            throw new AppliedRuleSnapshotImmutabilityError("delete")
+          }
+
           let auditBeforeState: Record<string, unknown> | null = null
           if (AUDITED_MODELS.includes(model as AuditedModel)) {
             try {
@@ -2732,7 +2763,8 @@ export function withTenantIsolation(prisma: PrismaClient) {
           }
 
           let companyIdForGuards: string | null =
-            (auditBeforeState?.companyId as string | undefined) ?? getTenantContext()?.companyId ??
+            (auditBeforeState?.companyId as string | undefined) ??
+            getTenantContext()?.companyId ??
             null
           const entityIdForAudit = extractEntityIdFromWhere(args.where)
 
@@ -3019,6 +3051,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
             throw new ArtifactImmutabilityError("updateMany")
           }
 
+          if (model === "AppliedRuleSnapshot") {
+            throw new AppliedRuleSnapshotImmutabilityError("updateMany")
+          }
+
           // Period lock enforcement for all period-affecting entities
           await assertPeriodWritableBulk(
             prismaBase,
@@ -3116,6 +3152,10 @@ export function withTenantIsolation(prisma: PrismaClient) {
         async deleteMany({ model, args, query }) {
           if (model === "Artifact") {
             throw new ArtifactImmutabilityError("deleteMany")
+          }
+
+          if (model === "AppliedRuleSnapshot") {
+            throw new AppliedRuleSnapshotImmutabilityError("deleteMany")
           }
 
           // Period lock enforcement for all period-affecting entities
@@ -3225,6 +3265,22 @@ export function withTenantIsolation(prisma: PrismaClient) {
 
           if (model === "Artifact") {
             throw new ArtifactImmutabilityError("upsert")
+          }
+
+          // AppliedRuleSnapshot: Allow upsert only if update clause is empty (create-only)
+          // This supports the dedupe pattern: upsert with empty update = findOrCreate
+          // All snapshot fields are immutable audit records - no updates allowed
+          if (model === "AppliedRuleSnapshot") {
+            const updateClause = args.update as Record<string, unknown> | undefined
+            const hasUpdateFields =
+              updateClause &&
+              typeof updateClause === "object" &&
+              Object.keys(updateClause).length > 0
+
+            if (hasUpdateFields) {
+              throw new AppliedRuleSnapshotImmutabilityError("upsert with non-empty update")
+            }
+            // Empty update = create-only semantics, allowed
           }
 
           // AUDIT: Capture before-state for audited models BEFORE the upsert

@@ -34,7 +34,7 @@ export interface ReferenceExtractionResult {
 export async function runReferenceExtractor(
   evidenceId: string
 ): Promise<ReferenceExtractionResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 

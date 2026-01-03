@@ -209,7 +209,7 @@ async function drainPendingItems(): Promise<number> {
  */
 async function drainPendingOcr(): Promise<number> {
   // Find scanned PDFs without OCR artifacts
-  const pending = await db.evidence.findMany({
+  const pending = await dbReg.evidence.findMany({
     where: {
       contentClass: "PDF_SCANNED",
       primaryTextArtifactId: null,
@@ -261,7 +261,7 @@ async function drainFetchedEvidence(): Promise<number> {
     .filter((id): id is string => id !== null)
 
   // Filter to only evidence without source pointers
-  const newEvidence = await db.evidence.findMany({
+  const newEvidence = await dbReg.evidence.findMany({
     where: {
       id: { in: evidenceIds },
       sourcePointers: { none: {} },

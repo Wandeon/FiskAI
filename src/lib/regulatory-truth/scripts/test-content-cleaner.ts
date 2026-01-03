@@ -16,7 +16,7 @@ async function testContentCleaner() {
   console.log("=".repeat(80))
 
   // Get recent evidence records
-  const evidence = await db.evidence.findMany({
+  const evidence = await dbReg.evidence.findMany({
     include: { source: true },
     orderBy: { fetchedAt: "desc" },
     take: 10,

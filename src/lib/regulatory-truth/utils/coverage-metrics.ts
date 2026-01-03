@@ -82,13 +82,13 @@ export async function collectCoverageMetrics(): Promise<CoverageMetrics> {
   })
 
   // Evidence metrics
-  const evidenceTotal = await db.evidence.count({ where: { deletedAt: null } })
-  const evidenceByType = await db.evidence.groupBy({
+  const evidenceTotal = await dbReg.evidence.count({ where: { deletedAt: null } })
+  const evidenceByType = await dbReg.evidence.groupBy({
     by: ["contentType"],
     _count: true,
     where: { deletedAt: null },
   })
-  const unextractedEvidence = await db.evidence.count({
+  const unextractedEvidence = await dbReg.evidence.count({
     where: { deletedAt: null, sourcePointers: { none: {} } },
   })
 

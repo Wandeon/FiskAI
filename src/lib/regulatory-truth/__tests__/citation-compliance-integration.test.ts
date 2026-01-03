@@ -11,8 +11,10 @@
 import { describe, it, before, after } from "node:test"
 import assert from "node:assert"
 import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import { findRelevantRules } from "../utils/rule-context"
 import { TEST_QUESTIONS } from "./citation-compliance.test"
+import { deleteEvidenceForTest } from "@/__tests__/helpers/db-cleanup"
 
 describe("Citation Compliance (Integration)", () => {
   // Test fixture IDs for cleanup
@@ -89,7 +91,7 @@ describe("Citation Compliance (Integration)", () => {
 
     for (const fixture of fixtures) {
       // First, get or create a test source
-      const source = await db.regulatorySource.upsert({
+      const source = await dbReg.regulatorySource.upsert({
         where: { slug: "test-citation-source" },
         create: {
           slug: "test-citation-source",
@@ -100,7 +102,7 @@ describe("Citation Compliance (Integration)", () => {
         update: {},
       })
 
-      const evidence = await db.evidence.create({
+      const evidence = await dbReg.evidence.create({
         data: {
           sourceId: source.id,
           url: `https://test.example.com/${fixture.conceptSlug}`,
@@ -164,9 +166,8 @@ describe("Citation Compliance (Integration)", () => {
     await db.regulatoryRule.deleteMany({
       where: { id: { in: createdIds.ruleIds } },
     })
-    await db.evidence.deleteMany({
-      where: { id: { in: createdIds.evidenceIds } },
-    })
+    // Use centralized test helper for Evidence cleanup
+    await deleteEvidenceForTest(createdIds.evidenceIds)
     console.log(`[citation-integration] Cleaned up ${createdIds.ruleIds.length} test fixtures`)
   })
 

@@ -59,7 +59,7 @@ export async function drainPipeline(options?: {
   const initialCounts = {
     pending: await db.discoveredItem.count({ where: { status: "PENDING" } }),
     fetched: await db.discoveredItem.count({ where: { status: "FETCHED" } }),
-    evidence: await db.evidence.count(),
+    evidence: await dbReg.evidence.count(),
     pointers: await db.sourcePointer.count(),
     rules: await db.regulatoryRule.count(),
     pendingReview: await db.regulatoryRule.count({ where: { status: "PENDING_REVIEW" } }),
@@ -92,7 +92,7 @@ export async function drainPipeline(options?: {
   // Phase 2: Extract from all unprocessed evidence (in batches)
   let totalExtracted = 0
   for (let batch = 0; batch < maxExtractorBatches; batch++) {
-    const unprocessedCount = await db.evidence.count({ where: { sourcePointers: { none: {} } } })
+    const unprocessedCount = await dbReg.evidence.count({ where: { sourcePointers: { none: {} } } })
     if (unprocessedCount === 0) break
 
     const result = await drainPhase(`extract-batch-${batch + 1}`, async () => {
@@ -167,7 +167,7 @@ export async function drainPipeline(options?: {
   const finalCounts = {
     pending: await db.discoveredItem.count({ where: { status: "PENDING" } }),
     fetched: await db.discoveredItem.count({ where: { status: "FETCHED" } }),
-    evidence: await db.evidence.count(),
+    evidence: await dbReg.evidence.count(),
     pointers: await db.sourcePointer.count(),
     rules: await db.regulatoryRule.count(),
     pendingReview: await db.regulatoryRule.count({ where: { status: "PENDING_REVIEW" } }),

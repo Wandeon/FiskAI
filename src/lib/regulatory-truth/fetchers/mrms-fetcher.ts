@@ -114,7 +114,7 @@ export async function createMRMSEvidence(newsItem: MRMSNewsItem): Promise<string
   const contentHash = hashContent(rawContent)
 
   // Check if we already have this exact data
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -124,12 +124,12 @@ export async function createMRMSEvidence(newsItem: MRMSNewsItem): Promise<string
   }
 
   // Find or create MRMS source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "mrms" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "mrms",
         name: "Ministarstvo rada, mirovinskog sustava, obitelji i socijalne politike",
@@ -141,7 +141,7 @@ export async function createMRMSEvidence(newsItem: MRMSNewsItem): Promise<string
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: newsItem.url,
@@ -183,7 +183,7 @@ export async function createMinimumWageEvidence(content: string): Promise<string
   const contentHash = hashContent(content, "text/html")
 
   // Check if we already have this exact content
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -193,12 +193,12 @@ export async function createMinimumWageEvidence(content: string): Promise<string
   }
 
   // Find or create MRMS source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "mrms-minimalna-placa" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "mrms-minimalna-placa",
         name: "MRMS - Minimalna plaća",
@@ -210,7 +210,7 @@ export async function createMinimumWageEvidence(content: string): Promise<string
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: MRMS_MINIMUM_WAGE_PAGE,

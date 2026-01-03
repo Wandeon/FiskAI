@@ -52,7 +52,7 @@ export async function checkStaleSources(): Promise<HealthCheckResult[]> {
   const warningDays = getThreshold("STALE_SOURCE_WARNING_DAYS")
   const criticalDays = getThreshold("STALE_SOURCE_CRITICAL_DAYS")
 
-  const sources = await db.regulatorySource.findMany({
+  const sources = await dbReg.regulatorySource.findMany({
     where: { isActive: true },
     select: {
       id: true,
@@ -116,7 +116,7 @@ export async function checkScraperFailureRate(): Promise<HealthCheckResult[]> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
   // Count fetches by status in last 24h
-  const fetchStats = await db.evidence.groupBy({
+  const fetchStats = await dbReg.evidence.groupBy({
     by: ["sourceId"],
     where: { fetchedAt: { gte: cutoff } },
     _count: { id: true },
@@ -126,7 +126,7 @@ export async function checkScraperFailureRate(): Promise<HealthCheckResult[]> {
   // For now, we'll check based on evidence with empty content
   for (const stat of fetchStats) {
     const total = stat._count.id
-    const failed = await db.evidence.count({
+    const failed = await dbReg.evidence.count({
       where: {
         sourceId: stat.sourceId,
         fetchedAt: { gte: cutoff },

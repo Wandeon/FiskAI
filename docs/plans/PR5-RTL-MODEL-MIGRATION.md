@@ -1,8 +1,28 @@
 # PR#5: RTL Model Migration Plan
 
-> **Status:** READY FOR REVIEW
+> **Status:** IN PROGRESS
 > **Created:** 2026-01-03
+> **Updated:** 2026-01-03
 > **Prerequisite:** PR#4 (dual-client scaffolding) must be merged first
+
+## PR#5A Progress
+
+### Completed
+
+- [x] Moved 6 models to `regulatory.prisma`: RegulatorySource, Evidence, EvidenceArtifact, ExtractionRejected, ConflictResolutionAudit, MonitoringAlert
+- [x] Moved 2 enums: AlertSeverity, AlertType
+- [x] Converted FK references to soft refs in core schema
+- [x] Both Prisma schemas validate successfully
+- [x] Both Prisma clients generate successfully
+- [x] ESLint rule relaxed to warn (not error) during transition
+- [x] Migrated 45 RTL files to use `dbReg` for moved models
+- [x] Smoke test passes
+- [x] PR created: https://github.com/Wandeon/FiskAI/pull/1297
+
+### Remaining
+
+- [ ] CI passes full test suite
+- [ ] PR merged
 
 ## Executive Summary
 

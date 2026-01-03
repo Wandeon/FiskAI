@@ -68,7 +68,7 @@ describe("Fetcher Lifecycle Invariants", () => {
       json: () => Promise.resolve([mockRate]),
     })
 
-    vi.mocked(db.regulatorySource.findFirst).mockResolvedValue({
+    vi.mocked(dbReg.regulatorySource.findFirst).mockResolvedValue({
       id: "source-1",
       slug: "hnb",
       name: "HNB",
@@ -82,9 +82,9 @@ describe("Fetcher Lifecycle Invariants", () => {
       updatedAt: new Date(),
     })
 
-    vi.mocked(db.evidence.findFirst).mockResolvedValue(null) // No existing evidence
+    vi.mocked(dbReg.evidence.findFirst).mockResolvedValue(null) // No existing evidence
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(db.evidence.create).mockResolvedValue({
+    vi.mocked(dbReg.evidence.create).mockResolvedValue({
       id: "evidence-1",
       sourceId: "source-1",
       url: "https://api.hnb.hr/test",

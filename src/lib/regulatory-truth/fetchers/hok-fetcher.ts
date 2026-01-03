@@ -152,7 +152,7 @@ export async function createHOKEvidence(newsItem: HOKNewsItem): Promise<string |
   const contentHash = hashContent(rawContent)
 
   // Check if we already have this exact data
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -162,12 +162,12 @@ export async function createHOKEvidence(newsItem: HOKNewsItem): Promise<string |
   }
 
   // Find or create HOK source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "hok" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "hok",
         name: "Hrvatska obrtnička komora (HOK)",
@@ -179,7 +179,7 @@ export async function createHOKEvidence(newsItem: HOKNewsItem): Promise<string |
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: newsItem.url,
@@ -223,7 +223,7 @@ export async function createMembershipEvidence(content: string): Promise<string 
   const contentHash = hashContent(content, "text/html")
 
   // Check if we already have this exact content
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -233,12 +233,12 @@ export async function createMembershipEvidence(content: string): Promise<string 
   }
 
   // Find or create HOK membership source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "hok-clanarina" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "hok-clanarina",
         name: "HOK - Članarina obrtnika",
@@ -250,7 +250,7 @@ export async function createMembershipEvidence(content: string): Promise<string 
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: HOK_MEMBERSHIP_PAGE,
@@ -293,7 +293,7 @@ export async function createRegulationsEvidence(content: string): Promise<string
   const contentHash = hashContent(content, "text/html")
 
   // Check if we already have this exact content
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -303,12 +303,12 @@ export async function createRegulationsEvidence(content: string): Promise<string
   }
 
   // Find or create HOK regulations source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "hok-obveze" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "hok-obveze",
         name: "HOK - Poslovne knjige i obveze obrtnika",
@@ -320,7 +320,7 @@ export async function createRegulationsEvidence(content: string): Promise<string
   }
 
   // Create Evidence record
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: HOK_REGULATIONS_PAGE,

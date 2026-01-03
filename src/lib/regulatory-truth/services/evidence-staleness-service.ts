@@ -14,7 +14,8 @@
  * 5. Handle transient network failures with retry logic (#1021)
  */
 
-import { db } from "@/lib/db"
+import { db } from "@/lib/db" // For RegulatoryRule, DiscoveryEndpoint, DiscoveredItem (still in core)
+import { dbReg } from "@/lib/db/regulatory" // For Evidence (moved)
 import { fetchWithRateLimit } from "../utils/rate-limiter"
 import { logAuditEvent } from "../utils/audit-log"
 
@@ -107,7 +108,7 @@ function calculateStalenessStatus(
  * - Does not update lastVerifiedAt on failure to allow sooner retries
  */
 export async function checkEvidenceStaleness(evidenceId: string): Promise<EvidenceStalenessCheck> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
     include: {
       source: {
@@ -232,7 +233,7 @@ export async function checkAllEvidenceStaleness(
     // Find evidence that needs verification
     // Prioritize: never verified, then UNAVAILABLE (for retry), then oldest verified
     // GitHub issue #1021: UNAVAILABLE evidence retries after 4 hours instead of 24
-    const evidenceToCheck = await db.evidence.findMany({
+    const evidenceToCheck = await dbReg.evidence.findMany({
       where: {
         deletedAt: null,
         OR: [
@@ -289,7 +290,7 @@ export async function checkAllEvidenceStaleness(
           updateData.lastVerifiedAt = new Date()
         }
 
-        await db.evidence.update({
+        await dbReg.evidence.update({
           where: { id },
           data: updateData,
         })
@@ -419,7 +420,7 @@ export async function queueStaleEvidenceForRecrawl(
   try {
     // Find stale or expired evidence with changed content
     // GitHub issue #1021: Don't queue UNAVAILABLE - let it retry first
-    const staleEvidence = await db.evidence.findMany({
+    const staleEvidence = await dbReg.evidence.findMany({
       where: {
         deletedAt: null,
         OR: [
@@ -477,7 +478,7 @@ export async function queueStaleEvidenceForRecrawl(
         })
 
         // Mark evidence as queued for refresh
-        await db.evidence.update({
+        await dbReg.evidence.update({
           where: { id: evidence.id },
           data: {
             hasChanged: false, // Reset change flag
@@ -516,26 +517,26 @@ export async function getStalenessStats(): Promise<{
 }> {
   const [total, fresh, aging, stale, unavailable, expired, neverVerified, changedContent] =
     await Promise.all([
-      db.evidence.count({ where: { deletedAt: null } }),
-      db.evidence.count({
+      dbReg.evidence.count({ where: { deletedAt: null } }),
+      dbReg.evidence.count({
         where: { deletedAt: null, stalenessStatus: STALENESS_STATUS.FRESH },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, stalenessStatus: STALENESS_STATUS.AGING },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, stalenessStatus: STALENESS_STATUS.STALE },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, stalenessStatus: STALENESS_STATUS.UNAVAILABLE },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, stalenessStatus: STALENESS_STATUS.EXPIRED },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, lastVerifiedAt: null },
       }),
-      db.evidence.count({
+      dbReg.evidence.count({
         where: { deletedAt: null, hasChanged: true },
       }),
     ])

@@ -97,8 +97,8 @@ async function runPhase(
  */
 async function collectMetrics(): Promise<RunMetrics> {
   // Evidence metrics
-  const evidenceTotal = await db.evidence.count()
-  const evidenceNew = await db.evidence.count({
+  const evidenceTotal = await dbReg.evidence.count()
+  const evidenceNew = await dbReg.evidence.count({
     where: { fetchedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
   })
 
@@ -114,9 +114,9 @@ async function collectMetrics(): Promise<RunMetrics> {
     totalDiscovered > 0 ? Number(duplicates[0]?.count || 0) / totalDiscovered : 0
 
   // Extractor metrics
-  const extractorRejections = await db.extractionRejected.count()
+  const extractorRejections = await dbReg.extractionRejected.count()
   const totalPointers = await db.sourcePointer.count()
-  const quoteMismatches = await db.extractionRejected.count({
+  const quoteMismatches = await dbReg.extractionRejected.count({
     where: { rejectionType: "NO_QUOTE_MATCH" },
   })
 

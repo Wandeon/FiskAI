@@ -26,7 +26,7 @@ async function processSentinelJob(job: Job<SentinelJobData>): Promise<JobResult>
 
     // Queue extract jobs for unprocessed evidence (no source pointers yet)
     // Check all unprocessed evidence, not just recently fetched
-    const newEvidence = await db.evidence.findMany({
+    const newEvidence = await dbReg.evidence.findMany({
       where: {
         sourcePointers: { none: {} },
       },
