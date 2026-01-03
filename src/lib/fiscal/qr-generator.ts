@@ -1,4 +1,7 @@
 import * as QRCode from "qrcode"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 /**
  * Data required for generating fiscal QR codes
@@ -13,7 +16,7 @@ export interface FiscalQRData {
   /** Issuer's OIB (Personal Identification Number) */
   issuerOib: string
   /** Invoice amount */
-  amount: number
+  amount: string
   /** Invoice date and time */
   dateTime: Date
 }
@@ -41,7 +44,7 @@ export function formatDateTime(date: Date): string {
  */
 export function generateVerificationUrl(data: FiscalQRData): string {
   const formattedDateTime = formatDateTime(data.dateTime)
-  const formattedAmount = data.amount.toFixed(2)
+  const formattedAmount = new Decimal(data.amount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2)
 
   const params = new URLSearchParams({
     jir: data.jir,

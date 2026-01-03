@@ -1,18 +1,23 @@
 import type { Expense, ExpenseLine } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import type { TransactionClient } from "@/lib/db"
-import { shouldCapitalizeAsset, THRESHOLDS } from "@/lib/fiscal-data/data/thresholds"
+import { THRESHOLDS } from "@/lib/fiscal-data/data/thresholds"
 
 type AssetCandidateInput = {
   expense: Expense
   lines: ExpenseLine[]
 }
 
+const Decimal = Prisma.Decimal
+
 export async function emitAssetCandidates(
   tx: TransactionClient,
   { expense, lines }: AssetCandidateInput
 ) {
-  const thresholdValue = THRESHOLDS.assetCapitalization.value
-  const candidates = lines.filter((line) => shouldCapitalizeAsset(Number(line.totalAmount)))
+  const thresholdValue = new Decimal(THRESHOLDS.assetCapitalization.value.toString())
+  const candidates = lines.filter((line) =>
+    new Decimal(line.totalAmount).greaterThan(thresholdValue)
+  )
 
   if (candidates.length === 0) return
 
@@ -24,7 +29,7 @@ export async function emitAssetCandidates(
       description: line.description,
       amount: line.totalAmount,
       currency: expense.currency,
-      thresholdValue,
+      thresholdValue: THRESHOLDS.assetCapitalization.value,
     })),
     skipDuplicates: true,
   })

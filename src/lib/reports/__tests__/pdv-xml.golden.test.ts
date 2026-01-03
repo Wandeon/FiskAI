@@ -30,35 +30,35 @@ function createBasePdvFormData(overrides: Partial<PdvFormData> = {}): PdvFormDat
     periodYear: 2025,
     section1: {
       domestic: {
-        standard: { rate: VAT_RATES.STANDARD, baseAmount: 10000, vatAmount: 2500 },
-        reduced: { rate: VAT_RATES.REDUCED, baseAmount: 0, vatAmount: 0 },
-        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: 0, vatAmount: 0 },
+        standard: { rate: VAT_RATES.STANDARD, baseAmount: "10000.00", vatAmount: "2500.00" },
+        reduced: { rate: VAT_RATES.REDUCED, baseAmount: "0.00", vatAmount: "0.00" },
+        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: "0.00", vatAmount: "0.00" },
       },
-      euDeliveries: { goods: 0, services: 0 },
-      exports: 0,
-      exempt: 0,
-      totalOutputVat: 2500,
-      totalBaseOutput: 10000,
+      euDeliveries: { goods: "0.00", services: "0.00" },
+      exports: "0.00",
+      exempt: "0.00",
+      totalOutputVat: "2500.00",
+      totalBaseOutput: "10000.00",
     },
     section2: {
       domestic: {
-        standard: { rate: VAT_RATES.STANDARD, baseAmount: 4000, vatAmount: 1000 },
-        reduced: { rate: VAT_RATES.REDUCED, baseAmount: 0, vatAmount: 0 },
-        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: 0, vatAmount: 0 },
+        standard: { rate: VAT_RATES.STANDARD, baseAmount: "4000.00", vatAmount: "1000.00" },
+        reduced: { rate: VAT_RATES.REDUCED, baseAmount: "0.00", vatAmount: "0.00" },
+        superReduced: { rate: VAT_RATES.SUPER_REDUCED, baseAmount: "0.00", vatAmount: "0.00" },
       },
       euAcquisitions: {
-        goods: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
-        services: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
+        goods: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
+        services: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
       },
-      imports: { rate: VAT_RATES.STANDARD, baseAmount: 0, vatAmount: 0 },
-      nonDeductible: 0,
-      totalInputVat: 1000,
-      totalBaseInput: 4000,
+      imports: { rate: VAT_RATES.STANDARD, baseAmount: "0.00", vatAmount: "0.00" },
+      nonDeductible: "0.00",
+      totalInputVat: "1000.00",
+      totalBaseInput: "4000.00",
     },
     section3: {
-      outputVat: 2500,
-      inputVat: 1000,
-      vatPayable: 1500,
+      outputVat: "2500.00",
+      inputVat: "1000.00",
+      vatPayable: "1500.00",
     },
     ...overrides,
   }
@@ -98,35 +98,35 @@ describe("PDV XML Golden Tests", () => {
         periodYear: 2025,
         section1: {
           domestic: {
-            standard: { rate: 25, baseAmount: 8000, vatAmount: 2000 },
-            reduced: { rate: 13, baseAmount: 3000, vatAmount: 390 },
-            superReduced: { rate: 5, baseAmount: 1000, vatAmount: 50 },
+            standard: { rate: 25, baseAmount: "8000.00", vatAmount: "2000.00" },
+            reduced: { rate: 13, baseAmount: "3000.00", vatAmount: "390.00" },
+            superReduced: { rate: 5, baseAmount: "1000.00", vatAmount: "50.00" },
           },
-          euDeliveries: { goods: 0, services: 0 },
-          exports: 0,
-          exempt: 0,
-          totalOutputVat: 2440,
-          totalBaseOutput: 12000,
+          euDeliveries: { goods: "0.00", services: "0.00" },
+          exports: "0.00",
+          exempt: "0.00",
+          totalOutputVat: "2440.00",
+          totalBaseOutput: "12000.00",
         },
         section2: {
           domestic: {
-            standard: { rate: 25, baseAmount: 2000, vatAmount: 500 },
-            reduced: { rate: 13, baseAmount: 1000, vatAmount: 130 },
-            superReduced: { rate: 5, baseAmount: 500, vatAmount: 25 },
+            standard: { rate: 25, baseAmount: "2000.00", vatAmount: "500.00" },
+            reduced: { rate: 13, baseAmount: "1000.00", vatAmount: "130.00" },
+            superReduced: { rate: 5, baseAmount: "500.00", vatAmount: "25.00" },
           },
           euAcquisitions: {
-            goods: { rate: 25, baseAmount: 0, vatAmount: 0 },
-            services: { rate: 25, baseAmount: 0, vatAmount: 0 },
+            goods: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
+            services: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
           },
-          imports: { rate: 25, baseAmount: 0, vatAmount: 0 },
-          nonDeductible: 0,
-          totalInputVat: 655,
-          totalBaseInput: 3500,
+          imports: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
+          nonDeductible: "0.00",
+          totalInputVat: "655.00",
+          totalBaseInput: "3500.00",
         },
         section3: {
-          outputVat: 2440,
-          inputVat: 655,
-          vatPayable: 1785,
+          outputVat: "2440.00",
+          inputVat: "655.00",
+          vatPayable: "1785.00",
         },
       })
 
@@ -142,35 +142,35 @@ describe("PDV XML Golden Tests", () => {
         periodYear: 2025,
         section1: {
           domestic: {
-            standard: { rate: 25, baseAmount: 1000, vatAmount: 250 },
-            reduced: { rate: 13, baseAmount: 0, vatAmount: 0 },
-            superReduced: { rate: 5, baseAmount: 0, vatAmount: 0 },
+            standard: { rate: 25, baseAmount: "1000.00", vatAmount: "250.00" },
+            reduced: { rate: 13, baseAmount: "0.00", vatAmount: "0.00" },
+            superReduced: { rate: 5, baseAmount: "0.00", vatAmount: "0.00" },
           },
-          euDeliveries: { goods: 0, services: 0 },
-          exports: 0,
-          exempt: 0,
-          totalOutputVat: 250,
-          totalBaseOutput: 1000,
+          euDeliveries: { goods: "0.00", services: "0.00" },
+          exports: "0.00",
+          exempt: "0.00",
+          totalOutputVat: "250.00",
+          totalBaseOutput: "1000.00",
         },
         section2: {
           domestic: {
-            standard: { rate: 25, baseAmount: 4000, vatAmount: 1000 },
-            reduced: { rate: 13, baseAmount: 0, vatAmount: 0 },
-            superReduced: { rate: 5, baseAmount: 0, vatAmount: 0 },
+            standard: { rate: 25, baseAmount: "4000.00", vatAmount: "1000.00" },
+            reduced: { rate: 13, baseAmount: "0.00", vatAmount: "0.00" },
+            superReduced: { rate: 5, baseAmount: "0.00", vatAmount: "0.00" },
           },
           euAcquisitions: {
-            goods: { rate: 25, baseAmount: 0, vatAmount: 0 },
-            services: { rate: 25, baseAmount: 0, vatAmount: 0 },
+            goods: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
+            services: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
           },
-          imports: { rate: 25, baseAmount: 0, vatAmount: 0 },
-          nonDeductible: 0,
-          totalInputVat: 1000,
-          totalBaseInput: 4000,
+          imports: { rate: 25, baseAmount: "0.00", vatAmount: "0.00" },
+          nonDeductible: "0.00",
+          totalInputVat: "1000.00",
+          totalBaseInput: "4000.00",
         },
         section3: {
-          outputVat: 250,
-          inputVat: 1000,
-          vatPayable: -750, // Refund
+          outputVat: "250.00",
+          inputVat: "1000.00",
+          vatPayable: "-750.00", // Refund
         },
       })
 
@@ -186,35 +186,35 @@ describe("PDV XML Golden Tests", () => {
         periodYear: 2025,
         section1: {
           domestic: {
-            standard: { rate: 25, baseAmount: 5000, vatAmount: 1250 },
-            reduced: { rate: 13, baseAmount: 0, vatAmount: 0 },
-            superReduced: { rate: 5, baseAmount: 0, vatAmount: 0 },
+            standard: { rate: 25, baseAmount: "5000.00", vatAmount: "1250.00" },
+            reduced: { rate: 13, baseAmount: "0.00", vatAmount: "0.00" },
+            superReduced: { rate: 5, baseAmount: "0.00", vatAmount: "0.00" },
           },
-          euDeliveries: { goods: 2000, services: 500 }, // Zero-rated EU deliveries
-          exports: 1000, // Zero-rated exports
-          exempt: 0,
-          totalOutputVat: 1250,
-          totalBaseOutput: 8500,
+          euDeliveries: { goods: "2000.00", services: "500.00" }, // Zero-rated EU deliveries
+          exports: "1000.00", // Zero-rated exports
+          exempt: "0.00",
+          totalOutputVat: "1250.00",
+          totalBaseOutput: "8500.00",
         },
         section2: {
           domestic: {
-            standard: { rate: 25, baseAmount: 2000, vatAmount: 500 },
-            reduced: { rate: 13, baseAmount: 0, vatAmount: 0 },
-            superReduced: { rate: 5, baseAmount: 0, vatAmount: 0 },
+            standard: { rate: 25, baseAmount: "2000.00", vatAmount: "500.00" },
+            reduced: { rate: 13, baseAmount: "0.00", vatAmount: "0.00" },
+            superReduced: { rate: 5, baseAmount: "0.00", vatAmount: "0.00" },
           },
           euAcquisitions: {
-            goods: { rate: 25, baseAmount: 1000, vatAmount: 250 }, // Reverse charge
-            services: { rate: 25, baseAmount: 500, vatAmount: 125 }, // Reverse charge
+            goods: { rate: 25, baseAmount: "1000.00", vatAmount: "250.00" }, // Reverse charge
+            services: { rate: 25, baseAmount: "500.00", vatAmount: "125.00" }, // Reverse charge
           },
-          imports: { rate: 25, baseAmount: 300, vatAmount: 75 },
-          nonDeductible: 50,
-          totalInputVat: 950,
-          totalBaseInput: 3800,
+          imports: { rate: 25, baseAmount: "300.00", vatAmount: "75.00" },
+          nonDeductible: "50.00",
+          totalInputVat: "950.00",
+          totalBaseInput: "3800.00",
         },
         section3: {
-          outputVat: 1250,
-          inputVat: 950,
-          vatPayable: 300,
+          outputVat: "1250.00",
+          inputVat: "950.00",
+          vatPayable: "300.00",
         },
       })
 
@@ -229,9 +229,9 @@ describe("PDV XML Golden Tests", () => {
         periodMonth: 12,
         periodYear: 2025,
         section4: {
-          marginScheme: 500,
-          travelAgency: 200,
-          usedGoods: 100,
+          marginScheme: "500.00",
+          travelAgency: "200.00",
+          usedGoods: "100.00",
         },
       })
 

@@ -1,4 +1,4 @@
-import type { FiscalRequest, Prisma } from "@prisma/client"
+import { Prisma, type FiscalRequest } from "@prisma/client"
 import { generateVerificationUrl } from "@/lib/fiscal/qr-generator"
 
 interface FiscalResponseInput {
@@ -25,7 +25,7 @@ export function buildFiscalResponseCreateInput(
           zki: input.zki ?? request.zki ?? "",
           invoiceNumber: request.qrInvoiceNumber ?? "",
           issuerOib: request.qrIssuerOib ?? "",
-          amount: Number(qrAmount),
+          amount: qrAmount.toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP).toFixed(2),
           dateTime: qrDateTime,
         })
       : null

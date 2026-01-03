@@ -7,6 +7,8 @@ import {
   PutObjectRetentionCommand,
   ObjectLockRetentionMode,
 } from "@aws-sdk/client-s3"
+import { promises as fs } from "fs"
+import path from "path"
 
 export interface RetentionOptions {
   retentionYears?: number // Croatian compliance: 11 years
@@ -14,6 +16,8 @@ export interface RetentionOptions {
 }
 
 const BUCKET = process.env.R2_BUCKET_NAME || "fiskai-documents"
+const MOCK_DIR = process.env.R2_MOCK_DIR || null
+const DETERMINISTIC_MODE = process.env.DETERMINISTIC_MODE === "true"
 
 /**
  * Upload file to R2 with 11-year retention policy for Croatian compliance.
@@ -34,6 +38,26 @@ export async function uploadWithRetention(
 ): Promise<string> {
   const { retentionYears, metadata } = options || {}
 
+  if (MOCK_DIR) {
+    const filePath = path.join(MOCK_DIR, key)
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(filePath, data)
+    await fs.writeFile(
+      `${filePath}.meta.json`,
+      JSON.stringify(
+        {
+          contentType,
+          retentionYears: retentionYears ?? null,
+          metadata: metadata ?? {},
+          uploadedAt: DETERMINISTIC_MODE ? "2000-01-01T00:00:00.000Z" : new Date().toISOString(),
+        },
+        null,
+        2
+      )
+    )
+    return key
+  }
+
   // Upload the file with metadata
   await client.send(
     new PutObjectCommand({
@@ -44,7 +68,7 @@ export async function uploadWithRetention(
       Metadata: {
         ...metadata,
         ...(retentionYears ? { "retention-years": retentionYears.toString() } : {}),
-        "uploaded-at": new Date().toISOString(),
+        "uploaded-at": DETERMINISTIC_MODE ? "2000-01-01T00:00:00.000Z" : new Date().toISOString(),
       },
     })
   )

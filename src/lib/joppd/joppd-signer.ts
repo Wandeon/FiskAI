@@ -7,6 +7,10 @@ export interface SigningCredentials {
 }
 
 export function signJoppdXml(xml: string, credentials: SigningCredentials): string {
+  if (process.env.MOCK_FINA_SIGNING === "true") {
+    return xml
+  }
+
   const sig = new SignedXml({
     privateKey: credentials.privateKeyPem,
     publicCert: credentials.certificatePem,

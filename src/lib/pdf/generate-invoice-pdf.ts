@@ -3,10 +3,12 @@ import { renderToBuffer } from "@react-pdf/renderer"
 import { InvoicePDFDocument } from "@/lib/pdf/invoice-template"
 import { generateInvoiceBarcodeDataUrl } from "@/lib/barcode"
 import { generateFiscalQRCode } from "@/lib/fiscal/qr-generator"
+import { Prisma } from "@prisma/client"
 
 export interface GenerateInvoicePDFOptions {
   invoiceId: string
   companyId: string
+  deterministicSeed?: string
 }
 
 export interface GenerateInvoicePDFResult {
@@ -21,7 +23,11 @@ export interface GenerateInvoicePDFResult {
 export async function generateInvoicePDF({
   invoiceId,
   companyId,
+  deterministicSeed,
 }: GenerateInvoicePDFOptions): Promise<GenerateInvoicePDFResult> {
+  const Decimal = Prisma.Decimal
+  const deterministicMode = process.env.DETERMINISTIC_MODE === "true" || Boolean(deterministicSeed)
+
   // Fetch invoice with all related data
   const invoice = await db.eInvoice.findFirst({
     where: {
@@ -66,9 +72,9 @@ export async function generateInvoicePDF({
       issueDate: invoice.issueDate,
       dueDate: invoice.dueDate,
       currency: invoice.currency,
-      netAmount: Number(invoice.netAmount),
-      vatAmount: Number(invoice.vatAmount),
-      totalAmount: Number(invoice.totalAmount),
+      netAmount: new Decimal(invoice.netAmount).toFixed(2),
+      vatAmount: new Decimal(invoice.vatAmount).toFixed(2),
+      totalAmount: new Decimal(invoice.totalAmount).toFixed(2),
       notes: invoice.notes,
       jir: invoice.jir,
       zki: invoice.zki,
@@ -91,6 +97,7 @@ export async function generateInvoicePDF({
       ? {
           name: invoice.buyer.name,
           oib: invoice.buyer.oib,
+          vatNumber: invoice.buyer.vatNumber,
           address: invoice.buyer.address,
           city: invoice.buyer.city,
           postalCode: invoice.buyer.postalCode,
@@ -100,12 +107,12 @@ export async function generateInvoicePDF({
     lines: invoice.lines.map((line) => ({
       lineNumber: line.lineNumber,
       description: line.description,
-      quantity: Number(line.quantity),
+      quantity: new Decimal(line.quantity).toFixed(3),
       unit: line.unit,
-      unitPrice: Number(line.unitPrice),
-      netAmount: Number(line.netAmount),
-      vatRate: Number(line.vatRate),
-      vatAmount: Number(line.vatAmount),
+      unitPrice: new Decimal(line.unitPrice).toFixed(2),
+      netAmount: new Decimal(line.netAmount).toFixed(2),
+      vatRate: new Decimal(line.vatRate).toFixed(2),
+      vatAmount: new Decimal(line.vatAmount).toFixed(2),
     })),
     bankAccount,
   }
@@ -138,7 +145,58 @@ export async function generateInvoicePDF({
 
   // Generate PDF
   const doc = InvoicePDFDocument({ ...pdfData, barcodeDataUrl, fiscalQRDataUrl })
-  const pdfBuffer = await renderToBuffer(doc)
+
+  const pdfBuffer = await (async () => {
+    if (!deterministicMode) {
+      return renderToBuffer(doc)
+    }
+
+    const seedMaterial = deterministicSeed ?? `${companyId}:${invoiceId}`
+    const seedBytes = Buffer.from(seedMaterial, "utf8")
+    const seed = seedBytes.reduce((acc, b) => (acc * 31 + b) >>> 0, 0x811c9dc5) >>> 0
+
+    const realRandom = Math.random
+    const realDate = Date
+    const fixedNow = new realDate("2000-01-01T00:00:00.000Z").getTime()
+
+    function xorshift32(state: number) {
+      let x = state >>> 0
+      x ^= x << 13
+      x ^= x >>> 17
+      x ^= x << 5
+      return x >>> 0
+    }
+
+    let rngState = seed || 1
+
+    const DeterministicDate = class extends realDate {
+      constructor(...args: any[]) {
+        if (args.length === 0) {
+          super(fixedNow)
+          return
+        }
+        // @ts-expect-error - Date constructor overloads
+        super(...args)
+      }
+      static now() {
+        return fixedNow
+      }
+    }
+
+    try {
+      // Deterministic sources for PDF metadata IDs & timestamps (PDFKit / react-pdf internals).
+      ;(globalThis as any).Date = DeterministicDate
+      Math.random = () => {
+        rngState = xorshift32(rngState)
+        return rngState / 0x100000000
+      }
+
+      return renderToBuffer(doc)
+    } finally {
+      ;(globalThis as any).Date = realDate
+      Math.random = realRandom
+    }
+  })()
 
   return {
     buffer: Buffer.from(pdfBuffer),

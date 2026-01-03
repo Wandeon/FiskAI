@@ -1,0 +1,5 @@
+## parseFloat in scenario-critical libs
+
+## Number() coercion in scenario-critical money libs
+
+## toNumber() in scenario-critical money libs

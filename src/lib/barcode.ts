@@ -1,4 +1,7 @@
 import QRCode from "qrcode"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 // IBAN validation using ISO 13616 mod-97 algorithm
 export function validateIban(iban: string): { valid: boolean; error?: string } {
@@ -92,7 +95,7 @@ export function validateIban(iban: string): { valid: boolean; error?: string } {
 type BarcodeParams = {
   creditorName: string
   creditorIban: string
-  amount: number
+  amount: string
   currency?: string
   invoiceNumber?: string
   dueDate?: Date | null
@@ -100,9 +103,9 @@ type BarcodeParams = {
 }
 
 // Format amount with 2 decimals and dot separator
-const formatAmount = (amount: number, currency: string) => {
-  const safe = Number.isFinite(amount) ? amount : 0
-  return `${currency}${safe.toFixed(2)}`
+const formatAmount = (amount: string, currency: string) => {
+  const fixed = new Decimal(amount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2)
+  return `${currency}${fixed}`
 }
 
 // EPC QR (SEPA credit transfer) payload; many HR banks accept it.

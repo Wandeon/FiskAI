@@ -1,0 +1,216 @@
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice1 create + PDF",
+  "input": {
+    "buyer": {
+      "name": "EU Client GmbH",
+      "vatNumber": "DE123456789",
+      "country": "DE"
+    },
+    "invoice": {
+      "issueDate": "2026-01-05T00:00:00.000Z",
+      "invoiceNumber": "1-1-1"
+    },
+    "lines": [
+      {
+        "description": "Consulting",
+        "quantity": 1,
+        "unitPrice": 1000,
+        "vatRate": 0
+      }
+    ]
+  },
+  "process": [
+    {
+      "file": "src/lib/invoice-numbering.ts",
+      "fn": "getNextInvoiceNumber"
+    },
+    {
+      "file": "src/lib/vat/output-calculator.ts",
+      "fn": "buildVatLineTotals"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create"
+    },
+    {
+      "file": "src/lib/pdf/generate-invoice-pdf-artifact.ts",
+      "fn": "generateInvoicePdfArtifact"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwtpgm9000cmowau2t0d0h0",
+        "fields": {
+          "invoiceNumber": "1-1-1",
+          "status": "SENT"
+        }
+      },
+      {
+        "model": "EInvoiceLine",
+        "id": "cmjwtpgme000dmowajnypnm0l",
+        "fields": {
+          "vatRate": "0.00",
+          "vatAmount": "0.00"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "cmjwtph8o000gmowatgd1va85",
+        "type": "PDF",
+        "fileName": "racun-1-1-1.pdf",
+        "checksum": "4db966e501addeca758941981642a27bfac2a8c02fd2bc790c22c010197127a7",
+        "storageKey": "attachments/cmjwtpgbb0001mowafano9cup/2000/01/4638dd5d_4db966e501addeca758941981642a27bfac2a8c02fd2bc790c22c010197127a7.pdf",
+        "generatorVersion": "invoice-pdf@1",
+        "inputHash": "0b3fc42372445cabd61a716f650b004f4ed86f73893b729de4bf30268b144659"
+      }
+    ],
+    "notes": {
+      "pdfContainsReverseChargeNote": false
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice2 fiscalize + sabotage + credit note",
+  "input": {
+    "invoice2": {
+      "invoiceNumber": "2-1-1",
+      "totalAmount": "230.00"
+    },
+    "fiscalize": {
+      "demo": true,
+      "paymentMethod": "CASH"
+    },
+    "sabotage": {
+      "update": {
+        "totalAmount": "1.00"
+      }
+    },
+    "creditNote": {
+      "correctsInvoiceId": "cmjwtphpq000qmowaj2rdyfpn",
+      "fullRefund": true
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/fiscal/pos-fiscalize.ts",
+      "fn": "fiscalizePosSale"
+    },
+    {
+      "file": "src/lib/prisma-extensions.ts",
+      "fn": "enforceInvoiceImmutability"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create (CREDIT_NOTE)"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwtphpq000qmowaj2rdyfpn",
+        "fields": {
+          "jir": "DEMO-790382dffd0de0b1e9be529b00940679",
+          "fiscalizedAt": "2026-01-02T12:01:30.370Z"
+        }
+      },
+      {
+        "model": "EInvoice",
+        "id": "cmjwtphtw000ymowabneihvav",
+        "fields": {
+          "correctsInvoiceId": "cmjwtphpq000qmowaj2rdyfpn",
+          "totalAmount": "-230.00"
+        }
+      }
+    ],
+    "notes": {
+      "sabotageError": "InvoiceImmutabilityError: Issued invoices are immutable. Attempted to update fields [totalAmount] on invoice in status PENDING_FISCALIZATION. Use a credit note for corrections."
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S2",
+  "step": "S2.Expense→Asset→MonthClose→Lock",
+  "input": {
+    "expense": {
+      "vendor": "Links d.o.o.",
+      "item": "MacBook Pro M3",
+      "net": "2500.00",
+      "vat": "625.00",
+      "total": "3125.00"
+    },
+    "depreciation": {
+      "usefulLifeMonths": 24,
+      "expectedMonth1": "104.16"
+    },
+    "monthClose": {
+      "month": "2026-01"
+    },
+    "sabotage": {
+      "expenseUpdateDescription": "Tampered"
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/fixed-assets/asset-candidates.ts",
+      "fn": "emitAssetCandidates"
+    },
+    {
+      "file": "src/lib/fixed-assets/conversion.ts",
+      "fn": "convertFixedAssetCandidateToAsset"
+    },
+    {
+      "file": "src/lib/assets/depreciation.ts",
+      "fn": "postDepreciationEntriesForPeriod"
+    },
+    {
+      "file": "src/lib/month-close/service.ts",
+      "fn": "runMonthClose"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "Expense",
+        "id": "cmjwtphvn0017mowaer60bdq5",
+        "fields": {
+          "totalAmount": "3125.00",
+          "status": "PENDING"
+        }
+      },
+      {
+        "model": "FixedAssetCandidate",
+        "id": "cmjwtphxz001emowan05k2hmo",
+        "fields": {
+          "status": "PENDING",
+          "amount": "3125.00",
+          "thresholdValue": "464.53"
+        }
+      },
+      {
+        "model": "FixedAsset",
+        "id": "cmjwtphyu001fmowa85vx6o3r",
+        "fields": {
+          "acquisitionCost": "2500.00",
+          "usefulLifeMonths": 24
+        }
+      },
+      {
+        "model": "AccountingPeriod",
+        "id": "cmjwtpi1s0027mowaq5asrm8i",
+        "fields": {
+          "status": "LOCKED",
+          "startDate": "2025-12-31T23:00:00.000Z"
+        }
+      }
+    ],
+    "notes": {
+      "lockError": "AccountingPeriodLockedError: Cannot modify Expense on 2026-01-10T00:00:00.000Z: accounting period is locked."
+    }
+  }
+}

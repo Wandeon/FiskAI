@@ -1,6 +1,9 @@
 import type { Company, Expense, ExpenseCategory, ExpenseLine } from "@prisma/client"
 import type { TransactionClient } from "@/lib/db"
 import { parseAppliesWhen, evaluateAppliesWhen } from "@/lib/regulatory-truth/dsl/applies-when"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 type VatInputRuleReference = {
   id: string
@@ -50,7 +53,7 @@ function buildVatInputContext(
     },
     txn: {
       kind: "PURCHASE" as const,
-      amount: Number(line.totalAmount),
+      amount: new Decimal(line.totalAmount).toFixed(2),
       currency: expense.currency === "EUR" ? ("EUR" as const) : undefined,
       itemCategory: category?.code ?? category?.name ?? expense.categoryId,
       date: expense.date.toISOString(),
@@ -111,11 +114,11 @@ export function calculateVatInputAmounts(
   line: ExpenseLine,
   references: VatInputRuleReference[] = []
 ) {
-  const vatAmount = Number(line.vatAmount)
+  const vatAmount = new Decimal(line.vatAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
 
   if (!expense.vatDeductible) {
     return {
-      deductibleVatAmount: 0,
+      deductibleVatAmount: new Decimal(0),
       nonDeductibleVatAmount: vatAmount,
     }
   }
@@ -126,8 +129,8 @@ export function calculateVatInputAmounts(
   )
 
   if (has50PercentRule) {
-    const deductible = vatAmount * 0.5
-    const nonDeductible = vatAmount - deductible
+    const deductible = vatAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    const nonDeductible = vatAmount.sub(deductible).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
     return {
       deductibleVatAmount: deductible,
       nonDeductibleVatAmount: nonDeductible,
@@ -136,6 +139,6 @@ export function calculateVatInputAmounts(
 
   return {
     deductibleVatAmount: vatAmount,
-    nonDeductibleVatAmount: 0,
+    nonDeductibleVatAmount: new Decimal(0),
   }
 }

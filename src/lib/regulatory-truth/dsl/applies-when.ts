@@ -1,5 +1,8 @@
 // src/lib/regulatory-truth/dsl/applies-when.ts
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 // ReDoS protection constants
 const MAX_REGEX_LENGTH = 100
@@ -99,7 +102,7 @@ interface EvaluationContext {
     kind: "SALE" | "PURCHASE" | "PAYMENT" | "PAYROLL" | "OTHER"
     b2b?: boolean
     paymentMethod?: "CASH" | "CARD" | "TRANSFER" | "OTHER"
-    amount?: number
+    amount?: number | string
     currency?: "EUR"
     itemCategory?: string
     date?: string
@@ -111,6 +114,31 @@ interface EvaluationContext {
   flags?: {
     isAutomationRequest?: boolean
   }
+}
+
+const DECIMAL_STRING_RE = /^-?\d+(?:\.\d+)?$/
+
+function tryParseDecimal(value: unknown): Prisma.Decimal | null {
+  if (value === null || value === undefined) return null
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return null
+    return new Decimal(value.toString())
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    if (!DECIMAL_STRING_RE.test(trimmed)) return null
+    return new Decimal(trimmed)
+  }
+
+  if (typeof value === "object" && "toString" in value) {
+    const s = String((value as { toString: () => string }).toString()).trim()
+    if (!DECIMAL_STRING_RE.test(s)) return null
+    return new Decimal(s)
+  }
+
+  return null
 }
 
 /**
@@ -146,24 +174,33 @@ function compare(
     return false // Missing fields always evaluate to false
   }
 
+  const leftDec = tryParseDecimal(left)
+  const rightDec = tryParseDecimal(right)
+
   switch (op) {
     case "eq":
+      if (leftDec && rightDec) return leftDec.equals(rightDec)
       return left === right
     case "neq":
+      if (leftDec && rightDec) return !leftDec.equals(rightDec)
       return left !== right
     case "gt":
+      if (leftDec && rightDec) return leftDec.greaterThan(rightDec)
       if (typeof left === "number" && typeof right === "number") return left > right
       if (typeof left === "string" && typeof right === "string") return left > right
       return false
     case "gte":
+      if (leftDec && rightDec) return leftDec.greaterThanOrEqualTo(rightDec)
       if (typeof left === "number" && typeof right === "number") return left >= right
       if (typeof left === "string" && typeof right === "string") return left >= right
       return false
     case "lt":
+      if (leftDec && rightDec) return leftDec.lessThan(rightDec)
       if (typeof left === "number" && typeof right === "number") return left < right
       if (typeof left === "string" && typeof right === "string") return left < right
       return false
     case "lte":
+      if (leftDec && rightDec) return leftDec.lessThanOrEqualTo(rightDec)
       if (typeof left === "number" && typeof right === "number") return left <= right
       if (typeof left === "string" && typeof right === "string") return left <= right
       return false
@@ -212,12 +249,18 @@ export function evaluateAppliesWhen(
 
     case "between": {
       const value = getFieldValue(context, predicate.field)
-      if (typeof value !== "number") return false
+      const valueDec = tryParseDecimal(value)
+      if (!valueDec) return false
+
+      const gteDec = predicate.gte === undefined ? null : tryParseDecimal(predicate.gte)
+      const lteDec = predicate.lte === undefined ? null : tryParseDecimal(predicate.lte)
+      if (predicate.gte !== undefined && !gteDec) return false
+      if (predicate.lte !== undefined && !lteDec) return false
 
       const gteOk =
-        predicate.gte === undefined || (typeof predicate.gte === "number" && value >= predicate.gte)
+        predicate.gte === undefined || (gteDec ? valueDec.greaterThanOrEqualTo(gteDec) : false)
       const lteOk =
-        predicate.lte === undefined || (typeof predicate.lte === "number" && value <= predicate.lte)
+        predicate.lte === undefined || (lteDec ? valueDec.lessThanOrEqualTo(lteDec) : false)
 
       return gteOk && lteOk
     }

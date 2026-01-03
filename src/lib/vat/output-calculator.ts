@@ -19,6 +19,40 @@ function parseVatRate(rule: RegulatoryRule | null, fallbackRate: number): number
   return Number.isFinite(parsed) ? parsed : fallbackRate
 }
 
+export function computeVatLineTotals(input: {
+  quantity: Prisma.Decimal | number | string
+  unitPrice: Prisma.Decimal | number | string
+  vatRatePercent: Prisma.Decimal | number | string
+}): {
+  quantity: Prisma.Decimal
+  unitPrice: Prisma.Decimal
+  vatRate: Prisma.Decimal
+  netAmount: Prisma.Decimal
+  vatAmount: Prisma.Decimal
+  totalAmount: Prisma.Decimal
+} {
+  const quantity = input.quantity instanceof Decimal ? input.quantity : new Decimal(input.quantity)
+  const unitPrice =
+    input.unitPrice instanceof Decimal ? input.unitPrice : new Decimal(input.unitPrice)
+  const vatRate =
+    input.vatRatePercent instanceof Decimal
+      ? input.vatRatePercent
+      : new Decimal(input.vatRatePercent)
+
+  const netAmount = quantity.mul(unitPrice).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+  const vatAmount = netAmount.mul(vatRate).div(100).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+  const totalAmount = netAmount.add(vatAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+
+  return {
+    quantity,
+    unitPrice,
+    vatRate,
+    netAmount,
+    vatAmount,
+    totalAmount,
+  }
+}
+
 export async function resolveVatRuleForCategory(
   vatCategory: string,
   issueDate: Date
@@ -69,21 +103,21 @@ export async function buildVatLineTotals(
   const rule = await resolveVatRuleForCategory(vatCategory, issueDate)
   const resolvedRate = parseVatRate(rule, fallbackRate)
 
-  const quantity = new Decimal(line.quantity)
-  const unitPrice = new Decimal(line.unitPrice)
-  const vatRate = new Decimal(resolvedRate)
-  const netAmount = quantity.mul(unitPrice)
-  const vatAmount = netAmount.mul(vatRate).div(100)
+  const totals = computeVatLineTotals({
+    quantity: line.quantity,
+    unitPrice: line.unitPrice,
+    vatRatePercent: resolvedRate,
+  })
 
   return {
     description: line.description,
-    quantity,
+    quantity: totals.quantity,
     unit: line.unit,
-    unitPrice,
-    netAmount,
-    vatRate,
+    unitPrice: totals.unitPrice,
+    netAmount: totals.netAmount,
+    vatRate: totals.vatRate,
     vatCategory,
-    vatAmount,
+    vatAmount: totals.vatAmount,
     vatRuleId: rule?.id ?? null,
   }
 }

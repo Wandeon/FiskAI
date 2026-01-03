@@ -1,5 +1,8 @@
 import { create } from "xmlbuilder2"
 import { formatAmount } from "@/lib/fiscal/utils"
+import { Prisma } from "@prisma/client"
+
+const Decimal = Prisma.Decimal
 
 export interface JoppdLineField {
   name: string
@@ -12,9 +15,9 @@ export interface JoppdLineInput {
   ruleVersionId?: string | null
   recipientName?: string | null
   recipientOib?: string | null
-  grossAmount?: number | null
-  netAmount?: number | null
-  taxAmount?: number | null
+  grossAmount?: string | null
+  netAmount?: string | null
+  taxAmount?: string | null
   originalLineId?: string | null
   lineData?: unknown
 }
@@ -85,15 +88,20 @@ export function generateJoppdXml(data: JoppdFormData): string {
   // ============================================
   const count = data.lines.length
 
-  // Simple sum logic - in a real app, these should be separate DB fields to ensure accuracy
-  const sumGross = data.lines.reduce((s, l) => s + (l.grossAmount || 0), 0)
-  const sumNet = data.lines.reduce((s, l) => s + (l.netAmount || 0), 0)
-  const sumTax = data.lines.reduce((s, l) => s + (l.taxAmount || 0), 0)
+  const sumGross = data.lines.reduce((s, l) => s.plus(l.grossAmount ? new Decimal(l.grossAmount) : 0), new Decimal(0))
+  const sumNet = data.lines.reduce((s, l) => s.plus(l.netAmount ? new Decimal(l.netAmount) : 0), new Decimal(0))
+  const sumTax = data.lines.reduce((s, l) => s.plus(l.taxAmount ? new Decimal(l.taxAmount) : 0), new Decimal(0))
 
-  // Infer contributions as the gap (Gross - Net - Tax)
-  // NOTE: This assumes no non-taxable nont-net items.
-  const sumContrib = Math.max(0, sumGross - sumNet - sumTax)
-  const sumIncome = sumGross - sumContrib // Dohodak = Primitak - Doprinosi
+  const sumMioI = data.lines.reduce(
+    (s, l) => s.plus(new Decimal(extractLineDataField(l.lineData, "mio1", "0"))),
+    new Decimal(0)
+  )
+  const sumMioII = data.lines.reduce(
+    (s, l) => s.plus(new Decimal(extractLineDataField(l.lineData, "mio2", "0"))),
+    new Decimal(0)
+  )
+  const sumEmployeeContrib = sumMioI.plus(sumMioII)
+  const sumIncome = sumGross.minus(sumEmployeeContrib)
 
   const stranaA = doc.ele("StranaA")
 
@@ -107,7 +115,7 @@ export function generateJoppdXml(data: JoppdFormData): string {
   stranaA.ele("BrojOsoba").txt(String(count)).up()
   stranaA.ele("BrojRedaka").txt(String(count)).up()
   stranaA.ele("I").txt(formatAmount(sumGross)).up() // Ukupni iznos primitka
-  stranaA.ele("II").txt(formatAmount(sumContrib)).up() // Ukupni iznos doprinosa
+  stranaA.ele("II").txt(formatAmount(sumEmployeeContrib)).up() // Ukupni iznos doprinosa (iz plaće)
   stranaA.ele("III").txt(formatAmount(sumIncome)).up() // Ukupni iznos dohotka
   stranaA.ele("IV").txt(formatAmount(sumTax)).up() // Ukupni porez i prirez
   stranaA.ele("V").txt(formatAmount(sumNet)).up() // Ukupni neto
@@ -119,10 +127,12 @@ export function generateJoppdXml(data: JoppdFormData): string {
   const stranaB = doc.ele("StranaB")
 
   for (const line of data.lines) {
-    const gross = line.grossAmount || 0
-    const net = line.netAmount || 0
-    const tax = line.taxAmount || 0
-    const contrib = Math.max(0, gross - net - tax)
+    const gross = line.grossAmount ? new Decimal(line.grossAmount) : new Decimal(0)
+    const net = line.netAmount ? new Decimal(line.netAmount) : new Decimal(0)
+    const tax = line.taxAmount ? new Decimal(line.taxAmount) : new Decimal(0)
+    const mio1 = new Decimal(extractLineDataField(line.lineData, "mio1", "0"))
+    const mio2 = new Decimal(extractLineDataField(line.lineData, "mio2", "0"))
+    const hzzo = new Decimal(extractLineDataField(line.lineData, "hzzo", "0"))
 
     const p = stranaB.ele("P")
 
@@ -191,23 +201,15 @@ export function generateJoppdXml(data: JoppdFormData): string {
     // P12.1 - P12.9 (Other exemptions)
 
     // P13.1: Doprinos za MIO I (15%)
-    // Simplified: Putting full contrib here. In reality splits 15/5.
-    // 20% of Gross usually.
-    // If gross=1000, MIO1=150, MIO2=50.
-    // Here we use inferred sum.
-    p.ele("P13.1")
-      .txt(formatAmount(contrib * 0.75))
-      .up() // Rough estimate 15/20
+    p.ele("P13.1").txt(formatAmount(mio1)).up()
 
     // P13.2: Doprinos za MIO II (5%)
-    p.ele("P13.2")
-      .txt(formatAmount(contrib * 0.25))
-      .up() // Rough estimate 5/20
+    p.ele("P13.2").txt(formatAmount(mio2)).up()
 
     // P13.3: Doprinos za zdravstveno (na placu) - usually 16.5% ON top.
     // Current model assumes 'gross' includes 'iz' (from) contributions.
     // 'Na' (on top) is usually separate cost.
-    p.ele("P13.3").txt("0.00").up()
+    p.ele("P13.3").txt(formatAmount(hzzo)).up()
 
     // P13.4: Doprinos za zaposljavanje
     p.ele("P13.4").txt("0.00").up()

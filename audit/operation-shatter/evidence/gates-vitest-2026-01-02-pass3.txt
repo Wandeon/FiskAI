@@ -1,0 +1,342 @@
+
+ RUN  v4.0.16 /home/admin/FiskAI/.worktrees/operation-shatter
+
+ ✓ src/components/assistant-v2/__tests__/HistoryBar.test.tsx (6 tests) 3762ms
+     ✓ renders collapsed toggle with count  1450ms
+     ✓ expands to show history items when clicked  604ms
+     ✓ calls onRestore with index when item clicked  849ms
+     ✓ shows clear all button when expanded  665ms
+ ✓ src/components/content/__tests__/AIAnswerBlock.test.tsx (32 tests) 4085ms
+       ✓ renders with all required props  1274ms
+ ✓ src/components/assistant-v2/__tests__/ErrorCard.test.tsx (8 tests) 2701ms
+     ✓ renders retry button for retryable errors  1228ms
+     ✓ calls onRetry when retry button clicked  479ms
+     ✓ disables retry button when retrying  479ms
+ ✓ src/lib/joppd/__tests__/joppd-xml-artifact-determinism.test.ts (1 test) 4491ms
+     ✓ stores a content-addressed artifact with deterministic checksum  4487ms
+ ✓ src/components/assistant-v2/__tests__/ClientDataPanel.test.tsx (12 tests) 3389ms
+     ✓ renders header "Your data"  1683ms
+     ✓ renders missing data with connect CTA  413ms
+     ✓ calls onConnectData when connect button clicked  618ms
+ ✓ src/components/assistant-v2/__tests__/AssistantInput.test.tsx (9 tests) 4201ms
+     ✓ renders textarea with placeholder  1014ms
+     ✓ calls onSubmit when Enter is pressed  1017ms
+     ✓ does NOT submit on Shift+Enter (allows newline)  504ms
+     ✓ calls onSubmit when send button is clicked  696ms
+     ✓ clears input after submit  370ms
+ ✓ src/components/assistant-v2/__tests__/EvidencePanel.test.tsx (9 tests) 3690ms
+     ✓ renders header "Sources"  1916ms
+     ✓ expands supporting sources when clicked  558ms
+     ✓ renders "View source" link with correct href  700ms
+ ✓ src/lib/pdf/__tests__/invoice-pdf-artifact-determinism.test.ts (1 test) 7123ms
+     ✓ generates identical checksum for identical inputs  7111ms
+ ✓ src/lib/reports/__tests__/pdv-xml-artifact-determinism.test.ts (1 test) 2780ms
+     ✓ generates identical checksum for identical inputs  2726ms
+ ✓ src/components/assistant-v2/__tests__/CTABlock.test.tsx (9 tests) 2197ms
+       ✓ renders primary action button  691ms
+       ✓ calls onDismiss when dismiss button clicked  387ms
+ ✓ src/components/content/__tests__/RegulatorySection.test.tsx (31 tests) 2458ms
+       ✓ shows conflict warning when hasConflict is true  1077ms
+ ✓ src/components/assistant-v2/__tests__/accessibility.axe.test.tsx (9 tests | 5 skipped) 4249ms
+     ✓ AnswerCard has no accessibility violations  1562ms
+     ✓ RefusalCard has no accessibility violations  1111ms
+     ✓ EvidencePanel has no accessibility violations  1074ms
+     ✓ ClientDataPanel has no accessibility violations  497ms
+ ✓ src/components/assistant-v2/__tests__/RelatedQuestions.test.tsx (6 tests) 1879ms
+     ✓ calls onSelect with question text when clicked (fill-only)  971ms
+     ✓ truncates long questions  397ms
+ ✓ src/components/assistant-v2/__tests__/SuggestionChips.test.tsx (7 tests | 1 skipped) 2318ms
+     ✓ renders all suggestions  1286ms
+     ✓ supports keyboard navigation with arrow keys  342ms
+ ✓ src/components/assistant-v2/__tests__/PersonalizationPanel.test.tsx (9 tests) 2737ms
+     ✓ renders header  1103ms
+     ✓ calls onConnect when connect button clicked  402ms
+     ✓ calls onDismiss when dismiss clicked  332ms
+ ✓ src/components/assistant-v2/__tests__/SourceCard.test.tsx (12 tests) 2724ms
+       ✓ renders title  534ms
+       ✓ renders "View source" link with page number  1208ms
+       ✓ opens link in new tab  684ms
+ ✓ src/components/assistant-v2/__tests__/SupportingSources.test.tsx (7 tests | 1 skipped) 1732ms
+     ✓ renders collapsed toggle with count  330ms
+     ✓ calls onToggle when clicked  1047ms
+ ✓ src/lib/audit/__tests__/immutability-blocked.test.ts (3 tests) 2100ms
+     ✓ blocks fiscalized invoice mutation and logs attempt  1541ms
+     ✓ blocks writes into locked accounting period and logs attempt  302ms
+ ✓ src/components/assistant-v2/__tests__/DataPointList.test.tsx (7 tests) 1505ms
+     ✓ renders all data points  361ms
+     ✓ uses definition list semantics  907ms
+ ✓ src/components/assistant-v2/__tests__/ConflictBanner.test.tsx (7 tests) 1284ms
+     ✓ renders resolved conflict with subtle styling  839ms
+ ✓ src/components/assistant-v2/__tests__/RefusalCard.test.tsx (7 tests) 2518ms
+     ✓ renders OUT_OF_SCOPE refusal with redirect options  1596ms
+ ✓ src/components/assistant-v2/__tests__/WhyDrawer.test.tsx (7 tests) 2409ms
+     ✓ has role="region" with accessible label  740ms
+     ✓ renders header with close button  503ms
+     ✓ renders bullets as list items  388ms
+ ✓ src/components/assistant-v2/__tests__/ActionButtons.test.tsx (8 tests) 2328ms
+     ✓ renders Why? button when hasWhy is true  1089ms
+     ✓ calls onWhyClick when Why? is clicked  589ms
+ ✓ src/lib/audit/__tests__/invoice-payment-mutable.test.ts (1 test) 1603ms
+     ✓ allows updating paidAmount/paymentStatus on SENT invoice  1600ms
+ ✓ src/components/assistant-v2/__tests__/AnswerCard.test.tsx (10 tests) 2102ms
+     ✓ renders headline  1225ms
+     ✓ renders Why? button when why data exists  334ms
+ ✓ src/lib/audit/__tests__/audit-correlation.test.ts (1 test) 1363ms
+     ✓ records UPDATE with before/after and correlationId  1360ms
+ ✓ src/components/assistant-v2/__tests__/Announcer.test.tsx (6 tests) 2092ms
+     ✓ renders with role="status"  1012ms
+     ✓ has aria-atomic="true"  317ms
+     ✓ is visually hidden but accessible  308ms
+ ✓ src/components/assistant-v2/__tests__/AuthorityBadge.test.tsx (6 tests | 2 skipped) 1509ms
+     ✓ has accessible role  1141ms
+ ✓ src/domain/tax/__tests__/VatCalculator.property.test.ts (13 tests) 909ms
+       ✓ VAT is always non-negative for positive net amounts  359ms
+ ✓ src/components/assistant-v2/__tests__/ConfidenceBadge.test.tsx (6 tests) 1633ms
+     ✓ has accessible label  1013ms
+ ✓ src/domain/invoicing/__tests__/InvoiceStatus.property.test.ts (14 tests) 797ms
+ ✓ src/domain/tax/__tests__/VatBreakdown.property.test.ts (10 tests) 561ms
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > returns legacy response
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_XFGu9cvmJjfw7AR1DatNh',
+  outcome: 'ANSWER',
+  durationMs: 2
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > returns legacy response even when new pipeline is running
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_FAPc383Ozx_oNAkjOopTD',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > runs new pipeline in background
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_XdvtIFQgkZqabkMmBYRS6',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > passes surface to both pipelines
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_Znjfc747jV0tS03BwTr_P',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > generates unique shadow request ID
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_2L6a_rQBOyOB1NC6GxaM2',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > generates unique shadow request ID
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_sUDLeU6MKXdwcxB1F3MEH',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+stdout | src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts > runShadowMode > handles new pipeline errors gracefully
+[ShadowMode] Pipeline completed {
+  shadowRequestId: 'shadow_X1rNx6lRilMyOdiODZqO1',
+  outcome: 'ANSWER',
+  durationMs: 0
+}
+
+ ✓ src/components/assistant-v2/__tests__/accessibility.contrast.test.tsx (9 tests) 464ms
+ ✓ src/lib/assistant/reasoning/__tests__/shadow-runner.test.ts (9 tests) 488ms
+ ✓ src/lib/assets/__tests__/tenant-depreciation-schedule.test.ts (1 test) 1606ms
+     ✓ does not inject companyId into DepreciationSchedule create  1602ms
+{"level":"error","time":1767355740609,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740673,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740676,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"PDV","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740732,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740776,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez u Njemačkoj","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740782,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"PDV u Austriji","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740793,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"tax in USA","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740799,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"Steuer in Deutschland","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740821,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740822,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez u Njemačkoj","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740828,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"nešto","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740831,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"PDV","msg":"Error generating clarifications"}
+{"level":"error","time":1767355740832,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"paušalni","msg":"Error generating clarifications"}
+ ✓ src/lib/assistant/query-engine/__tests__/query-interpreter.test.ts (33 tests) 276ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/patcher.test.ts (18 tests) 687ms
+ ✓ src/__tests__/admin/weekly-digest.test.ts (22 tests) 110ms
+ ✓ src/app/api/assistant/chat/reasoning/__tests__/route.test.ts (4 tests) 144ms
+ ✓ src/components/assistant-v2/__tests__/AnswerSection.test.tsx (6 tests) 1478ms
+     ✓ renders refusal card when answer kind is REFUSAL  991ms
+ ✓ src/domain/shared/__tests__/Money.property.test.ts (8 tests) 248ms
+ ✓ src/components/assistant-v2/__tests__/EmptyState.test.tsx (4 tests) 685ms
+     ✓ renders answer placeholder for MARKETING surface  487ms
+ ✓ src/lib/regulatory-truth/quality/__tests__/coverage-gate.test.ts (12 tests) 229ms
+{"level":"error","time":1767355745796,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"gibberish query","msg":"Error generating clarifications"}
+{"level":"info","time":1767355745806,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":15,"tokenCount":2,"meaningfulTokenCount":2,"detectedTopic":"REGULATORY","confidence":0.45,"surface":"MARKETING","traceId":"trace_SgQy7Z85npQEIS3DJKaMl","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355745814,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"info","time":1767355745815,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":10,"tokenCount":2,"meaningfulTokenCount":2,"detectedTopic":"REGULATORY","confidence":0.45,"surface":"MARKETING","traceId":"trace_HmXf_UMSwt5G3qhORc_ni","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355745889,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355745898,"env":"test","app":"fiskai","context":"assistant","query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355745899,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","retrievedRules":[{"id":"r1","titleHr":"Prag za paušalno","value":"39816.84","valueType":"currency_eur","authorityLevel":"LAW","explanationHr":"Godišnji primitak do 39.816,84 EUR.","sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:05.824Z"},"exactQuote":"Mock quote for evidence"}],"confidence":0.95}],"conceptSlugs":["pausalni-prag"],"surface":"MARKETING"},"msg":"Error generating contextual questions, falling back to static"}
+{"level":"info","time":1767355745921,"env":"test","app":"fiskai","context":"assistant","event":"no_citable_rules","queryLength":27,"tokenCount":5,"meaningfulTokenCount":5,"detectedTopic":"REGULATORY","confidence":0.85,"surface":"MARKETING","traceId":"trace_aUXk-B7ADcMoa0YCsg_09","reason":"no_concept_matches","msg":"assistant.interpretation.no_citable_rules"}
+{"level":"error","time":1767355745923,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test","msg":"Error generating clarifications"}
+{"level":"info","time":1767355745925,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":4,"tokenCount":1,"meaningfulTokenCount":1,"detectedTopic":"REGULATORY","confidence":0.25,"surface":"MARKETING","traceId":"trace_kSaoBUs9J4fh41Pl8g7K4","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355745925,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test","msg":"Error generating clarifications"}
+{"level":"info","time":1767355745926,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":4,"tokenCount":1,"meaningfulTokenCount":1,"detectedTopic":"REGULATORY","confidence":0.25,"surface":"APP","traceId":"trace_Ma4jAlehfgblpmVUOzpsX","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355745999,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test","msg":"Error generating clarifications"}
+{"level":"info","time":1767355745999,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":4,"tokenCount":1,"meaningfulTokenCount":1,"detectedTopic":"REGULATORY","confidence":0.25,"surface":"MARKETING","traceId":"trace_Pdx3P23kQ45Fb1XzoTP9S","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355746001,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test","msg":"Error generating clarifications"}
+{"level":"info","time":1767355746001,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":4,"tokenCount":1,"meaningfulTokenCount":1,"detectedTopic":"REGULATORY","confidence":0.25,"surface":"MARKETING","traceId":"trace_XJA6aIDP_kjNktx_DDKrM","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355746007,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test","msg":"Error generating clarifications"}
+{"level":"info","time":1767355746007,"env":"test","app":"fiskai","context":"assistant","event":"low_confidence","queryLength":4,"tokenCount":1,"meaningfulTokenCount":1,"detectedTopic":"REGULATORY","confidence":0.25,"surface":"MARKETING","traceId":"trace_S7ayEm5pkK4UFyoKYf_a8","threshold":0.6,"msg":"assistant.interpretation.low_confidence"}
+{"level":"error","time":1767355746029,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koja je stopa PDV-a u Hrvatskoj za hranu?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355746030,"env":"test","app":"fiskai","context":"assistant","query":"Koja je stopa PDV-a u Hrvatskoj za hranu?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355746030,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koja je stopa PDV-a u Hrvatskoj za hranu?","retrievedRules":[{"id":"r1","titleHr":"Test","value":"100","valueType":"number","authorityLevel":"LAW","confidence":0.95,"sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:06.010Z"},"exactQuote":"Mock quote for evidence"}]}],"conceptSlugs":["test-pdv"],"surface":"MARKETING"},"msg":"Error generating contextual questions, falling back to static"}
+{"level":"error","time":1767355746106,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355746106,"env":"test","app":"fiskai","context":"assistant","query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355746106,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","retrievedRules":[{"id":"r1","titleHr":"Test","value":"100","valueType":"number","authorityLevel":"LAW","confidence":0.9,"sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:06.032Z"},"exactQuote":"Mock quote for evidence"}]}],"conceptSlugs":["pausalni-prag"],"surface":"MARKETING"},"msg":"Error generating contextual questions, falling back to static"}
+{"level":"error","time":1767355746111,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koliko mi preostaje do praga za paušalni obrt?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355746111,"env":"test","app":"fiskai","context":"assistant","query":"Koliko mi preostaje do praga za paušalni obrt?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355746112,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koliko mi preostaje do praga za paušalni obrt?","retrievedRules":[{"id":"r1","titleHr":"Test","value":"100","valueType":"number","authorityLevel":"LAW","confidence":0.9,"sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:06.110Z"},"exactQuote":"Mock quote for evidence"}]}],"conceptSlugs":["pausalni-prag"],"surface":"APP","companyProfile":{}},"msg":"Error generating contextual questions, falling back to static"}
+{"level":"error","time":1767355746117,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355746117,"env":"test","app":"fiskai","context":"assistant","query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355746117,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","retrievedRules":[{"id":"r1","titleHr":"Test","value":"100","valueType":"number","authorityLevel":"LAW","confidence":0.9,"sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:06.112Z"},"exactQuote":"Mock quote for evidence"}]}],"conceptSlugs":["pausalni-prag"],"surface":"MARKETING"},"msg":"Error generating contextual questions, falling back to static"}
+{"level":"error","time":1767355746120,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?"},"msg":"Error synthesizing answer with LLM"}
+{"level":"info","time":1767355746120,"env":"test","app":"fiskai","context":"assistant","query":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","method":"template-fallback","reason":"llm-synthesis-failed","msg":"Using template-based answer (LLM synthesis failed)"}
+{"level":"error","time":1767355746120,"env":"test","app":"fiskai","context":"assistant","error":{},"context":{"userQuery":"Koji je godišnji prag prihoda za paušalni obrt u Hrvatskoj?","retrievedRules":[{"id":"r1","titleHr":"Test","value":"100","valueType":"number","authorityLevel":"LAW","confidence":0.9,"sourcePointers":[{"id":"sp1","evidence":{"fetchedAt":"2026-01-02T12:09:06.119Z"},"exactQuote":"Mock quote for evidence"}]}],"conceptSlugs":["pausalni-prag"],"surface":"APP"},"msg":"Error generating contextual questions, falling back to static"}
+ ✓ src/lib/assistant/query-engine/__tests__/answer-builder.test.ts (16 tests) 394ms
+ ✓ src/lib/assistant/hooks/__tests__/useAssistantController.test.ts (13 tests) 492ms
+ ✓ src/lib/assistant/hooks/__tests__/useCTADismissal.test.ts (6 tests) 398ms
+{"level":"error","time":1767355747387,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+ ✓ src/lib/assistant/reasoning/__tests__/integration.test.ts (19 tests) 231ms
+{"level":"error","time":1767355747397,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747408,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"gibberish query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747410,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747427,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747478,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747482,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747489,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747494,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747499,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355747501,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+ ✓ src/lib/assistant/hooks/__tests__/useAssistantAnalytics.test.ts (8 tests) 216ms
+ ✓ src/lib/modules/__tests__/access.test.ts (23 tests | 2 skipped) 51ms
+ ✓ src/lib/assistant/hooks/__tests__/useFocusManagement.test.ts (5 tests) 368ms
+ ✓ src/components/assistant-v2/__tests__/AnswerSkeleton.test.tsx (5 tests) 553ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/emit-event.test.ts (15 tests) 146ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/concept-registry.test.ts (49 tests) 183ms
+ ✓ src/domain/banking/__tests__/ReconciliationMatcher.test.ts (46 tests) 127ms
+ ✓ src/lib/assistant/reasoning/client/__tests__/useReasoningStream.test.tsx (4 tests) 106ms
+ ✓ src/lib/regulatory-truth/utils/__tests__/node-classifier.test.ts (17 tests) 92ms
+ ✓ src/application/invoicing/__tests__/IssueInvoice.test.ts (4 tests) 85ms
+ ✓ src/infrastructure/banking/__tests__/CsvParser.test.ts (79 tests) 118ms
+ ✓ src/__tests__/integration/components.test.ts (33 tests) 89ms
+ ✓ src/lib/assistant/hooks/__tests__/useRovingTabindex.test.ts (9 tests) 304ms
+ ✓ src/domain/shared/__tests__/Money.test.ts (24 tests) 94ms
+ ✓ src/lib/regulatory-truth/schemas/__tests__/knowledge-shapes.test.ts (39 tests) 238ms
+ ✓ src/infrastructure/fiscal/__tests__/ZkiSigner.test.ts (5 tests) 109ms
+ ✓ src/lib/assistant/hooks/__tests__/useReducedMotion.test.ts (4 tests) 192ms
+ ✓ src/lib/assistant/hooks/__tests__/useCTAEligibility.test.ts (7 tests) 175ms
+ ✓ src/application/banking/__tests__/ImportBankStatement.test.ts (14 tests) 76ms
+ ✓ src/lib/fiscal-data/__tests__/data-integrity.test.ts (55 tests) 153ms
+ ✓ src/lib/assistant/query-engine/__tests__/rule-selector.test.ts (8 tests) 116ms
+ ✓ src/domain/shared/__tests__/VatRate.test.ts (15 tests) 80ms
+ ✓ src/app/api/assistant/chat/__tests__/route.test.ts (7 tests) 158ms
+ ✓ src/domain/fiscalization/__tests__/ZkiCalculator.test.ts (20 tests) 58ms
+ ✓ src/lib/fiscal-data/__tests__/utils.test.ts (8 tests) 99ms
+ ✓ src/infrastructure/invoicing/__tests__/PrismaInvoiceRepository.test.ts (17 tests) 89ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/errors.test.ts (49 tests) 83ms
+{"level":"error","time":1767355761890,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+{"level":"error","time":1767355761899,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"test query","msg":"Error generating clarifications"}
+ ✓ src/lib/assistant/reasoning/__tests__/pipeline.test.ts (3 tests) 23ms
+ ✓ src/domain/fiscalization/__tests__/FiscalStatus.test.ts (23 tests) 80ms
+ ✓ src/domain/invoicing/__tests__/InvoiceNumber.test.ts (28 tests) 87ms
+ ✓ src/domain/invoicing/__tests__/Invoice.test.ts (35 tests) 99ms
+ ✓ src/domain/banking/__tests__/BankTransaction.test.ts (47 tests) 225ms
+ ✓ src/domain/tax/__tests__/VatBreakdown.test.ts (19 tests) 164ms
+ ✓ src/lib/assistant/reasoning/__tests__/feature-flags.test.ts (17 tests) 369ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/types.test.ts (33 tests) 53ms
+ ✓ src/domain/invoicing/__tests__/InvoiceStatus.test.ts (58 tests) 73ms
+ ✓ src/lib/fiscal/__tests__/xml-builder.golden.test.ts (6 tests) 114ms
+ ✓ src/application/fiscalization/__tests__/SubmitFiscalRequest.test.ts (3 tests) 24ms
+stdout | src/lib/assistant/query-engine/__tests__/rule-eligibility.test.ts > Rule Eligibility Gate > checkConditionalEligibility > returns MISSING_CONTEXT when required fields are absent
+[eligibility] Missing context fields for rule evaluation: counters.revenueYtd
+
+ ✓ src/lib/regulatory-truth/utils/__tests__/temporal-filter.test.ts (23 tests) 59ms
+ ✓ src/lib/assistant/query-engine/__tests__/rule-eligibility.test.ts (23 tests) 172ms
+ ✓ src/lib/regulatory-truth/retrieval/__tests__/query-router.test.ts (59 tests) 84ms
+ ✓ src/lib/assistant/reasoning/__tests__/refusal-policy.test.ts (26 tests) 89ms
+ ✓ src/__tests__/admin/tenant-list.test.ts (23 tests) 91ms
+ ✓ src/lib/assistant/query-engine/__tests__/concept-matcher.test.ts (16 tests) 252ms
+ ✓ src/lib/assistant/query-engine/__tests__/text-utils.test.ts (8 tests) 23ms
+ ✓ src/lib/payroll/__tests__/director-salary-determinism.test.ts (1 test) 60ms
+ ✓ src/lib/assistant/reasoning/__tests__/metrics.test.ts (18 tests) 156ms
+ ✓ src/lib/regulatory-truth/retrieval/__tests__/strategy-engine.test.ts (11 tests) 72ms
+ ✓ src/__tests__/admin/tenant-health.test.ts (13 tests) 94ms
+ ✓ src/__tests__/admin/metrics.test.ts (15 tests | 1 skipped) 134ms
+ ✓ src/lib/cache/__tests__/purge.test.ts (11 tests) 62ms
+ ✓ src/lib/regulatory-truth/taxonomy/__tests__/query-expansion.test.ts (5 tests) 23ms
+ ✓ src/domain/banking/__tests__/ImportDeduplicator.test.ts (19 tests) 80ms
+ ✓ src/lib/assistant/reasoning/sinks/__tests__/consumer.test.ts (2 tests) 27ms
+ ✓ src/lib/reports/__tests__/pdv-xml.golden.test.ts (6 tests) 42ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/repo-adapter.test.ts (24 tests) 84ms
+ ✓ src/lib/reports/__tests__/pdv-metapodaci-generatedAt.test.ts (1 test) 26ms
+ ✓ src/lib/premises/__tests__/bulk-actions.test.ts (4 tests) 52ms
+{"level":"error","time":1767355776481,"env":"test","app":"fiskai","context":"assistant","error":{},"userQuery":"porez","msg":"Error generating clarifications"}
+ ✓ src/lib/assistant/reasoning/stages/__tests__/context-resolution.test.ts (4 tests) 194ms
+ ✓ src/lib/assistant/reasoning/client/__tests__/sse-parser.test.ts (5 tests) 133ms
+ ✓ src/lib/deprecation/__tests__/registry.test.ts (17 tests) 63ms
+ ✓ src/lib/assistant/reasoning/__tests__/reasoning-pipeline.test.ts (4 tests) 39ms
+ ✓ src/domain/invoicing/__tests__/InvoiceLine.test.ts (16 tests) 27ms
+ ✓ src/lib/regulatory-truth/agents/__tests__/comparison-extractor.test.ts (20 tests) 86ms
+ ✓ src/application/invoicing/__tests__/AddInvoiceLine.test.ts (4 tests) 20ms
+ ✓ src/lib/assistant/reasoning/__tests__/topic-dimensions.test.ts (30 tests) 83ms
+ ✓ src/lib/assistant/__tests__/citations.test.ts (4 tests) 26ms
+ ✓ src/lib/assistant/__tests__/analytics.test.ts (2 tests) 14ms
+ ✓ src/domain/fiscalization/__tests__/FiscalRequest.test.ts (31 tests) 88ms
+ ✓ src/domain/tax/__tests__/VatCalculator.test.ts (10 tests) 64ms
+ ✓ src/__tests__/integration/multi-role.test.ts (14 tests | 3 skipped) 16ms
+ ✓ src/lib/regulatory-truth/utils/__tests__/velocity-profiler.test.ts (12 tests) 16ms
+ ✓ src/lib/assistant/__tests__/quality-gates.test.ts (16 tests) 22ms
+ ✓ src/lib/assistant/__tests__/streaming.test.ts (14 tests) 24ms
+ ✓ src/lib/regulatory-truth/agents/__tests__/multi-shape-extractor.test.ts (10 tests) 52ms
+ ✓ src/lib/assistant/reasoning/__tests__/validation.test.ts (13 tests) 133ms
+ ✓ src/lib/fiscal-data/__tests__/rtl-bridge.test.ts (16 tests) 82ms
+ ✓ src/__tests__/admin/alerts.test.ts (14 tests | 5 skipped) 28ms
+ ✓ src/lib/regulatory-truth/content-sync/__tests__/event-id.test.ts (34 tests) 156ms
+ ✓ src/infrastructure/mappers/__tests__/MoneyMapper.test.ts (25 tests) 186ms
+ ✓ src/lib/regulatory-truth/utils/__tests__/scan-scheduler.test.ts (12 tests) 73ms
+ ✓ src/lib/assistant/utils/__tests__/evidence-freshness.test.ts (27 tests) 55ms
+ ✓ src/lib/assistant/reasoning/sinks/__tests__/sse-sink.test.ts (3 tests) 17ms
+ ✓ src/lib/assistant/query-engine/__tests__/citation-builder.test.ts (9 tests) 143ms
+ ✓ src/lib/assistant/reasoning/sinks/__tests__/audit-sink.test.ts (3 tests) 122ms
+ ✓ src/domain/shared/__tests__/Quantity.test.ts (13 tests) 88ms
+ ✓ src/lib/assistant/query-engine/__tests__/conflict-detector.test.ts (6 tests) 84ms
+ ✓ src/lib/regulatory-truth/schemas/__tests__/comparison-matrix.test.ts (3 tests) 46ms
+ ✓ src/lib/assistant/reasoning/__tests__/compat.test.ts (3 tests) 14ms
+ ✓ src/lib/assistant/reasoning/__tests__/event-factory.test.ts (9 tests) 55ms
+ ✓ src/domain/invoicing/__tests__/InvoiceId.test.ts (10 tests) 16ms
+ ✓ src/lib/assistant/__tests__/validation.test.ts (6 tests) 54ms
+ ✓ src/lib/assistant/reasoning/__tests__/types.test.ts (11 tests) 26ms
+ ✓ src/lib/assistant/reasoning/__tests__/decision-coverage.test.ts (5 tests) 16ms
+ ✓ src/lib/assets/__tests__/depreciation-rounding.test.ts (1 test) 11ms
+ ✓ src/lib/middleware/__tests__/subdomain.test.ts (11 tests | 1 skipped) 45ms
+ ✓ src/domain/fiscalization/__tests__/ShouldFiscalize.test.ts (18 tests) 144ms
+ ✓ src/lib/assistant/reasoning/client/__tests__/selectors.test.ts (7 tests) 13ms
+ ✓ src/lib/assistant/__tests__/types.test.ts (6 tests) 117ms
+ ✓ src/lib/fixed-assets/__tests__/asset-candidates-determinism.test.ts (1 test) 52ms
+ ✓ src/application/invoicing/__tests__/CreateInvoice.test.ts (2 tests) 89ms
+ ✓ src/lib/assistant/reasoning/sinks/__tests__/types.test.ts (2 tests) 13ms
+ ✓ src/lib/assistant/reasoning/stages/__tests__/source-discovery.test.ts (3 tests) 10ms
+ ✓ src/lib/banking/import/__tests__/import-parsed-determinism.test.ts (1 test) 12ms
+ ✓ src/lib/regulatory-truth/dsl/__tests__/applies-when-decimal-amount.test.ts (3 tests) 10ms
+ ✓ src/lib/vat/__tests__/money-determinism.test.ts (3 tests) 9ms
+ ✓ src/lib/vat/__tests__/input-vat-determinism.test.ts (1 test) 18ms
+ ✓ src/lib/next/__tests__/safe-revalidate.test.ts (1 test) 7ms
+ ↓ src/components/assistant-v2/__tests__/AssistantContainer.test.tsx (3 tests | 3 skipped)
+
+ Test Files  155 passed | 1 skipped (156)
+      Tests  2078 passed | 24 skipped (2102)
+   Start at  13:08:20
+   Duration  101.13s (transform 22.56s, setup 57.84s, import 141.61s, tests 99.22s, environment 455.36s)
+

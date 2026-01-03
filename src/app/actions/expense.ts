@@ -215,8 +215,8 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
               vatRate: line.vatRate,
               vatAmount: line.vatAmount,
               totalAmount: line.totalAmount,
-              deductibleVatAmount: new Decimal(deductibleVatAmount),
-              nonDeductibleVatAmount: new Decimal(nonDeductibleVatAmount),
+              deductibleVatAmount,
+              nonDeductibleVatAmount,
               ruleReferences: references,
             },
           })
@@ -454,8 +454,8 @@ export async function updateExpense(
               vatRate: line.vatRate,
               vatAmount: line.vatAmount,
               totalAmount: line.totalAmount,
-              deductibleVatAmount: new Decimal(deductibleVatAmount),
-              nonDeductibleVatAmount: new Decimal(nonDeductibleVatAmount),
+              deductibleVatAmount,
+              nonDeductibleVatAmount,
               ruleReferences: references,
             },
           })

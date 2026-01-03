@@ -2,6 +2,7 @@
 import { describe, it } from "vitest"
 import path from "path"
 import * as forge from "node-forge"
+import { Prisma } from "@prisma/client"
 import { buildRacunRequest, buildStornoRequest, FiscalInvoiceData } from "../xml-builder"
 import { normalizeXml, assertMatchesGolden } from "@/test-utils/golden-test"
 
@@ -14,6 +15,8 @@ const MOCK_OIB = "12345678903" // Valid OIB with correct check digit
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
 describe("Fiscal XML Golden Tests", () => {
+  const Decimal = Prisma.Decimal
+
   describe("buildRacunRequest", () => {
     it("standard invoice XML matches fixture", () => {
       const invoice: FiscalInvoiceData = {
@@ -21,9 +24,9 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "PP1",
         deviceCode: "NA1",
         issueDate: new Date("2025-01-15T14:30:00"),
-        totalAmount: 125.0,
+        totalAmount: new Decimal("125.00"),
         vatRegistered: true,
-        vatBreakdown: [{ rate: 25, baseAmount: 100.0, vatAmount: 25.0 }],
+        vatBreakdown: [{ rate: 25, baseAmount: new Decimal("100.00"), vatAmount: new Decimal("25.00") }],
         paymentMethod: "G", // Cash
         operatorOib: MOCK_OIB,
         subsequentDelivery: false,
@@ -47,12 +50,12 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "SHOP",
         deviceCode: "POS1",
         issueDate: new Date("2025-03-15T10:00:00"),
-        totalAmount: 238.0, // 100*1.25 + 50*1.13 + 20*1.05 = 125 + 56.5 + 21 = 202.5... adjusted
+        totalAmount: new Decimal("238.00"), // fixture amount
         vatRegistered: true,
         vatBreakdown: [
-          { rate: 25, baseAmount: 100.0, vatAmount: 25.0 },
-          { rate: 13, baseAmount: 50.0, vatAmount: 6.5 },
-          { rate: 5, baseAmount: 20.0, vatAmount: 1.0 },
+          { rate: 25, baseAmount: new Decimal("100.00"), vatAmount: new Decimal("25.00") },
+          { rate: 13, baseAmount: new Decimal("50.00"), vatAmount: new Decimal("6.50") },
+          { rate: 5, baseAmount: new Decimal("20.00"), vatAmount: new Decimal("1.00") },
         ],
         paymentMethod: "K", // Card
         operatorOib: MOCK_OIB,
@@ -76,11 +79,11 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "HQ",
         deviceCode: "REG1",
         issueDate: new Date("2025-06-01T09:00:00"),
-        totalAmount: 200.0,
+        totalAmount: new Decimal("200.00"),
         vatRegistered: true,
-        vatBreakdown: [{ rate: 25, baseAmount: 100.0, vatAmount: 25.0 }],
-        exemptAmount: 50.0,
-        notTaxableAmount: 25.0,
+        vatBreakdown: [{ rate: 25, baseAmount: new Decimal("100.00"), vatAmount: new Decimal("25.00") }],
+        exemptAmount: new Decimal("50.00"),
+        notTaxableAmount: new Decimal("25.00"),
         paymentMethod: "T", // Bank transfer
         operatorOib: MOCK_OIB,
         subsequentDelivery: false,
@@ -103,9 +106,9 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "PP1",
         deviceCode: "NA1",
         issueDate: new Date("2025-01-20T16:00:00"),
-        totalAmount: 50.0,
+        totalAmount: new Decimal("50.00"),
         vatRegistered: true,
-        vatBreakdown: [{ rate: 25, baseAmount: 40.0, vatAmount: 10.0 }],
+        vatBreakdown: [{ rate: 25, baseAmount: new Decimal("40.00"), vatAmount: new Decimal("10.00") }],
         paymentMethod: "G",
         operatorOib: MOCK_OIB,
         subsequentDelivery: true,
@@ -129,7 +132,7 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "MALI",
         deviceCode: "K1",
         issueDate: new Date("2025-02-01T11:30:00"),
-        totalAmount: 75.0,
+        totalAmount: new Decimal("75.00"),
         vatRegistered: false,
         paymentMethod: "G",
         operatorOib: MOCK_OIB,
@@ -155,9 +158,9 @@ describe("Fiscal XML Golden Tests", () => {
         premisesCode: "PP1",
         deviceCode: "NA1",
         issueDate: new Date("2025-01-15T14:30:00"),
-        totalAmount: 125.0,
+        totalAmount: new Decimal("125.00"),
         vatRegistered: true,
-        vatBreakdown: [{ rate: 25, baseAmount: 100.0, vatAmount: 25.0 }],
+        vatBreakdown: [{ rate: 25, baseAmount: new Decimal("100.00"), vatAmount: new Decimal("25.00") }],
         paymentMethod: "G",
         operatorOib: MOCK_OIB,
         subsequentDelivery: false,

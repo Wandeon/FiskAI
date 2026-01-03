@@ -1,6 +1,6 @@
 import React from "react"
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer"
-import { generateFiscalQRCode } from "@/lib/fiscal/qr-generator"
+import { Prisma } from "@prisma/client"
 
 // Type definitions
 type InvoiceData = {
@@ -10,9 +10,9 @@ type InvoiceData = {
     issueDate: Date
     dueDate: Date | null
     currency: string
-    netAmount: number
-    vatAmount: number
-    totalAmount: number
+    netAmount: string
+    vatAmount: string
+    totalAmount: string
     notes: string | null
     jir: string | null
     zki: string | null
@@ -34,6 +34,7 @@ type InvoiceData = {
   buyer: {
     name: string
     oib: string | null
+    vatNumber?: string | null
     address: string | null
     city: string | null
     postalCode: string | null
@@ -42,12 +43,12 @@ type InvoiceData = {
   lines: Array<{
     lineNumber: number
     description: string
-    quantity: number
+    quantity: string
     unit: string
-    unitPrice: number
-    netAmount: number
-    vatRate: number
-    vatAmount: number
+    unitPrice: string
+    netAmount: string
+    vatRate: string
+    vatAmount: string
   }>
   bankAccount?: string
   barcodeDataUrl?: string | null
@@ -274,12 +275,13 @@ const styles = StyleSheet.create({
 })
 
 // Format currency
-const formatCurrency = (amount: number, currency: string) => {
-  return new Intl.NumberFormat("hr-HR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount)
+const Decimal = Prisma.Decimal
+
+const formatCurrency = (amount: string, currency: string) => {
+  const fixed = new Decimal(amount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2)
+  const [whole, fractional = "00"] = fixed.split(".")
+  const withGrouping = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  return `${withGrouping},${fractional} ${currency}`
 }
 
 // Format date
@@ -290,6 +292,10 @@ const formatDate = (date: Date) => {
 // Main component
 export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) => {
   const { invoice, seller, buyer, lines } = data
+  const reverseCharge =
+    Boolean(buyer?.vatNumber) &&
+    !String(buyer?.vatNumber ?? "").toUpperCase().startsWith("HR") &&
+    new Decimal(invoice.vatAmount).equals(0)
 
   return (
     <Document>
@@ -408,6 +414,14 @@ export const InvoicePDFTemplate: React.FC<{ data: InvoiceData }> = ({ data }) =>
             </View>
           </View>
         </View>
+
+        {reverseCharge && (
+          <View style={{ marginTop: 10 }}>
+            <Text style={{ fontSize: 9, color: "#111" }}>
+              Prijenos porezne obveze (Reverse charge): PDV nije obračunat.
+            </Text>
+          </View>
+        )}
 
         {/* Notes */}
         {invoice.notes && (

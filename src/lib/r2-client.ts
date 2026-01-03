@@ -16,15 +16,22 @@ import {
   ObjectLockRetentionMode,
 } from "@aws-sdk/client-s3"
 import { createHmac, timingSafeEqual } from "crypto"
+import { promises as fs } from "fs"
+import path from "path"
 
-const r2Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-})
+const MOCK_DIR = process.env.R2_MOCK_DIR || null
+const DETERMINISTIC_MODE = process.env.DETERMINISTIC_MODE === "true"
+
+const r2Client = MOCK_DIR
+  ? null
+  : new S3Client({
+      region: "auto",
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      },
+    })
 
 const BUCKET = process.env.R2_BUCKET_NAME || "fiskai-documents"
 
@@ -130,6 +137,21 @@ export function verifyTenantSignature(key: string, companyId: string): boolean {
 }
 
 export async function uploadToR2(key: string, data: Buffer, contentType: string): Promise<string> {
+  if (MOCK_DIR) {
+    const filePath = path.join(MOCK_DIR, key)
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(filePath, data)
+    await fs.writeFile(
+      `${filePath}.meta.json`,
+      JSON.stringify({ contentType, sizeBytes: data.length }, null, 2)
+    )
+    return key
+  }
+
+  if (!r2Client) {
+    throw new Error("R2 client not configured")
+  }
+
   await r2Client.send(
     new PutObjectCommand({
       Bucket: BUCKET,
@@ -142,6 +164,15 @@ export async function uploadToR2(key: string, data: Buffer, contentType: string)
 }
 
 export async function downloadFromR2(key: string): Promise<Buffer> {
+  if (MOCK_DIR) {
+    const filePath = path.join(MOCK_DIR, key)
+    return fs.readFile(filePath)
+  }
+
+  if (!r2Client) {
+    throw new Error("R2 client not configured")
+  }
+
   const response = await r2Client.send(
     new GetObjectCommand({
       Bucket: BUCKET,
@@ -157,6 +188,17 @@ export async function downloadFromR2(key: string): Promise<Buffer> {
 }
 
 export async function deleteFromR2(key: string): Promise<void> {
+  if (MOCK_DIR) {
+    const filePath = path.join(MOCK_DIR, key)
+    await fs.rm(filePath, { force: true })
+    await fs.rm(`${filePath}.meta.json`, { force: true })
+    return
+  }
+
+  if (!r2Client) {
+    throw new Error("R2 client not configured")
+  }
+
   await r2Client.send(
     new DeleteObjectCommand({
       Bucket: BUCKET,
@@ -181,8 +223,8 @@ export async function deleteFromR2(key: string): Promise<void> {
  */
 export function generateR2Key(companyId: string, contentHash: string, filename: string): string {
   const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const year = DETERMINISTIC_MODE ? 2000 : now.getFullYear()
+  const month = DETERMINISTIC_MODE ? "01" : String(now.getMonth() + 1).padStart(2, "0")
   // Only extract extension if filename contains a dot; otherwise default to "bin"
   const ext = filename.includes(".") ? filename.split(".").pop() || "bin" : "bin"
 

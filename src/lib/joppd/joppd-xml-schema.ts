@@ -67,6 +67,8 @@ const joppdSchema = z.object({
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
+  parseTagValue: false,
+  parseAttributeValue: false,
 })
 
 export type JoppdXmlValidationResult =

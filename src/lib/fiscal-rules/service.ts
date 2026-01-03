@@ -5,6 +5,7 @@ import type {
   CalculationRequest,
   CalculationResponse,
   ContributionsRuleData,
+  IncomeTaxRuleData,
   JoppdCodebookData,
   MileageRuleData,
   MunicipalityIncomeTaxData,
@@ -16,6 +17,7 @@ import type {
 
 const RULE_TABLE_KEYS: RuleTableKey[] = [
   "VAT",
+  "INCOME_TAX",
   "MUNICIPALITY_INCOME_TAX",
   "CONTRIBUTIONS",
   "PER_DIEM",
@@ -129,6 +131,39 @@ function calculateVat(
     vatAmount,
     grossAmount,
     availableRates,
+  }
+}
+
+function calculateIncomeTax(
+  data: IncomeTaxRuleData,
+  input: { monthlyTaxBase: number; personalAllowance?: number }
+) {
+  const allowance = input.personalAllowance ?? data.personalAllowance
+  const taxableMonthly = Math.max(0, input.monthlyTaxBase - allowance)
+  const taxableAnnual = taxableMonthly * 12
+
+  const bracket =
+    data.brackets.find(
+      (b) => taxableAnnual >= b.min && (b.max === null || taxableAnnual <= b.max)
+    ) ?? null
+
+  if (!bracket) {
+    throw new Error("No income tax bracket found")
+  }
+
+  const tax = Number((taxableMonthly * bracket.rate).toFixed(2))
+
+  return {
+    taxableMonthly,
+    taxableAnnual,
+    allowance,
+    rate: bracket.rate,
+    tax,
+    bracket: {
+      min: bracket.min,
+      max: bracket.max,
+      description: bracket.description ?? null,
+    },
   }
 }
 
@@ -275,6 +310,9 @@ export async function calculateDeterministicRule(
   switch (input.tableKey) {
     case "VAT":
       result = calculateVat(data as VatRuleData, input)
+      break
+    case "INCOME_TAX":
+      result = calculateIncomeTax(data as IncomeTaxRuleData, input)
       break
     case "MUNICIPALITY_INCOME_TAX":
       result = calculateMunicipalityIncomeTax(data as MunicipalityIncomeTaxData, input)

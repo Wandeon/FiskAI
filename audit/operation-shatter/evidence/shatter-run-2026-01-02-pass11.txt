@@ -1,0 +1,494 @@
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice1 create + PDF",
+  "input": {
+    "buyer": {
+      "name": "EU Client GmbH",
+      "vatNumber": "DE123456789",
+      "country": "DE"
+    },
+    "invoice": {
+      "issueDate": "2026-01-05T00:00:00.000Z",
+      "invoiceNumber": "1-1-1"
+    },
+    "lines": [
+      {
+        "description": "Consulting",
+        "quantity": 1,
+        "unitPrice": 1000,
+        "vatRate": 0
+      }
+    ]
+  },
+  "process": [
+    {
+      "file": "src/lib/invoice-numbering.ts",
+      "fn": "getNextInvoiceNumber"
+    },
+    {
+      "file": "src/lib/vat/output-calculator.ts",
+      "fn": "buildVatLineTotals"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create"
+    },
+    {
+      "file": "src/lib/pdf/generate-invoice-pdf-artifact.ts",
+      "fn": "generateInvoicePdfArtifact"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwuhtb3000cy1wand8hmwut",
+        "fields": {
+          "invoiceNumber": "1-1-1",
+          "status": "SENT"
+        }
+      },
+      {
+        "model": "EInvoiceLine",
+        "id": "cmjwuhtb9000dy1warz4g289l",
+        "fields": {
+          "vatRate": "0.00",
+          "vatAmount": "0.00"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "cmjwuhtw7000gy1wa331d7nu0",
+        "type": "PDF",
+        "fileName": "racun-1-1-1.pdf",
+        "checksum": "9aab3a9e4e644214de81ab8b7446fbc0bddd6ae3edde58c3a451312a48135c18",
+        "storageKey": "attachments/cmjwuht2p0001y1waapq8r3ph/2000/01/c2f1a771_9aab3a9e4e644214de81ab8b7446fbc0bddd6ae3edde58c3a451312a48135c18.pdf",
+        "generatorVersion": "invoice-pdf@1",
+        "inputHash": "b2110d9de223e5f6bd3a8345d4c6322b854af38d7bf8e46eb8ddf144bebc9555"
+      }
+    ],
+    "notes": {
+      "pdfContainsReverseChargeNote": true
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S1",
+  "step": "S1.Invoice2 fiscalize + sabotage + credit note",
+  "input": {
+    "invoice2": {
+      "invoiceNumber": "2-1-1",
+      "totalAmount": "230.00"
+    },
+    "fiscalize": {
+      "demo": true,
+      "paymentMethod": "CASH"
+    },
+    "sabotage": {
+      "update": {
+        "totalAmount": "1.00"
+      }
+    },
+    "creditNote": {
+      "correctsInvoiceId": "cmjwuhul6000qy1wad9tbh2yp",
+      "fullRefund": true
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/fiscal/pos-fiscalize.ts",
+      "fn": "fiscalizePosSale"
+    },
+    {
+      "file": "src/lib/prisma-extensions.ts",
+      "fn": "enforceInvoiceImmutability"
+    },
+    {
+      "file": "scripts/operation-shatter.ts",
+      "fn": "db.eInvoice.create (CREDIT_NOTE)"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "EInvoice",
+        "id": "cmjwuhul6000qy1wad9tbh2yp",
+        "fields": {
+          "jir": "DEMO-bebf16e0b025a17ce21924eac58c65bf",
+          "fiscalizedAt": "2026-01-02T12:23:33.460Z"
+        }
+      },
+      {
+        "model": "EInvoice",
+        "id": "cmjwuhut1000yy1waif8n1kxc",
+        "fields": {
+          "correctsInvoiceId": "cmjwuhul6000qy1wad9tbh2yp",
+          "totalAmount": "-230.00"
+        }
+      }
+    ],
+    "notes": {
+      "sabotageError": "InvoiceImmutabilityError: Issued invoices are immutable. Attempted to update fields [totalAmount] on invoice in status PENDING_FISCALIZATION. Use a credit note for corrections."
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S2",
+  "step": "S2.Expense→Asset→MonthClose→Lock",
+  "input": {
+    "expense": {
+      "vendor": "Links d.o.o.",
+      "item": "MacBook Pro M3",
+      "net": "2500.00",
+      "vat": "625.00",
+      "total": "3125.00"
+    },
+    "depreciation": {
+      "usefulLifeMonths": 24,
+      "expectedMonth1": "104.16"
+    },
+    "monthClose": {
+      "month": "2026-01"
+    },
+    "sabotage": {
+      "expenseUpdateDescription": "Tampered"
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/fixed-assets/asset-candidates.ts",
+      "fn": "emitAssetCandidates"
+    },
+    {
+      "file": "src/lib/fixed-assets/conversion.ts",
+      "fn": "convertFixedAssetCandidateToAsset"
+    },
+    {
+      "file": "src/lib/assets/depreciation.ts",
+      "fn": "postDepreciationEntriesForPeriod"
+    },
+    {
+      "file": "src/lib/month-close/service.ts",
+      "fn": "runMonthClose"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "Expense",
+        "id": "cmjwuhuv10017y1waff8qtmve",
+        "fields": {
+          "totalAmount": "3125.00",
+          "status": "PENDING"
+        }
+      },
+      {
+        "model": "FixedAssetCandidate",
+        "id": "cmjwuhuxu001ey1wamsiqiluj",
+        "fields": {
+          "status": "PENDING",
+          "amount": "3125.00",
+          "thresholdValue": "464.53"
+        }
+      },
+      {
+        "model": "FixedAsset",
+        "id": "cmjwuhuz2001fy1waz72vlk4g",
+        "fields": {
+          "acquisitionCost": "2500.00",
+          "usefulLifeMonths": 24
+        }
+      },
+      {
+        "model": "AccountingPeriod",
+        "id": "cmjwuhv3j0027y1waimphmkev",
+        "fields": {
+          "status": "LOCKED",
+          "startDate": "2025-12-31T23:00:00.000Z"
+        }
+      }
+    ],
+    "notes": {
+      "lockError": "AccountingPeriodLockedError: Cannot modify Expense on 2026-01-10T00:00:00.000Z: accounting period is locked."
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S3",
+  "step": "S3.Import + AutoMatch",
+  "input": {
+    "invoices": [
+      {
+        "id": "cmjwuhvec002oy1wanqhk2qd7",
+        "invoiceNumber": "4-1-1",
+        "total": "100.00"
+      },
+      {
+        "id": "cmjwuhvfm002sy1wa4d30qb4h",
+        "invoiceNumber": "5-1-1",
+        "total": "100.00"
+      }
+    ],
+    "transactions": [
+      {
+        "amount": "98.00",
+        "reference": null
+      },
+      {
+        "amount": "102.00",
+        "reference": "5-1-1"
+      },
+      {
+        "amount": "-5.00",
+        "description": "Bank naknada"
+      }
+    ]
+  },
+  "process": [
+    {
+      "file": "src/lib/banking/import/import-parsed.ts",
+      "fn": "importParsedBankTransactions"
+    },
+    {
+      "file": "src/lib/banking/reconciliation-service.ts",
+      "fn": "runAutoMatchTransactions"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "StatementImport",
+        "id": "cmjwuhvh4002wy1waa6sxcx00",
+        "fields": {
+          "fileChecksum": "244b696ca1f344a69232767b9a7c92251248722f63a7110ea8753397eeeb204c"
+        }
+      },
+      {
+        "model": "EInvoice",
+        "id": "cmjwuhvec002oy1wanqhk2qd7",
+        "fields": {
+          "paymentStatus": "PARTIAL",
+          "paidAmount": "98.00"
+        }
+      },
+      {
+        "model": "EInvoice",
+        "id": "cmjwuhvfm002sy1wa4d30qb4h",
+        "fields": {
+          "paymentStatus": "PAID",
+          "paidAmount": "100.00"
+        }
+      },
+      {
+        "model": "BankTransaction",
+        "id": "cmjwuhvi30030y1wa8ge3ntw2",
+        "fields": {
+          "amount": "-5.00",
+          "matchStatus": "AUTO_MATCHED"
+        }
+      },
+      {
+        "model": "BankTransaction",
+        "id": "cmjwuhvi3002yy1waopb3382n",
+        "fields": {
+          "amount": "98.00",
+          "matchStatus": "AUTO_MATCHED"
+        }
+      },
+      {
+        "model": "BankTransaction",
+        "id": "cmjwuhvi3002zy1wai95vshw4",
+        "fields": {
+          "amount": "102.00",
+          "matchStatus": "AUTO_MATCHED"
+        }
+      }
+    ],
+    "notes": {
+      "matchRes": {
+        "matchedCount": 3,
+        "evaluated": 3
+      }
+    }
+  }
+}
+{
+  "correlationId": "SHATTER-S4",
+  "step": "S4.Payroll→JOPPD→PDV",
+  "input": {
+    "payout": {
+      "gross": "3000.00",
+      "postalCode": "10000"
+    },
+    "ruleVersionIds": {
+      "CONTRIBUTIONS": "cmjwuhvwx003fy1wa30q02duz",
+      "INCOME_TAX": "cmjwuhvxw003hy1war7pdtc9z",
+      "MUNICIPALITY_INCOME_TAX": "cmjwuhvyf003jy1waxwklges6",
+      "JOPPD_CODEBOOK": "cmjwuhvz4003ly1wa7tfnhi8q"
+    },
+    "joppd": {
+      "mockSigning": true,
+      "retentionYears": 11,
+      "submissionId": "0752f8dd-ca8e-47a2-a854-105a359819fa"
+    },
+    "sabotage": {
+      "updateSignedKeyToNull": true,
+      "deleteSubmission": true
+    },
+    "pdv": {
+      "dateFrom": "2026-01-01T00:00:00.000Z",
+      "dateTo": "2026-01-31T23:59:59.999Z"
+    }
+  },
+  "process": [
+    {
+      "file": "src/lib/payroll/director-salary.ts",
+      "fn": "computeDirectorSalaryPayroll"
+    },
+    {
+      "file": "src/lib/joppd/joppd-service.ts",
+      "fn": "prepareJoppdSubmission"
+    },
+    {
+      "file": "src/lib/reports/pdv-xml-artifact.ts",
+      "fn": "generatePdvXmlArtifact"
+    }
+  ],
+  "evidence": {
+    "rows": [
+      {
+        "model": "Payout",
+        "id": "8ed9135f-589a-4807-9e7e-703045bc59c4",
+        "fields": {
+          "status": "REPORTED",
+          "periodMonth": 2
+        }
+      },
+      {
+        "model": "CalculationSnapshot",
+        "id": "515e8872-6fb4-41e6-b333-032e4baadd81",
+        "fields": {
+          "rulesEngineSnapshot": {
+            "kind": "OPERATION_SHATTER_DIRECTOR_SALARY",
+            "pinnedRuleVersions": {
+              "INCOME_TAX": "cmjwuhvxw003hy1war7pdtc9z",
+              "CONTRIBUTIONS": "cmjwuhvwx003fy1wa30q02duz",
+              "MUNICIPALITY_INCOME_TAX": "cmjwuhvyf003jy1waxwklges6"
+            }
+          }
+        }
+      },
+      {
+        "model": "JoppdSubmission",
+        "id": "0752f8dd-ca8e-47a2-a854-105a359819fa",
+        "fields": {
+          "status": "ACCEPTED",
+          "signedXmlHash": "0a5fc771a441eb277f9f6264d50ebb5e818065a0897977942da9613f82267ff8",
+          "signedXmlStorageKey": "attachments/cmjwuht2p0001y1waapq8r3ph/2000/01/a492c3f6_0a5fc771a441eb277f9f6264d50ebb5e818065a0897977942da9613f82267ff8.xml"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "cmjwuhw71003oy1wax3g86aaq",
+        "type": "XML",
+        "fileName": "joppd-39168380555-2026-02-8ed9135f-589a-4807-9e7e-703045bc59c4.xml",
+        "checksum": "0a5fc771a441eb277f9f6264d50ebb5e818065a0897977942da9613f82267ff8",
+        "storageKey": "attachments/cmjwuht2p0001y1waapq8r3ph/2000/01/a492c3f6_0a5fc771a441eb277f9f6264d50ebb5e818065a0897977942da9613f82267ff8.xml",
+        "generatorVersion": "joppd-xml@1",
+        "inputHash": "e0686f727736fb33e8e236eb6c292bd1ed336c965391638880f95e7471030bba"
+      },
+      {
+        "id": "cmjwuhwdz003wy1waw7cujyqi",
+        "type": "XML",
+        "fileName": "PDV-39168380555-2026-01.xml",
+        "checksum": "76bc51347f51fde41e923dbdf32b951c5150c60642b2accfccf2706d5606a2ec",
+        "storageKey": "attachments/cmjwuht2p0001y1waapq8r3ph/2000/01/0561bd19_76bc51347f51fde41e923dbdf32b951c5150c60642b2accfccf2706d5606a2ec.xml",
+        "generatorVersion": "pdv-xml@1",
+        "inputHash": "64c1f7ca791e1e06fbb421b39462219bd5cdc255fd69948227e5f1e0c5dfcf67"
+      }
+    ],
+    "notes": {
+      "joppdAttackError": "JoppdImmutabilityError: JOPPD submissions are immutable after signing/submission. Attempted to update fields [signedXmlStorageKey] on JOPPD in status ACCEPTED. Signed/submitted JOPPD records cannot be modified. Use a correction submission instead.",
+      "joppdDeleteError": "JoppdImmutabilityError: JOPPD submissions are immutable after signing/submission. Cannot delete JOPPD in status ACCEPTED. Signed/submitted JOPPD records are immutable. Use a correction submission instead.",
+      "pdv": {
+        "section1": {
+          "domestic": {
+            "standard": {
+              "rate": 25,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            },
+            "reduced": {
+              "rate": 13,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            },
+            "superReduced": {
+              "rate": 5,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            }
+          },
+          "euDeliveries": {
+            "goods": "0.00",
+            "services": "1000.00"
+          },
+          "exports": "0.00",
+          "exempt": "0.00",
+          "totalOutputVat": "0.00",
+          "totalBaseOutput": "1000.00"
+        },
+        "section2": {
+          "domestic": {
+            "standard": {
+              "rate": 25,
+              "baseAmount": "2500.00",
+              "vatAmount": "625.00"
+            },
+            "reduced": {
+              "rate": 13,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            },
+            "superReduced": {
+              "rate": 5,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            }
+          },
+          "euAcquisitions": {
+            "goods": {
+              "rate": 25,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            },
+            "services": {
+              "rate": 25,
+              "baseAmount": "0.00",
+              "vatAmount": "0.00"
+            }
+          },
+          "imports": {
+            "rate": 25,
+            "baseAmount": "0.00",
+            "vatAmount": "0.00"
+          },
+          "nonDeductible": "0.00",
+          "totalInputVat": "625.00",
+          "totalBaseInput": "2500.00"
+        },
+        "section3": {
+          "outputVat": "0.00",
+          "inputVat": "625.00",
+          "vatPayable": "-625.00"
+        }
+      }
+    }
+  }
+}
+{
+  "done": true,
+  "evidencePath": "/home/admin/FiskAI/.worktrees/operation-shatter/audit/operation-shatter/evidence/shatter-evidence.json"
+}
