@@ -56,6 +56,8 @@ export interface ActionButtonProps {
   onSuccess?: () => void
   /** Callback invoked on failed execution */
   onError?: (error: string) => void
+  /** Additional CSS classes for responsive sizing */
+  className?: string
 }
 
 /**

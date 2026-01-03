@@ -19,6 +19,7 @@ import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Loader2, CheckCircle2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useCapabilityAction } from "@/lib/capabilities/actions/useCapabilityAction"
 import { toast } from "@/lib/toast"
 import { ConfirmationDialog } from "./ConfirmationDialog"
@@ -33,6 +34,7 @@ export function ActionButton({
   params,
   onSuccess,
   onError,
+  className,
 }: ActionButtonProps) {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -77,7 +79,7 @@ export function ActionButton({
       variant={action.primary ? "default" : "outline"}
       disabled={isDisabled}
       onClick={handleClick}
-      className="relative"
+      className={cn("relative", className)}
     >
       {showSuccess ? (
         <CheckCircle2 className="mr-2 h-4 w-4 text-success animate-in zoom-in-0 duration-200" />

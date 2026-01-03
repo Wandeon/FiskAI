@@ -53,7 +53,7 @@ export function QueueItemCard({ item, showDiagnostics = false, onActionComplete 
         )}
 
         {/* Show available actions */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {item.capabilities.map((cap) =>
             cap.actions
               .filter((a) => cap.state === "READY" || !a.enabled)
@@ -66,6 +66,7 @@ export function QueueItemCard({ item, showDiagnostics = false, onActionComplete 
                   entityType={item.type}
                   showDiagnostics={showDiagnostics}
                   onSuccess={onActionComplete}
+                  className="w-full sm:w-auto"
                 />
               ))
           )}
