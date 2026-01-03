@@ -625,7 +625,7 @@ async function createConflictResolutionAudit(
     }
   }
 ): Promise<void> {
-  await db.conflictResolutionAudit.create({
+  await dbReg.conflictResolutionAudit.create({
     data: {
       conflictId,
       ruleAId,

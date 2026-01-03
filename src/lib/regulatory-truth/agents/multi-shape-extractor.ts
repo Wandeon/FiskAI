@@ -127,7 +127,7 @@ export async function runMultiShapeExtraction(
 
   // Step 4: ComparisonMatrix extraction (runs independently of classification)
   try {
-    const evidence = await db.evidence.findUnique({
+    const evidence = await dbReg.evidence.findUnique({
       where: { id: evidenceId },
       select: { rawContent: true },
     })

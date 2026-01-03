@@ -44,7 +44,7 @@ export interface ClaimExtractionResult {
  * Extract atomic claims from regulatory content
  */
 export async function runClaimExtractor(evidenceId: string): Promise<ClaimExtractionResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 
@@ -129,7 +129,7 @@ export async function runClaimExtractor(evidenceId: string): Promise<ClaimExtrac
       console.warn(`[claim-extractor] Rejected claim: ${validation.errors.join(", ")}`)
 
       // Store in dead-letter table for analysis
-      await db.extractionRejected.create({
+      await dbReg.extractionRejected.create({
         data: {
           evidenceId: evidence.id,
           rejectionType: validation.rejectionType || "VALIDATION_FAILED",

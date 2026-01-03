@@ -3467,22 +3467,7 @@ enum ConflictStatus {
   ESCALATED
 }
 
-enum AlertSeverity {
-  CRITICAL
-  HIGH
-  MEDIUM
-  LOW
-}
-
-enum AlertType {
-  SOURCE_CHANGED
-  SOURCE_UNAVAILABLE
-  RULE_SUPERSEDED
-  CONFLICT_DETECTED
-  DEADLINE_APPROACHING
-  CONFIDENCE_DEGRADED
-  COVERAGE_GAP
-}
+// AlertSeverity and AlertType moved to regulatory.prisma
 
 enum GraphEdgeType {
   AMENDS
@@ -3584,26 +3569,7 @@ enum TransitionPattern {
   TAXPAYER_CHOICE
 }
 
-model RegulatorySource {
-  id                 String    @id @default(cuid())
-  slug               String    @unique // e.g., "porezna-pausalni"
-  name               String // "Porezna uprava - Paušalno oporezivanje"
-  url                String
-  hierarchy          Int       @default(5) // 1=Ustav, 2=Zakon, 3=Podzakonski, 4=Pravilnik, 5=Uputa, 6=Mišljenje, 7=Praksa
-  fetchIntervalHours Int       @default(24)
-  lastFetchedAt      DateTime?
-  lastContentHash    String?
-  isActive           Boolean   @default(true)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  evidence             Evidence[]
-  monitoringAlerts     MonitoringAlert[]
-  webhookSubscriptions WebhookSubscription[]
-
-  @@index([isActive])
-  @@index([lastFetchedAt])
-}
+// RegulatorySource moved to regulatory.prisma
 
 model DiscoveryEndpoint {
   id                String                @id @default(cuid())
@@ -3675,80 +3641,7 @@ model DiscoveredItem {
   @@index([endpointId, nodeType]) // Grouping queries
 }
 
-model Evidence {
-  id            String    @id @default(cuid())
-  sourceId      String
-  fetchedAt     DateTime  @default(now())
-  contentHash   String
-  rawContent    String    @db.Text // Full HTML/PDF text
-  contentType   String    @default("html") // html, pdf, xml
-  url           String
-  hasChanged    Boolean   @default(false)
-  changeSummary String?
-  deletedAt     DateTime?
-
-  // Staleness tracking for regulatory compliance (GitHub issue #893)
-  lastVerifiedAt  DateTime? // Last time source URL was checked and content confirmed unchanged
-  expiresAt       DateTime? // Explicit expiration date for evidence (e.g., from effectiveUntil in rules)
-  sourceEtag      String? // ETag from source for change detection
-  sourceLastMod   DateTime? // Last-Modified header from source
-  verifyCount     Int       @default(0) // Number of times verified unchanged
-  stalenessStatus String    @default("FRESH") // FRESH, AGING, STALE, UNAVAILABLE, EXPIRED
-
-  // GitHub issue #1021: Track consecutive HEAD failures for grace period
-  consecutiveFailures Int @default(0) // Reset to 0 on success, increment on failure
-
-  // NEW: OCR support fields
-  contentClass          String  @default("HTML") // HTML, PDF_TEXT, PDF_SCANNED, DOC, XLSX, JSON
-  ocrMetadata           Json? // OCR processing metadata
-  primaryTextArtifactId String? // Points to canonical text artifact for Extractor
-
-  // Semantic similarity support for duplicate detection (GitHub issue #828)
-  embedding          Unsupported("vector(768)")? // Vector embedding for semantic duplicate detection
-  embeddingStatus    String                      @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  embeddingError     String? // Error message if embedding generation failed
-  embeddingAttempts  Int                         @default(0) // Number of embedding generation attempts
-  embeddingUpdatedAt DateTime? // Last embedding status update
-
-  source                 RegulatorySource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  sourcePointers         SourcePointer[]
-  agentRuns              AgentRun[]
-  extractionRejected     ExtractionRejected[]
-  artifacts              EvidenceArtifact[]
-  atomicClaims           AtomicClaim[]
-  processes              RegulatoryProcess[]
-  referenceTables        ReferenceTable[]
-  assets                 RegulatoryAsset[]
-  transitionalProvisions TransitionalProvision[]
-  coverageReport         CoverageReport?
-  comparisonMatrices     ComparisonMatrix[]
-
-  @@unique([url, contentHash])
-  @@index([sourceId])
-  @@index([fetchedAt])
-  @@index([contentHash])
-  @@index([contentClass])
-  @@index([stalenessStatus])
-  @@index([expiresAt])
-  @@index([lastVerifiedAt])
-  @@index([embeddingStatus]) // For retry queue queries
-}
-
-model EvidenceArtifact {
-  id          String   @id @default(cuid())
-  evidenceId  String
-  kind        String // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, TABLE_JSON
-  content     String   @db.Text
-  contentHash String
-  pageMap     Json? // Per-page metadata: [{page, confidence, method}]
-  createdAt   DateTime @default(now())
-
-  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
-
-  @@index([evidenceId])
-  @@index([kind])
-  @@index([createdAt])
-}
+// Evidence and EvidenceArtifact moved to regulatory.prisma
 
 model SourcePointer {
   id             String  @id @default(cuid())
@@ -3787,7 +3680,7 @@ model SourcePointer {
   endOffset   Int?
   matchType   SourcePointerMatchType? @default(PENDING_VERIFICATION)
 
-  evidence Evidence         @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  // evidence: FK removed - Evidence now in regulatory.prisma (soft ref via evidenceId)
   rules    RegulatoryRule[] @relation("RuleSourcePointers")
 
   @@index([evidenceId])
@@ -3986,8 +3879,7 @@ model AtomicClaim {
   confidence    Float   @default(0.8)
 
   // Relations
-  evidenceId String
-  evidence   Evidence         @relation(fields: [evidenceId], references: [id])
+  evidenceId String // Soft ref to Evidence in regulatory.prisma
   ruleId     String?
   rule       RegulatoryRule?  @relation(fields: [ruleId], references: [id])
   exceptions ClaimException[]
@@ -4069,8 +3961,7 @@ model RegulatoryProcess {
   // Relations
   steps      ProcessStep[]
   assets     RegulatoryAsset[]
-  evidenceId String?
-  evidence   Evidence?         @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4126,8 +4017,7 @@ model ReferenceTable {
   // Provenance
   sourceUrl   String?
   lastUpdated DateTime  @default(now())
-  evidenceId  String?
-  evidence    Evidence? @relation(fields: [evidenceId], references: [id])
+  evidenceId  String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4183,8 +4073,7 @@ model RegulatoryAsset {
 
   // Provenance
   sourceUrl  String
-  evidenceId String?
-  evidence   Evidence? @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4220,8 +4109,7 @@ model TransitionalProvision {
 
   // Provenance
   sourceArticle String
-  evidenceId    String
-  evidence      Evidence @relation(fields: [evidenceId], references: [id])
+  evidenceId    String // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4330,10 +4218,9 @@ model AgentRun {
   completedAt DateTime?
 
   // Optional relations based on what the agent processed
-  evidenceId String?
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
   ruleId     String?
 
-  evidence Evidence?       @relation(fields: [evidenceId], references: [id])
   rule     RegulatoryRule? @relation(fields: [ruleId], references: [id])
 
   @@index([agentType])
@@ -4365,28 +4252,7 @@ model RegulatoryConflict {
   @@index([createdAt])
 }
 
-model MonitoringAlert {
-  id                  String        @id @default(cuid())
-  severity            AlertSeverity
-  type                AlertType
-  affectedRuleIds     String[]
-  sourceId            String?
-  description         String        @db.Text
-  autoAction          Json? // { action, executed, result }
-  humanActionRequired Boolean       @default(false)
-  acknowledgedBy      String?
-  acknowledgedAt      DateTime?
-  resolvedAt          DateTime?
-  createdAt           DateTime      @default(now())
-
-  source RegulatorySource? @relation(fields: [sourceId], references: [id])
-
-  @@index([severity])
-  @@index([type])
-  @@index([sourceId])
-  @@index([createdAt])
-  @@index([resolvedAt])
-}
+// MonitoringAlert moved to regulatory.prisma
 
 // =============================================================================
 // AUDIT LOG - Legal Defense Layer
@@ -4406,30 +4272,7 @@ model RegulatoryAuditLog {
   @@index([action])
 }
 
-// =============================================================================
-// CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking (Issue #789)
-// =============================================================================
-
-model ConflictResolutionAudit {
-  id         String   @id @default(cuid())
-  conflictId String
-  ruleAId    String?
-  ruleBId    String?
-  resolution String // RULE_A_PREVAILS, RULE_B_PREVAILS, MERGE_RULES, ESCALATE_TO_HUMAN
-  reason     String   @db.Text
-  resolvedBy String // ARBITER_AGENT, HUMAN, SYSTEM
-  resolvedAt DateTime @default(now())
-  metadata   Json? // { authorityComparison, sourceComparison, temporalAnalysis, aiArbitration }
-
-  @@index([conflictId])
-  @@index([ruleAId])
-  @@index([ruleBId])
-  @@index([resolvedAt])
-}
-
-// =============================================================================
-// CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking (Issue #789)
-// =============================================================================
+// ConflictResolutionAudit moved to regulatory.prisma
 
 // =============================================================================
 // HUMAN REVIEW QUEUE - Centralized review management (Issue #884)
@@ -4664,26 +4507,7 @@ model WatchdogAudit {
 }
 
 // =============================================================================
-// EXTRACTION REJECTED - Dead Letter Queue
-// =============================================================================
-
-model ExtractionRejected {
-  id            String    @id @default(cuid())
-  evidenceId    String
-  rejectionType String // e.g., "INVALID_PERCENTAGE", "QUOTE_NOT_IN_EVIDENCE", "INVALID_DATE"
-  rawOutput     Json // The raw LLM output that failed
-  errorDetails  String // Specific error message
-  attemptCount  Int       @default(1)
-  lastAttemptAt DateTime  @default(now())
-  resolvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-
-  evidence Evidence @relation(fields: [evidenceId], references: [id])
-
-  @@index([evidenceId])
-  @@index([rejectionType])
-  @@index([createdAt])
-}
+// ExtractionRejected moved to regulatory.prisma
 
 // =============================================================================
 // SOFT FAIL LOG - Track AI operation failures
@@ -4787,8 +4611,7 @@ model CoverageReport {
   reviewedAt       DateTime?
   reviewedBy       String?
 
-  // Relations
-  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  // Relations - evidenceId is soft ref to Evidence in regulatory.prisma
 
   @@unique([evidenceId])
   @@index([coverageScore])
@@ -4819,8 +4642,7 @@ model ComparisonMatrix {
   conclusion String? @db.Text
 
   // Provenance
-  evidenceId String?
-  evidence   Evidence? @relation(fields: [evidenceId], references: [id])
+  evidenceId String? // Soft ref to Evidence in regulatory.prisma
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5309,7 +5131,7 @@ model ExperimentEvent {
 // Webhook subscriptions for regulatory sources
 model WebhookSubscription {
   id          String  @id @default(cuid())
-  sourceId    String? // Link to RegulatorySource if applicable
+  sourceId    String? // Soft ref to RegulatorySource in regulatory.prisma
   provider    String // e.g., "narodne-novine", "porezna-uprava", "fina", "custom"
   webhookType String // RSS_FEED, EMAIL_ALERT, HTTP_WEBHOOK, API_POLLING
   endpointUrl String? // External URL we're subscribed to
@@ -5334,8 +5156,7 @@ model WebhookSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  source RegulatorySource? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  // Relations - source: soft ref to RegulatorySource in regulatory.prisma
   events WebhookEvent[]
 
   @@index([provider])

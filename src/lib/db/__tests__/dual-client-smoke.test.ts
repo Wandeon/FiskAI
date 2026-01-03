@@ -2,9 +2,12 @@
  * Smoke test for dual Prisma client setup
  * Verifies that both core and regulatory clients can instantiate
  */
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeAll } from "vitest"
 
-describe("Dual Prisma Client Smoke Test", () => {
+// Skip tests if DATABASE_URL is not set (e.g., in CI without DB)
+const skipIfNoDb = process.env.DATABASE_URL ? describe : describe.skip
+
+skipIfNoDb("Dual Prisma Client Smoke Test", () => {
   it("should import core client (db) without errors", async () => {
     // Dynamic import to test the module resolution
     const { db } = await import("@/lib/db")

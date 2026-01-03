@@ -3,7 +3,7 @@
 // API: https://narodne-novine.nn.hr/article_metadata.aspx?format=json-ld
 // 100% reliable structured metadata - bypasses AI for metadata extraction
 
-import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import { hashContent } from "../utils/content-hash"
 import { logAuditEvent } from "../utils/audit-log"
 import { fetchWithRateLimit } from "../utils/rate-limiter"
@@ -222,7 +222,7 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
   const normalizedUrl = normalizeNNUrl(metadata.eli)
 
   // Check if we already have this exact data
-  const existing = await db.evidence.findFirst({
+  const existing = await dbReg.evidence.findFirst({
     where: { contentHash },
   })
 
@@ -232,12 +232,12 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
   }
 
   // Find or create NN source
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: { slug: "narodne-novine" },
   })
 
   if (!source) {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: "narodne-novine",
         name: "Narodne novine",
@@ -249,7 +249,7 @@ export async function createNNEvidence(metadata: NNArticleMetadata): Promise<str
   }
 
   // Create Evidence record with normalized ELI URL
-  const evidence = await db.evidence.create({
+  const evidence = await dbReg.evidence.create({
     data: {
       sourceId: source.id,
       url: normalizedUrl,

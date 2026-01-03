@@ -41,7 +41,7 @@ const VALIDATOR_REJECTION_TYPES = [
 async function checkExtractorParseFailureRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
 
-  const parseFailures = await db.extractionRejected.count({
+  const parseFailures = await dbReg.extractionRejected.count({
     where: {
       createdAt: { gte: cutoff },
       rejectionType: { in: PARSE_FAILURE_TYPES },
@@ -52,7 +52,7 @@ async function checkExtractorParseFailureRate(): Promise<HealthGate> {
     where: { createdAt: { gte: cutoff } },
   })
 
-  const totalRejections = await db.extractionRejected.count({
+  const totalRejections = await dbReg.extractionRejected.count({
     where: { createdAt: { gte: cutoff } },
   })
 
@@ -91,7 +91,7 @@ async function checkExtractorParseFailureRate(): Promise<HealthGate> {
 async function checkValidatorRejectionRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
 
-  const validatorRejections = await db.extractionRejected.count({
+  const validatorRejections = await dbReg.extractionRejected.count({
     where: {
       createdAt: { gte: cutoff },
       rejectionType: { in: VALIDATOR_REJECTION_TYPES },
@@ -102,7 +102,7 @@ async function checkValidatorRejectionRate(): Promise<HealthGate> {
     where: { createdAt: { gte: cutoff } },
   })
 
-  const totalRejections = await db.extractionRejected.count({
+  const totalRejections = await dbReg.extractionRejected.count({
     where: { createdAt: { gte: cutoff } },
   })
 
@@ -141,7 +141,7 @@ async function checkQuoteValidationRate(): Promise<HealthGate> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
   // Check for rejections specifically due to quote not being in evidence
-  const quoteFailures = await db.extractionRejected.count({
+  const quoteFailures = await dbReg.extractionRejected.count({
     where: {
       createdAt: { gte: cutoff },
       rejectionType: { in: ["NO_QUOTE_MATCH", "QUOTE_NOT_IN_EVIDENCE"] },
@@ -152,7 +152,7 @@ async function checkQuoteValidationRate(): Promise<HealthGate> {
     where: { createdAt: { gte: cutoff } },
   })
 
-  const totalRejections = await db.extractionRejected.count({
+  const totalRejections = await dbReg.extractionRejected.count({
     where: { createdAt: { gte: cutoff } },
   })
 

@@ -29,7 +29,7 @@ export async function deriveAuthorityLevelAsync(
 
   // Try to get hierarchy from database first
   if (slugs.length > 0) {
-    const dbSources = await db.regulatorySource.findMany({
+    const dbSources = await dbReg.regulatorySource.findMany({
       where: { slug: { in: slugs } },
       select: { hierarchy: true },
     })

@@ -76,8 +76,8 @@ export async function collectMetrics(): Promise<PipelineMetrics> {
     db.discoveredItem.count({ where: { status: "FETCHED" } }),
 
     // Evidence
-    db.evidence.count(),
-    db.evidence.count({
+    dbReg.evidence.count(),
+    dbReg.evidence.count({
       where: {
         sourcePointers: { none: {} },
       },

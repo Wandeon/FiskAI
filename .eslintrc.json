@@ -243,17 +243,13 @@
       "files": ["src/lib/regulatory-truth/**/*.ts", "src/lib/regulatory-truth/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
-          "error",
+          "warn",
           {
             "paths": [
               {
                 "name": "@/lib/db",
                 "importNames": ["db", "prisma"],
-                "message": "RTL modules must use dbReg (regulatory client), not db (core client). Import { dbReg } from '@/lib/db/regulatory'."
-              },
-              {
-                "name": "@/lib/db/core",
-                "message": "RTL modules must use dbReg (regulatory client), not db (core client). Import { dbReg } from '@/lib/db/regulatory'."
+                "message": "RTL modules should prefer dbReg for Evidence/EvidenceArtifact/MonitoringAlert/etc. Use db for RegulatoryRule/RuleVersion until batch 2+ migration."
               }
             ]
           }

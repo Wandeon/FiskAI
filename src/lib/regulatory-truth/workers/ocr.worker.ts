@@ -5,7 +5,7 @@ import { Job } from "bullmq"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { extractQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
-import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import { processScannedPdf } from "../utils/ocr-processor"
 import { hashContent } from "../utils/content-hash"
 import { logWorkerStartup } from "./startup-log"
@@ -24,7 +24,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
 
   try {
     // 1. Get evidence
-    const evidence = await db.evidence.findUnique({
+    const evidence = await dbReg.evidence.findUnique({
       where: { id: evidenceId },
     })
 
@@ -41,7 +41,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
     }
 
     // Check if already processed
-    const existingArtifact = await db.evidenceArtifact.findFirst({
+    const existingArtifact = await dbReg.evidenceArtifact.findFirst({
       where: { evidenceId, kind: "OCR_TEXT" },
     })
 
@@ -59,7 +59,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
 
     if (!ocrResult.text || ocrResult.text.trim().length === 0) {
       // Mark as failed with metadata
-      await db.evidence.update({
+      await dbReg.evidence.update({
         where: { id: evidenceId },
         data: {
           ocrMetadata: {
@@ -75,7 +75,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
     }
 
     // 4. Create OCR artifact
-    const artifact = await db.evidenceArtifact.create({
+    const artifact = await dbReg.evidenceArtifact.create({
       data: {
         evidenceId,
         kind: "OCR_TEXT",
@@ -90,7 +90,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
     })
 
     // 5. Update evidence with OCR metadata
-    await db.evidence.update({
+    await dbReg.evidence.update({
       where: { id: evidenceId },
       data: {
         primaryTextArtifactId: artifact.id,
@@ -141,7 +141,7 @@ async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
     jobsProcessed.inc({ worker: "ocr", status: "failed", queue: "ocr" })
 
     // Store error in metadata
-    await db.evidence
+    await dbReg.evidence
       .update({
         where: { id: evidenceId },
         data: {

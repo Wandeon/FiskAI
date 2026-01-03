@@ -54,7 +54,7 @@ async function runPipelineCycle(): Promise<void> {
     const pending = await db.discoveredItem.count({
       where: { status: "PENDING", retryCount: { lt: 3 } },
     })
-    const unextracted = await db.evidence.count({ where: { sourcePointers: { none: {} } } })
+    const unextracted = await dbReg.evidence.count({ where: { sourcePointers: { none: {} } } })
     const unlinkedPointers = await db.sourcePointer.count({ where: { rules: { none: {} } } })
     const pendingReview = await db.regulatoryRule.count({ where: { status: "PENDING_REVIEW" } })
     const approved = await db.regulatoryRule.count({

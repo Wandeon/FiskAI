@@ -89,7 +89,7 @@ describe("Citation Compliance (Integration)", () => {
 
     for (const fixture of fixtures) {
       // First, get or create a test source
-      const source = await db.regulatorySource.upsert({
+      const source = await dbReg.regulatorySource.upsert({
         where: { slug: "test-citation-source" },
         create: {
           slug: "test-citation-source",
@@ -100,7 +100,7 @@ describe("Citation Compliance (Integration)", () => {
         update: {},
       })
 
-      const evidence = await db.evidence.create({
+      const evidence = await dbReg.evidence.create({
         data: {
           sourceId: source.id,
           url: `https://test.example.com/${fixture.conceptSlug}`,
@@ -164,7 +164,7 @@ describe("Citation Compliance (Integration)", () => {
     await db.regulatoryRule.deleteMany({
       where: { id: { in: createdIds.ruleIds } },
     })
-    await db.evidence.deleteMany({
+    await dbReg.evidence.deleteMany({
       where: { id: { in: createdIds.evidenceIds } },
     })
     console.log(`[citation-integration] Cleaned up ${createdIds.ruleIds.length} test fixtures`)

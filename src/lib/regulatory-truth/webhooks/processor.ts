@@ -244,7 +244,7 @@ async function fetchAndCreateEvidence(
   console.log(`[webhook-processor] Fetching: ${url}`)
 
   // Check if we already have this URL
-  const existingEvidence = await db.evidence.findFirst({
+  const existingEvidence = await dbReg.evidence.findFirst({
     where: { url },
     orderBy: { fetchedAt: "desc" },
   })
@@ -302,7 +302,7 @@ async function fetchAndCreateEvidence(
     // Find or create source
     if (!sourceId) {
       const domain = new URL(url).hostname
-      const source = await db.regulatorySource.findFirst({
+      const source = await dbReg.regulatorySource.findFirst({
         where: {
           url: { contains: domain },
         },
@@ -312,7 +312,7 @@ async function fetchAndCreateEvidence(
         sourceId = source.id
       } else {
         // Auto-create source
-        const newSource = await db.regulatorySource.create({
+        const newSource = await dbReg.regulatorySource.create({
           data: {
             slug: domain.replace(/\./g, "-").toLowerCase(),
             name: `Auto: ${domain}`,
@@ -330,7 +330,7 @@ async function fetchAndCreateEvidence(
     }
 
     // Create evidence
-    const evidence = await db.evidence.create({
+    const evidence = await dbReg.evidence.create({
       data: {
         sourceId,
         url,
@@ -350,7 +350,7 @@ async function fetchAndCreateEvidence(
       const buffer = Buffer.from(content, "base64")
       const parsed = await parseBinaryContent(buffer, binaryType)
 
-      const artifact = await db.evidenceArtifact.create({
+      const artifact = await dbReg.evidenceArtifact.create({
         data: {
           evidenceId: evidence.id,
           kind: "PDF_TEXT",
@@ -359,7 +359,7 @@ async function fetchAndCreateEvidence(
         },
       })
 
-      await db.evidence.update({
+      await dbReg.evidence.update({
         where: { id: evidence.id },
         data: { primaryTextArtifactId: artifact.id },
       })

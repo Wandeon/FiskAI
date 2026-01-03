@@ -1,6 +1,7 @@
 // src/lib/regulatory-truth/agents/extractor.ts
 
 import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import {
   ExtractorInputSchema,
   ExtractorOutputSchema,
@@ -106,7 +107,7 @@ function extractQuoteFromJson(content: string, value: string): string | null {
  */
 export async function runExtractor(evidenceId: string): Promise<ExtractorResult> {
   // Get evidence from database
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
     include: { source: true },
   })
@@ -196,7 +197,7 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
       )
 
       // Store in dead-letter table for analysis
-      await db.extractionRejected.create({
+      await dbReg.extractionRejected.create({
         data: {
           evidenceId: evidence.id,
           rejectionType: "INVALID_DOMAIN",
@@ -244,7 +245,7 @@ export async function runExtractor(evidenceId: string): Promise<ExtractorResult>
               ? "NO_QUOTE_MATCH"
               : "VALIDATION_FAILED"
 
-      await db.extractionRejected.create({
+      await dbReg.extractionRejected.create({
         data: {
           evidenceId: evidence.id,
           rejectionType,
@@ -344,7 +345,7 @@ export async function runExtractorBatch(limit: number = 20): Promise<{
   errors: string[]
 }> {
   // Find evidence without source pointers
-  const unprocessedEvidence = await db.evidence.findMany({
+  const unprocessedEvidence = await dbReg.evidence.findMany({
     where: {
       sourcePointers: { none: {} },
     },

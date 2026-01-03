@@ -150,7 +150,7 @@ export async function runComparisonExtractor(
   evidenceId: string
 ): Promise<ComparisonExtractionResult> {
   // Get evidence content
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
     select: { rawContent: true },
   })

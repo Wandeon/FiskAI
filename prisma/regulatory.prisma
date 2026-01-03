@@ -16,30 +16,194 @@ datasource db {
   provider = "postgresql"
 }
 
-// ============================================================================
-// RTL MODELS WILL BE MOVED HERE IN PR#5
-// ============================================================================
-// Models to migrate:
-// - Evidence (source documents)
-// - EvidencePointer (links to rules)
-// - RegulatoryRule (extracted rules)
-// - RegulatoryRuleVersion (versioned rules)
-// - RuleCalculation (calculated values)
-// - RuleClaim (extracted claims)
-// - RuleClaimConflict (conflicts between claims)
-// - RuleClaimAggregation (aggregated claims)
-// - MonitoringAlert (RTL alerts)
-// - ReviewQueueItem (human review queue)
-// - ExtractionResult (LLM extraction results)
-// - Arbiter* models
-// - Pipeline* models
-// ============================================================================
+// =============================================================================
+// ENUMS
+// =============================================================================
 
-// Placeholder model to ensure schema is valid for generation
-// Remove after first real model is added in PR#5
-model RegulatoryPlaceholder {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+enum AlertSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
 
-  @@map("_regulatory_placeholder")
+enum AlertType {
+  SOURCE_CHANGED
+  SOURCE_UNAVAILABLE
+  RULE_SUPERSEDED
+  CONFLICT_DETECTED
+  DEADLINE_APPROACHING
+  CONFIDENCE_DEGRADED
+  COVERAGE_GAP
+}
+
+// =============================================================================
+// REGULATORY SOURCE - Root registry of monitored regulatory sources
+// =============================================================================
+
+model RegulatorySource {
+  id                 String    @id @default(cuid())
+  slug               String    @unique // e.g., "porezna-pausalni"
+  name               String // "Porezna uprava - Paušalno oporezivanje"
+  url                String
+  hierarchy          Int       @default(5) // 1=Ustav, 2=Zakon, 3=Podzakonski, 4=Pravilnik, 5=Uputa, 6=Mišljenje, 7=Praksa
+  fetchIntervalHours Int       @default(24)
+  lastFetchedAt      DateTime?
+  lastContentHash    String?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  evidence         Evidence[]
+  monitoringAlerts MonitoringAlert[]
+  // NOTE: WebhookSubscription remains in core schema with soft reference to sourceId
+
+  @@index([isActive])
+  @@index([lastFetchedAt])
+}
+
+// =============================================================================
+// EVIDENCE - Immutable source documents fetched from regulatory sources
+// =============================================================================
+
+model Evidence {
+  id            String    @id @default(cuid())
+  sourceId      String
+  fetchedAt     DateTime  @default(now())
+  contentHash   String
+  rawContent    String    @db.Text // Full HTML/PDF text
+  contentType   String    @default("html") // html, pdf, xml
+  url           String
+  hasChanged    Boolean   @default(false)
+  changeSummary String?
+  deletedAt     DateTime?
+
+  // Staleness tracking for regulatory compliance
+  lastVerifiedAt  DateTime? // Last time source URL was checked and content confirmed unchanged
+  expiresAt       DateTime? // Explicit expiration date for evidence
+  sourceEtag      String? // ETag from source for change detection
+  sourceLastMod   DateTime? // Last-Modified header from source
+  verifyCount     Int       @default(0) // Number of times verified unchanged
+  stalenessStatus String    @default("FRESH") // FRESH, AGING, STALE, UNAVAILABLE, EXPIRED
+
+  // Track consecutive HEAD failures for grace period
+  consecutiveFailures Int @default(0) // Reset to 0 on success, increment on failure
+
+  // OCR support fields
+  contentClass          String  @default("HTML") // HTML, PDF_TEXT, PDF_SCANNED, DOC, XLSX, JSON
+  ocrMetadata           Json? // OCR processing metadata
+  primaryTextArtifactId String? // Points to canonical text artifact for Extractor
+
+  // Semantic similarity support for duplicate detection
+  embedding          Unsupported("vector(768)")? // Vector embedding for semantic duplicate detection
+  embeddingStatus    String                      @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  embeddingError     String? // Error message if embedding generation failed
+  embeddingAttempts  Int                         @default(0) // Number of embedding generation attempts
+  embeddingUpdatedAt DateTime? // Last embedding status update
+
+  source             RegulatorySource        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  artifacts          EvidenceArtifact[]
+  extractionRejected ExtractionRejected[]
+  // NOTE: Relations to models still in core schema (SourcePointer, AtomicClaim, etc.)
+  // will be added back when those models are migrated in later batches
+
+  @@unique([url, contentHash])
+  @@index([sourceId])
+  @@index([fetchedAt])
+  @@index([contentHash])
+  @@index([contentClass])
+  @@index([stalenessStatus])
+  @@index([expiresAt])
+  @@index([lastVerifiedAt])
+  @@index([embeddingStatus]) // For retry queue queries
+}
+
+// =============================================================================
+// EVIDENCE ARTIFACT - OCR outputs, cleaned text, extracted tables
+// =============================================================================
+
+model EvidenceArtifact {
+  id          String   @id @default(cuid())
+  evidenceId  String
+  kind        String // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, TABLE_JSON
+  content     String   @db.Text
+  contentHash String
+  pageMap     Json? // Per-page metadata: [{page, confidence, method}]
+  createdAt   DateTime @default(now())
+
+  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@index([evidenceId])
+  @@index([kind])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// EXTRACTION REJECTED - Dead Letter Queue for failed extractions
+// =============================================================================
+
+model ExtractionRejected {
+  id            String    @id @default(cuid())
+  evidenceId    String
+  rejectionType String // e.g., "INVALID_PERCENTAGE", "QUOTE_NOT_IN_EVIDENCE", "INVALID_DATE"
+  rawOutput     Json // The raw LLM output that failed
+  errorDetails  String // Specific error message
+  attemptCount  Int       @default(1)
+  lastAttemptAt DateTime  @default(now())
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  evidence Evidence @relation(fields: [evidenceId], references: [id])
+
+  @@index([evidenceId])
+  @@index([rejectionType])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// CONFLICT RESOLUTION AUDIT - Detailed conflict resolution tracking
+// =============================================================================
+
+model ConflictResolutionAudit {
+  id         String   @id @default(cuid())
+  conflictId String
+  ruleAId    String? // Soft reference to RegulatoryRule (still in core)
+  ruleBId    String? // Soft reference to RegulatoryRule (still in core)
+  resolution String // RULE_A_PREVAILS, RULE_B_PREVAILS, MERGE_RULES, ESCALATE_TO_HUMAN
+  reason     String   @db.Text
+  resolvedBy String // ARBITER_AGENT, HUMAN, SYSTEM
+  resolvedAt DateTime @default(now())
+  metadata   Json? // { authorityComparison, sourceComparison, temporalAnalysis, aiArbitration }
+
+  @@index([conflictId])
+  @@index([ruleAId])
+  @@index([ruleBId])
+  @@index([resolvedAt])
+}
+
+// =============================================================================
+// MONITORING ALERT - RTL system alerts
+// =============================================================================
+
+model MonitoringAlert {
+  id                  String        @id @default(cuid())
+  severity            AlertSeverity
+  type                AlertType
+  affectedRuleIds     String[] // Soft references to RegulatoryRule IDs
+  sourceId            String?
+  description         String        @db.Text
+  autoAction          Json? // { action, executed, result }
+  humanActionRequired Boolean       @default(false)
+  acknowledgedBy      String?
+  acknowledgedAt      DateTime?
+  resolvedAt          DateTime?
+  createdAt           DateTime      @default(now())
+
+  source RegulatorySource? @relation(fields: [sourceId], references: [id])
+
+  @@index([severity])
+  @@index([type])
+  @@index([sourceId])
+  @@index([createdAt])
+  @@index([resolvedAt])
 }

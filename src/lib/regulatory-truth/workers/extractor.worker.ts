@@ -6,6 +6,7 @@ import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter, getDomainDelay } from "./rate-limiter"
 import { runExtractor } from "../agents/extractor"
 import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import { isReadyForExtraction } from "../utils/content-provider"
 
 interface ExtractJobData {
@@ -33,7 +34,7 @@ async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
     }
 
     // Get evidence with source info for rate limiting
-    const evidence = await db.evidence.findUnique({
+    const evidence = await dbReg.evidence.findUnique({
       where: { id: evidenceId },
       include: { source: true },
     })

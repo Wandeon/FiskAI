@@ -1,6 +1,7 @@
 // src/lib/regulatory-truth/agents/sentinel.ts
 import { DiscoveryPriority, FreshnessRisk, ScrapeFrequency } from "@prisma/client"
-import { db } from "@/lib/db"
+import { db } from "@/lib/db" // For DiscoveredItem (still in core)
+import { dbReg } from "@/lib/db/regulatory" // For Evidence, RegulatorySource (moved)
 import {
   fetchWithRateLimit,
   getSentinelHealth,
@@ -455,7 +456,7 @@ export interface SentinelResult {
  */
 async function findOrCreateSource(domain: string): Promise<{ id: string } | null> {
   // First, try to find existing source by domain
-  let source = await db.regulatorySource.findFirst({
+  let source = await dbReg.regulatorySource.findFirst({
     where: {
       url: { contains: domain },
     },
@@ -467,7 +468,7 @@ async function findOrCreateSource(domain: string): Promise<{ id: string } | null
 
   // Try without www prefix
   const domainWithoutWww = domain.replace(/^www\./, "")
-  source = await db.regulatorySource.findFirst({
+  source = await dbReg.regulatorySource.findFirst({
     where: {
       url: { contains: domainWithoutWww },
     },
@@ -480,7 +481,7 @@ async function findOrCreateSource(domain: string): Promise<{ id: string } | null
   // Auto-create a new source for this domain
   console.log(`[sentinel] Auto-creating RegulatorySource for ${domain}`)
   try {
-    source = await db.regulatorySource.create({
+    source = await dbReg.regulatorySource.create({
       data: {
         slug: domain.replace(/\./g, "-").toLowerCase(),
         name: `Auto: ${domain}`,
@@ -1037,7 +1038,7 @@ async function processSingleItem(item: {
         )
 
         const contentHash = hashContent(buffer.toString("base64"))
-        const evidence = await db.evidence.upsert({
+        const evidence = await dbReg.evidence.upsert({
           where: {
             url_contentHash: {
               url: item.url,
@@ -1093,7 +1094,7 @@ async function processSingleItem(item: {
         )
 
         const contentHash = hashContent(buffer.toString("base64"))
-        const evidence = await db.evidence.upsert({
+        const evidence = await dbReg.evidence.upsert({
           where: {
             url_contentHash: {
               url: item.url,
@@ -1115,7 +1116,7 @@ async function processSingleItem(item: {
         })
 
         // Create PDF_TEXT artifact
-        const artifact = await db.evidenceArtifact.create({
+        const artifact = await dbReg.evidenceArtifact.create({
           data: {
             evidenceId: evidence.id,
             kind: "PDF_TEXT",
@@ -1125,7 +1126,7 @@ async function processSingleItem(item: {
         })
 
         // Set primary text artifact
-        await db.evidence.update({
+        await dbReg.evidence.update({
           where: { id: evidence.id },
           data: { primaryTextArtifactId: artifact.id },
         })
@@ -1194,7 +1195,7 @@ async function processSingleItem(item: {
 
     // Check if we already have this content (from a different URL)
     // Step 1: Exact hash match (fastest, most reliable)
-    const existingEvidence = await db.evidence.findFirst({
+    const existingEvidence = await dbReg.evidence.findFirst({
       where: { contentHash },
     })
 
@@ -1291,7 +1292,7 @@ async function processSingleItem(item: {
     const derivedContentClass = contentClassMap[contentType] || "HTML"
 
     // Upsert evidence record (prevents duplicates with unique constraint on url+contentHash)
-    const evidence = await db.evidence.upsert({
+    const evidence = await dbReg.evidence.upsert({
       where: {
         url_contentHash: {
           url: item.url,

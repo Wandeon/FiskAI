@@ -32,7 +32,7 @@ export interface AssetExtractionResult {
  * Extract regulatory assets (forms, templates, documents) from content
  */
 export async function runAssetExtractor(evidenceId: string): Promise<AssetExtractionResult> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
   })
 

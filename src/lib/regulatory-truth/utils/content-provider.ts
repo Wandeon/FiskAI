@@ -15,7 +15,7 @@ export interface ExtractableContent {
  * Priority: primaryTextArtifact > OCR_TEXT > PDF_TEXT > rawContent
  */
 export async function getExtractableContent(evidenceId: string): Promise<ExtractableContent> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
     include: {
       artifacts: {
@@ -68,7 +68,7 @@ export async function getExtractableContent(evidenceId: string): Promise<Extract
  * Scanned PDFs need OCR artifact first.
  */
 export async function isReadyForExtraction(evidenceId: string): Promise<boolean> {
-  const evidence = await db.evidence.findUnique({
+  const evidence = await dbReg.evidence.findUnique({
     where: { id: evidenceId },
     include: {
       artifacts: {
@@ -97,7 +97,7 @@ export async function isReadyForExtraction(evidenceId: string): Promise<boolean>
  * Get evidence with its primary text artifact loaded.
  */
 export async function getEvidenceWithText(evidenceId: string) {
-  return db.evidence.findUnique({
+  return dbReg.evidence.findUnique({
     where: { id: evidenceId },
     include: {
       source: true,
