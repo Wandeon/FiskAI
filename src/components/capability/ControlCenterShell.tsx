@@ -34,7 +34,9 @@ export function ControlCenterShell({ title, role, children }: Props) {
           <DiagnosticsToggle />
         </header>
 
-        <main className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">{children}</main>
+        <main className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+          {children}
+        </main>
       </div>
     </DiagnosticsProvider>
   )

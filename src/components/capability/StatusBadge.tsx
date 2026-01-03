@@ -12,7 +12,10 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   // Invoice statuses
   DRAFT: { label: "Nacrt", variant: "secondary" },
   PENDING_FISCALIZATION: { label: "Ceka fiskalizaciju", variant: "outline" },

@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, FileText, Receipt, Building2 } from "lucide-react"
 import Link from "next/link"
 
-const QUEUE_CONFIG: Record<string, { icon: typeof FileText; message: string; cta?: { label: string; href: string } }> = {
+const QUEUE_CONFIG: Record<
+  string,
+  { icon: typeof FileText; message: string; cta?: { label: string; href: string } }
+> = {
   invoice: {
     icon: FileText,
     message: "Nema računa za obradu",
