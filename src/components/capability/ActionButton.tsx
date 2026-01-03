@@ -18,7 +18,7 @@
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Loader2 } from "lucide-react"
+import { Loader2, CheckCircle2 } from "lucide-react"
 import { useCapabilityAction } from "@/lib/capabilities/actions/useCapabilityAction"
 import { toast } from "@/lib/toast"
 import { ConfirmationDialog } from "./ConfirmationDialog"
@@ -35,6 +35,7 @@ export function ActionButton({
   onError,
 }: ActionButtonProps) {
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const { execute, isLoading } = useCapabilityAction({
     capabilityId,
@@ -43,7 +44,9 @@ export function ActionButton({
     entityType,
     onSuccess: () => {
       setShowConfirmation(false)
-      toast.success("Success", `${action.label} completed`)
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 2000)
+      toast.success("Uspjeh", `${action.label} zavrseno`)
       onSuccess?.()
     },
     onError: (err) => {
@@ -76,7 +79,11 @@ export function ActionButton({
       onClick={handleClick}
       className="relative"
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {showSuccess ? (
+        <CheckCircle2 className="mr-2 h-4 w-4 text-success animate-in zoom-in-0 duration-200" />
+      ) : isLoading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : null}
       {action.label}
       {showDiagnostics && (
         <span className="absolute -top-2 -right-2 text-[10px] font-mono bg-muted px-1 rounded">
