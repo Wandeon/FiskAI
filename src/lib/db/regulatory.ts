@@ -9,8 +9,39 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
 
 /**
- * Create an extended Prisma client with Evidence hard-delete prohibition.
- * Evidence is append-only to preserve regulatory audit chain integrity.
+ * Evidence immutable fields - once created, these MUST NOT be modified.
+ * This preserves the regulatory audit chain integrity.
+ */
+const EVIDENCE_IMMUTABLE_FIELDS = ["rawContent", "contentHash", "fetchedAt"] as const
+
+/**
+ * Error thrown when attempting to modify immutable Evidence fields.
+ */
+export class EvidenceImmutabilityError extends Error {
+  constructor(field: string) {
+    super(
+      `Cannot modify Evidence.${field}: Evidence content is immutable once created. ` +
+        "Create a new Evidence record if the source has changed."
+    )
+    this.name = "EvidenceImmutabilityError"
+  }
+}
+
+/**
+ * Check if an update operation attempts to modify immutable Evidence fields.
+ */
+function checkEvidenceImmutability(data: Record<string, unknown>): void {
+  for (const field of EVIDENCE_IMMUTABLE_FIELDS) {
+    if (field in data) {
+      throw new EvidenceImmutabilityError(field)
+    }
+  }
+}
+
+/**
+ * Create an extended Prisma client with Evidence protections:
+ * - Hard-delete prohibition (append-only)
+ * - Immutable field protection (rawContent, contentHash, fetchedAt)
  */
 function createExtendedClient(pool: Pool) {
   const baseClient = new PrismaClient({ adapter: new PrismaPg(pool) })
@@ -31,6 +62,27 @@ function createExtendedClient(pool: Pool) {
               "Evidence is append-only to preserve regulatory audit chain. " +
               "Use soft-delete via deletedAt if you need to mark evidence as inactive."
           )
+        },
+        update({ args, query }) {
+          // Block updates to immutable fields
+          if (args.data && typeof args.data === "object") {
+            checkEvidenceImmutability(args.data as Record<string, unknown>)
+          }
+          return query(args)
+        },
+        updateMany({ args, query }) {
+          // Block updates to immutable fields
+          if (args.data && typeof args.data === "object") {
+            checkEvidenceImmutability(args.data as Record<string, unknown>)
+          }
+          return query(args)
+        },
+        upsert({ args, query }) {
+          // Block updates to immutable fields (update path only)
+          if (args.update && typeof args.update === "object") {
+            checkEvidenceImmutability(args.update as Record<string, unknown>)
+          }
+          return query(args)
         },
       },
     },

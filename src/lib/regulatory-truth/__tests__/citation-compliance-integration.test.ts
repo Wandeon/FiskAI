@@ -11,8 +11,10 @@
 import { describe, it, before, after } from "node:test"
 import assert from "node:assert"
 import { db } from "@/lib/db"
+import { dbReg } from "@/lib/db/regulatory"
 import { findRelevantRules } from "../utils/rule-context"
 import { TEST_QUESTIONS } from "./citation-compliance.test"
+import { deleteEvidenceForTest } from "@/__tests__/helpers/db-cleanup"
 
 describe("Citation Compliance (Integration)", () => {
   // Test fixture IDs for cleanup
@@ -164,13 +166,8 @@ describe("Citation Compliance (Integration)", () => {
     await db.regulatoryRule.deleteMany({
       where: { id: { in: createdIds.ruleIds } },
     })
-    // Use raw SQL for Evidence cleanup - bypasses the hard-delete prohibition extension
-    // (Evidence is append-only in production, but tests need cleanup)
-    if (createdIds.evidenceIds.length > 0) {
-      await dbReg.$executeRawUnsafe(
-        `DELETE FROM "Evidence" WHERE id IN (${createdIds.evidenceIds.map((id) => `'${id}'`).join(",")})`
-      )
-    }
+    // Use centralized test helper for Evidence cleanup
+    await deleteEvidenceForTest(createdIds.evidenceIds)
     console.log(`[citation-integration] Cleaned up ${createdIds.ruleIds.length} test fixtures`)
   })
 

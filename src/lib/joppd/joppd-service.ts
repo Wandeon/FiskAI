@@ -7,6 +7,10 @@ import { generateR2Key } from "@/lib/r2-client"
 import { uploadWithRetention } from "@/lib/r2-client-retention"
 import { getEffectiveRuleVersion } from "@/lib/fiscal-rules/service"
 import { recordStoredArtifact } from "@/lib/artifacts/service"
+import {
+  createSnapshotCache,
+  getOrCreateSnapshotCached,
+} from "@/lib/rules/applied-rule-snapshot-service"
 
 import { generateJoppdXml, type JoppdLineInput } from "./joppd-generator"
 import { signJoppdXml, type SigningCredentials } from "./joppd-signer"
@@ -69,6 +73,16 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
   }))
 
   const submission = await prisma.$transaction(async (tx) => {
+    // Create snapshot cache inside the transaction for atomicity
+    // This ensures snapshots are created in the same transaction as lines
+    const snapshotCache = createSnapshotCache()
+    const lineSnapshots = await Promise.all(
+      lineInputs.map(async (line) => {
+        const effectiveRuleVersionId = line.ruleVersionId ?? ruleVersion.id
+        return getOrCreateSnapshotCached(effectiveRuleVersionId, input.companyId, snapshotCache, tx)
+      })
+    )
+
     const created = await tx.joppdSubmission.create({
       data: {
         companyId: input.companyId,
@@ -81,13 +95,14 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
     })
 
     await tx.joppdSubmissionLine.createMany({
-      data: lineInputs.map((line) => ({
+      data: lineInputs.map((line, index) => ({
         submissionId: created.id,
         payoutLineId: line.payoutLineId,
         lineNumber: line.lineNumber,
         lineData: line.lineData as Prisma.InputJsonValue,
         originalLineId: line.originalLineId,
         ruleVersionId: line.ruleVersionId ?? ruleVersion.id,
+        appliedRuleSnapshotId: lineSnapshots[index] ?? null,
       })),
     })
 
@@ -260,6 +275,17 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
   }))
 
   const submission = await prisma.$transaction(async (tx) => {
+    // Create snapshot cache inside the transaction for atomicity
+    // This ensures snapshots are created in the same transaction as lines
+    const snapshotCache = createSnapshotCache()
+    const lineSnapshots = await Promise.all(
+      lineInputs.map(async (line) => {
+        const effectiveRuleVersionId =
+          originalLineLookup.get(line.payoutLineId)?.ruleVersionId ?? defaultRuleVersionId
+        return getOrCreateSnapshotCached(effectiveRuleVersionId, input.companyId, snapshotCache, tx)
+      })
+    )
+
     const created = await tx.joppdSubmission.create({
       data: {
         companyId: input.companyId,
@@ -271,7 +297,7 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
     })
 
     await tx.joppdSubmissionLine.createMany({
-      data: lineInputs.map((line) => ({
+      data: lineInputs.map((line, index) => ({
         submissionId: created.id,
         payoutLineId: line.payoutLineId,
         lineNumber: line.lineNumber,
@@ -279,6 +305,7 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
         originalLineId: line.originalLineId,
         ruleVersionId:
           originalLineLookup.get(line.payoutLineId)?.ruleVersionId ?? defaultRuleVersionId,
+        appliedRuleSnapshotId: lineSnapshots[index] ?? null,
       })),
     })
 

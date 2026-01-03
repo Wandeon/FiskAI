@@ -127,7 +127,31 @@ const extendedClient = baseClient.$extends({
 })
 ```
 
-**Test cleanup:** Tests use raw SQL (`$executeRaw`) to bypass the extension for cleanup.
+**Test cleanup:** Tests use centralized helper (`src/__tests__/helpers/db-cleanup.ts`) with raw SQL to bypass the extension.
+
+### Evidence Immutability Guard
+
+**Finding:** Evidence critical fields must be immutable once created.
+
+**Immutable fields:**
+
+- `rawContent` - Original source content
+- `contentHash` - Integrity verification hash
+- `fetchedAt` - Fetch timestamp
+
+**Enforcement:** Prisma extension blocks `update`, `updateMany`, and `upsert` operations that attempt to modify immutable fields:
+
+```typescript
+// dbReg blocks Evidence immutable field updates
+update({ args, query }) {
+  if (args.data && typeof args.data === "object") {
+    checkEvidenceImmutability(args.data as Record<string, unknown>)
+  }
+  return query(args)
+}
+```
+
+**Mutable fields:** Metadata fields like `stalenessStatus`, `lastVerifiedAt`, `verifyCount`, `deletedAt` remain updatable for operational tracking.
 
 ---
 
