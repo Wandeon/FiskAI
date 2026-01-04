@@ -133,12 +133,33 @@ function getRegulatoryDatabaseUrl(): string {
   return regulatoryUrl || coreUrl!
 }
 
+/**
+ * Parse schema from connection URL.
+ * The ?schema=X parameter is Prisma-specific and needs to be set as search_path.
+ */
+function parseSchemaFromUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    return parsed.searchParams.get("schema")
+  } catch {
+    return null
+  }
+}
+
 // Regulatory database pool - separate from core to prevent resource contention
 // RTL can run heavy queries (evidence scans, claim joins) that shouldn't starve core
+const regulatoryDbUrl = getRegulatoryDatabaseUrl()
+const regulatorySchema = parseSchemaFromUrl(regulatoryDbUrl)
+
 const regulatoryPool =
   globalForRegulatory.regulatoryPool ??
   new Pool({
-    connectionString: getRegulatoryDatabaseUrl(),
+    connectionString: regulatoryDbUrl,
+    // Set search_path to include the regulatory schema (from ?schema=X in URL)
+    // This ensures pg Pool queries use the correct schema
+    ...(regulatorySchema && {
+      options: `-c search_path=${regulatorySchema},public`,
+    }),
   })
 
 // Regulatory Prisma client - NO tenant isolation
