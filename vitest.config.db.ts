@@ -18,11 +18,10 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],
     // Force serial execution to prevent race conditions on shared DB state
     // This is a temporary stabilizer until proper test isolation is implemented
-    pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
+    fileParallelism: false,
+    // Also disable concurrency within files
+    sequence: {
+      concurrent: false,
     },
   },
   resolve: {
