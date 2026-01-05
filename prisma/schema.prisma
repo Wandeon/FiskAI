@@ -1228,6 +1228,7 @@ model EInvoice {
   @@index([sellerOrganizationId])
   @@index([buyerOrganizationId])
   @@index([correctsInvoiceId])
+  @@index([integrationAccountId])
 }
 
 model EInvoiceLine {
