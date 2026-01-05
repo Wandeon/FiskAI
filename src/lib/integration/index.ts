@@ -21,3 +21,14 @@ export {
   type IntegrationEnv,
   type IntegrationStatus,
 } from "./types"
+
+export {
+  createIntegrationAccount,
+  findIntegrationAccount,
+  findIntegrationAccountById,
+  updateIntegrationAccountSecrets,
+  disableIntegrationAccount,
+  touchIntegrationAccount,
+  type CreateIntegrationAccountInput,
+  type IntegrationAccountWithSecrets,
+} from "./repository"
