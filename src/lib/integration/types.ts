@@ -41,6 +41,20 @@ export function parseFiscalizationSecrets(input: unknown): FiscalizationSecrets 
   return result.data
 }
 
+/**
+ * Extracts P12 certificate data from fiscalization secrets.
+ * Returns Buffer and password ready for crypto operations.
+ */
+export function extractP12FromSecrets(secrets: FiscalizationSecrets): {
+  p12Buffer: Buffer
+  password: string
+} {
+  return {
+    p12Buffer: Buffer.from(secrets.p12Base64, "base64"),
+    password: secrets.p12Password,
+  }
+}
+
 // Provider config schemas (non-sensitive)
 export interface EInvoiceProviderConfig {
   baseUrl?: string
