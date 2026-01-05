@@ -40,6 +40,11 @@ export const GET = withApiLogging(async (request: NextRequest) => {
     timestamp: new Date().toISOString(),
     version: process.env.APP_VERSION || process.env.npm_package_version || "0.1.0",
     environment: process.env.NODE_ENV || "development",
+    build: {
+      // Set at build time via Docker/Coolify args or GitHub Actions
+      commitSha: process.env.NEXT_PUBLIC_COMMIT_SHA || process.env.COMMIT_SHA || "unknown",
+      buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || process.env.BUILD_TIME || "unknown",
+    },
     portal: {
       detected: portal,
       host,
