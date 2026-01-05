@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { createCipheriv, randomBytes } from "crypto"
 import { encryptSecretEnvelope, decryptSecretEnvelope, VaultError } from "../vault"
 
 describe("Integration Vault", () => {
@@ -65,6 +66,36 @@ describe("Integration Vault", () => {
 
     it("throws VaultError on invalid format", () => {
       expect(() => decryptSecretEnvelope("not:valid:format:here", 1)).toThrow(VaultError)
+    })
+
+    it("throws VaultError with VAULT_INVALID_HEX for non-hex characters", () => {
+      expect(() => decryptSecretEnvelope("ghij:klmn:opqr", 1)).toThrow(VaultError)
+      expect(() => decryptSecretEnvelope("ghij:klmn:opqr", 1)).toThrow(
+        expect.objectContaining({ code: "VAULT_INVALID_HEX" })
+      )
+    })
+
+    it("throws VaultError with VAULT_INVALID_PLAINTEXT when decryption succeeds but JSON is invalid", () => {
+      // Create a valid encrypted envelope containing non-JSON plaintext
+      const keyHex = "a".repeat(64)
+      const masterKey = Buffer.from(keyHex, "hex")
+      const iv = randomBytes(16)
+      const invalidJson = "not valid json {"
+
+      const cipher = createCipheriv("aes-256-gcm", masterKey, iv)
+      const encrypted = Buffer.concat([cipher.update(invalidJson, "utf8"), cipher.final()])
+      const authTag = cipher.getAuthTag()
+
+      const envelope = [
+        iv.toString("hex"),
+        encrypted.toString("hex"),
+        authTag.toString("hex"),
+      ].join(":")
+
+      expect(() => decryptSecretEnvelope(envelope, 1)).toThrow(VaultError)
+      expect(() => decryptSecretEnvelope(envelope, 1)).toThrow(
+        expect.objectContaining({ code: "VAULT_INVALID_PLAINTEXT" })
+      )
     })
   })
 

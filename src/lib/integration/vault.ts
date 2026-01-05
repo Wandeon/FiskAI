@@ -5,6 +5,10 @@ const IV_LENGTH = 16
 const AUTH_TAG_LENGTH = 16
 const KEY_LENGTH = 32
 
+function isValidHex(str: string): boolean {
+  return /^[0-9a-fA-F]*$/.test(str)
+}
+
 export class VaultError extends Error {
   constructor(
     message: string,
@@ -87,6 +91,11 @@ export function decryptSecretEnvelope<T = Record<string, unknown>>(
 
   const [ivHex, encryptedHex, authTagHex] = parts
 
+  // Validate hex format before parsing
+  if (!isValidHex(ivHex) || !isValidHex(encryptedHex) || !isValidHex(authTagHex)) {
+    throw new VaultError("Invalid envelope: contains non-hex characters", "VAULT_INVALID_HEX")
+  }
+
   try {
     const iv = Buffer.from(ivHex, "hex")
     const encrypted = Buffer.from(encryptedHex, "hex")
@@ -109,6 +118,12 @@ export function decryptSecretEnvelope<T = Record<string, unknown>>(
   } catch (error) {
     if (error instanceof VaultError) {
       throw error
+    }
+    if (error instanceof SyntaxError) {
+      throw new VaultError(
+        "Decryption succeeded but payload is not valid JSON",
+        "VAULT_INVALID_PLAINTEXT"
+      )
     }
     throw new VaultError("Decryption failed: invalid ciphertext or key", "VAULT_DECRYPTION_FAILED")
   }
