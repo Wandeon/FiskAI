@@ -4480,6 +4480,11 @@ enum WatchdogAlertType {
   DRAINER_STALL // PR #90 fix: no progress for N minutes
   QUEUE_BACKLOG // PR #90 fix: queue depth exceeds threshold
   DLQ_SPIKE // PR #90 fix: dead letter queue growing
+  // Endpoint health alerts (Discovery v1)
+  ENDPOINT_SLA_BREACH // CRITICAL endpoint lastSuccessAt > 24h
+  ENDPOINT_CONSECUTIVE_ERRORS // CRITICAL endpoint consecutiveErrors >= 3
+  CIRCUIT_BREAKER_OPEN // Domain circuit breaker tripped
+  ENDPOINT_RECOVERED // Previously unhealthy endpoint now healthy (Slack-only)
 }
 
 enum AuditResult {
