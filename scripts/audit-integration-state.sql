@@ -65,12 +65,12 @@ AND "integrationAccountId" IS NULL
 ORDER BY "createdAt" DESC
 LIMIT 10;
 
--- SUCCESS FiscalRequests without integrationAccountId
+-- COMPLETED FiscalRequests without integrationAccountId
 SELECT
     COUNT(*) as count,
     "messageType"
 FROM "FiscalRequest"
-WHERE status = 'SUCCESS'
+WHERE status = 'COMPLETED'
 AND "integrationAccountId" IS NULL
 GROUP BY "messageType";
 
@@ -83,7 +83,7 @@ SELECT
     "messageType",
     "createdAt"
 FROM "FiscalRequest"
-WHERE status = 'SUCCESS'
+WHERE status = 'COMPLETED'
 AND "integrationAccountId" IS NULL
 ORDER BY "createdAt" DESC
 LIMIT 10;
@@ -161,11 +161,11 @@ AND "integrationAccountId" IS NULL
 UNION ALL
 
 SELECT
-    'FiscalRequest SUCCESS without integrationAccountId',
+    'FiscalRequest COMPLETED without integrationAccountId',
     COUNT(*),
     CASE WHEN COUNT(*) = 0 THEN 'READY' ELSE 'NOT READY' END
 FROM "FiscalRequest"
-WHERE status = 'SUCCESS'
+WHERE status = 'COMPLETED'
 AND "integrationAccountId" IS NULL
 
 UNION ALL

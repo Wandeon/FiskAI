@@ -59,10 +59,10 @@ async function checkInvariants(): Promise<InvariantViolation[]> {
     })
   }
 
-  // Check 2: FiscalRequest SUCCESS without integrationAccountId
+  // Check 2: FiscalRequest COMPLETED without integrationAccountId
   const fiscalNoIntegration = await db.fiscalRequest.findMany({
     where: {
-      status: FiscalStatus.SUCCESS,
+      status: FiscalStatus.COMPLETED,
       integrationAccountId: null,
     },
     select: { id: true, companyId: true, createdAt: true },
@@ -71,7 +71,7 @@ async function checkInvariants(): Promise<InvariantViolation[]> {
 
   const fiscalCount = await db.fiscalRequest.count({
     where: {
-      status: FiscalStatus.SUCCESS,
+      status: FiscalStatus.COMPLETED,
       integrationAccountId: null,
     },
   })
@@ -80,7 +80,7 @@ async function checkInvariants(): Promise<InvariantViolation[]> {
     violations.push({
       model: "FiscalRequest",
       field: "integrationAccountId",
-      condition: "status = SUCCESS AND integrationAccountId IS NULL",
+      condition: "status = COMPLETED AND integrationAccountId IS NULL",
       count: fiscalCount,
       sample: fiscalNoIntegration,
     })
@@ -210,7 +210,7 @@ async function main() {
     console.log("")
     console.log("VERIFIED:")
     console.log("  - All SENT/DELIVERED EInvoices have integrationAccountId")
-    console.log("  - All SUCCESS FiscalRequests have integrationAccountId")
+    console.log("  - All COMPLETED FiscalRequests have integrationAccountId")
     console.log("  - All ProviderSyncStates have integrationAccountId")
     console.log("  - No orphaned IntegrationAccounts")
     console.log("  - All fiscalization-enabled companies have active FISCALIZATION_CIS account")
