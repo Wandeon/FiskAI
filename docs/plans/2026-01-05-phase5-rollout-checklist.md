@@ -10,9 +10,9 @@ Before enabling enforcement, ALL of these MUST be verified:
 
 ### Database State
 
-- [ ] Run `npx tsx scripts/audit-integration-state.sql` - all checks return "READY"
+- [ ] Run `npx tsx scripts/run-audit-integration-state.ts` - all checks return "READY"
 - [ ] No SENT/DELIVERED EInvoices without integrationAccountId
-- [ ] No SUCCESS FiscalRequests without integrationAccountId
+- [ ] No COMPLETED FiscalRequests without integrationAccountId
 - [ ] All companies with fiscalization enabled have active FISCALIZATION_CIS account
 - [ ] All companies with e-invoicing enabled have active EINVOICE\_\* account
 
@@ -58,21 +58,52 @@ Before enabling enforcement, ALL of these MUST be verified:
    - All workers successfully route to V2 path
    - E-invoice and fiscalization operations work normally
 
-### Stage 2: Production Soft-Fail Mode (24-48h)
+### Stage 2: Production Shadow Mode (24-48h)
 
-1. **Enable soft-fail logging only:**
-   - Keep FF_ENFORCE_INTEGRATION_ACCOUNT=false
-   - Add monitoring for would-be-blocked operations
+1. **Enable shadow mode logging:**
 
-2. **Monitor and alert on:**
-   - Operations that WOULD have failed if enforcement was on
-   - Legacy path usage (V1 in logs)
-   - Missing integrationAccountId in new records
+   ```bash
+   # Coolify or environment config
+   FF_ENFORCE_INTEGRATION_ACCOUNT=false
+   FF_LOG_LEGACY_PATH_USAGE=true
+   ```
 
-3. **Acceptance criteria:**
-   - Zero operations that would have been blocked
-   - All new operations use V2 path
-   - No legacy path fallbacks
+2. **Shadow mode behavior:**
+   - Legacy paths continue to work (no user-facing impact)
+   - Structured logs emitted for operations that WOULD have been blocked
+   - Allows safe monitoring before enforcement
+
+3. **Structured log format:**
+
+   ```json
+   {
+     "level": "warn",
+     "msg": "integration.legacy_path.would_block",
+     "operation": "FISCALIZATION|EINVOICE_SEND|EINVOICE_RECEIVE|WORKER_JOB",
+     "companyId": "cmp_xxx",
+     "path": "legacy",
+     "integrationAccountId": null,
+     "reason": "No integrationAccountId provided",
+     "shadowMode": true
+   }
+   ```
+
+4. **Monitor and alert on:**
+   - Log query: `msg = "integration.legacy_path.would_block"`
+   - Group by: `operation`, `companyId`
+   - Alert threshold: Any occurrence (should be zero)
+
+5. **Acceptance criteria:**
+   - **Zero** `integration.legacy_path.would_block` logs in 24-48h period
+   - All new EInvoice records have integrationAccountId (V2 path)
+   - All new FiscalRequest records have integrationAccountId (V2 path)
+   - No legacy path fallbacks in worker jobs
+
+6. **If shadow mode shows violations:**
+   - Identify affected companies from logs
+   - Create missing IntegrationAccounts
+   - Backfill integrationAccountId on affected records
+   - Re-run shadow mode observation period
 
 ### Stage 3: Production Hard-Fail (Permanent)
 

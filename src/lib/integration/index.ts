@@ -39,4 +39,8 @@ export {
   assertLegacyPathAllowed,
   assertWorkerHasIntegration,
   isEnforcementActive,
+  isShadowModeActive,
+  getEnforcementMode,
+  type EnforcedOperation,
+  type EnforcementLogContext,
 } from "./enforcement"
