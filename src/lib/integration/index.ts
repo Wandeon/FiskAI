@@ -9,6 +9,7 @@ export {
 export {
   parseEInvoiceSecrets,
   parseFiscalizationSecrets,
+  extractP12FromSecrets,
   validateIntegrationKind,
   isEInvoiceKind,
   isFiscalizationKind,

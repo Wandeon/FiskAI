@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   parseEInvoiceSecrets,
   parseFiscalizationSecrets,
+  extractP12FromSecrets,
   validateIntegrationKind,
   isEInvoiceKind,
   isFiscalizationKind,
@@ -41,6 +42,34 @@ describe("Integration Types", () => {
 
     it("throws on missing p12Password", () => {
       expect(() => parseFiscalizationSecrets({ p12Base64: "x" })).toThrow(IntegrationSecretsError)
+    })
+  })
+
+  describe("extractP12FromSecrets", () => {
+    it("converts base64 to Buffer", () => {
+      const secrets = {
+        p12Base64: Buffer.from("test data").toString("base64"),
+        p12Password: "password",
+      }
+
+      const result = extractP12FromSecrets(secrets)
+
+      expect(result.p12Buffer).toBeInstanceOf(Buffer)
+      expect(result.p12Buffer.toString()).toBe("test data")
+      expect(result.password).toBe("password")
+    })
+
+    it("handles complex binary data correctly", () => {
+      const binaryData = Buffer.from([0x00, 0x01, 0xff, 0xfe, 0x30, 0x82])
+      const secrets = {
+        p12Base64: binaryData.toString("base64"),
+        p12Password: "complex-pass",
+      }
+
+      const result = extractP12FromSecrets(secrets)
+
+      expect(result.p12Buffer).toEqual(binaryData)
+      expect(result.password).toBe("complex-pass")
     })
   })
 
