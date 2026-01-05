@@ -47,6 +47,10 @@ export async function createIntegrationAccount(
     },
   })
 
+  if (!account.secretEnvelope) {
+    throw new Error(`Failed to create integration account: secretEnvelope is null for account ${account.id}`)
+  }
+
   return {
     id: account.id,
     companyId: account.companyId,
@@ -54,7 +58,7 @@ export async function createIntegrationAccount(
     environment: account.environment,
     status: account.status,
     providerConfig: account.providerConfig,
-    secretEnvelope: account.secretEnvelope!,
+    secretEnvelope: account.secretEnvelope,
   }
 }
 
@@ -102,7 +106,11 @@ export async function findIntegrationAccount(
 }
 
 /**
- * Finds IntegrationAccount by ID (for use when ID is already known).
+ * Finds an active IntegrationAccount by ID and decrypts its secrets.
+ * Returns null if not found, not active, or missing secret envelope.
+ *
+ * Note: This function filters by status=ACTIVE for consistency with findIntegrationAccount.
+ * If you need to retrieve disabled accounts, query the database directly.
  */
 export async function findIntegrationAccountById(
   id: string
@@ -111,7 +119,7 @@ export async function findIntegrationAccountById(
     where: { id },
   })
 
-  if (!account || !hasSecretEnvelope(account)) {
+  if (!account || account.status !== "ACTIVE" || !hasSecretEnvelope(account)) {
     return null
   }
 
@@ -153,10 +161,18 @@ export async function updateIntegrationAccountSecrets(
     },
   })
 
+  if (!account.secretEnvelope) {
+    throw new Error(`Failed to update integration account secrets: secretEnvelope is null for account ${account.id}`)
+  }
+
+  if (!account.rotatedAt) {
+    throw new Error(`Failed to update integration account secrets: rotatedAt is null for account ${account.id}`)
+  }
+
   return {
     id: account.id,
-    secretEnvelope: account.secretEnvelope!,
-    rotatedAt: account.rotatedAt!,
+    secretEnvelope: account.secretEnvelope,
+    rotatedAt: account.rotatedAt,
   }
 }
 

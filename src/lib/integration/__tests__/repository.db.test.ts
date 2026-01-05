@@ -3,8 +3,10 @@ import { db } from "@/lib/db"
 import {
   createIntegrationAccount,
   findIntegrationAccount,
+  findIntegrationAccountById,
   updateIntegrationAccountSecrets,
   disableIntegrationAccount,
+  touchIntegrationAccount,
 } from "../repository"
 
 describe("IntegrationAccount Repository", () => {
@@ -110,6 +112,41 @@ describe("IntegrationAccount Repository", () => {
     })
   })
 
+  describe("findIntegrationAccountById", () => {
+    it("returns account with decrypted secrets by ID", async () => {
+      const created = await createIntegrationAccount({
+        companyId: testCompanyId,
+        kind: "EINVOICE_EPOSLOVANJE",
+        environment: "TEST",
+        secrets: { apiKey: "secret-by-id" },
+      })
+
+      const found = await findIntegrationAccountById(created.id)
+
+      expect(found).not.toBeNull()
+      expect(found!.secrets).toEqual({ apiKey: "secret-by-id" })
+    })
+
+    it("returns null for non-existent ID", async () => {
+      const found = await findIntegrationAccountById("non-existent-id")
+      expect(found).toBeNull()
+    })
+
+    it("returns null for disabled account", async () => {
+      const created = await createIntegrationAccount({
+        companyId: testCompanyId,
+        kind: "EINVOICE_EPOSLOVANJE",
+        environment: "TEST",
+        secrets: { apiKey: "disabled-account" },
+      })
+
+      await disableIntegrationAccount(created.id)
+
+      const found = await findIntegrationAccountById(created.id)
+      expect(found).toBeNull()
+    })
+  })
+
   describe("updateIntegrationAccountSecrets", () => {
     it("rotates secrets and updates rotatedAt", async () => {
       const account = await createIntegrationAccount({
@@ -125,6 +162,30 @@ describe("IntegrationAccount Repository", () => {
 
       expect(updated.secretEnvelope).not.toBe(originalEnvelope)
       expect(updated.rotatedAt).not.toBeNull()
+    })
+  })
+
+  describe("touchIntegrationAccount", () => {
+    it("updates lastUsedAt timestamp", async () => {
+      const account = await createIntegrationAccount({
+        companyId: testCompanyId,
+        kind: "EINVOICE_EPOSLOVANJE",
+        environment: "TEST",
+        secrets: { apiKey: "touch-test" },
+      })
+
+      // Initial lastUsedAt should be null
+      const beforeTouch = await db.integrationAccount.findUnique({
+        where: { id: account.id },
+      })
+      expect(beforeTouch!.lastUsedAt).toBeNull()
+
+      await touchIntegrationAccount(account.id)
+
+      const afterTouch = await db.integrationAccount.findUnique({
+        where: { id: account.id },
+      })
+      expect(afterTouch!.lastUsedAt).not.toBeNull()
     })
   })
 })
