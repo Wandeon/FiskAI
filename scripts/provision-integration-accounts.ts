@@ -203,10 +203,8 @@ async function provision(apply: boolean) {
           kind: target.kind,
           environment: target.environment,
           status: IntegrationStatus.ACTIVE,
-          // Empty providerConfig - will use global env vars for now
-          providerConfig: null,
-          // No secretEnvelope - will be populated when company-specific keys are added
-          secretEnvelope: null,
+          // providerConfig and secretEnvelope omitted - will use global env vars
+          // and be populated when company-specific keys are added
         },
       })
 
