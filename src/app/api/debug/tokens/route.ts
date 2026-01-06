@@ -26,7 +26,7 @@ export async function GET() {
     const variablesContent = fs.readFileSync(variablesPath, "utf-8")
 
     // Parse :root variables
-    const rootMatch = variablesContent.match(/:root\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s)
+    const rootMatch = variablesContent.match(/:root\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/)
     const rootVars: Record<string, string> = {}
     if (rootMatch) {
       const rootBlock = rootMatch[1]
@@ -38,7 +38,7 @@ export async function GET() {
     }
 
     // Parse .dark variables
-    const darkMatch = variablesContent.match(/\.dark\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/s)
+    const darkMatch = variablesContent.match(/\.dark\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}/)
     const darkVars: Record<string, string> = {}
     if (darkMatch) {
       const darkBlock = darkMatch[1]
