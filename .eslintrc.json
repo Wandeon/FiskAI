@@ -75,19 +75,6 @@
       }
     },
     {
-      "files": [
-        "src/components/news/**/*",
-        "src/components/assistant-v2/**/*",
-        "src/components/marketing/**/*",
-        "src/components/knowledge-hub/**/*",
-        "src/components/ui/command-palette/**/*",
-        "src/app/(marketing)/**/*"
-      ],
-      "rules": {
-        "fisk-design-system/no-hardcoded-colors": "warn"
-      }
-    },
-    {
       "files": ["src/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",

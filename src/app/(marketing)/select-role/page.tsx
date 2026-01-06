@@ -71,7 +71,7 @@ export default async function SelectRolePage() {
   const baseDomain = url.hostname.replace(/^(www\.|app\.|staff\.|admin\.)/, "")
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-surface-1 to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-surface-1 to-surface-2 p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">

@@ -17,8 +17,8 @@ const typeColors: Record<string, string> = {
   pausalni: "border-success/30 bg-chart-4/15",
   "obrt-dohodak": "border-focus/30 bg-interactive/15",
   jdoo: "border-chart-2/30 bg-chart-2/15",
-  doo: "border-indigo-400/30 bg-chart-1/15",
-  freelancer: "border-orange-400/30 bg-chart-5/15",
+  doo: "border-chart-1/30 bg-chart-1/15",
+  freelancer: "border-chart-5/30 bg-chart-5/15",
   generic: "border-white/10 bg-surface/5",
 }
 

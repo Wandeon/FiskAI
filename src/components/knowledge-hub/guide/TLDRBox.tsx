@@ -11,7 +11,7 @@ const variantStyles = {
   default: {
     container: "border-chart-2/20 bg-gradient-to-br from-chart-2/10 to-chart-1/10",
     icon: "bg-chart-2/20 text-chart-2",
-    title: "text-purple-300",
+    title: "text-chart-2",
   },
   success: {
     container: "border-success/20 bg-gradient-to-br from-success/10 to-success/10",
@@ -19,7 +19,7 @@ const variantStyles = {
     title: "text-success-text",
   },
   warning: {
-    container: "border-warning/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10",
+    container: "border-warning/20 bg-gradient-to-br from-warning/10 to-chart-5/10",
     icon: "bg-warning/20 text-warning",
     title: "text-warning-text",
   },
