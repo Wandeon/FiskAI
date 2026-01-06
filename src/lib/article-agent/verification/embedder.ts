@@ -8,7 +8,7 @@ import { OllamaError } from "../llm/ollama-client"
  * Get embedding-specific configuration.
  * Uses OLLAMA_EMBED_* env vars, completely separate from LLM/extraction config.
  */
-function getEmbedConfig() {
+export function getEmbedConfig() {
   return {
     endpoint: process.env.OLLAMA_EMBED_ENDPOINT || "http://localhost:11434",
     model: process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text",
@@ -17,8 +17,17 @@ function getEmbedConfig() {
   }
 }
 
+// Track if we've logged the config (log once per process)
+let embedConfigLogged = false
+
 export async function embedText(text: string): Promise<number[]> {
   const config = getEmbedConfig()
+
+  // Log config once per process
+  if (!embedConfigLogged) {
+    console.log(`[embedder] Embedding call: endpoint=${config.endpoint} model=${config.model}`)
+    embedConfigLogged = true
+  }
 
   const headers: HeadersInit = { "Content-Type": "application/json" }
   // Only add auth header if API key is set and not "local"
