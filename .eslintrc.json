@@ -4,7 +4,14 @@
     "src/generated/**",
     "src/design-system/eslint/**/*.js",
     "src/design-system/tokens/**",
-    "src/design-system/scripts/**"
+    "src/design-system/scripts/**",
+    "src/emails/**",
+    "src/lib/email/templates/**",
+    "src/lib/reports/*-pdf.tsx",
+    "src/lib/pausalni/forms/*-pdf-template.tsx",
+    "src/app/**/*.png/route.tsx",
+    "src/lib/pdf/**",
+    "src/styles/tokens.ts"
   ],
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["fisk-design-system", "import"],
