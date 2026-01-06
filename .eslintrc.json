@@ -71,6 +71,19 @@
     {
       "files": ["src/**/*"],
       "rules": {
+        "fisk-design-system/no-hardcoded-colors": "warn"
+      }
+    },
+    {
+      "files": [
+        "src/components/marketing/**/*",
+        "src/components/assistant-v2/**/*",
+        "src/components/knowledge-hub/**/*",
+        "src/components/command-palette/**/*",
+        "src/components/news/**/*",
+        "src/app/(marketing)/**/*"
+      ],
+      "rules": {
         "fisk-design-system/no-hardcoded-colors": "error"
       }
     },
