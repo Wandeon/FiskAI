@@ -1,9 +1,8 @@
 {
   "root": true,
-  "ignorePatterns": ["src/generated/**"],
+  "ignorePatterns": ["src/generated/**", "src/design-system/eslint/**/*.js"],
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["fisk-design-system", "import"],
-  "ignorePatterns": ["src/generated/**"],
   "parserOptions": {
     "project": "./tsconfig.json"
   },
