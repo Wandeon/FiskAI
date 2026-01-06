@@ -6,6 +6,7 @@ const PREFIX = process.env.BULLMQ_PREFIX || "fiskai"
 
 // DLQ configuration
 export const DLQ_THRESHOLD = parseInt(process.env.DLQ_ALERT_THRESHOLD || "10")
+export const DLQ_RETENTION_DAYS = parseInt(process.env.DLQ_RETENTION_DAYS || "30")
 
 const defaultJobOptions: JobsOptions = {
   attempts: 3,
