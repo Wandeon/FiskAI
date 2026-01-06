@@ -72,15 +72,17 @@
       "files": [
         "src/app/(app)/**/*",
         "src/app/(admin)/**/*",
-        "src/app/(staff)/**/*",
-        "src/components/**/*"
+        "src/app/(staff)/**/*"
       ],
       "rules": {
-        "fisk-design-system/no-hardcoded-colors": "warn"
+        "fisk-design-system/no-hardcoded-colors": "error"
       }
     },
     {
-      "files": ["src/app/(marketing)/**/*"],
+      "files": [
+        "src/components/**/*",
+        "src/app/(marketing)/**/*"
+      ],
       "rules": {
         "fisk-design-system/no-hardcoded-colors": "warn"
       }

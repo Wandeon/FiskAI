@@ -14,7 +14,7 @@ const variantStyles = {
     title: "text-purple-300",
   },
   success: {
-    container: "border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-green-500/10",
+    container: "border-success/20 bg-gradient-to-br from-success/10 to-success/10",
     icon: "bg-chart-4/20 text-success",
     title: "text-success-text",
   },

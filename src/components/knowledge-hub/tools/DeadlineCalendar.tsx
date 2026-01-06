@@ -93,13 +93,13 @@ const typeColors = {
   pdv: "bg-purple-600",
   dohodak: "bg-success",
   porez: "bg-warning",
-  joppd: "bg-red-600",
+  joppd: "bg-danger",
 }
 
 // Status colors for database-driven obligations
 const statusColors = {
   PAID: "bg-success",
-  OVERDUE: "bg-red-600",
+  OVERDUE: "bg-danger",
   DUE_SOON: "bg-warning",
   PENDING: "bg-interactive",
   SKIPPED: "bg-neutral",

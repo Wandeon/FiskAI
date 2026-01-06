@@ -385,7 +385,7 @@ export function BulkOperations() {
                     {reportData.totals.expenseCount} expenses
                   </div>
                 </div>
-                <div className="p-4 bg-success-bg dark:bg-green-950 rounded-lg">
+                <div className="p-4 bg-success-bg rounded-lg">
                   <div className="flex items-center gap-2 text-success-icon dark:text-success-text mb-1">
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm font-medium">Net Profit</span>
