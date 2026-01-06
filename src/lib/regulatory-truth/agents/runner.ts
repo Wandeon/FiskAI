@@ -4,6 +4,11 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import type { AgentType } from "../schemas"
 import { getAgentPrompt } from "../prompts"
+import {
+  getOllamaExtractEndpoint,
+  getOllamaExtractModel,
+  getOllamaExtractHeaders,
+} from "./ollama-config"
 
 // =============================================================================
 // AGENT TIMEOUT CONFIGURATION
@@ -40,7 +45,7 @@ const AGENT_TIMEOUTS: Record<string, number> = {
 const DEFAULT_TIMEOUT_MS = 300000 // 5 minutes fallback
 
 // =============================================================================
-// OLLAMA CLIENT (reuse existing pattern)
+// AGENT TIMEOUT CONFIGURATION (continued)
 // =============================================================================
 
 // Read env vars lazily (at call time) to support dotenv loading after import
@@ -63,23 +68,6 @@ function getAgentTimeoutMs(agentType?: string): number {
   }
 
   return DEFAULT_TIMEOUT_MS
-}
-
-function getOllamaEndpoint(): string {
-  return process.env.OLLAMA_ENDPOINT || "https://ollama.com/api"
-}
-
-function getOllamaModel(): string {
-  return process.env.OLLAMA_MODEL || "llama3.1"
-}
-
-function getOllamaHeaders(): HeadersInit {
-  const apiKey = process.env.OLLAMA_API_KEY
-  const headers: HeadersInit = { "Content-Type": "application/json" }
-  if (apiKey) {
-    headers["Authorization"] = `Bearer ${apiKey}`
-  }
-  return headers
 }
 
 // =============================================================================
@@ -180,12 +168,16 @@ export async function runAgent<TInput, TOutput>(
       const timeoutMs = getAgentTimeoutMs(agentType)
       timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-      const response = await fetch(`${getOllamaEndpoint()}/api/chat`, {
+      const extractEndpoint = getOllamaExtractEndpoint()
+      const extractModel = getOllamaExtractModel()
+      console.log(`[runner] Extraction call: endpoint=${extractEndpoint} model=${extractModel}`)
+
+      const response = await fetch(`${extractEndpoint}/api/chat`, {
         method: "POST",
-        headers: getOllamaHeaders(),
+        headers: getOllamaExtractHeaders(),
         signal: controller.signal,
         body: JSON.stringify({
-          model: getOllamaModel(),
+          model: extractModel,
           messages: [
             {
               role: "system",
