@@ -365,11 +365,29 @@ jobs:
       - name: Schema sanity check
         run: |
           echo "Verifying required tables exist..."
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt regulatory.*" | grep -q "rule_table" || {
-            echo "::error::regulatory.rule_table does not exist - schema setup failed"
+
+          # Check core tables
+          echo "Checking core schema tables..."
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt public.*"
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | grep -E "^\s*[1-9]" || {
+            echo "::error::No tables in public schema - core schema setup failed"
             exit 1
           }
-          echo "✅ Schema sanity check passed"
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'User';" | grep -q "User" || {
+            echo "::error::public.User table does not exist - core schema setup failed"
+            exit 1
+          }
+          echo "✅ Core schema verified"
+
+          # Check regulatory tables
+          echo "Checking regulatory schema tables..."
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt regulatory.*" | grep -q "rule_table" || {
+            echo "::error::regulatory.rule_table does not exist - regulatory schema setup failed"
+            exit 1
+          }
+          echo "✅ Regulatory schema verified"
+
+          echo "✅ All schema sanity checks passed"
 
       - name: Run DB vitest tests
         run: npm run test:db
