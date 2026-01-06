@@ -1,3 +1,10 @@
+/* eslint-disable fisk-design-system/no-hardcoded-colors --
+ * @design-override: Marketing header uses dark cockpit aesthetic with:
+ * - Animated glow effects requiring framer-motion color interpolation
+ * - Gradient CTA buttons for brand visibility
+ * - Rotating border animations
+ * All colors are intentional for the marketing "command center" theme.
+ */
 "use client"
 
 import { useEffect, useState } from "react"

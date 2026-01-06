@@ -144,6 +144,27 @@ const config: Config = {
         grid: "var(--chart-grid)",
         axis: "var(--chart-axis)",
       },
+
+      // ─────────────────────────────────────────────────────────────
+      // CATEGORY COLORS (Type/category distinctions)
+      // ─────────────────────────────────────────────────────────────
+      category: {
+        guide: {
+          DEFAULT: "var(--category-guide)",
+          text: "var(--category-guide-text)",
+          bg: "var(--category-guide-bg)",
+        },
+        expert: {
+          DEFAULT: "var(--category-expert)",
+          text: "var(--category-expert-text)",
+          bg: "var(--category-expert-bg)",
+        },
+        feature: {
+          DEFAULT: "var(--category-feature)",
+          text: "var(--category-feature-text)",
+          bg: "var(--category-feature-bg)",
+        },
+      },
     },
 
     extend: {
