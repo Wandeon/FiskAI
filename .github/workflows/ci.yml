@@ -359,28 +359,22 @@ jobs:
       - name: Create regulatory schema
         run: PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS regulatory;"
 
-      - name: Debug - verify DB before schema push
+      - name: Apply core schema via migrations
         run: |
-          echo "DATABASE_URL: ${DATABASE_URL:0:30}..."
-          echo "Testing connection..."
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT current_database(), current_schema();"
-
-      - name: Apply core schema
-        run: |
-          echo "Applying core schema..."
-          # Use explicit schema path
-          npx prisma db push --accept-data-loss --schema=prisma/schema.prisma 2>&1 | tee /tmp/prisma-push.log
+          echo "Applying core schema using prisma migrate deploy..."
+          # Use migrate deploy instead of db push for reliable transaction handling
+          npx prisma migrate deploy --schema=prisma/schema.prisma 2>&1
           echo ""
-          echo "Checking tables immediately after push..."
+          echo "Verifying tables after migrate..."
           PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'public';"
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt public.*" || echo "(no tables)"
 
       - name: Apply regulatory schema
         run: |
-          echo "Applying regulatory schema..."
-          npx prisma db push --schema=prisma/regulatory.prisma --accept-data-loss 2>&1 | tee /tmp/prisma-push-reg.log
+          echo "Applying regulatory schema using prisma db push..."
+          # Regulatory schema uses db push as it may not have migrations
+          npx prisma db push --schema=prisma/regulatory.prisma --accept-data-loss 2>&1
           echo ""
-          echo "Checking regulatory tables immediately after push..."
+          echo "Verifying regulatory tables after push..."
           PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt regulatory.*" || echo "(no tables)"
 
       - name: Schema sanity check
