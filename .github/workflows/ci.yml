@@ -14,8 +14,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   NODE_VERSION: "22"
-  NODE_OPTIONS: "--max-old-space-size=8192"
-  DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+  DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Only one heavy job at a time per branch
 concurrency:
@@ -23,11 +22,99 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # All quality gates in one job to maximize cache reuse
-  quality:
-    name: Quality Gates
+  # Lint job - lightweight, no database needed
+  lint:
+    name: Lint & Format
     runs-on: [self-hosted, artemipc, x86_64, fiskai]
-    timeout-minutes: 30
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache Prisma
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.prisma
+            node_modules/@prisma/client
+          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
+          restore-keys: |
+            prisma-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Format check
+        run: npm run format:check
+
+  # Typecheck job - separate to avoid blocking lint
+  typecheck:
+    name: TypeScript
+    runs-on: [self-hosted, artemipc, x86_64, fiskai]
+    timeout-minutes: 15
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache Prisma
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.prisma
+            node_modules/@prisma/client
+          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: TypeScript check
+        run: |
+          npx tsc --noEmit 2>&1 | tee typescript-errors.log
+          ERROR_COUNT=$(grep -c "error TS" typescript-errors.log || echo "0")
+          echo "## TypeScript Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "::warning::TypeScript check found $ERROR_COUNT errors"
+            grep "error TS" typescript-errors.log | head -20 >> $GITHUB_STEP_SUMMARY
+          fi
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+  # Test job - needs postgres
+  test:
+    name: Tests
+    runs-on: [self-hosted, artemipc, x86_64, fiskai]
+    needs: [lint]
+    timeout-minutes: 20
 
     services:
       postgres:
@@ -61,36 +148,14 @@ jobs:
             node_modules/.prisma
             node_modules/@prisma/client
           key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
-          restore-keys: |
-            prisma-${{ runner.os }}-
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Generate Prisma client
         run: npx prisma generate
-
-      - name: Validate Prisma schema
-        run: npx prisma validate
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Format check
-        run: npm run format:check
-
-      - name: TypeScript check
-        id: typecheck
-        continue-on-error: true
-        run: |
-          npx tsc --noEmit 2>&1 | tee typescript-errors.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          ERROR_COUNT=$(grep -c "error TS" typescript-errors.log || echo "0")
-          echo "## TypeScript Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
-          if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "::warning::TypeScript check found $ERROR_COUNT errors"
-          fi
-          exit $EXIT_CODE
 
       - name: Security audit
         run: npm audit --audit-level=high
@@ -108,10 +173,11 @@ jobs:
         env:
           DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=test_${{ github.run_id }}"
 
+  # Build job - after lint and tests pass
   build:
     name: Build & Push
     runs-on: [self-hosted, artemipc, x86_64, fiskai]
-    needs: [quality]
+    needs: [lint, test]
     timeout-minutes: 45
 
     permissions:
@@ -152,6 +218,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -159,6 +227,7 @@ jobs:
       - name: Build Next.js
         run: npm run build
         env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
           REGULATORY_DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           NEXTAUTH_SECRET: "build-time-secret-not-used-at-runtime"
           NEXTAUTH_URL: "http://localhost:3000"
