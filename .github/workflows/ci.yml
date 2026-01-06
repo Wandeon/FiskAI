@@ -359,23 +359,43 @@ jobs:
       - name: Create regulatory schema
         run: PGPASSWORD=ci psql -h localhost -U ci -d ci -c "CREATE SCHEMA IF NOT EXISTS regulatory;"
 
-      - name: Apply core schema via migrations
+      - name: Apply schemas with verification
         run: |
-          echo "Applying core schema using prisma migrate deploy..."
-          # Use migrate deploy instead of db push for reliable transaction handling
-          npx prisma migrate deploy --schema=prisma/schema.prisma 2>&1
-          echo ""
-          echo "Verifying tables after migrate..."
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'public';"
+          set -e
 
-      - name: Apply regulatory schema
-        run: |
-          echo "Applying regulatory schema using prisma db push..."
-          # Regulatory schema uses db push as it may not have migrations
-          npx prisma db push --schema=prisma/regulatory.prisma --accept-data-loss 2>&1
+          echo "=== Applying core schema ==="
+          npx prisma db push --accept-data-loss --schema=prisma/schema.prisma 2>&1
+
+          # Verify tables were created
+          echo "Verifying core tables..."
+          for i in 1 2 3 4 5; do
+            CORE_COUNT=$(PGPASSWORD=ci psql -h localhost -U ci -d ci -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';")
+            CORE_COUNT=$(echo "$CORE_COUNT" | tr -d ' ')
+            echo "Attempt $i: Found $CORE_COUNT tables in public schema"
+            if [ "$CORE_COUNT" -ge 100 ]; then
+              echo "✅ Core schema verified ($CORE_COUNT tables)"
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "::error::Failed to create core schema tables after 5 attempts"
+              exit 1
+            fi
+            echo "Waiting and retrying..."
+            sleep 2
+          done
+
           echo ""
-          echo "Verifying regulatory tables after push..."
-          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt regulatory.*" || echo "(no tables)"
+          echo "=== Applying regulatory schema ==="
+          npx prisma db push --schema=prisma/regulatory.prisma --accept-data-loss 2>&1
+
+          # Verify regulatory tables
+          echo "Verifying regulatory tables..."
+          sleep 1
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "\dt regulatory.*" || echo "(no regulatory tables)"
+
+          echo ""
+          echo "=== Final verification ==="
+          PGPASSWORD=ci psql -h localhost -U ci -d ci -c "SELECT table_schema, COUNT(*) as count FROM information_schema.tables WHERE table_schema IN ('public', 'regulatory') GROUP BY table_schema;"
 
       - name: Schema sanity check
         run: |
