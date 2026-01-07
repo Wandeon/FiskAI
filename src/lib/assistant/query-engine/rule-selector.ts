@@ -125,6 +125,32 @@ export async function selectRules(
     transactionData: selectionContext?.transactionData,
   })
 
+  // PHASE-4 BRIDGE: Try RuleFact first (new canonical system), fallback to RegulatoryRule
+  // This dual-query allows gradual migration while maintaining backward compatibility
+  // Eventually, only RuleFact should be queried (Phase 5 retirement)
+  let useRuleFact = false
+  let ruleFactCount = 0
+
+  try {
+    // Check if RuleFact has any published data for these concepts
+    ruleFactCount = await dbReg.ruleFact.count({
+      where: {
+        conceptSlug: { in: conceptSlugs },
+        status: "PUBLISHED",
+      },
+    })
+    useRuleFact = ruleFactCount > 0
+    if (useRuleFact) {
+      console.log(`[rule-selector] Phase-4: Using RuleFact (${ruleFactCount} published rules)`)
+    }
+  } catch (error) {
+    // RuleFact query failed - fall back to RegulatoryRule
+    console.warn(
+      `[rule-selector] Phase-4: RuleFact query failed, using RegulatoryRule fallback:`,
+      error
+    )
+  }
+
   // Fetch all PUBLISHED rules for these concepts
   // Note: We fetch all and filter in-memory to properly handle appliesWhen
   // and to track ineligible rules for debugging
