@@ -279,5 +279,48 @@ GROUP BY 1;
 
 ---
 
+## Phase 1 Decision: Evidence Consolidation
+
+**Date:** 2026-01-07
+
+### Decision: `regulatory.Evidence` is Canonical
+
+**Rationale:**
+
+1. All production code already uses `dbReg.evidence` (98 access patterns, 0 using `db.evidence`)
+2. `regulatory.Evidence` is in `prisma/regulatory.prisma` (managed by Prisma)
+3. `public.Evidence` was removed from `schema.prisma` (orphaned table)
+4. Active fetchers write to `regulatory.Evidence`
+
+### Historical Data Strategy
+
+| Table                     | Rows  | Decision                    |
+| ------------------------- | ----- | --------------------------- |
+| `public.Evidence`         | 2,022 | DEPRECATED - Do not migrate |
+| `public.RegulatorySource` | 75    | DEPRECATED - Do not migrate |
+
+**Justification for NOT migrating:**
+
+1. SourcePointers are self-contained (have `exactQuote` embedded)
+2. Historical SourcePointers still work for assistant answers
+3. Migration risk outweighs benefit (ID conflicts, FK issues)
+4. Old Evidence is not being updated anyway
+
+### Accepted Trade-offs
+
+1. 1,995 historical SourcePointers have orphaned `evidenceId` (pointing to `public.Evidence`)
+2. These SourcePointers cannot trace provenance to source document
+3. Re-verification of old quotes is not possible
+
+### Future Retirement Plan (Phase 5)
+
+After Phase-1 cutover is complete:
+
+1. Add `@deprecated` comment to any code that might reference `public.Evidence`
+2. Create migration to DROP `public.Evidence` and `public.RegulatorySource`
+3. Update SourcePointer to make `evidenceId` nullable OR delete orphaned records
+
+---
+
 **Audit Complete:** 2026-01-07
-**Next Phase:** Phase 1 - Canonical Evidence Consolidation
+**Next Phase:** Phase 2 - Prisma/DB Alignment
