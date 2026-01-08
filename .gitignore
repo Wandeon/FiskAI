@@ -66,3 +66,4 @@ public/search-index.json
 # PM2 logs
 logs/*
 !logs/.gitkeep
+dist/
