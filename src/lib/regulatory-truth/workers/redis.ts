@@ -29,10 +29,37 @@ export function getBullMqOptions() {
   }
 }
 
-// Shared Redis instance for non-BullMQ use (heartbeats, version tracking)
-export const redis = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: null, // Required by BullMQ
-  enableReadyCheck: false,
+// Lazy-loaded Redis instance to avoid Next.js build issues with worker threads
+let _redis: Redis | null = null
+
+/**
+ * Get the shared Redis instance (lazy-loaded)
+ * Use this for non-BullMQ operations (heartbeats, version tracking, rate limiting)
+ */
+export function getRedis(): Redis {
+  if (!_redis) {
+    _redis = new Redis(REDIS_URL, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: true, // Don't connect until first command
+    })
+  }
+  return _redis
+}
+
+/**
+ * Shared Redis instance - uses lazy loading via Proxy
+ * This is the backwards-compatible export that can be used like the old redis instance
+ */
+export const redis: Redis = new Proxy({} as Redis, {
+  get(_, prop: string | symbol) {
+    const instance = getRedis()
+    const value = (instance as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
 })
 
 // Separate connection for workers (BullMQ requirement)
@@ -44,7 +71,7 @@ export function createWorkerConnection(): Redis {
 export async function checkRedisHealth(timeoutMs: number = 2000): Promise<boolean> {
   try {
     const pong = await Promise.race([
-      redis.ping(),
+      getRedis().ping(),
       new Promise<string>((_, reject) =>
         setTimeout(() => reject(new Error("Redis ping timeout")), timeoutMs)
       ),
@@ -57,7 +84,10 @@ export async function checkRedisHealth(timeoutMs: number = 2000): Promise<boolea
 
 // Graceful shutdown
 export async function closeRedis(): Promise<void> {
-  await redis.quit()
+  if (_redis) {
+    await _redis.quit()
+    _redis = null
+  }
 }
 
 // ============================================================================
@@ -78,9 +108,9 @@ export interface DrainerHeartbeat {
  * Update drainer heartbeat in Redis (called after each successful operation)
  */
 export async function updateDrainerHeartbeat(data: DrainerHeartbeat): Promise<void> {
-  await redis.set(DRAINER_HEARTBEAT_KEY, JSON.stringify(data))
+  await getRedis().set(DRAINER_HEARTBEAT_KEY, JSON.stringify(data))
   // Also update individual stage timestamps
-  await redis.hset(DRAINER_STATS_KEY, {
+  await getRedis().hset(DRAINER_STATS_KEY, {
     lastActivity: data.lastActivity,
     lastQueue: data.queueName,
     itemsProcessed: String(data.itemsProcessed),
@@ -92,7 +122,7 @@ export async function updateDrainerHeartbeat(data: DrainerHeartbeat): Promise<vo
  * Get drainer heartbeat from Redis
  */
 export async function getDrainerHeartbeat(): Promise<DrainerHeartbeat | null> {
-  const data = await redis.get(DRAINER_HEARTBEAT_KEY)
+  const data = await getRedis().get(DRAINER_HEARTBEAT_KEY)
   if (!data) return null
   try {
     return JSON.parse(data) as DrainerHeartbeat
@@ -130,13 +160,13 @@ export interface StageHeartbeat {
 }
 
 export async function updateStageHeartbeat(data: StageHeartbeat): Promise<void> {
-  await redis.hset(DRAINER_STAGES_KEY, {
+  await getRedis().hset(DRAINER_STAGES_KEY, {
     [data.stage]: JSON.stringify(data),
   })
 }
 
 export async function getStageHeartbeat(stage: string): Promise<StageHeartbeat | null> {
-  const data = await redis.hget(DRAINER_STAGES_KEY, stage)
+  const data = await getRedis().hget(DRAINER_STAGES_KEY, stage)
   if (!data) return null
   try {
     return JSON.parse(data) as StageHeartbeat
@@ -146,7 +176,7 @@ export async function getStageHeartbeat(stage: string): Promise<StageHeartbeat |
 }
 
 export async function getAllStageHeartbeats(): Promise<Record<string, StageHeartbeat>> {
-  const data = await redis.hgetall(DRAINER_STAGES_KEY)
+  const data = await getRedis().hgetall(DRAINER_STAGES_KEY)
   const heartbeats: Record<string, StageHeartbeat> = {}
   for (const [stage, value] of Object.entries(data)) {
     try {
