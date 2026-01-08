@@ -33,7 +33,16 @@ describe("company default handling", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(requireAuth).mockResolvedValue({ id: "user-1" } as any)
-    vi.mocked(db.$transaction).mockImplementation(async (operations) => Promise.all(operations))
+    vi.mocked(db.$transaction).mockImplementation(async (operations: unknown) => {
+      if (Array.isArray(operations)) {
+        return Promise.all(operations)
+      }
+      // If it's a callback function, call it with a mock tx object
+      if (typeof operations === "function") {
+        return operations(db)
+      }
+      return []
+    })
   })
 
   it("creating a new company clears previous defaults", async () => {
