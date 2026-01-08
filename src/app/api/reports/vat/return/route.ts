@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { requireAuth, requireCompanyWithPermission } from "@/lib/auth-utils"
 import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { createControlSum } from "@/lib/exports/control-sum"
 import {
@@ -22,35 +22,38 @@ const querySchema = z
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    return await requireCompanyWithPermission(user.id!, "reports:export", async (company) => {
+      const { searchParams } = new URL(request.url)
+      const query = parseQuery(searchParams, querySchema)
+      const { from: dateFrom, to: dateTo } = query
 
-    const { searchParams } = new URL(request.url)
-    const query = parseQuery(searchParams, querySchema)
-    const { from: dateFrom, to: dateTo } = query
+      const data = await preparePdvFormData(company.id, dateFrom, dateTo)
+      const validation = validatePdvFormData(data)
 
-    const data = await preparePdvFormData(company.id, dateFrom, dateTo)
-    const validation = validatePdvFormData(data)
+      const payload = {
+        data,
+        periodDescription: getPeriodDescription(data),
+        validation,
+      }
 
-    const payload = {
-      data,
-      periodDescription: getPeriodDescription(data),
-      validation,
-    }
+      const json = JSON.stringify(payload, null, 2)
+      const controlSum = createControlSum(json)
+      const responseBody = JSON.stringify({ ...payload, controlSum }, null, 2)
 
-    const json = JSON.stringify(payload, null, 2)
-    const controlSum = createControlSum(json)
-    const responseBody = JSON.stringify({ ...payload, controlSum }, null, 2)
-
-    return new NextResponse(responseBody, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "X-Export-Control-Sum": controlSum,
-      },
+      return new NextResponse(responseBody, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "X-Export-Control-Sum": controlSum,
+        },
+      })
     })
   } catch (error) {
     if (isValidationError(error)) {
       return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
     console.error("PDV return generation error:", error)
     return NextResponse.json({ error: "Neuspješna PDV prijava" }, { status: 500 })

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { Prisma, EInvoiceStatus } from "@prisma/client"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { requireAuth, requireCompany, requireCompanyWithPermission } from "@/lib/auth-utils"
 import { IncomingInvoice } from "@/lib/e-invoice/types"
 import { logger } from "@/lib/logger"
 import { oibOptionalSchema } from "@/lib/validations/oib"
@@ -58,187 +58,191 @@ const incomingInvoiceSchema = z.object({
 export async function POST(request: Request) {
   try {
     const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    return await requireCompanyWithPermission(user.id!, "invoice:create", async (company) => {
+      const body = await request.json()
+      const parsed = incomingInvoiceSchema.safeParse(body)
 
-    const body = await request.json()
-    const parsed = incomingInvoiceSchema.safeParse(body)
-
-    if (!parsed.success) {
-      logger.warn(
-        {
-          userId: user.id,
-          companyId: company.id,
-          validationErrors: parsed.error.issues,
-          operation: "incoming_invoice_validation_failed",
-        },
-        "Incoming invoice validation failed"
-      )
-
-      return NextResponse.json(
-        {
-          error: "Invalid invoice data",
-          details: parsed.error.issues,
-        },
-        { status: 400 }
-      )
-    }
-
-    const invoiceData = parsed.data
-
-    // Check if invoice already exists (prevent duplicates)
-    if (invoiceData.providerRef) {
-      const existing = await db.eInvoice.findFirst({
-        where: {
-          providerRef: invoiceData.providerRef,
-          companyId: company.id,
-        },
-      })
-
-      if (existing) {
+      if (!parsed.success) {
         logger.warn(
           {
             userId: user.id,
             companyId: company.id,
-            providerRef: invoiceData.providerRef,
-            operation: "duplicate_invoice_received",
+            validationErrors: parsed.error.issues,
+            operation: "incoming_invoice_validation_failed",
           },
-          "Duplicate incoming invoice received"
+          "Incoming invoice validation failed"
         )
 
         return NextResponse.json(
           {
-            error: "Invoice already exists",
-            invoiceId: existing.id,
+            error: "Invalid invoice data",
+            details: parsed.error.issues,
           },
-          { status: 409 }
+          { status: 400 }
         )
       }
-    }
 
-    const incomingInvoice = await db.$transaction(async (tx) => {
-      // Create or find buyer contact
-      let buyerContact = null as null | { id: string; organizationId: string | null }
-      if (invoiceData.buyer?.oib) {
-        buyerContact = await tx.contact.findFirst({
+      const invoiceData = parsed.data
+
+      // Check if invoice already exists (prevent duplicates)
+      if (invoiceData.providerRef) {
+        const existing = await db.eInvoice.findFirst({
           where: {
-            oib: invoiceData.buyer.oib,
+            providerRef: invoiceData.providerRef,
             companyId: company.id,
           },
-          select: { id: true, organizationId: true },
         })
 
-        if (!buyerContact) {
-          buyerContact = await tx.contact.create({
-            data: {
+        if (existing) {
+          logger.warn(
+            {
+              userId: user.id,
               companyId: company.id,
-              type: "SUPPLIER",
-              name: invoiceData.buyer.name,
-              oib: invoiceData.buyer.oib,
-              address: invoiceData.buyer.address,
-              city: invoiceData.buyer.city,
-              postalCode: invoiceData.buyer.postalCode,
-              country: invoiceData.buyer.country,
+              providerRef: invoiceData.providerRef,
+              operation: "duplicate_invoice_received",
             },
-            select: { id: true, organizationId: true },
-          })
+            "Duplicate incoming invoice received"
+          )
+
+          return NextResponse.json(
+            {
+              error: "Invoice already exists",
+              invoiceId: existing.id,
+            },
+            { status: 409 }
+          )
         }
       }
 
-      let buyerOrganizationId = buyerContact?.organizationId ?? null
-      if (buyerContact && !buyerOrganizationId) {
-        const { organizationId } = await upsertOrganizationFromContact(tx, company.id, {
-          name: invoiceData.buyer?.name || "Unknown",
-          oib: invoiceData.buyer?.oib,
-          address: invoiceData.buyer?.address,
-          city: invoiceData.buyer?.city,
-          postalCode: invoiceData.buyer?.postalCode,
-          country: invoiceData.buyer?.country,
-        })
-        buyerOrganizationId = organizationId
-        await tx.contact.update({
-          where: { id: buyerContact.id },
-          data: { organizationId },
-        })
-      }
+      const incomingInvoice = await db.$transaction(async (tx) => {
+        // Create or find buyer contact
+        let buyerContact = null as null | { id: string; organizationId: string | null }
+        if (invoiceData.buyer?.oib) {
+          buyerContact = await tx.contact.findFirst({
+            where: {
+              oib: invoiceData.buyer.oib,
+              companyId: company.id,
+            },
+            select: { id: true, organizationId: true },
+          })
 
-      // Create the incoming e-invoice
-      return tx.eInvoice.create({
-        data: {
-          companyId: company.id,
-          direction: invoiceData.direction,
-          type: invoiceData.type,
-          internalReference: generateInternalReference(
-            invoiceData.invoiceNumber,
-            invoiceData.issueDate
-          ),
-          notes: `Primljeni e-račun iz vanjskog sustava. Provider ref: ${invoiceData.providerRef || "N/A"}`,
-          buyerId: buyerContact?.id,
-          buyerOrganizationId,
+          if (!buyerContact) {
+            buyerContact = await tx.contact.create({
+              data: {
+                companyId: company.id,
+                type: "SUPPLIER",
+                name: invoiceData.buyer.name,
+                oib: invoiceData.buyer.oib,
+                address: invoiceData.buyer.address,
+                city: invoiceData.buyer.city,
+                postalCode: invoiceData.buyer.postalCode,
+                country: invoiceData.buyer.country,
+              },
+              select: { id: true, organizationId: true },
+            })
+          }
+        }
 
-          // Invoice data
-          invoiceNumber: invoiceData.invoiceNumber,
-          issueDate: new Date(invoiceData.issueDate),
-          dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined,
-          currency: invoiceData.currency,
-          bankAccount: company.iban || undefined,
+        let buyerOrganizationId = buyerContact?.organizationId ?? null
+        if (buyerContact && !buyerOrganizationId) {
+          const { organizationId } = await upsertOrganizationFromContact(tx, company.id, {
+            name: invoiceData.buyer?.name || "Unknown",
+            oib: invoiceData.buyer?.oib,
+            address: invoiceData.buyer?.address,
+            city: invoiceData.buyer?.city,
+            postalCode: invoiceData.buyer?.postalCode,
+            country: invoiceData.buyer?.country,
+          })
+          buyerOrganizationId = organizationId
+          await tx.contact.update({
+            where: { id: buyerContact.id },
+            data: { organizationId },
+          })
+        }
 
-          // Amounts
-          netAmount: invoiceData.netAmount,
-          vatAmount: invoiceData.vatAmount,
-          totalAmount: invoiceData.totalAmount,
+        // Create the incoming e-invoice
+        return tx.eInvoice.create({
+          data: {
+            companyId: company.id,
+            direction: invoiceData.direction,
+            type: invoiceData.type,
+            internalReference: generateInternalReference(
+              invoiceData.invoiceNumber,
+              invoiceData.issueDate
+            ),
+            notes: `Primljeni e-račun iz vanjskog sustava. Provider ref: ${invoiceData.providerRef || "N/A"}`,
+            buyerId: buyerContact?.id,
+            buyerOrganizationId,
 
-          // Status - set to "DELIVERED" since it's received
-          status: "DELIVERED",
+            // Invoice data
+            invoiceNumber: invoiceData.invoiceNumber,
+            issueDate: new Date(invoiceData.issueDate),
+            dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined,
+            currency: invoiceData.currency,
+            bankAccount: company.iban || undefined,
 
-          // Provider info
-          providerRef: invoiceData.providerRef,
-          providerStatus: "RECEIVED",
-          providerError: null,
+            // Amounts
+            netAmount: invoiceData.netAmount,
+            vatAmount: invoiceData.vatAmount,
+            totalAmount: invoiceData.totalAmount,
 
-          // XML data if provided
-          ...(invoiceData.xmlData && { ublXml: invoiceData.xmlData }),
+            // Status - set to "DELIVERED" since it's received
+            status: "DELIVERED",
 
-          // Create invoice lines
-          lines: {
-            create: invoiceData.lines.map((line, index) => ({
-              lineNumber: index + 1,
-              description: line.description,
-              quantity: line.quantity,
-              unit: line.unit,
-              unitPrice: line.unitPrice,
-              netAmount: line.netAmount,
-              vatRate: line.vatRate,
-              vatCategory: line.vatCategory,
-              vatAmount: line.vatAmount,
-            })),
+            // Provider info
+            providerRef: invoiceData.providerRef,
+            providerStatus: "RECEIVED",
+            providerError: null,
+
+            // XML data if provided
+            ...(invoiceData.xmlData && { ublXml: invoiceData.xmlData }),
+
+            // Create invoice lines
+            lines: {
+              create: invoiceData.lines.map((line, index) => ({
+                lineNumber: index + 1,
+                description: line.description,
+                quantity: line.quantity,
+                unit: line.unit,
+                unitPrice: line.unitPrice,
+                netAmount: line.netAmount,
+                vatRate: line.vatRate,
+                vatCategory: line.vatCategory,
+                vatAmount: line.vatAmount,
+              })),
+            },
           },
-        },
-        include: {
-          lines: { orderBy: { lineNumber: "asc" } },
-          buyer: true,
-        },
+          include: {
+            lines: { orderBy: { lineNumber: "asc" } },
+            buyer: true,
+          },
+        })
       })
-    })
 
-    logger.info(
-      {
-        userId: user.id,
-        companyId: company.id,
-        invoiceId: incomingInvoice.id,
-        invoiceNumber: incomingInvoice.invoiceNumber,
-        providerRef: invoiceData.providerRef,
-        operation: "incoming_invoice_created",
-      },
-      "Incoming e-invoice created successfully"
-    )
+      logger.info(
+        {
+          userId: user.id,
+          companyId: company.id,
+          invoiceId: incomingInvoice.id,
+          invoiceNumber: incomingInvoice.invoiceNumber,
+          providerRef: invoiceData.providerRef,
+          operation: "incoming_invoice_created",
+        },
+        "Incoming e-invoice created successfully"
+      )
 
-    return NextResponse.json({
-      success: true,
-      invoice: incomingInvoice,
-      message: "E-invoice received and processed successfully",
+      return NextResponse.json({
+        success: true,
+        invoice: incomingInvoice,
+        message: "E-invoice received and processed successfully",
+      })
     })
   } catch (error) {
     logger.error({ error }, "Failed to process incoming e-invoice")
+
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     if (error instanceof Error) {
       return NextResponse.json(

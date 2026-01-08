@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { requireAuth, requireCompanyWithPermission } from "@/lib/auth-utils"
 import {
   fetchAccountantExportData,
   invoicesToCsv,
@@ -26,113 +26,116 @@ function parseDate(value?: string) {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    return await requireCompanyWithPermission(user.id!, "reports:export", async (company) => {
+      const { searchParams } = new URL(request.url)
+      const parsed = querySchema.safeParse({
+        from: searchParams.get("from") || undefined,
+        to: searchParams.get("to") || undefined,
+      })
 
-    const { searchParams } = new URL(request.url)
-    const parsed = querySchema.safeParse({
-      from: searchParams.get("from") || undefined,
-      to: searchParams.get("to") || undefined,
-    })
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Neispravan upit", details: parsed.error.format() },
+          { status: 400 }
+        )
+      }
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Neispravan upit", details: parsed.error.format() },
-        { status: 400 }
-      )
-    }
+      const fromDate = parseDate(parsed.data.from)
+      const toDate = parseDate(parsed.data.to)
 
-    const fromDate = parseDate(parsed.data.from)
-    const toDate = parseDate(parsed.data.to)
+      if (parsed.data.from && !fromDate) {
+        return NextResponse.json({ error: "Neispravan datum 'from'" }, { status: 400 })
+      }
+      if (parsed.data.to && !toDate) {
+        return NextResponse.json({ error: "Neispravan datum 'to'" }, { status: 400 })
+      }
 
-    if (parsed.data.from && !fromDate) {
-      return NextResponse.json({ error: "Neispravan datum 'from'" }, { status: 400 })
-    }
-    if (parsed.data.to && !toDate) {
-      return NextResponse.json({ error: "Neispravan datum 'to'" }, { status: 400 })
-    }
+      // Fetch all data
+      const exportData = await fetchAccountantExportData(company.id, fromDate, toDate)
 
-    // Fetch all data
-    const exportData = await fetchAccountantExportData(company.id, fromDate, toDate)
+      if (fromDate && toDate) {
+        await lockAccountingPeriodsForRange(
+          company.id,
+          fromDate,
+          toDate,
+          user.id!,
+          "export_season_pack"
+        )
+      }
 
-    if (fromDate && toDate) {
-      await lockAccountingPeriodsForRange(
-        company.id,
-        fromDate,
-        toDate,
-        user.id!,
-        "export_season_pack"
-      )
-    }
+      // Determine filename range label
+      const rangeLabel =
+        parsed.data.from && parsed.data.to ? `${parsed.data.from}-${parsed.data.to}` : "all"
 
-    // Determine filename range label
-    const rangeLabel =
-      parsed.data.from && parsed.data.to ? `${parsed.data.from}-${parsed.data.to}` : "all"
+      // Create ZIP archive
+      const archive = archiver("zip", {
+        zlib: { level: 9 }, // Maximum compression
+      })
 
-    // Create ZIP archive
-    const archive = archiver("zip", {
-      zlib: { level: 9 }, // Maximum compression
-    })
+      // Create a readable stream from the archive
+      const chunks: Buffer[] = []
 
-    // Create a readable stream from the archive
-    const chunks: Buffer[] = []
+      archive.on("data", (chunk: Buffer) => {
+        chunks.push(chunk)
+      })
 
-    archive.on("data", (chunk: Buffer) => {
-      chunks.push(chunk)
-    })
+      archive.on("error", (err) => {
+        throw err
+      })
 
-    archive.on("error", (err) => {
-      throw err
-    })
+      const files = {
+        "00-SAZETAK.csv": summaryToCsv(exportData),
+        "01-RACUNI.csv": invoicesToCsv(exportData.invoices),
+        "02-TROSKOVI.csv": expensesToCsv(exportData.expenses),
+        "03-KPR.csv": kprToCsv(exportData.kprRows),
+        "PROCITAJ-ME.txt": createReadme(exportData, parsed.data.from, parsed.data.to),
+      }
 
-    const files = {
-      "00-SAZETAK.csv": summaryToCsv(exportData),
-      "01-RACUNI.csv": invoicesToCsv(exportData.invoices),
-      "02-TROSKOVI.csv": expensesToCsv(exportData.expenses),
-      "03-KPR.csv": kprToCsv(exportData.kprRows),
-      "PROCITAJ-ME.txt": createReadme(exportData, parsed.data.from, parsed.data.to),
-    }
+      const controlManifest = {
+        generatedAt: new Date().toISOString(),
+        files: Object.entries(files).map(([name, content]) => ({
+          name,
+          bytes: Buffer.byteLength(content),
+          controlSum: createControlSum(content),
+        })),
+      }
 
-    const controlManifest = {
-      generatedAt: new Date().toISOString(),
-      files: Object.entries(files).map(([name, content]) => ({
-        name,
-        bytes: Buffer.byteLength(content),
-        controlSum: createControlSum(content),
-      })),
-    }
+      // Add CSV files and README to the archive
+      Object.entries(files).forEach(([name, content]) => {
+        archive.append(content, { name })
+      })
 
-    // Add CSV files and README to the archive
-    Object.entries(files).forEach(([name, content]) => {
-      archive.append(content, { name })
-    })
+      archive.append(JSON.stringify(controlManifest, null, 2), { name: "CONTROL_SUMS.json" })
 
-    archive.append(JSON.stringify(controlManifest, null, 2), { name: "CONTROL_SUMS.json" })
+      // Finalize the archive
+      await archive.finalize()
 
-    // Finalize the archive
-    await archive.finalize()
+      // Wait for all chunks to be collected
+      await new Promise((resolve) => {
+        archive.on("end", resolve)
+      })
 
-    // Wait for all chunks to be collected
-    await new Promise((resolve) => {
-      archive.on("end", resolve)
-    })
+      // Combine all chunks into a single buffer
+      const zipBuffer = Buffer.concat(chunks)
+      const controlSum = createControlSum(zipBuffer)
 
-    // Combine all chunks into a single buffer
-    const zipBuffer = Buffer.concat(chunks)
-    const controlSum = createControlSum(zipBuffer)
+      // Return the ZIP file
+      const filename = `fiskai-tax-season-pack-${rangeLabel}.zip`
 
-    // Return the ZIP file
-    const filename = `fiskai-tax-season-pack-${rangeLabel}.zip`
-
-    return new NextResponse(zipBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": zipBuffer.length.toString(),
-        "X-Export-Control-Sum": controlSum,
-      },
+      return new NextResponse(zipBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Content-Length": zipBuffer.length.toString(),
+          "X-Export-Control-Sum": controlSum,
+        },
+      })
     })
   } catch (error) {
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
     console.error("Season pack export error:", error)
     return NextResponse.json({ error: "Neuspješan izvoz tax season paketa" }, { status: 500 })
   }

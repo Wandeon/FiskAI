@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { requireAuth, requireCompany } from "@/lib/auth-utils"
+import { requireAuth, requireCompanyWithPermission } from "@/lib/auth-utils"
 import { parseQuery, isValidationError, formatValidationError } from "@/lib/api/validation"
 import { db } from "@/lib/db"
 import { setTenantContext } from "@/lib/prisma-extensions"
@@ -16,88 +16,91 @@ const querySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
-    const company = await requireCompany(user.id!)
+    return await requireCompanyWithPermission(user.id!, "reports:export", async (company) => {
+      setTenantContext({ companyId: company.id, userId: user.id! })
 
-    setTenantContext({ companyId: company.id, userId: user.id! })
+      const { searchParams } = new URL(request.url)
+      const query = parseQuery(searchParams, querySchema)
 
-    const { searchParams } = new URL(request.url)
-    const query = parseQuery(searchParams, querySchema)
+      // Default to current quarter
+      const now = new Date()
+      const quarter = Math.floor(now.getMonth() / 3)
+      const defaultFrom = new Date(now.getFullYear(), quarter * 3, 1)
+      const defaultTo = new Date(now.getFullYear(), quarter * 3 + 3, 0)
 
-    // Default to current quarter
-    const now = new Date()
-    const quarter = Math.floor(now.getMonth() / 3)
-    const defaultFrom = new Date(now.getFullYear(), quarter * 3, 1)
-    const defaultTo = new Date(now.getFullYear(), quarter * 3 + 3, 0)
+      const dateFrom = query.from ?? defaultFrom
+      const dateTo = query.to ?? defaultTo
 
-    const dateFrom = query.from ?? defaultFrom
-    const dateTo = query.to ?? defaultTo
-
-    // Get invoices (output VAT)
-    const invoices = await db.eInvoice.findMany({
-      where: {
-        companyId: company.id,
-        issueDate: { gte: dateFrom, lte: dateTo },
-        status: { not: "DRAFT" },
-      },
-      select: { netAmount: true, vatAmount: true, totalAmount: true },
-    })
-
-    // Get expenses (input VAT)
-    const expenses = await db.expense.findMany({
-      where: {
-        companyId: company.id,
-        date: { gte: dateFrom, lte: dateTo },
-        status: "PAID",
-      },
-      select: { netAmount: true, vatAmount: true, totalAmount: true, vatDeductible: true },
-    })
-
-    // Calculate totals
-    const outputVat = {
-      net: invoices.reduce((sum, i) => sum + Number(i.netAmount), 0),
-      vat: invoices.reduce((sum, i) => sum + Number(i.vatAmount), 0),
-      total: invoices.reduce((sum, i) => sum + Number(i.totalAmount), 0),
-    }
-
-    const inputVat = {
-      deductible: expenses
-        .filter((e) => e.vatDeductible)
-        .reduce((sum, e) => sum + Number(e.vatAmount), 0),
-      nonDeductible: expenses
-        .filter((e) => !e.vatDeductible)
-        .reduce((sum, e) => sum + Number(e.vatAmount), 0),
-      total: expenses.reduce((sum, e) => sum + Number(e.vatAmount), 0),
-    }
-
-    const vatPayable = outputVat.vat - inputVat.deductible
-
-    await lockAccountingPeriodsForRange(company.id, dateFrom, dateTo, user.id!, "export_vat_pdf")
-
-    // Generate PDF
-    const pdfBuffer = await renderToBuffer(
-      VatPdfDocument({
-        companyName: company.name,
-        companyOib: company.oib,
-        dateFrom,
-        dateTo,
-        outputVat,
-        inputVat,
-        vatPayable,
+      // Get invoices (output VAT)
+      const invoices = await db.eInvoice.findMany({
+        where: {
+          companyId: company.id,
+          issueDate: { gte: dateFrom, lte: dateTo },
+          status: { not: "DRAFT" },
+        },
+        select: { netAmount: true, vatAmount: true, totalAmount: true },
       })
-    )
 
-    const fileName = `pdv-obrazac-${company.oib}-${dateFrom.toISOString().slice(0, 10)}-${dateTo.toISOString().slice(0, 10)}.pdf`
+      // Get expenses (input VAT)
+      const expenses = await db.expense.findMany({
+        where: {
+          companyId: company.id,
+          date: { gte: dateFrom, lte: dateTo },
+          status: "PAID",
+        },
+        select: { netAmount: true, vatAmount: true, totalAmount: true, vatDeductible: true },
+      })
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-      },
+      // Calculate totals
+      const outputVat = {
+        net: invoices.reduce((sum, i) => sum + Number(i.netAmount), 0),
+        vat: invoices.reduce((sum, i) => sum + Number(i.vatAmount), 0),
+        total: invoices.reduce((sum, i) => sum + Number(i.totalAmount), 0),
+      }
+
+      const inputVat = {
+        deductible: expenses
+          .filter((e) => e.vatDeductible)
+          .reduce((sum, e) => sum + Number(e.vatAmount), 0),
+        nonDeductible: expenses
+          .filter((e) => !e.vatDeductible)
+          .reduce((sum, e) => sum + Number(e.vatAmount), 0),
+        total: expenses.reduce((sum, e) => sum + Number(e.vatAmount), 0),
+      }
+
+      const vatPayable = outputVat.vat - inputVat.deductible
+
+      await lockAccountingPeriodsForRange(company.id, dateFrom, dateTo, user.id!, "export_vat_pdf")
+
+      // Generate PDF
+      const pdfBuffer = await renderToBuffer(
+        VatPdfDocument({
+          companyName: company.name,
+          companyOib: company.oib,
+          dateFrom,
+          dateTo,
+          outputVat,
+          inputVat,
+          vatPayable,
+        })
+      )
+
+      const fileName = `pdv-obrazac-${company.oib}-${dateFrom.toISOString().slice(0, 10)}-${dateTo.toISOString().slice(0, 10)}.pdf`
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+        },
+      })
     })
   } catch (error) {
     if (isValidationError(error)) {
       return NextResponse.json(formatValidationError(error), { status: 400 })
+    }
+    if (error instanceof Error && error.message.includes("Permission denied")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
     console.error("VAT PDF export error:", error)
     return NextResponse.json({ error: "Neuspješan PDV PDF izvoz" }, { status: 500 })
