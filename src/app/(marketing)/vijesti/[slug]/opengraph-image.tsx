@@ -1,6 +1,12 @@
 /* eslint-disable fisk-design-system/no-hardcoded-colors -- OG image generation uses inline styles for PNG output */
 import { ImageResponse } from "next/og"
-import { getPostBySlug } from "@/lib/content/news"
+import { getAllPostSlugs, getPostBySlug } from "@/lib/content/news"
+
+// Required for static export - pre-generate OG images for all posts
+export async function generateStaticParams() {
+  const slugs = await getAllPostSlugs()
+  return slugs.map((slug) => ({ slug }))
+}
 
 export const alt = "FiskAI Vijesti"
 export const size = {
