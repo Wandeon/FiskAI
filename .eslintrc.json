@@ -307,6 +307,10 @@
         "src/components/marketing/**/*.ts",
         "src/components/marketing/**/*.tsx"
       ],
+      "excludedFiles": [
+        "src/app/(marketing)/**/opengraph-image.tsx",
+        "src/app/(marketing)/**/opengraph-image.ts"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",

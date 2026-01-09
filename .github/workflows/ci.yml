@@ -621,9 +621,10 @@ jobs:
       - name: Check marketing has no force-dynamic
         run: |
           echo "Checking marketing routes have no force-dynamic..."
-          if grep -r --include='*.ts' --include='*.tsx' 'force-dynamic' src/app/\(marketing\)/ 2>/dev/null | grep -v '.test.'; then
+          # Look for the actual export statement, not just the string in comments
+          if grep -rE --include='*.ts' --include='*.tsx' 'dynamic\s*=\s*["\x27]force-dynamic["\x27]' src/app/\(marketing\)/ 2>/dev/null | grep -v '.test.'; then
             echo "::error::Marketing cannot use force-dynamic - must be statically renderable"
-            grep -r --include='*.ts' --include='*.tsx' 'force-dynamic' src/app/\(marketing\)/ 2>/dev/null || true
+            grep -rE --include='*.ts' --include='*.tsx' 'dynamic\s*=\s*["\x27]force-dynamic["\x27]' src/app/\(marketing\)/ 2>/dev/null || true
             exit 1
           fi
           echo "✅ Marketing has no force-dynamic"

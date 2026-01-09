@@ -21,19 +21,21 @@ EXCLUDE_DIRS=(
   "src/app/feed.xml"
 )
 
-# Dynamic routes within marketing that can't be statically generated (yet)
-# These use force-dynamic, have no generateStaticParams, or depend on server actions/headers
+# Dynamic routes within marketing that can't be statically generated
+# NOTE: As of Phase 2, all marketing routes are static-safe:
+# - vodic/[slug] and usporedba/[slug] now use generateStaticParams
+# - check-email, verify-email, select-role are now static redirect stubs
+# - Original auth pages moved to (auth) route group
 EXCLUDE_MARKETING_DYNAMIC=(
-  "src/app/(marketing)/vodic/[slug]"
-  "src/app/(marketing)/usporedba/[slug]"
-  "src/app/(marketing)/check-email"
-  "src/app/(marketing)/verify-email"
-  "src/app/(marketing)/select-role"
+  # Currently empty - all marketing routes are static-compatible
 )
 
 # Marketing files that are incompatible with static export
+# OG image routes use dynamic runtime, not compatible with static export
 EXCLUDE_MARKETING_FILES=(
   "src/app/(marketing)/opengraph-image.tsx"
+  "src/app/(marketing)/vodic/[slug]/opengraph-image.tsx"
+  "src/app/(marketing)/vijesti/[slug]/opengraph-image.tsx"
 )
 
 # Root-level files that use force-dynamic or are incompatible with static export
