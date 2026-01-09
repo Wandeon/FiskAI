@@ -18,6 +18,7 @@
     "src/lib/regulatory-truth/workers/**/*.ts",
     "src/lib/regulatory-truth/agents/**/*.ts",
     "src/lib/regulatory-truth/utils/**/*.ts",
+    "src/lib/e-invoice/**/*.ts",
     "src/lib/db/**/*.ts"
   ],
   "exclude": ["**/*.test.ts", "**/__tests__/**"]

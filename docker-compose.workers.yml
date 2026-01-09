@@ -52,7 +52,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-orchestrator
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/orchestrator.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/orchestrator.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -82,7 +82,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-sentinel
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/sentinel.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/sentinel.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -112,7 +112,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-extractor
     restart: unless-stopped
-    command: ["npx", "tsx", "src/lib/regulatory-truth/workers/extractor.worker.ts"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/extractor.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -124,8 +124,6 @@ services:
       - WORKER_TYPE=extractor
       - WORKER_CONCURRENCY=1
       - GIT_SHA=${GIT_SHA:-unknown}
-    volumes:
-      - ./src:/app/src:ro
     depends_on:
       redis:
         condition: service_healthy
@@ -147,7 +145,7 @@ services:
         WITH_OCR: "true"
     container_name: fiskai-worker-ocr
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/ocr.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/ocr.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -180,7 +178,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-composer
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/composer.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/composer.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -213,7 +211,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-reviewer
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/reviewer.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/reviewer.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -246,7 +244,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-scheduler
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/scheduler.service.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/scheduler.service.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -274,7 +272,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-releaser
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/releaser.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/releaser.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -304,7 +302,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-arbiter
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/arbiter.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/arbiter.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -338,7 +336,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-continuous-drainer
     restart: unless-stopped
-    command: ["npx", "tsx", "src/lib/regulatory-truth/workers/continuous-drainer.worker.ts"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/continuous-drainer.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -370,7 +368,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-content-sync
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/content-sync.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/content-sync.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -406,7 +404,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-article
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/article.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/article.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -441,7 +439,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-evidence-embedding
     restart: unless-stopped
-    command: ["npx", "tsx", "src/lib/regulatory-truth/workers/evidence-embedding.worker.ts"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/evidence-embedding.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -478,7 +476,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-embedding
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/regulatory-truth/workers/embedding.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/regulatory-truth/workers/embedding.worker.js"]
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
@@ -515,7 +513,7 @@ services:
         WITH_OCR: "false"
     container_name: fiskai-worker-einvoice-inbound
     restart: unless-stopped
-    command: ["node", "dist/workers/lib/e-invoice/workers/eposlovanje-inbound-poller.worker.js"]
+    command: ["node", "-r", "tsconfig-paths/register", "dist/workers/lib/e-invoice/workers/eposlovanje-inbound-poller.worker.js"]
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://fiskai:${DB_PASSWORD}@fiskai-db:5432/fiskai?schema=public}
