@@ -248,6 +248,8 @@ services:
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://fiskai-redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - REGULATORY_DATABASE_URL=${REGULATORY_DATABASE_URL}
       - WATCHDOG_TIMEZONE=Europe/Zagreb
       - WORKER_TYPE=scheduler
       - GIT_SHA=${GIT_SHA:-unknown}
