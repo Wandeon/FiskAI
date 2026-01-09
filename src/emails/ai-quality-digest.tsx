@@ -61,7 +61,7 @@ export default function AIQualityDigest({ data }: AIQualityDigestProps) {
               ))}
             </Section>
           )}
-          <Link href="https://admin.fiskai.hr/dashboard">Otvori Admin Dashboard</Link>
+          <Link href="https://app.fiskai.hr/admin">Otvori Admin Dashboard</Link>
         </Container>
       </Body>
     </Html>

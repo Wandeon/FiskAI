@@ -2,11 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { logger } from "./lib/logger"
-import {
-  getSubdomain,
-  getRedirectUrlForSystemRole,
-  canAccessSubdomain,
-} from "@/lib/middleware/subdomain"
+import { getSubdomain, getDashboardPathForRole, canAccessPath } from "@/lib/middleware/subdomain"
 import { getCacheHeaders } from "@/lib/cache-headers"
 import {
   detectAIBot,
@@ -120,35 +116,41 @@ export async function middleware(request: NextRequest) {
 
   // Legacy subdomain redirects: admin.fiskai.hr → app.fiskai.hr/admin, staff.fiskai.hr → app.fiskai.hr/staff
   // These are 308 permanent redirects to preserve method (POST stays POST)
-  if (subdomain === "admin" || subdomain === "staff") {
-    const externalUrl = getExternalUrl(request)
-    const baseDomain = externalUrl.hostname.replace(/^(admin|staff)\./, "")
-    const redirectUrl = new URL(externalUrl)
-    redirectUrl.hostname = `app.${baseDomain}`
-    // Prepend the subdomain as a path prefix
-    redirectUrl.pathname = `/${subdomain}${pathname === "/" ? "" : pathname}`
+  const hostParts = realHost.split(":")[0].split(".")
+  if (hostParts.length >= 3) {
+    const possibleLegacySubdomain = hostParts[0]
+    if (possibleLegacySubdomain === "admin" || possibleLegacySubdomain === "staff") {
+      const externalUrl = getExternalUrl(request)
+      const baseDomain = externalUrl.hostname.replace(/^(admin|staff)\./, "")
+      const redirectUrl = new URL(externalUrl)
+      redirectUrl.hostname = `app.${baseDomain}`
+      // Prepend the subdomain as a path prefix
+      redirectUrl.pathname = `/${possibleLegacySubdomain}${pathname === "/" ? "" : pathname}`
 
-    logger.info(
-      {
-        requestId,
-        subdomain,
-        pathname,
-        redirectUrl: redirectUrl.toString(),
-      },
-      "Legacy subdomain redirect to app subdomain with path prefix"
-    )
+      logger.info(
+        {
+          requestId,
+          subdomain: possibleLegacySubdomain,
+          pathname,
+          redirectUrl: redirectUrl.toString(),
+        },
+        "Legacy subdomain redirect to app subdomain with path prefix"
+      )
 
-    return new NextResponse(null, {
-      status: 308,
-      headers: {
-        Location: redirectUrl.toString(),
-        "x-request-id": requestId,
-        "x-response-time": `${Date.now() - startTime}ms`,
-      },
-    })
+      return new NextResponse(null, {
+        status: 308,
+        headers: {
+          Location: redirectUrl.toString(),
+          "x-request-id": requestId,
+          "x-response-time": `${Date.now() - startTime}ms`,
+        },
+      })
+    }
   }
 
   // Marketing subdomain - apply rate limiting for unauthenticated traffic
+  // Note: Marketing is now served from separate static site, but we still handle
+  // requests that reach the app server (e.g., during migration)
   if (subdomain === "marketing") {
     // Rate limit unauthenticated traffic by IP address
     const ip =
@@ -201,9 +203,7 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Protected subdomains require authentication
-  // Must specify secureCookie for production to look for __Secure-authjs.session-token
-  // Must pass secret explicitly for edge runtime compatibility
+  // App subdomain - require authentication
   const isSecure =
     request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https"
   const token = await getToken({
@@ -214,12 +214,9 @@ export async function middleware(request: NextRequest) {
   })
 
   if (!token) {
-    // Redirect to auth on app subdomain (app.fiskai.hr/auth)
+    // Redirect to auth on app subdomain
     const externalUrl = getExternalUrl(request)
     const authUrl = new URL("/auth", externalUrl)
-    // Ensure we're on the app subdomain
-    const baseDomain = externalUrl.hostname.replace(/^(app|staff|admin)\./, "")
-    authUrl.hostname = `app.${baseDomain}`
     authUrl.searchParams.set("callbackUrl", externalUrl.toString())
 
     logger.info(
@@ -238,46 +235,37 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check subdomain access based on user's system role
+  // User is authenticated - check path-based role access
   const systemRole = (token.systemRole as string) || "USER"
 
-  if (!canAccessSubdomain(systemRole, subdomain)) {
-    // Redirect to correct subdomain for user's role
+  // Enforce role-based path restrictions
+  if (!canAccessPath(systemRole, pathname)) {
+    // Redirect to appropriate dashboard for their role
+    const dashboardPath = getDashboardPathForRole(systemRole as "USER" | "STAFF" | "ADMIN")
     const externalUrl = getExternalUrl(request)
-    const redirectUrl = getRedirectUrlForSystemRole(
-      systemRole as "USER" | "STAFF" | "ADMIN",
-      externalUrl.toString()
-    )
+    const redirectUrl = new URL(dashboardPath, externalUrl)
 
     logger.info(
       {
         requestId,
         systemRole,
-        currentSubdomain: subdomain,
-        redirectUrl,
+        pathname,
+        redirectUrl: redirectUrl.toString(),
       },
-      "Redirecting user to correct subdomain for their role"
+      "User lacks permission for path, redirecting to their dashboard"
     )
 
     const response = NextResponse.redirect(redirectUrl)
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
-    response.headers.set("Content-Security-Policy", generateCSP(nonce))
     return response
   }
 
-  // After early returns above, subdomain is narrowed to "app" only
-  // (admin/staff redirect at L123, marketing returns at L152)
-  const routeGroup = "/(app)"
-  const controlCenterPath = "/app-control-center"
-
-  // Legacy /dashboard compatibility - redirect to root (then to control-center)
-  // This prevents 404s from old bookmarks and legacy code still referencing /dashboard
+  // Legacy /dashboard compatibility - redirect to app-control-center
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     const externalUrl = getExternalUrl(request)
-    // Preserve any sub-path or query params
-    const newPath = pathname === "/dashboard" ? "/" : pathname.replace("/dashboard", "")
-    const redirectUrl = new URL(newPath || "/", externalUrl)
+    const newPath = pathname === "/dashboard" ? "/app-control-center" : pathname.replace("/dashboard", "/app-control-center")
+    const redirectUrl = new URL(newPath, externalUrl)
     redirectUrl.search = request.nextUrl.search
 
     logger.info(
@@ -288,7 +276,7 @@ export async function middleware(request: NextRequest) {
         originalPath: pathname,
         redirectPath: redirectUrl.pathname,
       },
-      "Redirecting legacy /dashboard to root"
+      "Redirecting legacy /dashboard to app-control-center"
     )
 
     const response = NextResponse.redirect(redirectUrl)
@@ -297,19 +285,22 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Redirect root path to control-center for protected subdomains
-  // This replaces the redirect that was in individual page.tsx files
+  // Redirect root path to appropriate dashboard for user's role
   if (pathname === "/") {
+    const dashboardPath = getDashboardPathForRole(systemRole as "USER" | "STAFF" | "ADMIN")
+    // For regular users, send to control center; for admin/staff, send to their dashboards
+    const targetPath = systemRole === "USER" ? "/app-control-center" : dashboardPath
     const externalUrl = getExternalUrl(request)
-    const controlCenterUrl = new URL(controlCenterPath, externalUrl)
+    const controlCenterUrl = new URL(targetPath, externalUrl)
 
     logger.info(
       {
         requestId,
         subdomain,
         systemRole,
+        targetPath,
       },
-      "Redirecting authenticated user from root to control-center"
+      "Redirecting authenticated user from root to dashboard"
     )
 
     const response = NextResponse.redirect(controlCenterUrl)
@@ -318,17 +309,19 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Rewrite to appropriate route group based on subdomain
+  // Rewrite to (app) route group for app subdomain
+  const routeGroup = "/(app)"
   const url = request.nextUrl.clone()
 
-  // Rewrite /control-center to the subdomain-specific path
+  // Rewrite /control-center to app-control-center
   let rewrittenPath = pathname
   if (pathname === "/control-center") {
-    rewrittenPath = controlCenterPath
+    rewrittenPath = "/app-control-center"
   }
 
-  // Don't rewrite if already in the correct route group
-  if (!pathname.startsWith(routeGroup)) {
+  // Don't rewrite if already in the correct route group or if accessing /admin or /staff paths
+  // /admin and /staff are top-level routes, not in route groups
+  if (!pathname.startsWith(routeGroup) && !pathname.startsWith("/admin") && !pathname.startsWith("/staff")) {
     url.pathname = `${routeGroup}${rewrittenPath}`
 
     const response = NextResponse.rewrite(url)
@@ -351,11 +344,10 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Add subdomain to headers for route group selection
+  // Add subdomain to headers
   const response = NextResponse.next()
   response.headers.set("x-request-id", requestId)
   response.headers.set("x-subdomain", subdomain)
-  response.headers.set("x-route-group", routeGroup)
   response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
 
   logger.info(

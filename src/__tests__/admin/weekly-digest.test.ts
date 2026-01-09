@@ -549,7 +549,7 @@ describe("Weekly Digest", () => {
       const data = createMockDigestData()
       const html = formatDigestEmail(data)
 
-      expect(html).toContain("https://admin.fiskai.hr/dashboard")
+      expect(html).toContain("https://app.fiskai.hr/admin")
       expect(html).toContain("Otvori Admin Dashboard")
     })
 

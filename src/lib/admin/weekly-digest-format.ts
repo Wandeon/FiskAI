@@ -194,7 +194,7 @@ export function formatDigestEmail(data: WeeklyDigestData): string {
 
       <!-- CTA -->
       <div style="text-align: center; margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
-        <a href="https://admin.fiskai.hr/dashboard"
+        <a href="https://app.fiskai.hr/admin"
            style="display: inline-block; background-color: #667eea; color: white; padding: 14px 28px;
                   border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
           Otvori Admin Dashboard

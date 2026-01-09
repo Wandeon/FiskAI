@@ -293,7 +293,7 @@ export default function RegulatoryTruthDigestEmail({ data }: RegulatoryTruthDige
 
             {/* CTA */}
             <Section style={styles.ctaSection}>
-              <Link href="https://admin.fiskai.hr/admin/watchdog" style={styles.ctaButton}>
+              <Link href="https://app.fiskai.hr/admin/watchdog" style={styles.ctaButton}>
                 Open Watchdog Dashboard
               </Link>
             </Section>

@@ -82,12 +82,12 @@ We target browsers with >0.5% global usage, excluding Opera Mini and discontinue
 
 ## Portals
 
-| Portal       | URL             | Audience       |
-| ------------ | --------------- | -------------- |
-| Marketing    | fiskai.hr       | Public         |
-| Client App   | app.fiskai.hr   | Clients        |
-| Staff Portal | staff.fiskai.hr | Accountants    |
-| Admin Portal | admin.fiskai.hr | Platform owner |
+| Portal       | URL                   | Audience       |
+| ------------ | --------------------- | -------------- |
+| Marketing    | fiskai.hr             | Public         |
+| Client App   | app.fiskai.hr         | Clients        |
+| Staff Portal | app.fiskai.hr/staff   | Accountants    |
+| Admin Portal | app.fiskai.hr/admin   | Platform owner |
 
 ## Development
 

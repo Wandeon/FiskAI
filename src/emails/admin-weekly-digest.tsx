@@ -225,7 +225,7 @@ export default function AdminWeeklyDigest({ data }: AdminWeeklyDigestProps) {
 
             {/* CTA */}
             <Section style={styles.ctaSection}>
-              <Link href="https://admin.fiskai.hr/dashboard" style={styles.ctaButton}>
+              <Link href="https://app.fiskai.hr/admin" style={styles.ctaButton}>
                 Otvori Admin Dashboard
               </Link>
             </Section>
