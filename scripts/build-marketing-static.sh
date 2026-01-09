@@ -3,7 +3,12 @@
 # Temporarily excludes non-marketing route groups to avoid conflicts
 set -euo pipefail
 
-cd /home/admin/FiskAI
+# Use GITHUB_WORKSPACE in CI, otherwise find repo root from script location
+if [ -n "${GITHUB_WORKSPACE:-}" ]; then
+  cd "$GITHUB_WORKSPACE"
+else
+  cd "$(dirname "$0")/.."
+fi
 
 echo "=== Building Marketing Static Export ==="
 
