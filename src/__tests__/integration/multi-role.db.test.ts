@@ -72,14 +72,16 @@ describe("Multi-Role Architecture Integration", () => {
   })
 
   describe("Subdomain Detection", () => {
-    it("detects admin subdomain", () => {
-      expect(getSubdomain("admin.fiskai.hr")).toBe("admin")
-      expect(getSubdomain("admin.fiskai.hr:3000")).toBe("admin")
+    it("returns marketing for legacy admin subdomain (redirected by middleware)", () => {
+      // Legacy subdomains are handled by middleware 308 redirect to app.fiskai.hr/admin
+      expect(getSubdomain("admin.fiskai.hr")).toBe("marketing")
+      expect(getSubdomain("admin.fiskai.hr:3000")).toBe("marketing")
     })
 
-    it("detects staff subdomain", () => {
-      expect(getSubdomain("staff.fiskai.hr")).toBe("staff")
-      expect(getSubdomain("staff.fiskai.hr:3000")).toBe("staff")
+    it("returns marketing for legacy staff subdomain (redirected by middleware)", () => {
+      // Legacy subdomains are handled by middleware 308 redirect to app.fiskai.hr/staff
+      expect(getSubdomain("staff.fiskai.hr")).toBe("marketing")
+      expect(getSubdomain("staff.fiskai.hr:3000")).toBe("marketing")
     })
 
     it("detects app subdomain", () => {
@@ -92,8 +94,7 @@ describe("Multi-Role Architecture Integration", () => {
       expect(getSubdomain("www.fiskai.hr")).toBe("marketing")
     })
 
-    // Skip: localhost handling changed for dev environments
-    it.skip("defaults to app for localhost", () => {
+    it("defaults to app for localhost", () => {
       expect(getSubdomain("localhost")).toBe("app")
       expect(getSubdomain("localhost:3000")).toBe("app")
       expect(getSubdomain("127.0.0.1")).toBe("app")

@@ -252,12 +252,12 @@ Anything else is unfinished work.
 **Domain:** `fiskai.hr` (Cloudflare-managed, primary)
 **Legacy:** `fiskai.eu` (redirects to fiskai.hr)
 
-| Portal       | URL               | Audience             | Purpose                 |
-| ------------ | ----------------- | -------------------- | ----------------------- |
-| Marketing    | `fiskai.hr`       | Public               | Landing, guides, auth   |
-| Client App   | `app.fiskai.hr`   | Clients              | Business dashboard      |
-| Staff Portal | `staff.fiskai.hr` | Internal accountants | Multi-client workspace  |
-| Admin Portal | `admin.fiskai.hr` | Platform owner       | Tenant/staff management |
+| Portal       | URL                     | Audience             | Purpose                 |
+| ------------ | ----------------------- | -------------------- | ----------------------- |
+| Marketing    | `fiskai.hr`             | Public               | Landing, guides, auth   |
+| Client App   | `app.fiskai.hr`         | Clients              | Business dashboard      |
+| Staff Portal | `app.fiskai.hr/staff`   | Internal accountants | Multi-client workspace  |
+| Admin Portal | `app.fiskai.hr/admin`   | Platform owner       | Tenant/staff management |
 
 **SystemRole Enum:** `USER` | `STAFF` | `ADMIN` (separate from per-company roles)
 
@@ -366,11 +366,11 @@ See `docs/adr/001-ddd-clean-architecture.md` for the full decision record.
 - `/content/usporedbe/` - MDX comparisons
 - `/docs/plans/` - Implementation plans
 - `/src/lib/modules/` - Module definitions & access control
-- `/src/lib/middleware/` - Subdomain routing
+- `/src/lib/middleware/` - Subdomain and path-based routing
 - `/src/app/(marketing)/` - Public pages, auth
 - `/src/app/(app)/` - Client dashboard
-- `/src/app/(staff)/` - Staff portal
-- `/src/app/(admin)/` - Admin portal
+- `/src/app/staff/` - Staff portal (role-protected top-level route)
+- `/src/app/admin/` - Admin portal (role-protected top-level route)
 
 ## Component Architecture
 

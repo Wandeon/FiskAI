@@ -1,10 +1,17 @@
-export type Subdomain = "app" | "staff" | "admin" | "marketing"
+/**
+ * Subdomain detection and routing utilities
+ *
+ * Architecture:
+ * - www.fiskai.hr / fiskai.hr → marketing (static site, separate repo)
+ * - app.fiskai.hr → application (all authenticated users)
+ *
+ * Roles are expressed via paths, not subdomains:
+ * - /admin → Admin users only
+ * - /staff → Staff users only
+ * - /* → Regular users
+ */
 
-const SUBDOMAIN_MAP: Record<string, Subdomain> = {
-  app: "app",
-  staff: "staff",
-  admin: "admin",
-}
+export type Subdomain = "app" | "marketing"
 
 export function getSubdomain(host: string): Subdomain {
   // Remove port if present
@@ -12,8 +19,8 @@ export function getSubdomain(host: string): Subdomain {
 
   // Handle localhost development
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    // Default to marketing in development to allow access to public pages
-    return "marketing"
+    // Default to app in development for authenticated routes
+    return "app"
   }
 
   // Extract subdomain from hostname
@@ -22,12 +29,14 @@ export function getSubdomain(host: string): Subdomain {
   // Expected format: subdomain.fiskai.hr or fiskai.hr
   if (parts.length >= 3) {
     const subdomain = parts[0]
-    if (subdomain in SUBDOMAIN_MAP) {
-      return SUBDOMAIN_MAP[subdomain]
+    if (subdomain === "app") {
+      return "app"
     }
+    // Legacy admin/staff subdomains will be redirected by middleware
   }
 
-  // Root domain = marketing
+  // Root domain (fiskai.hr) or www = marketing
+  // Marketing is now served from separate static site
   return "marketing"
 }
 
@@ -36,8 +45,8 @@ export function getSubdomainFromRequest(request: Request): Subdomain {
 
   // Development override via header
   const subdomainOverride = request.headers.get("x-subdomain")
-  if (subdomainOverride && subdomainOverride in SUBDOMAIN_MAP) {
-    return SUBDOMAIN_MAP[subdomainOverride]
+  if (subdomainOverride === "app") {
+    return "app"
   }
 
   return getSubdomain(host)
@@ -45,10 +54,6 @@ export function getSubdomainFromRequest(request: Request): Subdomain {
 
 export function getRouteGroupForSubdomain(subdomain: Subdomain): string {
   switch (subdomain) {
-    case "admin":
-      return "(admin)"
-    case "staff":
-      return "(staff)"
     case "app":
       return "(app)"
     case "marketing":
@@ -57,61 +62,60 @@ export function getRouteGroupForSubdomain(subdomain: Subdomain): string {
   }
 }
 
+/**
+ * Get the dashboard path for a given system role
+ * All roles access app.fiskai.hr, but are routed to different paths
+ */
+export function getDashboardPathForRole(systemRole: "USER" | "STAFF" | "ADMIN"): string {
+  switch (systemRole) {
+    case "ADMIN":
+      return "/admin"
+    case "STAFF":
+      return "/staff"
+    case "USER":
+    default:
+      return "/dashboard"
+  }
+}
+
+/**
+ * Check if a user can access a specific path based on their role
+ */
+export function canAccessPath(systemRole: string, pathname: string): boolean {
+  if (pathname.startsWith("/admin")) {
+    return systemRole === "ADMIN"
+  }
+  if (pathname.startsWith("/staff")) {
+    return systemRole === "STAFF" || systemRole === "ADMIN"
+  }
+  // All other paths accessible by all authenticated users
+  return true
+}
+
+// Legacy exports for backward compatibility - these will be removed after migration
 export function getRedirectUrlForSystemRole(
   systemRole: "USER" | "STAFF" | "ADMIN",
   currentUrl: string
 ): string {
   try {
     const url = new URL(currentUrl)
-    const protocol = url.protocol
-    const port = url.port ? `:${url.port}` : ""
-    let hostname = url.hostname
-
-    // Strip www. if present
-    if (hostname.startsWith("www.")) {
-      hostname = hostname.replace(/^www\./, "")
-    }
-
-    // Strip existing subdomains (app, staff, admin) to get the base domain
-    // We strictly match the known subdomains to avoid stripping parts of the actual domain name
-    const baseDomain = hostname.replace(/^(app|staff|admin)\./, "")
-
-    let targetSubdomain = ""
-    switch (systemRole) {
-      case "ADMIN":
-        targetSubdomain = "admin."
-        break
-      case "STAFF":
-        targetSubdomain = "staff."
-        break
-      case "USER":
-      default:
-        targetSubdomain = "app."
-        break
-    }
-
-    // Special handling for localhost/preview URLs if they don't support subdomains
-    // But typically for this architecture, we assume app.localhost is configured in /etc/hosts
-    // or we are pointing to a domain that supports wildcard/subdomains.
-
-    return `${protocol}//${targetSubdomain}${baseDomain}${port}`
-  } catch (e) {
-    // Fallback if URL parsing fails - root path lets middleware handle routing
-    return "/"
+    // All roles go to app subdomain now, just different paths
+    const baseDomain = url.hostname.replace(/^(app|staff|admin|www)\./, "")
+    const path = getDashboardPathForRole(systemRole)
+    return `${url.protocol}//app.${baseDomain}${url.port ? `:${url.port}` : ""}${path}`
+  } catch {
+    return "/dashboard"
   }
 }
 
 export function canAccessSubdomain(systemRole: string, subdomain: string): boolean {
-  switch (subdomain) {
-    case "admin":
-      return systemRole === "ADMIN"
-    case "staff":
-      return systemRole === "STAFF" || systemRole === "ADMIN"
-    case "app":
-      return true // All roles can access app
-    case "marketing":
-      return true // Public
-    default:
-      return false
+  // App subdomain is accessible by all authenticated users
+  // Role restrictions are enforced at the path level, not subdomain level
+  if (subdomain === "app") {
+    return true
   }
+  if (subdomain === "marketing") {
+    return true // Public
+  }
+  return false
 }

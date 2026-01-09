@@ -259,7 +259,7 @@ function CriticalAlertEmail({ alert }: { alert: WatchdogAlert }) {
 
           <Section style={{ padding: "20px", textAlign: "center" as const }}>
             <Link
-              href="https://admin.fiskai.hr/admin/watchdog"
+              href="https://app.fiskai.hr/admin/watchdog"
               style={{
                 display: "inline-block",
                 backgroundColor: "#ef4444",
