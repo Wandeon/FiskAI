@@ -2,6 +2,7 @@ import Link from "next/link"
 import { requireAdmin } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { getComplianceHealth } from "@/lib/admin/metrics"
+import { adminTenantRoute } from "@/lib/admin/routes"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -160,7 +161,7 @@ export default async function ComplianceStatusPage() {
                   <TableRow key={certificate.id}>
                     <TableCell>
                       <Link
-                        href={`/tenants/${certificate.company.id}`}
+                        href={adminTenantRoute(certificate.company.id)}
                         className="font-medium text-primary hover:underline"
                       >
                         {certificate.company.name}
@@ -199,7 +200,7 @@ export default async function ComplianceStatusPage() {
                   <TableRow key={certificate.id}>
                     <TableCell>
                       <Link
-                        href={`/tenants/${certificate.company.id}`}
+                        href={adminTenantRoute(certificate.company.id)}
                         className="font-medium text-primary hover:underline"
                       >
                         {certificate.company.name}
@@ -238,7 +239,7 @@ export default async function ComplianceStatusPage() {
                   <TableRow key={company.id}>
                     <TableCell>
                       <Link
-                        href={`/tenants/${company.id}`}
+                        href={adminTenantRoute(company.id)}
                         className="font-medium text-primary hover:underline"
                       >
                         {company.name}
@@ -275,7 +276,7 @@ export default async function ComplianceStatusPage() {
                   <TableRow key={request.id}>
                     <TableCell>
                       <Link
-                        href={`/tenants/${request.company.id}`}
+                        href={adminTenantRoute(request.company.id)}
                         className="font-medium text-primary hover:underline"
                       >
                         {request.company.name}

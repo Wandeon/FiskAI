@@ -19,11 +19,11 @@ import {
   Filter,
   X,
   Check,
-  Clock,
   CheckCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { adminTenantRoute } from "@/lib/admin/routes"
 import type { Alert, AlertLevel, AlertType } from "@/lib/admin/alerts"
 
 const LEVEL_STYLES: Record<AlertLevel, { icon: typeof AlertTriangle; color: string }> = {
@@ -283,7 +283,7 @@ export function AlertsPage({ alerts }: AlertsPageProps) {
                         Dismiss
                       </Button>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/tenants/${alert.companyId}`}>
+                        <Link href={adminTenantRoute(alert.companyId)}>
                           <ArrowRight className="h-4 w-4 mr-1" />
                           View
                         </Link>
