@@ -59,6 +59,7 @@ export async function extractReceipt(
   const model = "gpt-4o-mini"
   let inputTokens = 0
   let outputTokens = 0
+  const startTime = Date.now()
 
   try {
     const openai = getOpenAI()
@@ -70,6 +71,7 @@ export async function extractReceipt(
       ],
       response_format: { type: "json_object" },
     })
+    const durationMs = Date.now() - startTime
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
@@ -85,6 +87,8 @@ export async function extractReceipt(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return { success: false, error: "No response from AI" }
@@ -101,6 +105,8 @@ export async function extractReceipt(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -121,6 +127,8 @@ export async function extractReceipt(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -141,11 +149,14 @@ export async function extractReceipt(
         inputTokens,
         outputTokens,
         success: true,
+        durationMs,
+        provider: "openai",
       })
     }
 
     return { success: true, data, rawText: text }
   } catch (error) {
+    const durationMs = Date.now() - startTime
     // Track failed usage
     if (companyId) {
       await trackAIUsage({
@@ -155,6 +166,8 @@ export async function extractReceipt(
         inputTokens,
         outputTokens,
         success: false,
+        durationMs,
+        provider: "openai",
       })
     }
 
@@ -181,6 +194,7 @@ export async function extractInvoice(
   const model = "gpt-4o-mini"
   let inputTokens = 0
   let outputTokens = 0
+  const startTime = Date.now()
 
   try {
     const openai = getOpenAI()
@@ -192,6 +206,7 @@ export async function extractInvoice(
       ],
       response_format: { type: "json_object" },
     })
+    const durationMs = Date.now() - startTime
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
@@ -207,6 +222,8 @@ export async function extractInvoice(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return { success: false, error: "No response from AI" }
@@ -223,6 +240,8 @@ export async function extractInvoice(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -243,6 +262,8 @@ export async function extractInvoice(
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -263,11 +284,14 @@ export async function extractInvoice(
         inputTokens,
         outputTokens,
         success: true,
+        durationMs,
+        provider: "openai",
       })
     }
 
     return { success: true, data, rawText: text }
   } catch (error) {
+    const durationMs = Date.now() - startTime
     // Track failed usage
     if (companyId) {
       await trackAIUsage({
@@ -277,6 +301,8 @@ export async function extractInvoice(
         inputTokens,
         outputTokens,
         success: false,
+        durationMs,
+        provider: "openai",
       })
     }
 

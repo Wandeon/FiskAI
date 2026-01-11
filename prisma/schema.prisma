@@ -2405,12 +2405,15 @@ model AIUsage {
   costCents  Int?
   model      String?
   success    Boolean  @default(true)
+  durationMs Int?     // API call latency in milliseconds
+  provider   String?  // "openai" | "deepseek" | "ollama"
   createdAt  DateTime @default(now())
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId, createdAt])
   @@index([companyId, operation])
   @@index([userId, createdAt])
+  @@index([provider, createdAt])
 }
 
 model ArticleJob {
@@ -3779,6 +3782,7 @@ model BackfillRun {
   lastProcessedSource String?
   lastProcessedPage   Int?
   lastProcessedUrl    String?
+  checkpoint          Json?   // SitemapDiscoveryCheckpoint for streaming resume
 
   // Relations
   discoveredItems DiscoveredItem[]
