@@ -1,11 +1,9 @@
-import { Suspense } from "react"
 import { getCurrentUser } from "@/lib/auth-utils"
 import { db } from "@/lib/db"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import {
   AlertCircle,
   CheckCircle,
@@ -18,6 +16,7 @@ import {
   Radar,
 } from "lucide-react"
 import Link from "next/link"
+import { adminRegulatoryRoute } from "@/lib/admin/routes"
 
 export const revalidate = 60 // 1 minute cache
 
@@ -104,19 +103,19 @@ export default async function RegulatoryDashboardPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href="/regulatory/sentinel">
+            <Link href={adminRegulatoryRoute("/sentinel")}>
               <Radar className="mr-2 h-4 w-4" />
               Sentinel Health
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/regulatory/sources">
+            <Link href={adminRegulatoryRoute("/sources")}>
               <Database className="mr-2 h-4 w-4" />
               Sources
             </Link>
           </Button>
           <Button asChild>
-            <Link href="/regulatory/inbox">
+            <Link href={adminRegulatoryRoute("/inbox")}>
               <FileText className="mr-2 h-4 w-4" />
               Review Inbox
               {data.pendingReviewCount > 0 && (
@@ -280,7 +279,7 @@ export default async function RegulatoryDashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Agent Activity</CardTitle>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/regulatory/sources">
+            <Link href={adminRegulatoryRoute("/sources")}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Trigger Manual Check
             </Link>
@@ -322,7 +321,7 @@ export default async function RegulatoryDashboardPage() {
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/inbox">
+          <Link href={adminRegulatoryRoute("/inbox")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -337,7 +336,7 @@ export default async function RegulatoryDashboardPage() {
         </Card>
 
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/conflicts">
+          <Link href={adminRegulatoryRoute("/conflicts")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
@@ -352,7 +351,7 @@ export default async function RegulatoryDashboardPage() {
         </Card>
 
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/releases">
+          <Link href={adminRegulatoryRoute("/releases")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
