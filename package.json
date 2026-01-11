@@ -31,6 +31,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:check-features": "tsx scripts/check-feature-tables.ts",
     "prisma:generate": "npm run prisma:generate:core && npm run prisma:generate:regulatory",
     "prisma:generate:core": "prisma generate --schema=prisma/schema.prisma",
     "prisma:generate:regulatory": "prisma generate --config=prisma.config.regulatory.ts",
