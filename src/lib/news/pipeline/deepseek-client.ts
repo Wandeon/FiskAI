@@ -97,8 +97,10 @@ async function callOllamaCloud(
   messages.push({ role: "user", content: prompt })
 
   let lastError: Error | null = null
+  const startTime = Date.now()
 
   for (let attempt = 0; attempt < retries; attempt++) {
+    const attemptStart = Date.now()
     try {
       const response = await fetch(`${endpoint}/api/chat`, {
         method: "POST",
@@ -117,6 +119,7 @@ async function callOllamaCloud(
           },
         }),
       })
+      const durationMs = Date.now() - attemptStart
 
       if (!response.ok) {
         const errorBody = await response.text()
@@ -139,6 +142,8 @@ async function callOllamaCloud(
         inputTokens: 0, // Ollama doesn't provide token counts
         outputTokens: 0,
         success: true,
+        durationMs,
+        provider: "ollama",
       })
 
       return content
@@ -156,6 +161,7 @@ async function callOllamaCloud(
     }
   }
 
+  const totalDurationMs = Date.now() - startTime
   // Track failed request
   await trackAIUsage({
     companyId: "system",
@@ -164,6 +170,8 @@ async function callOllamaCloud(
     inputTokens: 0,
     outputTokens: 0,
     success: false,
+    durationMs: totalDurationMs,
+    provider: "ollama",
   })
 
   throw new DeepSeekError(
@@ -206,8 +214,10 @@ async function callOpenAI(
   messages.push({ role: "user", content: prompt })
 
   let lastError: Error | null = null
+  const startTime = Date.now()
 
   for (let attempt = 0; attempt < retries; attempt++) {
+    const attemptStart = Date.now()
     try {
       const response = await openai.chat.completions.create({
         model,
@@ -216,6 +226,7 @@ async function callOpenAI(
         max_tokens: maxTokens,
         response_format: jsonMode ? { type: "json_object" } : undefined,
       })
+      const durationMs = Date.now() - attemptStart
 
       const content = response.choices[0]?.message?.content
       if (!content) throw new DeepSeekError("OpenAI returned no content")
@@ -228,6 +239,8 @@ async function callOpenAI(
         inputTokens: response.usage?.prompt_tokens || 0,
         outputTokens: response.usage?.completion_tokens || 0,
         success: true,
+        durationMs,
+        provider: "openai",
       })
 
       return content
@@ -242,6 +255,7 @@ async function callOpenAI(
     }
   }
 
+  const totalDurationMs = Date.now() - startTime
   // Track failed request
   await trackAIUsage({
     companyId: "system",
@@ -250,6 +264,8 @@ async function callOpenAI(
     inputTokens: 0,
     outputTokens: 0,
     success: false,
+    durationMs: totalDurationMs,
+    provider: "openai",
   })
 
   throw new DeepSeekError(
@@ -329,8 +345,10 @@ export async function callDeepSeek(
   }
 
   let lastError: Error | null = null
+  const startTime = Date.now()
 
   for (let attempt = 0; attempt < retries; attempt++) {
+    const attemptStart = Date.now()
     try {
       const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
@@ -340,6 +358,7 @@ export async function callDeepSeek(
         },
         body: JSON.stringify(requestBody),
       })
+      const durationMs = Date.now() - attemptStart
 
       if (!response.ok) {
         const errorBody = await response.text()
@@ -367,6 +386,8 @@ export async function callDeepSeek(
           inputTokens: data.usage.prompt_tokens,
           outputTokens: data.usage.completion_tokens,
           success: true,
+          durationMs,
+          provider: "deepseek",
         })
       }
 
@@ -387,6 +408,7 @@ export async function callDeepSeek(
     }
   }
 
+  const totalDurationMs = Date.now() - startTime
   // Track failed request
   await trackAIUsage({
     companyId: "system",
@@ -395,6 +417,8 @@ export async function callDeepSeek(
     inputTokens: 0,
     outputTokens: 0,
     success: false,
+    durationMs: totalDurationMs,
+    provider: "deepseek",
   })
 
   throw new DeepSeekError(

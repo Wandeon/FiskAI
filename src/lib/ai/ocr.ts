@@ -21,6 +21,7 @@ export async function extractFromImage(
   let success = false
   let inputTokens = 0
   let outputTokens = 0
+  const startTime = Date.now()
 
   try {
     const openai = getOpenAI()
@@ -56,6 +57,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
       ],
       max_tokens: 1000,
     })
+    const durationMs = Date.now() - startTime
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
@@ -73,6 +75,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return { success: false, error: "No JSON in response", rawText: content }
@@ -89,6 +93,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -109,6 +115,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -130,11 +138,14 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
         inputTokens,
         outputTokens,
         success: true,
+        durationMs,
+        provider: "openai",
       })
     }
 
     return { success: true, data }
   } catch (error) {
+    const durationMs = Date.now() - startTime
     // Track failed usage
     if (companyId) {
       await trackAIUsage({
@@ -144,6 +155,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
         inputTokens,
         outputTokens,
         success: false,
+        durationMs,
+        provider: "openai",
       })
     }
 
@@ -169,6 +182,7 @@ export async function extractFromImageUrl(
   const model = "gpt-4o"
   let inputTokens = 0
   let outputTokens = 0
+  const startTime = Date.now()
 
   try {
     const openai = getOpenAI()
@@ -204,6 +218,7 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
       ],
       max_tokens: 1000,
     })
+    const durationMs = Date.now() - startTime
 
     // Track token usage
     inputTokens = response.usage?.prompt_tokens || 0
@@ -220,6 +235,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return { success: false, error: "No JSON in response", rawText: content }
@@ -236,6 +253,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -256,6 +275,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
           inputTokens,
           outputTokens,
           success: false,
+          durationMs,
+          provider: "openai",
         })
       }
       return {
@@ -276,11 +297,14 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
         inputTokens,
         outputTokens,
         success: true,
+        durationMs,
+        provider: "openai",
       })
     }
 
     return { success: true, data }
   } catch (error) {
+    const durationMs = Date.now() - startTime
     // Track failed usage
     if (companyId) {
       await trackAIUsage({
@@ -290,6 +314,8 @@ Croatian: PDV=VAT, Ukupno=Total, Gotovina=Cash, Kartica=Card`,
         inputTokens,
         outputTokens,
         success: false,
+        durationMs,
+        provider: "openai",
       })
     }
 
