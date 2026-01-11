@@ -2,6 +2,8 @@ import { drizzleDb } from "@/lib/db/drizzle"
 import { newsPosts, newsCategories } from "@/lib/db/schema/news"
 import { desc, sql } from "drizzle-orm"
 import { NewsTableClient } from "./news-table-client"
+import { hasNewsTables, NEWS_TABLES } from "@/lib/admin/runtime-capabilities"
+import { NotConfigured } from "@/components/admin/not-configured"
 
 export const dynamic = "force-dynamic"
 
@@ -72,6 +74,19 @@ async function getCategories() {
 }
 
 export default async function AdminNewsPage() {
+  // Check capability before querying - prevents crash if tables don't exist
+  const capability = await hasNewsTables()
+
+  if (!capability.available) {
+    return (
+      <NotConfigured
+        feature="News"
+        missingTables={capability.missingTables}
+        actionHint={`Run migrations for News tables: ${NEWS_TABLES.join(", ")}`}
+      />
+    )
+  }
+
   const [statusCounts, posts, categories] = await Promise.all([
     getStatusCounts(),
     getPosts(),

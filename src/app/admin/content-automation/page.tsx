@@ -9,10 +9,28 @@ import {
   getContentPipelineHealth,
   getPendingContentSyncPRs,
 } from "@/lib/regulatory-truth/monitoring/metrics"
+import {
+  hasRegulatoryTruthTables,
+  CONTENT_AUTOMATION_TABLES,
+} from "@/lib/admin/runtime-capabilities"
+import { NotConfigured } from "@/components/admin/not-configured"
 
 export const dynamic = "force-dynamic"
 
 export default async function ContentAutomationPage() {
+  // Check capability before querying - prevents crash if tables don't exist
+  const capability = await hasRegulatoryTruthTables()
+
+  if (!capability.available) {
+    return (
+      <NotConfigured
+        feature="Content Automation"
+        missingTables={capability.missingTables}
+        actionHint={`Run migrations for Content Automation tables: ${CONTENT_AUTOMATION_TABLES.join(", ")}`}
+      />
+    )
+  }
+
   const [articleMetrics, syncMetrics, recentJobs, recentEvents, health, pendingPRs] =
     await Promise.all([
       collectArticleAgentMetrics(),
