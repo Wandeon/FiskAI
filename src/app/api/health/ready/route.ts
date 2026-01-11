@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withApiLogging } from "@/lib/api-logging"
 import { logger } from "@/lib/logger"
+import { verifyAllFeatureContracts } from "@/lib/admin/feature-contracts"
 
 export const dynamic = "force-dynamic"
 
@@ -9,6 +10,7 @@ interface HealthCheck {
   status: "ok" | "degraded" | "failed"
   latency?: number
   message?: string
+  details?: Record<string, unknown>
 }
 
 /**
@@ -91,6 +93,52 @@ export const GET = withApiLogging(async () => {
     checks.uptime = {
       status: "ok",
       message: `${uptimeSeconds}s`,
+    }
+  }
+
+  // Type A Feature Contracts - CRITICAL for readiness
+  // If any Type A feature is enabled but missing tables, deployment has failed
+  try {
+    const { allHealthy, features } = await verifyAllFeatureContracts()
+    const enabledFeatures = features.filter((f) => f.enabled)
+    const unhealthyFeatures = enabledFeatures.filter((f) => !f.healthy)
+
+    if (enabledFeatures.length === 0) {
+      checks.featureContracts = {
+        status: "ok",
+        message: "No Type A features enabled",
+      }
+    } else if (allHealthy) {
+      checks.featureContracts = {
+        status: "ok",
+        message: `${enabledFeatures.length} Type A feature(s) healthy`,
+        details: {
+          features: enabledFeatures.map((f) => f.name),
+        },
+      }
+    } else {
+      // Type A contract violation is a deployment defect
+      checks.featureContracts = {
+        status: "failed",
+        message: `${unhealthyFeatures.length} Type A feature(s) missing tables`,
+        details: {
+          unhealthy: unhealthyFeatures.map((f) => ({
+            feature: f.name,
+            missingTables: f.missingTables,
+          })),
+        },
+      }
+      overallStatus = "not_ready"
+      logger.error(
+        { unhealthyFeatures, severity: "CRITICAL" },
+        "Type A feature contract violation detected in readiness check"
+      )
+    }
+  } catch (error) {
+    logger.error({ error }, "Failed to verify feature contracts")
+    checks.featureContracts = {
+      status: "degraded",
+      message: "Could not verify feature contracts",
     }
   }
 
