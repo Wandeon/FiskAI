@@ -23,7 +23,7 @@ export default async function ContentAutomationPage() {
       <NotConfigured
         feature="Content Automation"
         missingTables={capability.missingTables}
-        actionHint={`Run migrations for Content Automation tables: ${capability.requiredTables.join(", ")}`}
+        actionHint={`Run migrations for Content Automation tables: ${capability.requiredTables?.join(", ") ?? "unknown"}`}
       />
     )
   }

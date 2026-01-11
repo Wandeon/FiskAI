@@ -82,7 +82,7 @@ export default async function AdminNewsPage() {
       <NotConfigured
         feature="News"
         missingTables={capability.missingTables}
-        actionHint={`Run migrations for News tables: ${capability.requiredTables.join(", ")}`}
+        actionHint={`Run migrations for News tables: ${capability.requiredTables?.join(", ") ?? "unknown"}`}
       />
     )
   }
