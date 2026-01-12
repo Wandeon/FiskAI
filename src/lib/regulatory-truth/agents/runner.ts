@@ -155,11 +155,12 @@ async function lookupCache(key: CacheKey) {
 
 /**
  * Write result to cache (only for success outcomes)
+ * Note: outcome is NOT stored - cache is a pure artifact store.
+ * On cache hit, the output is re-validated against the current outputSchema.
  */
 async function writeCache(
   key: CacheKey,
   output: object,
-  outcome: "SUCCESS_APPLIED" | "SUCCESS_NO_CHANGE",
   originalRunId: string,
   confidence?: number,
   tokensUsed?: number
@@ -181,7 +182,6 @@ async function writeCache(
       promptHash: key.promptHash,
       inputContentHash: key.inputContentHash,
       output,
-      outcome,
       originalRunId,
       confidence,
       tokensUsed,
@@ -468,10 +468,62 @@ export async function runAgent<TInput, TOutput>(
 
   const cachedResult = await lookupCache(cacheKey)
   if (cachedResult) {
-    // Cache hit - return cached output without LLM call
+    // Cache hit - re-validate output against current outputSchema
+    // This ensures schema evolution doesn't serve stale/invalid data
+    const cachedOutputValidation = outputSchema.safeParse(cachedResult.output)
     const durationMs = Date.now() - startTime
 
-    // Create AgentRun record with DUPLICATE_CACHED outcome
+    if (!cachedOutputValidation.success) {
+      // Cached output fails current schema validation
+      // Return VALIDATION_REJECTED, not DUPLICATE_CACHED
+      console.log(
+        `[runner] Cache hit for ${agentType} but validation failed: ${cachedOutputValidation.error.message}`
+      )
+
+      const run = await db.agentRun.create({
+        data: {
+          agentType,
+          status: "COMPLETED",
+          outcome: "VALIDATION_REJECTED",
+          noChangeCode: "VALIDATION_BLOCKED",
+          noChangeDetail: `Cached output failed current schema validation: ${cachedOutputValidation.error.message}`,
+          input: input as object,
+          output: cachedResult.output as object,
+          evidenceId,
+          ruleId,
+          runId,
+          jobId,
+          parentJobId,
+          sourceSlug,
+          queueName,
+          inputChars,
+          inputBytes,
+          inputContentHash,
+          promptTemplateId: provenance.templateId,
+          promptTemplateVersion: provenance.version,
+          promptHash: provenance.promptHash,
+          cacheHit: true, // It WAS a cache hit, but validation failed
+          durationMs,
+          completedAt: new Date(),
+        },
+      })
+
+      // Note: We do NOT overwrite the cache entry or call incrementCacheHit
+      // The stale cache entry will be replaced when a fresh LLM result arrives
+
+      return {
+        success: false,
+        output: null,
+        error: `Cached output failed validation: ${cachedOutputValidation.error.message}`,
+        runId: run.id,
+        durationMs,
+        tokensUsed: undefined,
+        outcome: "VALIDATION_REJECTED",
+        itemsProduced: 0,
+      }
+    }
+
+    // Validation passed - return cached output
     const run = await db.agentRun.create({
       data: {
         agentType,
@@ -509,7 +561,7 @@ export async function runAgent<TInput, TOutput>(
 
     return {
       success: true,
-      output: cachedResult.output as TOutput,
+      output: cachedOutputValidation.data,
       error: null,
       runId: run.id,
       durationMs,
@@ -803,12 +855,11 @@ export async function runAgent<TInput, TOutput>(
       // CACHE WRITE (PR-B): Store successful result for future cache hits
       // ==========================================================================
       // Write to cache after successful LLM call (parse OK, schema OK, confidence OK)
-      // The outcome will be SUCCESS_APPLIED or SUCCESS_NO_CHANGE (caller determines)
-      // Both are valid for caching - the output itself is the same
+      // Note: outcome is NOT stored - cache is a pure artifact store
+      // On cache hit, output is re-validated against current schema
       writeCache(
         cacheKey,
         outputValidation.data as object,
-        "SUCCESS_APPLIED", // May become SUCCESS_NO_CHANGE, but output is same
         run.id,
         confidence,
         data.eval_count || undefined

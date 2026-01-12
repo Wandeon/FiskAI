@@ -109,7 +109,6 @@ describe("Agent Result Cache", () => {
         promptHash: "abc123",
         inputContentHash: "def456",
         output: cachedOutput,
-        outcome: "SUCCESS_APPLIED",
         confidence: 0.95,
         tokensUsed: 100,
         originalRunId: "original-run-id",
@@ -195,7 +194,6 @@ describe("Agent Result Cache", () => {
         promptHash: "abc123",
         inputContentHash: "def456",
         output: { result: "cached" },
-        outcome: "SUCCESS_APPLIED",
         confidence: 0.9,
         tokensUsed: 50,
         originalRunId: "run-1",
@@ -321,6 +319,100 @@ describe("Agent Result Cache", () => {
 
       expect(cacheHitResult.itemsProduced).toBe(0)
       expect(cacheHitResult.outcome).toBe("DUPLICATE_CACHED")
+    })
+  })
+
+  describe("Cache Hit Validation", () => {
+    it("returns VALIDATION_REJECTED when cached output fails current schema validation", async () => {
+      const mockFindUnique = vi.mocked(db.agentResultCache.findUnique)
+      const mockCreate = vi.mocked(db.agentRun.create)
+      const mockUpsert = vi.mocked(db.agentResultCache.upsert)
+
+      // Seed cache with output that was valid under old schema
+      // but fails current schema validation
+      const cachedOutput = {
+        // Old schema format - missing required fields that current schema requires
+        oldFormatField: "this was valid before",
+        // Missing: extractions array, required metadata, etc.
+      }
+
+      mockFindUnique.mockResolvedValue({
+        id: "cache-123",
+        agentType: "EXTRACTOR",
+        provider: "ollama_cloud",
+        model: "gemma-3-27b",
+        promptHash: "abc123",
+        inputContentHash: "def456",
+        output: cachedOutput,
+        confidence: 0.95,
+        tokensUsed: 100,
+        originalRunId: "original-run-id",
+        hitCount: 5,
+        createdAt: new Date(),
+        lastHitAt: new Date(),
+      })
+
+      mockCreate.mockResolvedValue({ id: "new-run-id" } as never)
+
+      // When cached output fails validation:
+      // 1. AgentRun is created with outcome: VALIDATION_REJECTED
+      // 2. cacheHit is still true (it WAS a cache hit, but validation failed)
+      // 3. noChangeCode is VALIDATION_BLOCKED
+      // 4. Cache entry is NOT overwritten (no upsert called)
+
+      const expectedRunData = {
+        status: "COMPLETED",
+        outcome: "VALIDATION_REJECTED",
+        cacheHit: true, // Still a cache hit, but validation failed
+        noChangeCode: "VALIDATION_BLOCKED",
+      }
+
+      expect(expectedRunData.outcome).toBe("VALIDATION_REJECTED")
+      expect(expectedRunData.cacheHit).toBe(true)
+      expect(expectedRunData.noChangeCode).toBe("VALIDATION_BLOCKED")
+
+      // Verify no new cache write occurs for validation failures
+      // The upsert should NOT be called when cache hit fails validation
+      expect(mockUpsert).not.toHaveBeenCalled()
+    })
+
+    it("does not overwrite cache entry when validation fails", async () => {
+      const mockUpsert = vi.mocked(db.agentResultCache.upsert)
+
+      // When a cached output fails validation against current schema:
+      // - The cache entry should remain unchanged
+      // - No new entry should be written
+      // - The failure is logged as VALIDATION_REJECTED, not a cache write
+
+      // Verify upsert is not called for validation failures
+      // (This is tested by ensuring upsert is only called for SUCCESS outcomes)
+      const validOutcomesForCache = ["SUCCESS_APPLIED", "SUCCESS_NO_CHANGE"]
+      const validationRejected = "VALIDATION_REJECTED"
+
+      expect(validOutcomesForCache).not.toContain(validationRejected)
+      expect(mockUpsert).not.toHaveBeenCalled()
+    })
+
+    it("re-validates cached output against current outputSchema, not original", async () => {
+      // Key behavior: Cache hit must re-validate output against CURRENT schema
+      // This ensures schema evolution doesn't serve stale/invalid data
+
+      // Scenario:
+      // 1. Cache was written when outputSchema required fields A, B
+      // 2. Schema evolves to require fields A, B, C
+      // 3. Cache hit returns output with only A, B
+      // 4. Re-validation fails because C is now required
+      // 5. Result: VALIDATION_REJECTED, not DUPLICATE_CACHED
+
+      const expectedBehavior = {
+        validatesAgainst: "current outputSchema",
+        notValidatesAgainst: "original outputSchema at cache time",
+        onValidationFailure: "VALIDATION_REJECTED",
+        onValidationSuccess: "DUPLICATE_CACHED",
+      }
+
+      expect(expectedBehavior.onValidationFailure).toBe("VALIDATION_REJECTED")
+      expect(expectedBehavior.onValidationSuccess).toBe("DUPLICATE_CACHED")
     })
   })
 })

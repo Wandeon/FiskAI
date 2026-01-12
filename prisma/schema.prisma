@@ -4505,9 +4505,8 @@ model AgentResultCache {
   promptHash       String
   inputContentHash String
 
-  // Cached result
+  // Cached result (validated output artifact - no outcome stored)
   output           Json      // The validated output JSON
-  outcome          AgentRunOutcome // SUCCESS_APPLIED or SUCCESS_NO_CHANGE
   confidence       Float?
   tokensUsed       Int?
 

@@ -7,7 +7,6 @@ CREATE TABLE "AgentResultCache" (
     "promptHash" TEXT NOT NULL,
     "inputContentHash" TEXT NOT NULL,
     "output" JSONB NOT NULL,
-    "outcome" "AgentRunOutcome" NOT NULL,
     "confidence" DOUBLE PRECISION,
     "tokensUsed" INTEGER,
     "originalRunId" TEXT,
