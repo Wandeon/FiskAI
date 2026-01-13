@@ -32,6 +32,7 @@ export interface ComposerResult {
   success: boolean
   output: ComposerOutput | null
   ruleId: string | null
+  agentRunId: string | null // PHASE-D: For outcome updates via updateRunOutcome
   error: string | null
 }
 
@@ -56,6 +57,7 @@ export async function runComposer(
       success: false,
       output: null,
       ruleId: null,
+      agentRunId: null,
       error: "No source pointer IDs provided",
     }
   }
@@ -78,6 +80,7 @@ export async function runComposer(
       success: false,
       output: null,
       ruleId: null,
+      agentRunId: null,
       error: `No source pointers found for IDs: ${sourcePointerIds.join(", ")}`,
     }
   }
@@ -91,6 +94,7 @@ export async function runComposer(
       success: false,
       output: null,
       ruleId: null,
+      agentRunId: null,
       error: `Blocked domain(s): ${blockedDomains.join(", ")}. Test data cannot create rules.`,
     }
   }
@@ -152,6 +156,7 @@ export async function runComposer(
       success: false,
       output: null,
       ruleId: null,
+      agentRunId: result.agentRunId ?? null,
       error: result.error,
     }
   }
@@ -200,6 +205,7 @@ export async function runComposer(
       success: false,
       output: result.output,
       ruleId: null,
+      agentRunId: result.agentRunId ?? null,
       error: `Conflict detected (${conflict.id}) - queued for Arbiter`,
     }
   }
@@ -236,6 +242,7 @@ export async function runComposer(
       success: false,
       output: result.output,
       ruleId: null,
+      agentRunId: result.agentRunId ?? null,
       error: `Cannot create rule "${draftRule.concept_slug}" with invalid AppliesWhen DSL: ${dslValidation.error}. Rules with invalid applicability conditions must be rejected to prevent incorrect application.`,
     }
   }
@@ -264,6 +271,7 @@ export async function runComposer(
       success: false,
       output: result.output,
       ruleId: null,
+      agentRunId: result.agentRunId ?? null,
       error: `Cannot create rule "${draftRule.concept_slug}" without source pointers. Rules must be traceable to evidence.`,
     }
   }
@@ -286,6 +294,7 @@ export async function runComposer(
       success: false,
       output: result.output,
       ruleId: null,
+      agentRunId: result.agentRunId ?? null,
       error: `Cannot create rule "${draftRule.concept_slug}": ${missingIds.length} source pointer(s) not found in database`,
     }
   }
@@ -329,6 +338,7 @@ export async function runComposer(
       success: true,
       output: result.output,
       ruleId: resolution.existingRuleId,
+      agentRunId: result.agentRunId ?? null,
       error: null,
     }
   }
@@ -509,6 +519,7 @@ export async function runComposer(
     success: true,
     output: result.output,
     ruleId: rule.id,
+    agentRunId: result.agentRunId ?? null,
     error: null,
   }
 }
@@ -539,6 +550,165 @@ export function groupSourcePointersByDomain(
   }
 
   return grouped
+}
+
+// =============================================================================
+// PHASE-D: COMPOSER FROM CANDIDATE FACTS
+// =============================================================================
+
+/** Grounding quote from CandidateFact */
+interface GroundingQuote {
+  text: string
+  contextBefore?: string | null
+  contextAfter?: string | null
+  evidenceId?: string
+  articleNumber?: string | null
+  lawReference?: string | null
+}
+
+/**
+ * PHASE-D: Run the Composer agent from CandidateFacts instead of SourcePointers
+ *
+ * This function:
+ * 1. Fetches CandidateFacts by IDs
+ * 2. Creates SourcePointers as an "Apply" artifact (when rule is created)
+ * 3. Runs the standard composer flow
+ * 4. Returns agentRunId for outcome updates
+ *
+ * Architecture note: CandidateFact is the stage output (inter-stage carrier).
+ * SourcePointer becomes an Apply artifact - created during compose when rule is created.
+ * This preserves RegulatoryRule → SourcePointer relation while making CandidateFact the data carrier.
+ */
+export async function runComposerFromCandidates(
+  candidateFactIds: string[],
+  correlationOpts?: CorrelationOptions
+): Promise<ComposerResult> {
+  if (candidateFactIds.length === 0) {
+    return {
+      success: false,
+      output: null,
+      ruleId: null,
+      agentRunId: null,
+      error: "No candidate fact IDs provided",
+    }
+  }
+
+  // Fetch CandidateFacts from database
+  const candidateFacts = await db.candidateFact.findMany({
+    where: { id: { in: candidateFactIds } },
+  })
+
+  if (candidateFacts.length === 0) {
+    return {
+      success: false,
+      output: null,
+      ruleId: null,
+      agentRunId: null,
+      error: `No candidate facts found for IDs: ${candidateFactIds.join(", ")}`,
+    }
+  }
+
+  console.log(`[composer] PHASE-D: Processing ${candidateFacts.length} CandidateFacts`)
+
+  // Extract unique domains from candidate facts
+  const domains = [...new Set(candidateFacts.map((cf) => cf.suggestedDomain).filter(Boolean))]
+  const blockedDomains = domains.filter((d) => d && isBlockedDomain(d))
+  if (blockedDomains.length > 0) {
+    console.log(`[composer] Blocked test domains: ${blockedDomains.join(", ")}`)
+    return {
+      success: false,
+      output: null,
+      ruleId: null,
+      agentRunId: null,
+      error: `Blocked domain(s): ${blockedDomains.join(", ")}. Test data cannot create rules.`,
+    }
+  }
+
+  // PHASE-D APPLY STEP: Create SourcePointers from CandidateFacts
+  // This converts CandidateFacts (inter-stage carrier) into SourcePointers (rule evidence)
+  const createdSourcePointerIds: string[] = []
+
+  for (const cf of candidateFacts) {
+    const quotes = cf.groundingQuotes as GroundingQuote[] | null
+    if (!quotes || quotes.length === 0) {
+      console.warn(`[composer] CandidateFact ${cf.id} has no grounding quotes, skipping`)
+      continue
+    }
+
+    // Use the first grounding quote for the SourcePointer
+    const primaryQuote = quotes[0]
+    if (!primaryQuote.evidenceId) {
+      console.warn(`[composer] CandidateFact ${cf.id} quote has no evidenceId, skipping`)
+      continue
+    }
+
+    try {
+      const sourcePointer = await db.sourcePointer.create({
+        data: {
+          evidenceId: primaryQuote.evidenceId,
+          domain: cf.suggestedDomain || "unknown",
+          valueType: cf.suggestedValueType || "text",
+          extractedValue: cf.extractedValue || "",
+          displayValue: cf.extractedValue || "",
+          exactQuote: primaryQuote.text,
+          confidence: cf.overallConfidence,
+          articleNumber: primaryQuote.articleNumber,
+          lawReference: primaryQuote.lawReference,
+          contextBefore: primaryQuote.contextBefore,
+          contextAfter: primaryQuote.contextAfter,
+          extractionNotes: `PHASE-D: Created from CandidateFact ${cf.id}`,
+        },
+      })
+      createdSourcePointerIds.push(sourcePointer.id)
+      console.log(
+        `[composer] Created SourcePointer ${sourcePointer.id} from CandidateFact ${cf.id}`
+      )
+    } catch (error) {
+      console.error(`[composer] Failed to create SourcePointer from CandidateFact ${cf.id}:`, error)
+      // Continue with other CandidateFacts
+    }
+  }
+
+  if (createdSourcePointerIds.length === 0) {
+    return {
+      success: false,
+      output: null,
+      ruleId: null,
+      agentRunId: null,
+      error: "No SourcePointers could be created from CandidateFacts",
+    }
+  }
+
+  console.log(
+    `[composer] PHASE-D: Created ${createdSourcePointerIds.length} SourcePointers from ${candidateFacts.length} CandidateFacts`
+  )
+
+  // Delegate to existing runComposer with the created SourcePointers
+  const result = await runComposer(createdSourcePointerIds, correlationOpts)
+
+  // If rule creation failed, mark the orphaned source pointers
+  if (!result.success && createdSourcePointerIds.length > 0) {
+    await markOrphanedPointersForReview(
+      createdSourcePointerIds,
+      result.error || "Composition failed"
+    )
+  }
+
+  // Update CandidateFact status based on result
+  if (result.success && result.ruleId) {
+    // Mark CandidateFacts as promoted
+    await db.candidateFact.updateMany({
+      where: { id: { in: candidateFactIds } },
+      data: {
+        status: "PROMOTED",
+        promotedToRuleFactId: result.ruleId, // Soft ref to the created rule
+        reviewedAt: new Date(),
+      },
+    })
+    console.log(`[composer] Marked ${candidateFactIds.length} CandidateFacts as PROMOTED`)
+  }
+
+  return result
 }
 
 /**

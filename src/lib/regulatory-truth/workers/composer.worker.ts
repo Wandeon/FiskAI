@@ -4,29 +4,50 @@ import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { reviewQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter } from "./rate-limiter"
-import { runComposer } from "../agents/composer"
+import { runComposerFromCandidates } from "../agents/composer"
+import { updateRunOutcome } from "../agents/runner"
 
+// PHASE-D: Composer now accepts candidateFactIds instead of pointerIds
 interface ComposeJobData {
-  pointerIds: string[]
+  candidateFactIds: string[]
   domain: string
   runId: string
   parentJobId?: string
+  // Legacy field for backward compatibility during migration
+  pointerIds?: string[]
 }
 
 async function processComposeJob(job: Job<ComposeJobData>): Promise<JobResult> {
   const start = Date.now()
-  const { pointerIds, domain, runId } = job.data
+  const { candidateFactIds, domain, runId } = job.data
+
+  // PHASE-D: Require candidateFactIds
+  if (!candidateFactIds || candidateFactIds.length === 0) {
+    console.error(`[composer] No candidateFactIds provided for domain ${domain}`)
+    return {
+      success: false,
+      duration: 0,
+      error: "No candidateFactIds provided - PHASE-D requires CandidateFact input",
+    }
+  }
 
   try {
     // Rate limit LLM calls
     const result = await llmLimiter.schedule(() =>
-      runComposer(pointerIds, {
+      runComposerFromCandidates(candidateFactIds, {
         runId,
         jobId: String(job.id),
         parentJobId: job.data.parentJobId,
         queueName: "compose",
       })
     )
+
+    // INVARIANT ENFORCEMENT: Update AgentRun with actual item count
+    // itemsProduced = 1 if rule created, 0 otherwise
+    const itemsProduced = result.success && result.ruleId ? 1 : 0
+    if (result.agentRunId) {
+      await updateRunOutcome(result.agentRunId, itemsProduced)
+    }
 
     if (result.success && result.ruleId) {
       // Queue review job
@@ -51,7 +72,7 @@ async function processComposeJob(job: Job<ComposeJobData>): Promise<JobResult> {
     return {
       success: result.success,
       duration,
-      data: { ruleId: result.ruleId, domain },
+      data: { ruleId: result.ruleId, domain, candidateFactsProcessed: candidateFactIds.length },
     }
   } catch (error) {
     jobsProcessed.inc({ worker: "composer", status: "failed", queue: "compose" })
