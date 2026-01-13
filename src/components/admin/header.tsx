@@ -1,8 +1,11 @@
 "use client"
 
-import { Bell, User, Building2, AlertTriangle } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Bell, Building2, AlertTriangle, LogOut, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { logout } from "@/lib/actions/auth"
 
 interface AdminHeaderProps {
   totalTenants?: number
@@ -47,10 +50,63 @@ export function AdminHeader({ totalTenants, alertsCount }: AdminHeaderProps) {
             </Badge>
           )}
         </Button>
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
-        </Button>
+        <AdminUserMenu />
       </div>
     </header>
+  )
+}
+
+function AdminUserMenu() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleLogout = async () => {
+    setIsPending(true)
+    await logout()
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-[var(--surface-secondary)] transition-colors"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-medium text-brand-700">
+          A
+        </div>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-[var(--muted)] hidden sm:block transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg z-50">
+          <div className="p-1">
+            <button
+              onClick={() => void handleLogout()}
+              disabled={isPending}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-danger-text hover:bg-danger-bg transition-colors disabled:opacity-50"
+            >
+              <LogOut className="h-4 w-4" />
+              {isPending ? "Logging out..." : "Logout"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
