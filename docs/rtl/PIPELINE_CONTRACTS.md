@@ -488,6 +488,16 @@ All agent runs are logged with one of these outcomes:
 
 **Critical Invariant**: `SUCCESS_APPLIED` **MUST** have `itemsProduced > 0`.
 
+**Runtime Enforcement**: This invariant is enforced at the single choke point
+`updateRunOutcome()` in `runner.ts:961-989`. The outcome is derived deterministically
+from `itemsProduced`, not passed in by callers:
+
+- `itemsProduced > 0` → `SUCCESS_APPLIED`
+- `itemsProduced = 0` → `SUCCESS_NO_CHANGE`
+
+Workers MUST call `updateRunOutcome(agentRunId, itemsProduced)` after processing
+to finalize the outcome. The extractor worker does this at `extractor.worker.ts:67-69`.
+
 ---
 
 ## Known Issues (PHASE-D Migration)
