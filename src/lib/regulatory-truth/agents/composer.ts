@@ -553,7 +553,7 @@ export function groupSourcePointersByDomain(
 }
 
 // =============================================================================
-// PHASE-D: COMPOSER FROM CANDIDATE FACTS
+// PHASE-D: COMPOSER PROPOSAL GENERATION (NO PERSISTENCE)
 // =============================================================================
 
 /** Grounding quote from CandidateFact */
@@ -567,28 +567,39 @@ interface GroundingQuote {
 }
 
 /**
- * PHASE-D: Run the Composer agent from CandidateFacts instead of SourcePointers
+ * Composer proposal - returned by generateComposerProposal()
+ * Contains the LLM output without any persistence. Apply stage handles DB writes.
+ */
+export interface ComposerProposal {
+  success: boolean
+  output: ComposerOutput | null
+  agentRunId: string | null
+  candidateFactIds: string[]
+  error: string | null
+}
+
+/**
+ * PHASE-D: Generate a composer proposal from CandidateFacts (NO PERSISTENCE)
  *
  * This function:
  * 1. Fetches CandidateFacts by IDs
- * 2. Creates SourcePointers as an "Apply" artifact (when rule is created)
- * 3. Runs the standard composer flow
- * 4. Returns agentRunId for outcome updates
+ * 2. Builds input for the composer agent
+ * 3. Runs the LLM to generate a draft rule proposal
+ * 4. Returns the proposal (ComposerOutput) without any DB writes
  *
- * Architecture note: CandidateFact is the stage output (inter-stage carrier).
- * SourcePointer becomes an Apply artifact - created during compose when rule is created.
- * This preserves RegulatoryRule → SourcePointer relation while making CandidateFact the data carrier.
+ * Architecture: Composer generates proposals. Apply stage persists truth.
+ * This ensures clean stage separation and auditability.
  */
-export async function runComposerFromCandidates(
+export async function generateComposerProposal(
   candidateFactIds: string[],
   correlationOpts?: CorrelationOptions
-): Promise<ComposerResult> {
+): Promise<ComposerProposal> {
   if (candidateFactIds.length === 0) {
     return {
       success: false,
       output: null,
-      ruleId: null,
       agentRunId: null,
+      candidateFactIds: [],
       error: "No candidate fact IDs provided",
     }
   }
@@ -602,13 +613,15 @@ export async function runComposerFromCandidates(
     return {
       success: false,
       output: null,
-      ruleId: null,
       agentRunId: null,
+      candidateFactIds,
       error: `No candidate facts found for IDs: ${candidateFactIds.join(", ")}`,
     }
   }
 
-  console.log(`[composer] PHASE-D: Processing ${candidateFacts.length} CandidateFacts`)
+  console.log(
+    `[composer] PHASE-D: Generating proposal from ${candidateFacts.length} CandidateFacts`
+  )
 
   // Extract unique domains from candidate facts
   const domains = [...new Set(candidateFacts.map((cf) => cf.suggestedDomain).filter(Boolean))]
@@ -618,27 +631,193 @@ export async function runComposerFromCandidates(
     return {
       success: false,
       output: null,
-      ruleId: null,
       agentRunId: null,
+      candidateFactIds,
       error: `Blocked domain(s): ${blockedDomains.join(", ")}. Test data cannot create rules.`,
     }
   }
 
-  // PHASE-D APPLY STEP: Create SourcePointers from CandidateFacts
-  // This converts CandidateFacts (inter-stage carrier) into SourcePointers (rule evidence)
+  // Build input for the composer agent from CandidateFacts
+  // Transform CandidateFacts into the format expected by ComposerInput
+  const pointerLikeInputs = candidateFacts
+    .map((cf) => {
+      const quotes = cf.groundingQuotes as GroundingQuote[] | null
+      if (!quotes || quotes.length === 0) {
+        console.warn(`[composer] CandidateFact ${cf.id} has no grounding quotes, skipping`)
+        return null
+      }
+      const primaryQuote = quotes[0]
+      return {
+        id: cf.id, // Use candidateFact ID as the "pointer" ID for input
+        domain: cf.suggestedDomain || "unknown",
+        extractedValue: cf.extractedValue || "",
+        exactQuote: primaryQuote.text,
+        confidence: cf.overallConfidence,
+      }
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+
+  if (pointerLikeInputs.length === 0) {
+    return {
+      success: false,
+      output: null,
+      agentRunId: null,
+      candidateFactIds,
+      error: "No valid CandidateFacts with grounding quotes",
+    }
+  }
+
+  // Build input for agent (using candidateFact IDs as source pointer IDs for the LLM)
+  const input: ComposerInput = {
+    sourcePointerIds: pointerLikeInputs.map((p) => p.id),
+    sourcePointers: pointerLikeInputs,
+  }
+
+  // Run the agent (LLM only - no persistence)
+  const result = await runAgent<ComposerInput, ComposerOutput>({
+    agentType: "COMPOSER",
+    input,
+    inputSchema: ComposerInputSchema,
+    outputSchema: ComposerOutputSchema,
+    temperature: 0.1,
+    runId: correlationOpts?.runId,
+    jobId: correlationOpts?.jobId,
+    parentJobId: correlationOpts?.parentJobId,
+    sourceSlug: correlationOpts?.sourceSlug,
+    queueName: correlationOpts?.queueName ?? "compose",
+  })
+
+  if (!result.success || !result.output) {
+    return {
+      success: false,
+      output: null,
+      agentRunId: result.agentRunId ?? null,
+      candidateFactIds,
+      error: result.error,
+    }
+  }
+
+  // Return the proposal - NO persistence here
+  // Apply stage will handle SourcePointer + RegulatoryRule creation
+  return {
+    success: true,
+    output: result.output,
+    agentRunId: result.agentRunId ?? null,
+    candidateFactIds,
+    error: null,
+  }
+}
+
+// =============================================================================
+// PHASE-D: APPLY COMPOSER PROPOSAL (PERSISTENCE STAGE)
+// =============================================================================
+
+/**
+ * Apply result - returned by applyComposerProposal()
+ */
+export interface ApplyResult {
+  success: boolean
+  ruleId: string | null
+  sourcePointerIds: string[]
+  error: string | null
+}
+
+/**
+ * PHASE-D: Apply a composer proposal (PERSISTENCE STAGE)
+ *
+ * This function handles ALL persistence:
+ * 1. Creates SourcePointers from CandidateFacts
+ * 2. Creates RegulatoryRule from the proposal
+ * 3. Links SourcePointers to the rule
+ * 4. Updates CandidateFact status
+ *
+ * Architecture: This is the single point of truth persistence.
+ * Separates "proposal generation" (compose) from "truth persistence" (apply).
+ */
+export async function applyComposerProposal(
+  proposal: ComposerProposal,
+  correlationOpts?: CorrelationOptions
+): Promise<ApplyResult> {
+  if (!proposal.success || !proposal.output) {
+    return {
+      success: false,
+      ruleId: null,
+      sourcePointerIds: [],
+      error: proposal.error || "Invalid proposal",
+    }
+  }
+
+  const { candidateFactIds, output } = proposal
+
+  // Fetch CandidateFacts to create SourcePointers
+  const candidateFacts = await db.candidateFact.findMany({
+    where: { id: { in: candidateFactIds } },
+  })
+
+  if (candidateFacts.length === 0) {
+    return {
+      success: false,
+      ruleId: null,
+      sourcePointerIds: [],
+      error: "No candidate facts found for apply",
+    }
+  }
+
+  // Check for conflicts in the proposal
+  if (output.conflicts_detected) {
+    // Create a conflict record for Arbiter to resolve later
+    const conflict = await db.regulatoryConflict.create({
+      data: {
+        conflictType: "SOURCE_CONFLICT",
+        status: "OPEN",
+        itemAId: null,
+        itemBId: null,
+        description:
+          output.conflicts_detected.description || "Conflicting values detected in source data",
+        metadata: {
+          candidateFactIds,
+          conflictingIds: candidateFactIds.slice(0, 2),
+          detectedBy: "COMPOSER",
+          conflictDetails: output.conflicts_detected,
+        },
+      },
+    })
+
+    await logAuditEvent({
+      action: "CONFLICT_CREATED",
+      entityType: "CONFLICT",
+      entityId: conflict.id,
+      metadata: {
+        conflictType: "SOURCE_CONFLICT",
+        candidateFactCount: candidateFactIds.length,
+      },
+    })
+
+    console.log(`[apply] Created conflict ${conflict.id} for Arbiter resolution`)
+
+    return {
+      success: false,
+      ruleId: null,
+      sourcePointerIds: [],
+      error: `Conflict detected (${conflict.id}) - queued for Arbiter`,
+    }
+  }
+
+  const draftRule = output.draft_rule
+
+  // Create SourcePointers from CandidateFacts
   const createdSourcePointerIds: string[] = []
 
   for (const cf of candidateFacts) {
     const quotes = cf.groundingQuotes as GroundingQuote[] | null
     if (!quotes || quotes.length === 0) {
-      console.warn(`[composer] CandidateFact ${cf.id} has no grounding quotes, skipping`)
+      console.warn(`[apply] CandidateFact ${cf.id} has no grounding quotes, skipping`)
       continue
     }
 
-    // Use the first grounding quote for the SourcePointer
     const primaryQuote = quotes[0]
     if (!primaryQuote.evidenceId) {
-      console.warn(`[composer] CandidateFact ${cf.id} quote has no evidenceId, skipping`)
+      console.warn(`[apply] CandidateFact ${cf.id} quote has no evidenceId, skipping`)
       continue
     }
 
@@ -656,59 +835,311 @@ export async function runComposerFromCandidates(
           lawReference: primaryQuote.lawReference,
           contextBefore: primaryQuote.contextBefore,
           contextAfter: primaryQuote.contextAfter,
-          extractionNotes: `PHASE-D: Created from CandidateFact ${cf.id}`,
+          extractionNotes: `PHASE-D Apply: Created from CandidateFact ${cf.id}`,
         },
       })
       createdSourcePointerIds.push(sourcePointer.id)
-      console.log(
-        `[composer] Created SourcePointer ${sourcePointer.id} from CandidateFact ${cf.id}`
-      )
+      console.log(`[apply] Created SourcePointer ${sourcePointer.id} from CandidateFact ${cf.id}`)
     } catch (error) {
-      console.error(`[composer] Failed to create SourcePointer from CandidateFact ${cf.id}:`, error)
-      // Continue with other CandidateFacts
+      console.error(`[apply] Failed to create SourcePointer from CandidateFact ${cf.id}:`, error)
     }
   }
 
   if (createdSourcePointerIds.length === 0) {
     return {
       success: false,
-      output: null,
       ruleId: null,
-      agentRunId: null,
+      sourcePointerIds: [],
       error: "No SourcePointers could be created from CandidateFacts",
     }
   }
 
-  console.log(
-    `[composer] PHASE-D: Created ${createdSourcePointerIds.length} SourcePointers from ${candidateFacts.length} CandidateFacts`
-  )
-
-  // Delegate to existing runComposer with the created SourcePointers
-  const result = await runComposer(createdSourcePointerIds, correlationOpts)
-
-  // If rule creation failed, mark the orphaned source pointers
-  if (!result.success && createdSourcePointerIds.length > 0) {
-    await markOrphanedPointersForReview(
-      createdSourcePointerIds,
-      result.error || "Composition failed"
-    )
+  // Validate AppliesWhen DSL
+  let appliesWhenObj: unknown
+  if (typeof draftRule.applies_when === "string") {
+    try {
+      appliesWhenObj = JSON.parse(draftRule.applies_when)
+    } catch {
+      appliesWhenObj = null
+    }
+  } else {
+    appliesWhenObj = draftRule.applies_when
   }
 
-  // Update CandidateFact status based on result
-  if (result.success && result.ruleId) {
-    // Mark CandidateFacts as promoted
+  const dslValidation = validateAppliesWhen(appliesWhenObj)
+  if (!dslValidation.valid) {
+    console.error(`[apply] REJECTING rule with invalid AppliesWhen DSL: ${draftRule.concept_slug}`)
+    await markOrphanedPointersForReview(
+      createdSourcePointerIds,
+      `Invalid DSL: ${dslValidation.error}`
+    )
+    return {
+      success: false,
+      ruleId: null,
+      sourcePointerIds: createdSourcePointerIds,
+      error: `Invalid AppliesWhen DSL: ${dslValidation.error}`,
+    }
+  }
+
+  const appliesWhenString =
+    typeof appliesWhenObj === "string" ? appliesWhenObj : JSON.stringify(appliesWhenObj)
+
+  // Fetch evidence for authority level derivation
+  const sourcePointers = await db.sourcePointer.findMany({
+    where: { id: { in: createdSourcePointerIds } },
+  })
+
+  const evidenceIds = sourcePointers.map((sp) => sp.evidenceId)
+  const evidenceRecords = await dbReg.evidence.findMany({
+    where: { id: { in: evidenceIds } },
+    include: { source: true },
+  })
+
+  const sourceSlugs = evidenceRecords
+    .map((e) => e.source?.slug)
+    .filter((slug): slug is string => slug !== undefined)
+  const authorityLevel = deriveAuthorityLevel(sourceSlugs)
+
+  // Check for deduplication
+  const resolution = await resolveCanonicalConcept(
+    draftRule.concept_slug,
+    String(draftRule.value),
+    draftRule.value_type,
+    new Date(draftRule.effective_from)
+  )
+
+  if (resolution.shouldMerge && resolution.existingRuleId) {
+    console.log(`[apply] Found existing rule ${resolution.existingRuleId}. Merging pointers.`)
+
+    const mergeResult = await mergePointersToExistingRule(
+      resolution.existingRuleId,
+      createdSourcePointerIds
+    )
+
+    await logAuditEvent({
+      action: "RULE_MERGED",
+      entityType: "RULE",
+      entityId: resolution.existingRuleId,
+      metadata: {
+        proposedSlug: draftRule.concept_slug,
+        canonicalSlug: resolution.canonicalSlug,
+        addedPointers: mergeResult.addedPointers,
+        reason: resolution.mergeReason,
+      },
+    })
+
+    // Update CandidateFact status
     await db.candidateFact.updateMany({
       where: { id: { in: candidateFactIds } },
       data: {
         status: "PROMOTED",
-        promotedToRuleFactId: result.ruleId, // Soft ref to the created rule
+        promotedToRuleFactId: resolution.existingRuleId,
         reviewedAt: new Date(),
       },
     })
-    console.log(`[composer] Marked ${candidateFactIds.length} CandidateFacts as PROMOTED`)
+
+    return {
+      success: true,
+      ruleId: resolution.existingRuleId,
+      sourcePointerIds: createdSourcePointerIds,
+      error: null,
+    }
   }
 
-  return result
+  const finalConceptSlug = resolution.canonicalSlug
+
+  // Compute meaning signature
+  const effectiveFromDate = new Date(draftRule.effective_from)
+  const effectiveUntilDate = draftRule.effective_until ? new Date(draftRule.effective_until) : null
+  const meaningSignature = computeMeaningSignature({
+    conceptSlug: finalConceptSlug,
+    value: String(draftRule.value),
+    valueType: draftRule.value_type,
+    effectiveFrom: effectiveFromDate,
+    effectiveUntil: effectiveUntilDate,
+  })
+
+  // Compute derived confidence
+  const derivedConfidence = computeDerivedConfidence(
+    sourcePointers.map((sp) => ({ confidence: sp.confidence })),
+    draftRule.llm_confidence
+  )
+
+  // Validate explanation
+  const pointersWithQuotes = await db.sourcePointer.findMany({
+    where: { id: { in: createdSourcePointerIds } },
+    select: { exactQuote: true },
+  })
+  const sourceQuotes = pointersWithQuotes.map((p) => p.exactQuote).filter(Boolean) as string[]
+  const explanationValidation = validateExplanation(
+    draftRule.explanation_hr,
+    draftRule.explanation_en,
+    sourceQuotes,
+    String(draftRule.value)
+  )
+
+  let finalExplanationHr = draftRule.explanation_hr
+  let finalExplanationEn: string | null = draftRule.explanation_en ?? null
+
+  if (!explanationValidation.valid) {
+    console.warn(`[apply] Explanation validation failed for ${finalConceptSlug}`)
+    finalExplanationHr = createQuoteOnlyExplanation(sourceQuotes, String(draftRule.value))
+    finalExplanationEn = null
+  }
+
+  // Create the RegulatoryRule
+  const rule = await db.regulatoryRule.create({
+    data: {
+      conceptSlug: finalConceptSlug,
+      titleHr: draftRule.title_hr,
+      titleEn: draftRule.title_en,
+      riskTier: draftRule.risk_tier,
+      authorityLevel,
+      appliesWhen: appliesWhenString,
+      value: String(draftRule.value),
+      valueType: draftRule.value_type,
+      explanationHr: finalExplanationHr,
+      explanationEn: finalExplanationEn,
+      effectiveFrom: effectiveFromDate,
+      effectiveUntil: effectiveUntilDate,
+      supersedesId: draftRule.supersedes,
+      status: "DRAFT",
+      confidence: draftRule.llm_confidence,
+      llmConfidence: draftRule.llm_confidence,
+      derivedConfidence,
+      composerNotes: draftRule.composer_notes,
+      meaningSignature,
+      sourcePointers: {
+        connect: createdSourcePointerIds.map((id) => ({ id })),
+      },
+    },
+  })
+
+  // Create/update Concept
+  const concept = await db.concept.upsert({
+    where: { slug: finalConceptSlug },
+    create: {
+      slug: finalConceptSlug,
+      nameHr: draftRule.title_hr,
+      nameEn: draftRule.title_en,
+      description: draftRule.explanation_hr,
+      tags: [draftRule.risk_tier, authorityLevel],
+    },
+    update: {
+      nameHr: draftRule.title_hr,
+      nameEn: draftRule.title_en,
+    },
+  })
+
+  await db.regulatoryRule.update({
+    where: { id: rule.id },
+    data: { conceptId: concept.id },
+  })
+
+  // Create AMENDS edge if superseding
+  if (draftRule.supersedes) {
+    try {
+      await createEdgeWithCycleCheck({
+        fromRuleId: rule.id,
+        toRuleId: draftRule.supersedes,
+        relation: "AMENDS",
+        validFrom: rule.effectiveFrom,
+      })
+    } catch (error) {
+      if (error instanceof CycleDetectedError) {
+        console.warn(`[apply] Cycle prevented: AMENDS edge would create a cycle`)
+      } else {
+        throw error
+      }
+    }
+  }
+
+  // Detect conflicts
+  const firstArticleNumber = sourcePointers.find((sp) => sp.articleNumber)?.articleNumber || null
+  const conflicts = await detectStructuralConflicts({
+    id: rule.id,
+    conceptSlug: rule.conceptSlug,
+    value: rule.value,
+    effectiveFrom: rule.effectiveFrom,
+    effectiveUntil: rule.effectiveUntil,
+    authorityLevel,
+    articleNumber: firstArticleNumber,
+  })
+
+  if (conflicts.length > 0) {
+    const created = await seedConflicts(conflicts)
+    console.log(`[apply] Detected ${conflicts.length} conflicts, created ${created} records`)
+  }
+
+  // Log audit event
+  await logAuditEvent({
+    action: "RULE_CREATED",
+    entityType: "RULE",
+    entityId: rule.id,
+    metadata: {
+      conceptSlug: rule.conceptSlug,
+      riskTier: draftRule.risk_tier,
+      llmConfidence: draftRule.llm_confidence,
+      derivedConfidence,
+      sourcePointerCount: createdSourcePointerIds.length,
+      candidateFactCount: candidateFactIds.length,
+      conflictsDetected: conflicts.length,
+    },
+  })
+
+  // Update CandidateFact status
+  await db.candidateFact.updateMany({
+    where: { id: { in: candidateFactIds } },
+    data: {
+      status: "PROMOTED",
+      promotedToRuleFactId: rule.id,
+      reviewedAt: new Date(),
+    },
+  })
+
+  console.log(
+    `[apply] Created rule ${rule.id} with ${createdSourcePointerIds.length} SourcePointers`
+  )
+
+  return {
+    success: true,
+    ruleId: rule.id,
+    sourcePointerIds: createdSourcePointerIds,
+    error: null,
+  }
+}
+
+/**
+ * @deprecated Use generateComposerProposal() + applyComposerProposal() instead.
+ * This function is kept for backward compatibility during migration.
+ */
+export async function runComposerFromCandidates(
+  candidateFactIds: string[],
+  correlationOpts?: CorrelationOptions
+): Promise<ComposerResult> {
+  // Generate proposal (LLM only)
+  const proposal = await generateComposerProposal(candidateFactIds, correlationOpts)
+
+  if (!proposal.success) {
+    return {
+      success: false,
+      output: proposal.output,
+      ruleId: null,
+      agentRunId: proposal.agentRunId,
+      error: proposal.error,
+    }
+  }
+
+  // Apply proposal (persistence)
+  const applyResult = await applyComposerProposal(proposal, correlationOpts)
+
+  return {
+    success: applyResult.success,
+    output: proposal.output,
+    ruleId: applyResult.ruleId,
+    agentRunId: proposal.agentRunId,
+    error: applyResult.error,
+  }
 }
 
 /**
