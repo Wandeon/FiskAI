@@ -478,3 +478,338 @@ GROUP BY "agentType"
 HAVING COUNT(*) > 10;
 -- Warn if any > 0.2 (20%)
 ```
+
+---
+
+## Token Spend vs Persisted Value
+
+These queries help answer: "Did we spend tokens and get persisted value?"
+
+### Token ROI by Source
+
+```sql
+-- Tokens spent vs rules created per source
+WITH source_spend AS (
+  SELECT
+    "sourceSlug",
+    SUM("tokensUsed") as tokens_spent,
+    COUNT(*) as llm_calls
+  FROM "AgentRun"
+  WHERE "createdAt" > NOW() - INTERVAL '7 days'
+    AND "tokensUsed" > 0
+  GROUP BY "sourceSlug"
+),
+source_rules AS (
+  SELECT
+    rs.slug as "sourceSlug",
+    COUNT(DISTINCT rr.id) as rules_created
+  FROM "RegulatorySource" rs
+  JOIN "Evidence" e ON e."sourceId" = rs.id
+  JOIN "SourcePointer" sp ON sp."evidenceId" = e.id
+  JOIN "RegulatoryRule" rr ON rr.id = sp."ruleId"
+  WHERE rr."createdAt" > NOW() - INTERVAL '7 days'
+  GROUP BY rs.slug
+)
+SELECT
+  s."sourceSlug",
+  s.tokens_spent,
+  s.llm_calls,
+  COALESCE(r.rules_created, 0) as rules_created,
+  CASE
+    WHEN COALESCE(r.rules_created, 0) > 0
+    THEN ROUND(s.tokens_spent::numeric / r.rules_created, 0)
+    ELSE NULL
+  END as tokens_per_rule
+FROM source_spend s
+LEFT JOIN source_rules r ON r."sourceSlug" = s."sourceSlug"
+ORDER BY tokens_spent DESC;
+```
+
+### Token Efficiency Trend
+
+```sql
+-- Daily token efficiency (tokens per persisted rule)
+WITH daily_spend AS (
+  SELECT
+    DATE("createdAt") as date,
+    SUM("tokensUsed") as tokens_spent
+  FROM "AgentRun"
+  WHERE "createdAt" > NOW() - INTERVAL '14 days'
+    AND "tokensUsed" > 0
+  GROUP BY DATE("createdAt")
+),
+daily_rules AS (
+  SELECT
+    DATE("createdAt") as date,
+    COUNT(*) as rules_created
+  FROM "RegulatoryRule"
+  WHERE "createdAt" > NOW() - INTERVAL '14 days'
+  GROUP BY DATE("createdAt")
+)
+SELECT
+  s.date,
+  s.tokens_spent,
+  COALESCE(r.rules_created, 0) as rules_created,
+  CASE
+    WHEN COALESCE(r.rules_created, 0) > 0
+    THEN ROUND(s.tokens_spent::numeric / r.rules_created, 0)
+    ELSE s.tokens_spent
+  END as tokens_per_rule
+FROM daily_spend s
+LEFT JOIN daily_rules r ON r.date = s.date
+ORDER BY s.date DESC;
+```
+
+---
+
+## Source Health Score
+
+Track which sources are producing value vs wasting budget.
+
+### Source Health Summary
+
+```sql
+-- Source health score (higher = better)
+WITH source_metrics AS (
+  SELECT
+    "sourceSlug",
+    COUNT(*) as total_runs,
+    COUNT(*) FILTER (WHERE outcome = 'SUCCESS_APPLIED') as success_count,
+    COUNT(*) FILTER (WHERE outcome = 'EMPTY_OUTPUT') as empty_count,
+    COUNT(*) FILTER (WHERE outcome IN ('RETRY_EXHAUSTED', 'TIMEOUT')) as error_count,
+    SUM("tokensUsed") as total_tokens,
+    SUM("itemsProduced") as items_produced
+  FROM "AgentRun"
+  WHERE "createdAt" > NOW() - INTERVAL '7 days'
+    AND "sourceSlug" IS NOT NULL
+  GROUP BY "sourceSlug"
+)
+SELECT
+  "sourceSlug",
+  total_runs,
+  success_count,
+  empty_count,
+  error_count,
+  total_tokens,
+  items_produced,
+  -- Health score: 0-100
+  ROUND(
+    (
+      (success_count::numeric / NULLIF(total_runs, 0)) * 40 +
+      (items_produced::numeric / NULLIF(total_tokens / 1000, 0)) * 40 +
+      (1 - empty_count::numeric / NULLIF(total_runs, 0)) * 20
+    ),
+    1
+  ) as health_score
+FROM source_metrics
+WHERE total_runs >= 5  -- Only sources with enough data
+ORDER BY health_score DESC;
+```
+
+### Sources in Cooldown
+
+```sql
+-- This requires checking PipelineProgress for cooldown events
+SELECT
+  "sourceSlug",
+  COUNT(*) as cooldown_triggers,
+  MAX(timestamp) as last_cooldown
+FROM "PipelineProgress"
+WHERE "skipReason" LIKE '%cooldown%'
+  AND timestamp > NOW() - INTERVAL '7 days'
+GROUP BY "sourceSlug"
+ORDER BY cooldown_triggers DESC;
+```
+
+### Low Value Sources
+
+```sql
+-- Sources burning tokens with no output
+SELECT
+  "sourceSlug",
+  SUM("tokensUsed") as tokens_burned,
+  COUNT(*) as empty_runs,
+  ROUND(AVG("tokensUsed")::numeric, 0) as avg_tokens_per_empty
+FROM "AgentRun"
+WHERE outcome = 'EMPTY_OUTPUT'
+  AND "createdAt" > NOW() - INTERVAL '7 days'
+  AND "sourceSlug" IS NOT NULL
+GROUP BY "sourceSlug"
+HAVING SUM("tokensUsed") > 1000  -- At least 1K tokens burned
+ORDER BY tokens_burned DESC
+LIMIT 20;
+```
+
+---
+
+## Tokens Burned with itemsProduced = 0
+
+Critical metric: tokens spent without any persisted value.
+
+### Token Waste Summary
+
+```sql
+-- Tokens spent with no items produced
+SELECT
+  "agentType",
+  outcome,
+  COUNT(*) as runs,
+  SUM("tokensUsed") as tokens_burned,
+  ROUND(AVG("tokensUsed")::numeric, 0) as avg_tokens
+FROM "AgentRun"
+WHERE "createdAt" > NOW() - INTERVAL '24 hours'
+  AND "tokensUsed" > 0
+  AND "itemsProduced" = 0
+GROUP BY "agentType", outcome
+ORDER BY tokens_burned DESC;
+```
+
+### Token Waste by Source
+
+```sql
+-- Which sources are wasting the most tokens
+SELECT
+  "sourceSlug",
+  COUNT(*) as zero_output_runs,
+  SUM("tokensUsed") as tokens_wasted,
+  ROUND(SUM("tokensUsed")::numeric / COUNT(*), 0) as avg_tokens_per_run
+FROM "AgentRun"
+WHERE "createdAt" > NOW() - INTERVAL '7 days'
+  AND "tokensUsed" > 0
+  AND "itemsProduced" = 0
+  AND "sourceSlug" IS NOT NULL
+GROUP BY "sourceSlug"
+HAVING SUM("tokensUsed") > 5000  -- More than 5K tokens wasted
+ORDER BY tokens_wasted DESC
+LIMIT 20;
+```
+
+### Token Burn Rate Trend
+
+```sql
+-- Daily token waste trend
+SELECT
+  DATE("createdAt") as date,
+  SUM("tokensUsed") FILTER (WHERE "itemsProduced" = 0) as tokens_wasted,
+  SUM("tokensUsed") FILTER (WHERE "itemsProduced" > 0) as tokens_productive,
+  ROUND(
+    SUM("tokensUsed") FILTER (WHERE "itemsProduced" = 0)::numeric * 100 /
+    NULLIF(SUM("tokensUsed"), 0),
+    1
+  ) as waste_rate_pct
+FROM "AgentRun"
+WHERE "createdAt" > NOW() - INTERVAL '14 days'
+  AND "tokensUsed" > 0
+GROUP BY DATE("createdAt")
+ORDER BY date DESC;
+```
+
+---
+
+## Pipeline Progress Monitoring (New)
+
+Using the new PipelineProgress table for observability.
+
+### Scout Outcomes
+
+```sql
+-- Scout stage results
+SELECT
+  DATE(timestamp) as date,
+  metadata->>'decision' as decision,
+  COUNT(*) as count,
+  ROUND(AVG((metadata->>'worthItScore')::numeric), 2) as avg_score
+FROM "PipelineProgress"
+WHERE "stageName" = 'scout'
+  AND timestamp > NOW() - INTERVAL '7 days'
+GROUP BY DATE(timestamp), metadata->>'decision'
+ORDER BY date DESC, count DESC;
+```
+
+### Router Decisions
+
+```sql
+-- Routing decision distribution
+SELECT
+  metadata->>'decision' as routing_decision,
+  COUNT(*) as count,
+  COUNT(*) FILTER (WHERE metadata->>'budgetAllowed' = 'true') as budget_allowed,
+  COUNT(*) FILTER (WHERE metadata->>'budgetAllowed' = 'false') as budget_denied
+FROM "PipelineProgress"
+WHERE "stageName" = 'router'
+  AND timestamp > NOW() - INTERVAL '24 hours'
+GROUP BY metadata->>'decision'
+ORDER BY count DESC;
+```
+
+### Budget Denial Analysis
+
+```sql
+-- Why budget is denying requests
+SELECT
+  metadata->>'budgetDenialReason' as denial_reason,
+  "sourceSlug",
+  COUNT(*) as denials
+FROM "PipelineProgress"
+WHERE "stageName" = 'router'
+  AND metadata->>'budgetAllowed' = 'false'
+  AND timestamp > NOW() - INTERVAL '24 hours'
+GROUP BY metadata->>'budgetDenialReason', "sourceSlug"
+ORDER BY denials DESC
+LIMIT 20;
+```
+
+### Skip Reasons Distribution
+
+```sql
+-- Why content is being skipped
+SELECT
+  "stageName",
+  "skipReason",
+  COUNT(*) as count
+FROM "PipelineProgress"
+WHERE "skipReason" IS NOT NULL
+  AND timestamp > NOW() - INTERVAL '24 hours'
+GROUP BY "stageName", "skipReason"
+ORDER BY count DESC
+LIMIT 30;
+```
+
+---
+
+## Budget Governor Alerts
+
+### Budget Cap Approaching
+
+```sql
+-- Daily token usage vs cap (500K default)
+SELECT
+  DATE("createdAt") as date,
+  SUM("tokensUsed") as tokens_used,
+  500000 as daily_cap,
+  ROUND(SUM("tokensUsed")::numeric * 100 / 500000, 1) as usage_pct
+FROM "AgentRun"
+WHERE "createdAt" > NOW() - INTERVAL '7 days'
+  AND "tokensUsed" > 0
+GROUP BY DATE("createdAt")
+ORDER BY date DESC;
+-- Alert if usage_pct > 80
+```
+
+### Source-Level Budget Usage
+
+```sql
+-- Per-source budget usage vs cap (50K default)
+SELECT
+  "sourceSlug",
+  SUM("tokensUsed") as tokens_used,
+  50000 as source_cap,
+  ROUND(SUM("tokensUsed")::numeric * 100 / 50000, 1) as usage_pct
+FROM "AgentRun"
+WHERE "createdAt" > NOW() - INTERVAL '1 day'
+  AND "tokensUsed" > 0
+  AND "sourceSlug" IS NOT NULL
+GROUP BY "sourceSlug"
+HAVING SUM("tokensUsed") > 25000  -- Over 50% of cap
+ORDER BY tokens_used DESC;
+```

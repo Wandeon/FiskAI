@@ -4521,6 +4521,37 @@ model AgentResultCache {
   @@index([createdAt])
 }
 
+/// Pipeline progress tracking for observability
+/// Records every stage execution to answer "Did we spend tokens and get persisted value?"
+model PipelineProgress {
+  id                    String    @id @default(cuid())
+  stageName             String    // scout, router, ocr, extract, compose, apply, review, arbiter, release
+  evidenceId            String?   // Soft ref to Evidence
+  sourceSlug            String
+  runId                 String
+  timestamp             DateTime  @default(now())
+
+  // Metrics
+  producedCount         Int       @default(0) // Items created by this stage
+  downstreamQueuedCount Int       @default(0) // Jobs queued to next stage
+  tokensUsed            Int?      // LLM tokens consumed
+  durationMs            Int?      // Processing time
+
+  // Skip/Error tracking
+  skipReason            String?   // Why skipped (if applicable)
+  errorClass            String?   // TRANSIENT, VALIDATION, AUTH, QUOTA, CONTENT, INTERNAL
+  errorMessage          String?   @db.Text
+
+  // Stage-specific metadata
+  metadata              Json?
+
+  @@index([stageName, timestamp])
+  @@index([sourceSlug, timestamp])
+  @@index([runId])
+  @@index([timestamp])
+  @@index([stageName, sourceSlug, timestamp])
+}
+
 model RegulatoryConflict {
   id                  String         @id @default(cuid())
   conflictType        ConflictType
