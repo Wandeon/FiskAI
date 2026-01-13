@@ -16,8 +16,9 @@ All Docker images are built by GitHub Actions and pushed to GitHub Container Reg
                          │                               │
                          ▼                               ▼
                 ┌─────────────────┐             ┌─────────────────┐
-                │  Coolify        │             │  docker compose │
-                │  (App Deploy)   │             │  (Workers)      │
+                │  VPS-01         │             │  VPS            │
+                │  152.53.146.3   │             │  152.53.179.101 │
+                │  Coolify (App)  │             │  Workers        │
                 └─────────────────┘             └─────────────────┘
 ```
 
@@ -43,7 +44,10 @@ Each image is tagged with:
 
 ### GHCR Authentication
 
-Both VPS-01 servers need to authenticate with GHCR to pull private images.
+Both servers need to authenticate with GHCR to pull private images:
+
+- **VPS-01** (152.53.146.3): App server (Coolify)
+- **VPS** (152.53.179.101): Worker server
 
 1. Create a Personal Access Token (PAT) with `read:packages` scope at:
    https://github.com/settings/tokens
@@ -98,11 +102,11 @@ curl -X POST "http://152.53.146.3:8000/api/v1/applications/tgg4gkcco8k8s0wwg08cc
 
 ### Worker Deployment (Manual)
 
-Workers are deployed via docker compose on VPS-01:
+Workers are deployed via docker compose on VPS (152.53.179.101):
 
 ```bash
-# SSH to VPS-01
-ssh admin@152.53.146.3
+# SSH to VPS (worker server)
+ssh admin@152.53.179.101
 
 # Navigate to project directory
 cd /home/admin/FiskAI

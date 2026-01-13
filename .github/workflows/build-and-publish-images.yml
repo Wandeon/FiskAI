@@ -163,9 +163,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**App (via Coolify):** Automatically deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Workers (via SSH):**" >> $GITHUB_STEP_SUMMARY
+          echo "**Workers (via SSH to VPS 152.53.179.101):**" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "ssh admin@152.53.146.3 'cd /home/admin/FiskAI && IMAGE_TAG=${{ github.sha }} ./scripts/deploy-workers.sh'" >> $GITHUB_STEP_SUMMARY
+          echo "ssh admin@152.53.179.101 'cd /home/admin/FiskAI && IMAGE_TAG=${{ github.sha }} ./scripts/deploy-workers.sh'" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   # Auto-deploy app to Coolify after successful build
