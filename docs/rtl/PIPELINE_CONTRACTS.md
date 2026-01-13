@@ -262,7 +262,7 @@ interface ComposerProposal {
 
 ---
 
-## Stage 4.5: Apply (PHASE-D: Truth Persistence)
+## Stage 5: Apply (PHASE-D: Truth Persistence)
 
 ### File Locations
 
@@ -333,7 +333,7 @@ interface ApplyResult {
 
 ---
 
-## Stage 5: Reviewer
+## Stage 6: Reviewer
 
 ### File Locations
 
@@ -400,7 +400,7 @@ interface ReviewerResult {
 
 ---
 
-## Stage 6: Arbiter
+## Stage 7: Arbiter
 
 ### File Locations
 
@@ -467,7 +467,7 @@ interface ArbiterResult {
 
 ---
 
-## Stage 7: Releaser
+## Stage 8: Releaser
 
 ### File Locations
 

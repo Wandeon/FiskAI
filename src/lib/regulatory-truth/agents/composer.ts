@@ -822,6 +822,22 @@ export async function applyComposerProposal(
     }
 
     try {
+      // Idempotency check: skip if SourcePointer already exists for this CandidateFact
+      // This prevents duplicates on job retry
+      const existingPointer = await db.sourcePointer.findFirst({
+        where: {
+          extractionNotes: { contains: `CandidateFact ${cf.id}` },
+        },
+      })
+
+      if (existingPointer) {
+        createdSourcePointerIds.push(existingPointer.id)
+        console.log(
+          `[apply] Found existing SourcePointer ${existingPointer.id} for CandidateFact ${cf.id} (idempotent)`
+        )
+        continue
+      }
+
       const sourcePointer = await db.sourcePointer.create({
         data: {
           evidenceId: primaryQuote.evidenceId,
