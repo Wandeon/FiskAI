@@ -5,6 +5,7 @@
 
 import OpenAI from "openai"
 import { trackAIUsage, type AIOperation } from "@/lib/ai/usage-tracking"
+import { llmCircuitBreaker } from "@/lib/regulatory-truth/watchdog/llm-circuit-breaker"
 
 interface DeepSeekMessage {
   role: "system" | "user" | "assistant"
@@ -47,6 +48,13 @@ export class DeepSeekError extends Error {
   }
 }
 
+export class ProviderCircuitOpenError extends Error {
+  constructor(public provider: string) {
+    super(`Circuit breaker OPEN for ${provider} - failing fast`)
+    this.name = "ProviderCircuitOpenError"
+  }
+}
+
 type NewsAiProvider = "deepseek" | "openai" | "ollama"
 
 function resolveProvider(): NewsAiProvider {
@@ -75,6 +83,11 @@ async function callOllamaCloud(
     operation?: string
   }
 ): Promise<string> {
+  // Check circuit breaker before attempting call
+  if (!(await llmCircuitBreaker.canCall("ollama"))) {
+    throw new ProviderCircuitOpenError("ollama")
+  }
+
   const {
     systemPrompt,
     temperature = 0.7,
@@ -146,6 +159,8 @@ async function callOllamaCloud(
         provider: "ollama",
       })
 
+      await llmCircuitBreaker.recordSuccess("ollama")
+
       return content
     } catch (error) {
       lastError = error as Error
@@ -192,6 +207,11 @@ async function callOpenAI(
     operation?: string
   }
 ): Promise<string> {
+  // Check circuit breaker before attempting call
+  if (!(await llmCircuitBreaker.canCall("openai"))) {
+    throw new ProviderCircuitOpenError("openai")
+  }
+
   const {
     systemPrompt,
     temperature = 0.4,
@@ -242,6 +262,8 @@ async function callOpenAI(
         durationMs,
         provider: "openai",
       })
+
+      await llmCircuitBreaker.recordSuccess("openai")
 
       return content
     } catch (error) {
@@ -320,6 +342,11 @@ export async function callDeepSeek(
     })
   }
 
+  // Check circuit breaker before attempting call
+  if (!(await llmCircuitBreaker.canCall("deepseek"))) {
+    throw new ProviderCircuitOpenError("deepseek")
+  }
+
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
     throw new DeepSeekError("DEEPSEEK_API_KEY environment variable is not set")
@@ -390,6 +417,8 @@ export async function callDeepSeek(
           provider: "deepseek",
         })
       }
+
+      await llmCircuitBreaker.recordSuccess("deepseek")
 
       return content
     } catch (error) {

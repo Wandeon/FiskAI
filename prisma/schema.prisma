@@ -4785,6 +4785,7 @@ enum WatchdogCheckType {
   DRAINER_PROGRESS // PR #90 fix: detect drainer stalls
   QUEUE_BACKLOG // PR #90 fix: detect queue buildup
   DLQ_HEALTH // PR #90 fix: dead letter queue monitoring
+  LLM_PROVIDER_HEALTH // PR-1: Ollama/OpenAI/DeepSeek reachability
 }
 
 enum WatchdogAlertType {
@@ -4805,6 +4806,9 @@ enum WatchdogAlertType {
   ENDPOINT_CONSECUTIVE_ERRORS // CRITICAL endpoint consecutiveErrors >= 3
   CIRCUIT_BREAKER_OPEN // Domain circuit breaker tripped
   ENDPOINT_RECOVERED // Previously unhealthy endpoint now healthy (Slack-only)
+  // LLM Provider health alerts (PR-1)
+  LLM_PROVIDER_DOWN // PR-1: Provider unreachable
+  LLM_CIRCUIT_OPEN // PR-1: Circuit breaker tripped
 }
 
 enum AuditResult {
