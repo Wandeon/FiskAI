@@ -12,6 +12,8 @@ import {
   getDrainerIdleMinutes,
   getDrainerHeartbeat,
 } from "../workers"
+import { pingAllProviders, getActiveProvider } from "./llm-provider-health"
+import { llmCircuitBreaker } from "./llm-circuit-breaker"
 
 /**
  * Update health status in database
@@ -289,6 +291,10 @@ export async function runAllHealthChecks(): Promise<HealthCheckResult[]> {
   const drainerResult = await checkDrainerStall()
   results.push(drainerResult)
 
+  // LLM provider health checks
+  const llmResults = await checkLLMProviderHealth()
+  results.push(...llmResults)
+
   const healthy = results.filter((r) => r.status === "HEALTHY").length
   const warning = results.filter((r) => r.status === "WARNING").length
   const critical = results.filter((r) => r.status === "CRITICAL").length
@@ -410,4 +416,90 @@ export async function checkDrainerStall(): Promise<HealthCheckResult> {
 
   await updateHealth(result)
   return result
+}
+
+/**
+ * Check LLM provider health and update circuit breaker state.
+ * Creates alerts for unhealthy providers.
+ */
+export async function checkLLMProviderHealth(): Promise<HealthCheckResult[]> {
+  const results: HealthCheckResult[] = []
+  const activeProvider = getActiveProvider()
+
+  console.log(`[health] Checking LLM providers (active: ${activeProvider})...`)
+
+  const pingResults = await pingAllProviders()
+
+  for (const ping of pingResults) {
+    // Update circuit breaker
+    if (ping.status === "HEALTHY") {
+      await llmCircuitBreaker.recordSuccess(ping.provider)
+    } else {
+      await llmCircuitBreaker.recordFailure(ping.provider, ping.error || ping.reasonCode)
+    }
+
+    const circuitState = await llmCircuitBreaker.getState(ping.provider)
+
+    // Determine check status (combine ping + circuit state)
+    let status: WatchdogHealthStatus = "HEALTHY"
+    let message = `${ping.provider}: ${ping.latencyMs}ms`
+
+    if (circuitState.state === "OPEN") {
+      status = "CRITICAL"
+      message = `${ping.provider} circuit OPEN: ${circuitState.lastError}`
+    } else if (ping.status === "CRITICAL") {
+      status = "CRITICAL"
+      message = `${ping.provider}: ${ping.reasonCode} - ${ping.error}`
+    } else if (ping.status === "DEGRADED") {
+      status = "WARNING"
+      message = `${ping.provider}: ${ping.reasonCode}`
+    }
+
+    // Raise alert for active provider only (avoid noise for unused providers)
+    const isActiveProvider = ping.provider === activeProvider
+
+    if (status === "CRITICAL" && isActiveProvider) {
+      await raiseAlert({
+        severity: "CRITICAL",
+        type: "LLM_PROVIDER_DOWN",
+        entityId: ping.provider,
+        message: `LLM provider "${ping.provider}" is unreachable: ${ping.error || ping.reasonCode}`,
+        details: {
+          provider: ping.provider,
+          reasonCode: ping.reasonCode,
+          latencyMs: ping.latencyMs,
+          circuitState: circuitState.state,
+          consecutiveFailures: circuitState.consecutiveFailures,
+        },
+      })
+    }
+
+    if (circuitState.state === "OPEN" && isActiveProvider) {
+      await raiseAlert({
+        severity: "CRITICAL",
+        type: "LLM_CIRCUIT_OPEN",
+        entityId: ping.provider,
+        message: `LLM circuit breaker OPEN for "${ping.provider}" - requests will fail fast`,
+        details: {
+          provider: ping.provider,
+          openedAt: circuitState.openedAt,
+          consecutiveFailures: circuitState.consecutiveFailures,
+          lastError: circuitState.lastError,
+        },
+      })
+    }
+
+    const result: HealthCheckResult = {
+      checkType: "LLM_PROVIDER_HEALTH" as WatchdogCheckType,
+      entityId: ping.provider,
+      status,
+      metric: ping.latencyMs,
+      message,
+    }
+
+    await updateHealth(result)
+    results.push(result)
+  }
+
+  return results
 }
