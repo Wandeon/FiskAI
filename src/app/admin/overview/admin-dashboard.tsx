@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import Link from "next/link"
+import { adminRoute, adminTenantRoute } from "@/lib/admin/routes"
 import type {
   AdminMetrics,
   OnboardingFunnel,
@@ -43,19 +44,19 @@ export function AdminDashboard({
       {/* Quick Actions */}
       <div className="flex gap-4">
         <Button asChild variant="default">
-          <Link href="/tenants?sortField=createdAt&sortOrder=desc">
+          <Link href={adminRoute("/tenants?sortField=createdAt&sortOrder=desc")}>
             <UserPlus className="h-4 w-4 mr-2" />
             View Recent Signups
           </Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/alerts?level=critical">
+          <Link href={adminRoute("/alerts?level=critical")}>
             <AlertTriangle className="h-4 w-4 mr-2" />
             View Critical Alerts
           </Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/tenants">
+          <Link href={adminRoute("/tenants")}>
             <Users className="h-4 w-4 mr-2" />
             Manage Tenants
           </Link>
@@ -68,26 +69,26 @@ export function AdminDashboard({
           title="Total Tenants"
           value={metrics.totalTenants}
           icon={Users}
-          href="/tenants"
+          href={adminRoute("/tenants")}
         />
         <MetricCard
           title="Active Subscriptions"
           value={metrics.activeSubscriptions}
           icon={CreditCard}
-          href="/tenants?subscriptionStatus=active"
+          href={adminRoute("/tenants?subscriptionStatus=active")}
         />
         <MetricCard
           title="This Week Signups"
           value={metrics.thisWeekSignups}
           icon={UserPlus}
-          href="/tenants?sortField=createdAt&sortOrder=desc"
+          href={adminRoute("/tenants?sortField=createdAt&sortOrder=desc")}
         />
         <MetricCard
           title="Needs Help"
           value={metrics.needsHelp}
           icon={AlertTriangle}
           variant={metrics.needsHelp > 0 ? "warning" : "default"}
-          href="/alerts?level=critical"
+          href={adminRoute("/alerts?level=critical")}
         />
       </div>
 
@@ -135,7 +136,7 @@ export function AdminDashboard({
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <Link
-            href="/tenants?flags=cert-active"
+            href={adminRoute("/tenants?flags=cert-active")}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
           >
             <Shield className="h-8 w-8 text-success-icon" />
@@ -146,7 +147,7 @@ export function AdminDashboard({
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </Link>
           <Link
-            href="/tenants?flags=cert-expiring"
+            href={adminRoute("/tenants?flags=cert-expiring")}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
           >
             <AlertTriangle className="h-8 w-8 text-warning-icon" />
@@ -157,7 +158,7 @@ export function AdminDashboard({
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </Link>
           <Link
-            href="/tenants?sortField=fiscalizedAt&sortOrder=desc"
+            href={adminRoute("/tenants?sortField=fiscalizedAt&sortOrder=desc")}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
           >
             <CheckCircle className="h-8 w-8 text-info-icon" />
@@ -175,7 +176,7 @@ export function AdminDashboard({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Signups</CardTitle>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/tenants?sortField=createdAt&sortOrder=desc">
+            <Link href={adminRoute("/tenants?sortField=createdAt&sortOrder=desc")}>
               View All
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
@@ -189,7 +190,7 @@ export function AdminDashboard({
               {recentSignups.map((signup) => (
                 <Link
                   key={signup.id}
-                  href={`/tenants/${signup.id}`}
+                  href={adminTenantRoute(signup.id)}
                   className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors border"
                 >
                   <div className="flex-1">

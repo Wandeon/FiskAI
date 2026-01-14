@@ -64,6 +64,8 @@ export async function trackAIUsage(params: {
   inputTokens?: number
   outputTokens?: number
   success?: boolean
+  durationMs?: number
+  provider?: string
 }): Promise<void> {
   try {
     const {
@@ -73,6 +75,8 @@ export async function trackAIUsage(params: {
       inputTokens = 0,
       outputTokens = 0,
       success = true,
+      durationMs,
+      provider,
     } = params
 
     const tokensUsed = inputTokens + outputTokens
@@ -86,6 +90,8 @@ export async function trackAIUsage(params: {
         tokensUsed: tokensUsed > 0 ? tokensUsed : null,
         costCents,
         success,
+        durationMs: durationMs ?? null,
+        provider: provider ?? null,
       },
     })
 
@@ -97,6 +103,8 @@ export async function trackAIUsage(params: {
         tokensUsed,
         costCents,
         success,
+        durationMs,
+        provider,
       },
       "AI usage tracked"
     )

@@ -1,4 +1,5 @@
-# Dockerfile
+# syntax=docker/dockerfile:1
+# Dockerfile with BuildKit cache mounts for fast warm builds
 # Use TARGETPLATFORM for multi-arch builds (defaults to host platform in CI)
 # For production ARM64 builds: docker buildx build --platform linux/arm64
 FROM node:22-alpine AS base
@@ -20,8 +21,10 @@ COPY prisma.config.ts prisma.config.regulatory.ts ./
 # Disable Husky in Docker builds (no .git directory available)
 ENV HUSKY=0
 
-# Install dependencies (using legacy-peer-deps for openai package compatibility)
-RUN npm ci --legacy-peer-deps
+# Install dependencies with npm cache mount for fast subsequent builds
+# Cache mount persists on BuildKit daemon between builds
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm ci --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -29,10 +32,19 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Prisma needs a DATABASE_URL at generation time but doesn't use it.
-# This dummy URL is only for schema parsing, not database connection.
-# Using ARG instead of ENV ensures this value doesn't leak to the final image.
+# Build-time environment variables needed for Prisma generation and Next.js static analysis.
+# These dummy values are only for schema parsing and module evaluation, not actual connections.
+# Using ARG + ENV ensures they're available during build but don't leak to final image.
 ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+ARG REGULATORY_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+ENV DATABASE_URL=${DATABASE_URL}
+ENV REGULATORY_DATABASE_URL=${REGULATORY_DATABASE_URL}
+
+# Service API keys (dummy values for build - real values provided at runtime)
+ENV RESEND_API_KEY="re_dummy_build_key"
+ENV RESEND_FROM_EMAIL="build@example.com"
+ENV OPENAI_API_KEY="sk-dummy-build-key"
+ENV DEEPSEEK_API_KEY="sk-dummy-build-key"
 
 # Generate Prisma clients (both core and regulatory)
 RUN npx prisma generate && npx prisma generate --config=prisma.config.regulatory.ts
@@ -43,8 +55,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Increase Node.js memory limit for build
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 
-# Build the application
-RUN npm run build
+# Build the application with Next.js cache mount for incremental builds
+# This dramatically speeds up rebuilds when only a few files change
+RUN --mount=type=cache,target=/app/.next/cache,sharing=locked \
+    npm run build
 
 # Production image
 FROM base AS runner

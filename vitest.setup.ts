@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom"
 import { vi } from "vitest"
+import React from "react"
+
+// Make React globally available for JSX (needed for components using automatic JSX runtime)
+globalThis.React = React
 
 // Fail-fast DB mocks for unit tests
 // These throw IMMEDIATELY on import, not on property access.

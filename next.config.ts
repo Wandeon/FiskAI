@@ -4,8 +4,8 @@ import path from "path"
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  // Exclude ioredis from bundling to avoid worker thread issues during build
-  serverExternalPackages: ["ioredis", "bullmq"],
+  // Exclude packages from bundling to avoid worker thread issues during build
+  serverExternalPackages: ["ioredis", "bullmq", "pino", "pino-pretty", "thread-stream"],
   // Image optimization
   images: { formats: ["image/avif", "image/webp"] },
   // Silence monorepo root inference issues when multiple lockfiles exist on host

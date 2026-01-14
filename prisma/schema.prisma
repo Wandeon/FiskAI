@@ -2405,12 +2405,15 @@ model AIUsage {
   costCents  Int?
   model      String?
   success    Boolean  @default(true)
+  durationMs Int?     // API call latency in milliseconds
+  provider   String?  // "openai" | "deepseek" | "ollama"
   createdAt  DateTime @default(now())
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId, createdAt])
   @@index([companyId, operation])
   @@index([userId, createdAt])
+  @@index([provider, createdAt])
 }
 
 model ArticleJob {
@@ -3134,6 +3137,7 @@ enum AuditAction {
   RULE_DELETED
   RULE_MERGED
   RULE_ROLLBACK
+  RULE_REVOKED
   RULE_QUEUED_FOR_REVIEW
   RULE_CONCEPT_LINKED
   MERGE_RULES
@@ -3521,6 +3525,25 @@ enum DiscoveredItemStatus {
   FAILED
 }
 
+enum DiscoveryMethod {
+  SENTINEL // Daily scheduled discovery
+  BACKFILL // Historical backfill discovery
+}
+
+enum BackfillRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum BackfillMode {
+  SITEMAP // Parse sitemap.xml and sitemap indexes
+  ARCHIVE // Crawl archive listing pages
+  PAGINATION // Iterate through paginated listings
+}
+
 enum NodeType {
   HUB // Container page (lists, indexes, sitemaps)
   LEAF // Content page (articles, regulations)
@@ -3568,6 +3591,36 @@ enum AgentType {
   EXEMPTION_EXTRACTOR
 }
 
+// AgentRun outcome taxonomy (PR-A: 2026-01-12)
+enum AgentRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AgentRunOutcome {
+  SUCCESS_APPLIED        // Output validated and state advanced
+  SUCCESS_NO_CHANGE      // Output valid but no new information
+  VALIDATION_REJECTED    // Failed deterministic validation
+  LOW_CONFIDENCE         // Below confidence threshold
+  EMPTY_OUTPUT           // LLM returned empty/null
+  PARSE_FAILED           // LLM output not valid JSON
+  CONTENT_LOW_QUALITY    // Pre-filter rejected input
+  SKIPPED_DETERMINISTIC  // Pre-LLM rules decided no LLM needed
+  CIRCUIT_OPEN           // Circuit breaker prevented call
+  DUPLICATE_CACHED       // Cache hit, no LLM call (PR-B)
+  RETRY_EXHAUSTED        // All retries failed
+  TIMEOUT                // Aborted due to timeout
+}
+
+enum NoChangeCode {
+  ALREADY_EXTRACTED
+  DUPLICATE_POINTERS
+  NO_RELEVANT_CHANGES
+  BELOW_MIN_CONFIDENCE
+  VALIDATION_BLOCKED
+}
+
 enum RuleStatus {
   DRAFT
   PENDING_REVIEW
@@ -3575,6 +3628,7 @@ enum RuleStatus {
   PUBLISHED
   DEPRECATED
   REJECTED
+  REVOKED // Rule was revoked after publication (deterministic rollback)
 }
 
 enum ConflictType {
@@ -3723,6 +3777,52 @@ model DiscoveryEndpoint {
   @@index([lastScrapedAt])
 }
 
+// --- Backfill Run Tracking ---
+// Tracks historical backfill discovery runs with full audit trail
+model BackfillRun {
+  id        String            @id @default(cuid())
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  status    BackfillRunStatus @default(PENDING)
+
+  // Configuration
+  sources     Json // Array of source slugs: ["narodne-novine", "porezna-uprava"]
+  mode        BackfillMode
+  dateFrom    DateTime? // Optional date range filter
+  dateTo      DateTime?
+  maxUrls     Int              @default(1000) // Global cap per run
+  concurrency Int              @default(2)
+  delayMs     Int              @default(5000) // Per-domain delay
+  dryRun      Boolean          @default(false)
+
+  // Execution
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  // Counters
+  discoveredCount Int @default(0) // URLs discovered
+  queuedCount     Int @default(0) // Jobs enqueued
+  skippedCount    Int @default(0) // Already existed
+  errorCount      Int @default(0) // Errors encountered
+
+  // Metadata
+  errorLog Json?   // JSON array of error details
+  runBy    String? // Operator identifier (user ID or CLI)
+  notes    String? // Operator notes
+
+  // Progress tracking (for resume)
+  lastProcessedSource String?
+  lastProcessedPage   Int?
+  lastProcessedUrl    String?
+  checkpoint          Json?   // SitemapDiscoveryCheckpoint for streaming resume
+
+  // Relations
+  discoveredItems DiscoveredItem[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
 model DiscoveredItem {
   id           String               @id @default(cuid())
   endpointId   String
@@ -3736,6 +3836,10 @@ model DiscoveredItem {
   errorMessage String?
   retryCount   Int                  @default(0)
   createdAt    DateTime             @default(now())
+
+  // --- Discovery Method ---
+  discoveryMethod DiscoveryMethod @default(SENTINEL)
+  backfillRunId   String? // Link to BackfillRun if discovered via backfill
 
   // --- Topology ---
   nodeType  NodeType  @default(LEAF)
@@ -3754,7 +3858,8 @@ model DiscoveredItem {
   // --- Scheduling ---
   nextScanDue DateTime @default(now())
 
-  endpoint DiscoveryEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  endpoint    DiscoveryEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  backfillRun BackfillRun?      @relation(fields: [backfillRunId], references: [id])
 
   @@unique([endpointId, url])
   @@index([status])
@@ -3762,6 +3867,8 @@ model DiscoveredItem {
   @@index([evidenceId])
   @@index([nextScanDue, freshnessRisk]) // The "Manifest" query
   @@index([endpointId, nodeType]) // Grouping queries
+  @@index([discoveryMethod])
+  @@index([backfillRunId])
 }
 
 // Evidence and EvidenceArtifact moved to regulatory.prisma
@@ -3870,6 +3977,20 @@ model RegulatoryRule {
   confidence        Float            @default(0.8) // DEPRECATED: Use derivedConfidence instead (kept for backward compatibility)
   llmConfidence     Float            @default(0.8) // LLM's self-assessed confidence in composition
   derivedConfidence Float            @default(0.8) // Confidence derived from source pointer quality (Issue #770)
+
+  // Confidence Envelope (Mission #3: confidence, auditability, rollback)
+  confidenceReasons          Json     @default("[]") // Array of {reason: ConfidenceReason, weight: number, detail?: string}
+  originatingCandidateFactIds String[] // CandidateFact IDs that contributed to this rule
+  originatingAgentRunIds     String[] // AgentRun IDs involved in creating this rule
+
+  // Human Review Readiness (Mission #3)
+  reviewRequired        Boolean @default(false) // True when confidence < threshold or source health poor
+  reviewRequiredReasons Json?                   // Array of {reason: ReviewRequiredReason, detail?: string}
+
+  // Rollback Capability (Mission #3)
+  revokedAt     DateTime? // When the rule was revoked
+  revokedReason String?   // Human-readable reason for revocation
+
   composerNotes     String?
   reviewerNotes     String?
   approvedBy        String? // User ID who approved (for T0/T1)
@@ -3890,6 +4011,7 @@ model RegulatoryRule {
   incomingEdges  GraphEdge[]          @relation("EdgeTo")
   atomicClaims   AtomicClaim[]
   eInvoiceLines  EInvoiceLine[]
+  auditSnapshots AuditSnapshot[] // Immutable audit records created on Apply success
 
   // Allow draft/pending variants to coexist; only PUBLISHED is unique per concept/date
   // This enables conflict candidates to be stored before arbiter resolution
@@ -3900,6 +4022,49 @@ model RegulatoryRule {
   @@index([effectiveFrom])
   @@index([meaningSignature])
   @@index([conceptId])
+  @@index([reviewRequired]) // Mission #3: quick lookup for rules needing review
+  @@index([revokedAt])      // Mission #3: quick lookup for revoked rules
+}
+
+// ============================================================================
+// AUDIT SNAPSHOTS (Mission #3: confidence, auditability, rollback)
+// ============================================================================
+// Immutable audit records created on Apply success. These capture the full
+// context at the moment a rule was created/updated, enabling deterministic
+// replay and external audit.
+
+model AuditSnapshot {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Rule linkage
+  ruleId String
+  rule   RegulatoryRule @relation(fields: [ruleId], references: [id])
+
+  // Content hashes for deterministic replay
+  ruleHash   String // SHA256 of rule content (conceptSlug+value+valueType+effectiveFrom+effectiveUntil+derivedConfidence)
+  inputsHash String // SHA256 of inputs (candidateFactIds, agentRunIds, sourcePointerIds)
+
+  // State snapshots at time of creation
+  sourceHealthState    Json // Map of sourceSlug -> {health, stateChangedAt, decisionReason}
+  routingBudgetSummary Json // Current routing/budget state from budget governor
+
+  // Confidence snapshot
+  confidenceScore   Float // derivedConfidence at time of snapshot
+  confidenceReasons Json  // Array of {reason, weight, detail} at time of snapshot
+
+  // Originating data
+  candidateFactIds String[] // CandidateFact IDs used
+  agentRunIds      String[] // AgentRun IDs involved
+  sourcePointerIds String[] // SourcePointer IDs referenced
+
+  // Pipeline correlation
+  agentRunId String? // The AgentRun that triggered this snapshot (Apply worker)
+  jobId      String? // BullMQ job ID for correlation
+
+  @@index([ruleId])
+  @@index([createdAt])
+  @@index([agentRunId])
 }
 
 // ============================================================================
@@ -4328,28 +4493,184 @@ model RuleRelease {
 }
 
 model AgentRun {
-  id          String    @id @default(cuid())
+  id          String         @id @default(cuid())
   agentType   AgentType
-  status      String    @default("running") // running, completed, failed
-  input       Json // The input provided to the agent
-  output      Json? // The output from the agent (null if failed)
-  rawOutput   Json? // Raw LLM output on failure (for debugging)
-  error       String? // Error message if failed
+  status      AgentRunStatus @default(RUNNING)
+
+  // Input/Output
+  input       Json
+  output      Json?
+  rawOutput   Json?
+  error       String?
+
+  // Metrics
   tokensUsed  Int?
+  inputChars  Int?
+  inputBytes  Int?
   durationMs  Int?
   confidence  Float?
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
 
-  // Optional relations based on what the agent processed
+  // Prompt provenance
+  promptTemplateId      String?
+  promptTemplateVersion String?
+  promptHash            String?
+
+  // Outcome taxonomy
+  outcome        AgentRunOutcome?
+  noChangeCode   NoChangeCode?
+  noChangeDetail String?
+  itemsProduced  Int              @default(0)
+
+  // Correlation
+  runId       String?
+  jobId       String?
+  parentJobId String?
+  sourceSlug  String?
+  queueName   String?
+
+  // Retry tracking
+  attempt     Int @default(1)
+
+  // Cache metadata (for PR-B)
+  inputContentHash String?
+  cacheHit         Boolean @default(false)
+
+  // Linkage
   evidenceId String? // Soft ref to Evidence in regulatory.prisma
   ruleId     String?
+  rule       RegulatoryRule? @relation(fields: [ruleId], references: [id])
 
-  rule RegulatoryRule? @relation(fields: [ruleId], references: [id])
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
 
   @@index([agentType])
   @@index([status])
+  @@index([outcome])
   @@index([startedAt])
+  @@index([agentType, outcome, startedAt])
+  @@index([queueName, outcome, startedAt])
+  @@index([inputContentHash])
+  @@index([runId])
+  @@index([sourceSlug, startedAt])
+}
+
+/// Cache for agent LLM results to avoid redundant API calls
+/// Key: (agentType, provider, model, promptHash, inputContentHash)
+/// Only stores SUCCESS_APPLIED and SUCCESS_NO_CHANGE outcomes
+model AgentResultCache {
+  id               String    @id @default(cuid())
+  agentType        AgentType
+  provider         String    // e.g. "ollama_cloud", "openai"
+  model            String    // e.g. "gemma-3-27b"
+  promptHash       String
+  inputContentHash String
+
+  // Cached result (validated output artifact - no outcome stored)
+  output           Json      // The validated output JSON
+  confidence       Float?
+  tokensUsed       Int?
+
+  // Metadata
+  originalRunId    String?   // Reference to the AgentRun that created this cache entry
+  hitCount         Int       @default(0) // Number of times this cache entry was used
+  createdAt        DateTime  @default(now())
+  lastHitAt        DateTime?
+
+  @@unique([agentType, provider, model, promptHash, inputContentHash])
+  @@index([agentType, inputContentHash])
+  @@index([createdAt])
+}
+
+/// Pipeline progress tracking for observability
+/// Records every stage execution to answer "Did we spend tokens and get persisted value?"
+model PipelineProgress {
+  id                    String    @id @default(cuid())
+  stageName             String    // scout, router, ocr, extract, compose, apply, review, arbiter, release
+  evidenceId            String?   // Soft ref to Evidence
+  sourceSlug            String
+  runId                 String
+  timestamp             DateTime  @default(now())
+
+  // Metrics
+  producedCount         Int       @default(0) // Items created by this stage
+  downstreamQueuedCount Int       @default(0) // Jobs queued to next stage
+  tokensUsed            Int?      // LLM tokens consumed
+  durationMs            Int?      // Processing time
+
+  // Skip/Error tracking
+  skipReason            String?   // Why skipped (if applicable)
+  errorClass            String?   // TRANSIENT, VALIDATION, AUTH, QUOTA, CONTENT, INTERNAL
+  errorMessage          String?   @db.Text
+
+  // Stage-specific metadata
+  metadata              Json?
+
+  @@index([stageName, timestamp])
+  @@index([sourceSlug, timestamp])
+  @@index([runId])
+  @@index([timestamp])
+  @@index([stageName, sourceSlug, timestamp])
+}
+
+// Source Health: Rolling metrics for adaptive routing and budget allocation
+// Updated after each batch to enable self-correcting behavior
+model SourceHealth {
+  id                  String    @id @default(cuid())
+  sourceSlug          String    @unique // Identifier for the regulatory source
+
+  // Rolling success metrics (window-based, e.g., last 7 days)
+  windowStartAt       DateTime  @default(now()) // Start of current rolling window
+  windowSizeHours     Int       @default(168)   // 7 days default
+
+  // Outcome counts in current window
+  totalAttempts       Int       @default(0)     // Total LLM calls attempted
+  successCount        Int       @default(0)     // itemsProduced > 0
+  emptyCount          Int       @default(0)     // itemsProduced = 0 but no error
+  errorCount          Int       @default(0)     // Errors/failures
+
+  // Token efficiency metrics
+  totalTokensUsed     Int       @default(0)     // Tokens spent in window
+  totalItemsProduced  Int       @default(0)     // Rules/facts created
+  avgTokensPerItem    Float     @default(0)     // Rolling avg: tokens / items
+
+  // Derived health score (0-1, higher = better)
+  healthScore         Float     @default(0.5)   // Computed from metrics
+
+  // Pause/cooldown state
+  isPaused            Boolean   @default(false) // If true, no LLM budget allocated
+  pausedAt            DateTime? // When paused
+  pauseReason         String?   // Why paused (LOW_HEALTH, MANUAL, etc.)
+  pauseExpiresAt      DateTime? // Auto-unpause time
+
+  // Adaptive thresholds (set based on health)
+  minScoutScore       Float     @default(0.4)   // Min worthItScore to proceed
+  allowCloud          Boolean   @default(true)  // Whether cloud LLM is permitted
+  budgetMultiplier    Float     @default(1.0)   // 0-2, scales per-source cap
+
+  // Stability: Health state tracking with dwell time (anti-flapping)
+  healthState             String    @default("FAIR")    // EXCELLENT, GOOD, FAIR, POOR, CRITICAL
+  healthStateEnteredAt    DateTime  @default(now())     // When current state was entered
+  previousHealthState     String?                       // For audit trail
+
+  // Explainability: Last decision tracking
+  lastDecisionReason      String?   // Enum: HEALTH_UPGRADE, HEALTH_DOWNGRADE, AUTO_PAUSE, AUTO_UNPAUSE, MANUAL_PAUSE, STARVATION_ALLOWANCE
+  lastDecisionAt          DateTime? // When the decision was made
+  lastDecisionDetails     Json?     // { triggeredBy, metricValue, threshold, previousValue }
+
+  // Starvation guard: Minimum evaluation allowance for rare sources
+  lastStarvationAllowanceAt DateTime? // When last starvation allowance was granted
+  starvationAllowanceCount  Int       @default(0) // How many allowances granted in window
+
+  // Timestamps
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastBatchAt         DateTime? // Last time metrics were updated
+
+  @@index([healthScore])
+  @@index([isPaused])
+  @@index([updatedAt])
+  @@index([healthState])
+  @@index([lastDecisionAt])
 }
 
 model RegulatoryConflict {

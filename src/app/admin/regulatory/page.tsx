@@ -1,11 +1,8 @@
-import { Suspense } from "react"
 import { getCurrentUser } from "@/lib/auth-utils"
-import { db } from "@/lib/db"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import {
   AlertCircle,
   CheckCircle,
@@ -18,47 +15,22 @@ import {
   Radar,
 } from "lucide-react"
 import Link from "next/link"
+import { adminRegulatoryRoute } from "@/lib/admin/routes"
+import {
+  getRegulatoryPipelineStatus,
+  type RegulatoryPipelineStatus,
+} from "@/lib/admin/regulatory-status"
 
 export const revalidate = 60 // 1 minute cache
 
-interface RecentActivity {
-  id: string
-  type: string
-  completedAt: Date | null
-  confidence: number | null
-  summary: string
-}
+async function getDashboardData(): Promise<{
+  status: RegulatoryPipelineStatus
+}> {
+  // Call server function directly - no unauthenticated fetch needed
+  // Auth is enforced at the page level before this is called
+  const status = await getRegulatoryPipelineStatus()
 
-async function getDashboardData() {
-  // Get status from API
-  const statusUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-  const statusRes = await fetch(`${statusUrl}/api/admin/regulatory-truth/status`, {
-    cache: "no-store",
-  })
-
-  if (!statusRes.ok) {
-    throw new Error("Failed to fetch status")
-  }
-
-  const status = await statusRes.json()
-
-  // Get pending review count
-  const pendingReviewCount = await db.regulatoryRule.count({
-    where: { status: "PENDING_REVIEW" },
-  })
-
-  // Get open conflicts
-  const openConflicts = await db.regulatoryConflict.count({
-    where: {
-      status: { in: ["OPEN"] },
-    },
-  })
-
-  return {
-    status,
-    pendingReviewCount,
-    openConflicts,
-  }
+  return { status }
 }
 
 export default async function RegulatoryDashboardPage() {
@@ -68,8 +40,11 @@ export default async function RegulatoryDashboardPage() {
     redirect("/")
   }
 
-  const data = await getDashboardData()
-  const { status } = data
+  const { status } = await getDashboardData()
+
+  // Derive counts from status - no need for separate DB queries
+  const pendingReviewCount = status.rules.byStatus.PENDING_REVIEW
+  const openConflicts = status.conflicts.active
 
   const healthStatusConfig = {
     healthy: {
@@ -104,24 +79,24 @@ export default async function RegulatoryDashboardPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href="/regulatory/sentinel">
+            <Link href={adminRegulatoryRoute("/sentinel")}>
               <Radar className="mr-2 h-4 w-4" />
               Sentinel Health
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/regulatory/sources">
+            <Link href={adminRegulatoryRoute("/sources")}>
               <Database className="mr-2 h-4 w-4" />
               Sources
             </Link>
           </Button>
           <Button asChild>
-            <Link href="/regulatory/inbox">
+            <Link href={adminRegulatoryRoute("/inbox")}>
               <FileText className="mr-2 h-4 w-4" />
               Review Inbox
-              {data.pendingReviewCount > 0 && (
+              {pendingReviewCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
-                  {data.pendingReviewCount}
+                  {pendingReviewCount}
                 </Badge>
               )}
             </Link>
@@ -151,13 +126,13 @@ export default async function RegulatoryDashboardPage() {
                   {status.sources.needingCheck} sources need checking
                 </div>
               )}
-              {data.pendingReviewCount > 0 && (
+              {pendingReviewCount > 0 && (
                 <div className="text-sm text-warning-icon">
-                  {data.pendingReviewCount} rules awaiting review
+                  {pendingReviewCount} rules awaiting review
                 </div>
               )}
-              {data.openConflicts > 0 && (
-                <div className="text-sm text-danger-icon">{data.openConflicts} open conflicts</div>
+              {openConflicts > 0 && (
+                <div className="text-sm text-danger-icon">{openConflicts} open conflicts</div>
               )}
             </div>
           </div>
@@ -280,7 +255,7 @@ export default async function RegulatoryDashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Agent Activity</CardTitle>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/regulatory/sources">
+            <Link href={adminRegulatoryRoute("/sources")}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Trigger Manual Check
             </Link>
@@ -291,7 +266,7 @@ export default async function RegulatoryDashboardPage() {
             <div className="text-center py-8 text-muted-foreground">No recent activity</div>
           ) : (
             <div className="space-y-4">
-              {(status.recentActivity as RecentActivity[]).map((activity) => (
+              {status.recentActivity.map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
@@ -322,7 +297,7 @@ export default async function RegulatoryDashboardPage() {
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/inbox">
+          <Link href={adminRegulatoryRoute("/inbox")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -330,14 +305,14 @@ export default async function RegulatoryDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.pendingReviewCount}</div>
+              <div className="text-2xl font-bold">{pendingReviewCount}</div>
               <p className="text-sm text-muted-foreground">Rules awaiting review</p>
             </CardContent>
           </Link>
         </Card>
 
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/conflicts">
+          <Link href={adminRegulatoryRoute("/conflicts")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
@@ -345,14 +320,14 @@ export default async function RegulatoryDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.openConflicts}</div>
+              <div className="text-2xl font-bold">{openConflicts}</div>
               <p className="text-sm text-muted-foreground">Open conflicts</p>
             </CardContent>
           </Link>
         </Card>
 
         <Card className="hover:border-primary transition-colors cursor-pointer">
-          <Link href="/regulatory/releases">
+          <Link href={adminRegulatoryRoute("/releases")}>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />

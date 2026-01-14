@@ -1,13 +1,18 @@
 // src/lib/regulatory-truth/workers/extractor.worker.ts
 import { Job } from "bullmq"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
-import { composeQueue, extractQueue } from "./queues"
+import { extractQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
-import { llmLimiter, getDomainDelay } from "./rate-limiter"
+import { llmLimiter } from "./rate-limiter"
 import { runExtractor } from "../agents/extractor"
-import { db } from "@/lib/db"
+import { updateRunOutcome } from "../agents/runner"
 import { dbReg } from "@/lib/db/regulatory"
 import { isReadyForExtraction } from "../utils/content-provider"
+
+// PHASE-D: Compose imports disabled until composer is migrated to CandidateFacts
+// import { composeQueue } from "./queues"
+// import { getDomainDelay } from "./rate-limiter"
+// import { db } from "@/lib/db"
 
 interface ExtractJobData {
   evidenceId: string
@@ -48,33 +53,35 @@ async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
     }
 
     // Rate limit LLM calls
-    const result = await llmLimiter.schedule(() => runExtractor(evidenceId))
-
-    if (result.success && result.sourcePointerIds.length > 0) {
-      // Group pointers by domain and queue compose jobs
-      const pointers = await db.sourcePointer.findMany({
-        where: { id: { in: result.sourcePointerIds } },
-        select: { id: true, domain: true },
+    const result = await llmLimiter.schedule(() =>
+      runExtractor(evidenceId, {
+        runId,
+        jobId: String(job.id),
+        parentJobId: job.data.parentJobId,
+        sourceSlug: evidence.source?.slug,
+        queueName: "extract",
       })
+    )
 
-      const byDomain = new Map<string, string[]>()
-      for (const p of pointers) {
-        const ids = byDomain.get(p.domain) || []
-        ids.push(p.id)
-        byDomain.set(p.domain, ids)
-      }
-
-      // Queue compose job for each domain
-      for (const [domain, pointerIds] of byDomain) {
-        // Use sorted pointer IDs for stable jobId (order-independent)
-        const sortedIds = [...pointerIds].sort().join(",")
-        await composeQueue.add(
-          "compose",
-          { pointerIds, domain, runId, parentJobId: job.id },
-          { delay: getDomainDelay(domain), jobId: `compose-${domain}-${sortedIds}` }
-        )
-      }
+    // PHASE-D: Update AgentRun.itemsProduced with the count of CandidateFacts created
+    // This ensures SUCCESS_APPLIED/SUCCESS_NO_CHANGE is set correctly based on actual items
+    if (result.success && result.agentRunId) {
+      await updateRunOutcome(result.agentRunId, result.candidateFactIds.length)
     }
+
+    // PHASE-D: Compose queueing is DISABLED until composer is migrated to use CandidateFacts
+    // The composer agent (runComposer) is tightly coupled to SourcePointer:
+    // - Takes sourcePointerIds as input
+    // - Queries db.sourcePointer.findMany()
+    // - Connects rules to sourcePointers
+    //
+    // Since PHASE-D removed SourcePointer creation, compose would fail immediately.
+    // CandidateFacts are stored and itemsProduced is updated correctly above.
+    // TODO: Migrate composer.ts and composer.worker.ts to use CandidateFacts
+    //
+    // if (result.success && result.candidateFactIds.length > 0) {
+    //   ... queue compose jobs with candidateFactIds ...
+    // }
 
     const duration = Date.now() - start
     jobsProcessed.inc({ worker: "extractor", status: "success", queue: "extract" })
@@ -83,7 +90,8 @@ async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
     return {
       success: true,
       duration,
-      data: { pointersCreated: result.sourcePointerIds.length },
+      // PHASE-D: Report candidateFactsCreated instead of pointersCreated
+      data: { candidateFactsCreated: result.candidateFactIds.length },
     }
   } catch (error) {
     jobsProcessed.inc({ worker: "extractor", status: "failed", queue: "extract" })

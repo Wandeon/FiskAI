@@ -110,6 +110,15 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // Public API routes bypass authentication (health checks, webhooks, etc.)
+  // Must check BEFORE subdomain/auth routing to allow internal healthchecks from localhost
+  if (pathname.startsWith("/api/") && isPublicApiRoute(pathname)) {
+    const response = NextResponse.next()
+    response.headers.set("x-request-id", requestId)
+    response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+    return response
+  }
+
   // Detect subdomain using real host
   const realHost = getRealHost(request)
   const subdomain = getSubdomain(realHost)
@@ -204,6 +213,22 @@ export async function middleware(request: NextRequest) {
   }
 
   // App subdomain - require authentication
+  // But first, check if this is a public auth page that doesn't require authentication
+  const PUBLIC_AUTH_PATHS = ["/auth", "/login", "/register", "/forgot-password", "/reset-password"]
+  const isPublicAuthPath = PUBLIC_AUTH_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  )
+
+  // Allow public auth pages without authentication
+  if (isPublicAuthPath) {
+    const response = NextResponse.next()
+    response.headers.set("x-request-id", requestId)
+    response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
+    response.headers.set("Content-Security-Policy", generateCSP(nonce))
+    response.headers.set("x-nonce", nonce)
+    return response
+  }
+
   const isSecure =
     request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https"
   const token = await getToken({
@@ -261,11 +286,14 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Legacy /dashboard compatibility - redirect to cc
-  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+  // Legacy path redirects - all old control center paths go to /cc
+  if (
+    pathname === "/dashboard" ||
+    pathname === "/app-control-center" ||
+    pathname === "/control-center"
+  ) {
     const externalUrl = getExternalUrl(request)
-    const newPath = pathname === "/dashboard" ? "/cc" : pathname.replace("/dashboard", "/cc")
-    const redirectUrl = new URL(newPath, externalUrl)
+    const redirectUrl = new URL("/cc", externalUrl)
     redirectUrl.search = request.nextUrl.search
 
     logger.info(
@@ -274,9 +302,9 @@ export async function middleware(request: NextRequest) {
         subdomain,
         systemRole,
         originalPath: pathname,
-        redirectPath: redirectUrl.pathname,
+        redirectPath: "/cc",
       },
-      "Redirecting legacy /dashboard to cc"
+      "Redirecting legacy path to /cc"
     )
 
     const response = NextResponse.redirect(redirectUrl)
@@ -288,8 +316,8 @@ export async function middleware(request: NextRequest) {
   // Redirect root path to appropriate dashboard for user's role
   if (pathname === "/") {
     const dashboardPath = getDashboardPathForRole(systemRole as "USER" | "STAFF" | "ADMIN")
-    // For regular users, send to control center; for admin/staff, send to their dashboards
-    const targetPath = systemRole === "USER" ? "/cc" : dashboardPath
+    // All roles go to their respective dashboard path
+    const targetPath = dashboardPath
     const externalUrl = getExternalUrl(request)
     const controlCenterUrl = new URL(targetPath, externalUrl)
 
@@ -315,12 +343,6 @@ export async function middleware(request: NextRequest) {
   const routeGroupDisplay = "/(app)"
   const url = request.nextUrl.clone()
 
-  // Rewrite /control-center to cc
-  let rewrittenPath = pathname
-  if (pathname === "/control-center") {
-    rewrittenPath = "/cc"
-  }
-
   // Don't rewrite if already in the correct route group or if accessing /admin or /staff paths
   // /admin and /staff are top-level routes, not in route groups
   if (
@@ -329,7 +351,7 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/staff")
   ) {
-    url.pathname = `${routeGroup}${rewrittenPath}`
+    url.pathname = `${routeGroup}${pathname}`
 
     const response = NextResponse.rewrite(url)
     response.headers.set("x-request-id", requestId)

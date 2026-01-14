@@ -1,4 +1,4 @@
-// src/app/(app)/app-control-center/page.tsx
+// src/app/(app)/cc/page.tsx
 /**
  * Client Control Center
  *
@@ -145,7 +145,7 @@ async function getQueueItems(queue: (typeof CLIENT_QUEUES)[number]): Promise<Que
 export default async function ClientControlCenterPage() {
   const session = await auth()
   if (!session?.user) {
-    redirect("/login")
+    redirect("/auth")
   }
 
   // Fetch items for all queues
