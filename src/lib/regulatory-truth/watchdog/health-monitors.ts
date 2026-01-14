@@ -14,6 +14,7 @@ import {
 } from "../workers"
 import { pingAllProviders, getActiveProvider } from "./llm-provider-health"
 import { llmCircuitBreaker } from "./llm-circuit-breaker"
+import { runProgressGateChecks } from "./progress-gates"
 
 /**
  * Update health status in database
@@ -294,6 +295,10 @@ export async function runAllHealthChecks(): Promise<HealthCheckResult[]> {
   // LLM provider health checks
   const llmResults = await checkLLMProviderHealth()
   results.push(...llmResults)
+
+  // Progress gates (LLM provider health gates)
+  const progressResults = await runProgressGateChecks()
+  results.push(...progressResults)
 
   const healthy = results.filter((r) => r.status === "HEALTHY").length
   const warning = results.filter((r) => r.status === "WARNING").length
