@@ -338,12 +338,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rewrite to (app) route group for app subdomain
-  const routeGroup = "/(app)"
+  // Note: Parentheses must be URL-encoded for Next.js routing to work
+  const routeGroup = "/%28app%29"
+  const routeGroupDisplay = "/(app)"
   const url = request.nextUrl.clone()
 
   // Don't rewrite if already in the correct route group or if accessing /admin or /staff paths
   // /admin and /staff are top-level routes, not in route groups
   if (
+    !pathname.startsWith(routeGroupDisplay) &&
     !pathname.startsWith(routeGroup) &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/staff")
@@ -353,7 +356,7 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.rewrite(url)
     response.headers.set("x-request-id", requestId)
     response.headers.set("x-subdomain", subdomain)
-    response.headers.set("x-route-group", routeGroup)
+    response.headers.set("x-route-group", routeGroupDisplay)
     response.headers.set("x-response-time", `${Date.now() - startTime}ms`)
 
     logger.info(
