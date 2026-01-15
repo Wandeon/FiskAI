@@ -24,6 +24,7 @@ interface ScheduledJobData {
     | "truth-consolidation-audit"
     | "dlq-healing"
     | "regression-detection"
+    | "feedback-retention-cleanup"
   runId: string
   triggeredBy?: string
 }
@@ -241,6 +242,38 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
           success: true,
           duration: Date.now() - start,
           data: { queued: true, runId },
+        }
+      }
+
+      case "feedback-retention-cleanup": {
+        // Task 4.1: RTL Autonomy - User Feedback Loop
+        // Monthly cleanup of feedback records older than 12 months
+        // Critical Safeguard (Appendix A.4): Enforces data retention policy
+        const { cleanupOldFeedback, getFeedbackStats } = await import("../utils/user-feedback.db")
+
+        // Get stats before cleanup
+        const beforeStats = await getFeedbackStats()
+
+        // Run cleanup with default retention (12 months)
+        const deletedCount = await cleanupOldFeedback()
+
+        // Get stats after cleanup
+        const afterStats = await getFeedbackStats()
+
+        console.log(
+          `[orchestrator] Feedback retention cleanup: deleted=${deletedCount} ` +
+            `before=${beforeStats.total} after=${afterStats.total}`
+        )
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: {
+            deleted: deletedCount,
+            beforeTotal: beforeStats.total,
+            afterTotal: afterStats.total,
+            oldestRemaining: afterStats.oldestRecord?.toISOString() || null,
+          },
         }
       }
 

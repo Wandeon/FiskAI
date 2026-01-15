@@ -288,6 +288,24 @@ async function startScheduler(): Promise<void> {
   )
   console.log("[scheduler] Scheduled: Regression detection at 01:00")
 
+  // Monthly feedback retention cleanup on 1st of each month at 02:00
+  // Task 4.1: RTL Autonomy - User Feedback Loop
+  // Deletes feedback records older than 12 months (RETENTION_MONTHS)
+  // Critical Safeguard (Appendix A.4): Enforces data retention policy
+  cron.schedule(
+    "0 2 1 * *", // At 02:00 on day-of-month 1
+    async () => {
+      console.log("[scheduler] Running monthly feedback retention cleanup...")
+      await scheduledQueue.add("scheduled", {
+        type: "feedback-retention-cleanup",
+        runId: `feedback-cleanup-${Date.now()}`,
+        triggeredBy: "cron",
+      })
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: Feedback retention cleanup on 1st of month at 02:00")
+
   console.log("[scheduler] Scheduler service started")
   console.log("[scheduler] ==================================")
   console.log("[scheduler] REMOVED: Daily pipeline processing (now continuous)")
