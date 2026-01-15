@@ -13,6 +13,7 @@
 // Triggered by: Sentinel/Scout when drift > threshold and yield = 0
 
 import { Job } from "bullmq"
+import { Prisma } from "@prisma/client"
 import { dbReg } from "@/lib/db"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { jobsProcessed, jobDuration } from "./metrics"
@@ -80,10 +81,11 @@ async function fetchHistoricalExamples(
   try {
     // Find Evidence records that were successfully processed
     // (have SourcePointers pointing to them)
+    // Note: endpointId maps to sourceId in the Evidence model
     const successfulEvidence = await dbReg.evidence.findMany({
       where: {
-        endpointId,
-        rawContent: { not: null },
+        sourceId: endpointId,
+        rawContent: { not: "" },
       },
       select: {
         id: true,
@@ -164,7 +166,7 @@ async function storeSelectorSuggestionPR(
   const alert = await dbReg.monitoringAlert.create({
     data: {
       severity: "HIGH",
-      type: "CONTENT_CHANGE", // Using existing type; closest match for format change
+      type: "STRUCTURAL_DRIFT", // Alert type for format/selector changes
       affectedRuleIds: [], // No rules affected yet - this is about selectors
       description:
         `Selector adaptation needed for endpoint ${endpointUrl}.\n\n` +

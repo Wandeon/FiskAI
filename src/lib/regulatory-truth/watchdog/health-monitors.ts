@@ -1,7 +1,7 @@
 // src/lib/regulatory-truth/watchdog/health-monitors.ts
 
 import { db, dbReg } from "@/lib/db"
-import type { WatchdogHealthStatus, WatchdogCheckType } from "@prisma/client"
+import { Prisma, type WatchdogHealthStatus, type WatchdogCheckType } from "@prisma/client"
 import type { HealthCheckResult } from "./types"
 import { getThreshold } from "./types"
 import { raiseAlert } from "./alerting"
@@ -285,7 +285,7 @@ export async function checkStructuralDrift(): Promise<HealthCheckResult[]> {
   const endpoints = await db.discoveryEndpoint.findMany({
     where: {
       isActive: true,
-      metadata: { not: null },
+      metadata: { not: Prisma.JsonNull },
     },
     select: {
       id: true,

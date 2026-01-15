@@ -6,6 +6,7 @@
 
 // eslint-disable-next-line no-restricted-imports -- Need db for HumanReviewQueue (main schema)
 import { db, dbReg } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import {
   type CalibrationParameters,
   type ReviewOutcome,
@@ -73,7 +74,7 @@ export async function collectReviewOutcomesFromDB(since?: Date): Promise<ReviewO
       entityType: { in: ["RULE", "RULE_FACT"] },
       status: "COMPLETED",
       completedAt: { gte: since ?? defaultSince },
-      resolution: { not: null },
+      resolution: { not: Prisma.JsonNull },
     },
     select: {
       resolution: true,

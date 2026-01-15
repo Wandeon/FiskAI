@@ -650,9 +650,9 @@ export async function runArbiter(conflictId: string): Promise<ArbiterResult> {
           ruleBTier: itemB.riskTier,
           escalationReason: "tier_protection_with_precedent",
           precedentInfo: {
-            count: precedentResult.precedentCount,
-            agreement: precedentResult.agreementPercentage,
-            strategy: precedentResult.winnerStrategy,
+            count: precedentResult.precedentCount ?? 0,
+            agreement: precedentResult.agreementPercentage ?? 0,
+            strategy: precedentResult.winnerStrategy ?? "unknown",
           },
         })
 

@@ -3160,6 +3160,7 @@ enum AuditAction {
   // Regulatory Truth Layer - Status Transitions & Pipeline
   RULE_STATUS_CHANGED
   PIPELINE_STAGE_COMPLETE
+  STRUCTURAL_DRIFT_DETECTED
 
   // Staff Portal - Client Data Access (GDPR compliance)
   STAFF_VIEW_CLIENT

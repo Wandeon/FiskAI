@@ -105,6 +105,7 @@ const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   SEMANTIC_DUPLICATE_DETECTED: "Otkrivena semantička kopija",
   RULE_AUTO_DEPRECATED: "Pravilo automatski zastarjelo",
   HUMAN_REVIEW_REQUESTED: "Zatražen ljudski pregled",
+  STRUCTURAL_DRIFT_DETECTED: "Otkriveno strukturno odstupanje",
 }
 
 const ENTITY_LABELS: Record<string, string> = {

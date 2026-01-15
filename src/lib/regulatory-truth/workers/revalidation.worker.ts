@@ -18,6 +18,7 @@
 // Failed revalidations trigger alerts requiring human review.
 
 import { Job } from "bullmq"
+import { Prisma } from "@prisma/client"
 import { dbReg } from "@/lib/db"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { jobsProcessed, jobDuration } from "./metrics"
@@ -325,7 +326,10 @@ async function recordRevalidation(result: RevalidationResult): Promise<void> {
       ruleId: result.ruleId,
       validatedAt: result.validatedAt,
       passed: result.passed,
-      failures: result.failures.length > 0 ? result.failures : null,
+      failures:
+        result.failures.length > 0
+          ? (result.failures as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       validationSuite: "full",
     },
   })

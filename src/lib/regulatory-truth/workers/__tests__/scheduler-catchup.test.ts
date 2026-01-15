@@ -18,19 +18,29 @@ export interface SchedulerRun {
   lockHolder: string | null
 }
 
+// Create mock functions for database operations
+const mockSchedulerRunFindMany = vi.fn()
+const mockSchedulerRunFindFirst = vi.fn()
+const mockSchedulerRunCreate = vi.fn()
+const mockSchedulerRunUpdate = vi.fn()
+const mockSchedulerRunUpdateMany = vi.fn()
+const mockSchedulerRunFindUnique = vi.fn()
+const mockTransaction = vi.fn()
+const mockQueryRaw = vi.fn()
+
 // Mock the database module - must be hoisted before imports
 vi.mock("@/lib/db/regulatory", () => ({
   dbReg: {
     schedulerRun: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-      findUnique: vi.fn(),
+      findMany: (...args: unknown[]) => mockSchedulerRunFindMany(...args),
+      findFirst: (...args: unknown[]) => mockSchedulerRunFindFirst(...args),
+      create: (...args: unknown[]) => mockSchedulerRunCreate(...args),
+      update: (...args: unknown[]) => mockSchedulerRunUpdate(...args),
+      updateMany: (...args: unknown[]) => mockSchedulerRunUpdateMany(...args),
+      findUnique: (...args: unknown[]) => mockSchedulerRunFindUnique(...args),
     },
-    $transaction: vi.fn(),
-    $queryRaw: vi.fn(),
+    $transaction: (...args: unknown[]) => mockTransaction(...args),
+    $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
   },
 }))
 
@@ -47,11 +57,18 @@ import {
   transitionToRunning,
 } from "../scheduler-catchup"
 
-// Import the mocked module for test setup
-import { dbReg } from "@/lib/db/regulatory"
-
-// Type the mock for better type safety
-const mockDbReg = vi.mocked(dbReg)
+// Mock db object for transaction callbacks
+const mockDbRegObject = {
+  schedulerRun: {
+    findMany: (...args: unknown[]) => mockSchedulerRunFindMany(...args),
+    findFirst: (...args: unknown[]) => mockSchedulerRunFindFirst(...args),
+    create: (...args: unknown[]) => mockSchedulerRunCreate(...args),
+    update: (...args: unknown[]) => mockSchedulerRunUpdate(...args),
+    updateMany: (...args: unknown[]) => mockSchedulerRunUpdateMany(...args),
+    findUnique: (...args: unknown[]) => mockSchedulerRunFindUnique(...args),
+  },
+  $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
+}
 
 describe("scheduler-catchup", () => {
   const INSTANCE_ID = "test-instance-001"
@@ -80,7 +97,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.findMany.mockResolvedValue([missedRun])
+      mockSchedulerRunFindMany.mockResolvedValue([missedRun])
 
       // Act
       const missed = await detectMissedRuns("discovery")
@@ -104,7 +121,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.findMany.mockResolvedValue([])
+      mockSchedulerRunFindMany.mockResolvedValue([])
 
       // Act
       const missed = await detectMissedRuns("discovery")
@@ -126,7 +143,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.findMany.mockResolvedValue([failedRun])
+      mockSchedulerRunFindMany.mockResolvedValue([failedRun])
 
       // Act
       const missed = await detectMissedRuns("discovery")
@@ -138,13 +155,13 @@ describe("scheduler-catchup", () => {
 
     it("only looks back 24 hours for missed runs", async () => {
       // Arrange: Verify the query uses correct time window
-      mockDbReg.schedulerRun.findMany.mockResolvedValue([])
+      mockSchedulerRunFindMany.mockResolvedValue([])
 
       // Act
       await detectMissedRuns("discovery")
 
       // Assert: Should query with scheduledAt >= 24 hours ago
-      expect(mockDbReg.schedulerRun.findMany).toHaveBeenCalledWith(
+      expect(mockSchedulerRunFindMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             jobType: "discovery",
@@ -195,7 +212,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.update.mockResolvedValue({
+      mockSchedulerRunUpdate.mockResolvedValue({
         ...missedRun,
         status: "MISSED",
       })
@@ -204,7 +221,7 @@ describe("scheduler-catchup", () => {
       await triggerCatchUp(missedRun, INSTANCE_ID)
 
       // Assert
-      expect(mockDbReg.schedulerRun.update).toHaveBeenCalledWith(
+      expect(mockSchedulerRunUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "run-1" },
           data: expect.objectContaining({
@@ -229,7 +246,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.findFirst.mockResolvedValue(lastRun)
+      mockSchedulerRunFindFirst.mockResolvedValue(lastRun)
 
       // Act
       const staleness = await checkStaleness("discovery")
@@ -252,7 +269,7 @@ describe("scheduler-catchup", () => {
         lockHolder: null,
       }
 
-      mockDbReg.schedulerRun.findFirst.mockResolvedValue(lastRun)
+      mockSchedulerRunFindFirst.mockResolvedValue(lastRun)
 
       // Act
       const staleness = await checkStaleness("discovery")
@@ -263,7 +280,7 @@ describe("scheduler-catchup", () => {
 
     it("returns stale when no completed discovery run exists", async () => {
       // Arrange: No completed runs found
-      mockDbReg.schedulerRun.findFirst.mockResolvedValue(null)
+      mockSchedulerRunFindFirst.mockResolvedValue(null)
 
       // Act
       const staleness = await checkStaleness("discovery")
@@ -283,15 +300,15 @@ describe("scheduler-catchup", () => {
     describe("acquireLock", () => {
       it("acquires lock when no other instance holds it", async () => {
         // Arrange: No existing lock
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
+        mockTransaction.mockImplementation(async (fn) => {
           // Simulate the lock check + acquire pattern
-          mockDbReg.schedulerRun.findFirst.mockResolvedValue(null)
-          mockDbReg.schedulerRun.update.mockResolvedValue({
+          mockSchedulerRunFindFirst.mockResolvedValue(null)
+          mockSchedulerRunUpdate.mockResolvedValue({
             id: "run-1",
             lockHolder: INSTANCE_ID,
             status: "RUNNING",
           })
-          return fn(mockDbReg)
+          return fn(mockDbRegObject)
         })
 
         // Act
@@ -304,13 +321,13 @@ describe("scheduler-catchup", () => {
 
       it("fails to acquire lock when another instance holds it", async () => {
         // Arrange: Another instance holds the lock
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
-          mockDbReg.schedulerRun.findFirst.mockResolvedValue({
+        mockTransaction.mockImplementation(async (fn) => {
+          mockSchedulerRunFindFirst.mockResolvedValue({
             id: "run-1",
             lockHolder: "other-instance-002",
             status: "RUNNING",
           })
-          return fn(mockDbReg)
+          return fn(mockDbRegObject)
         })
 
         // Act
@@ -323,22 +340,22 @@ describe("scheduler-catchup", () => {
 
       it("uses row-level lock within transaction", async () => {
         // Arrange
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
-          return fn(mockDbReg)
+        mockTransaction.mockImplementation(async (fn) => {
+          return fn(mockDbRegObject)
         })
 
         // Act
         await acquireLock("discovery", INSTANCE_ID, "run-1")
 
         // Assert: Transaction was used for atomicity
-        expect(mockDbReg.$transaction).toHaveBeenCalled()
+        expect(mockTransaction).toHaveBeenCalled()
       })
     })
 
     describe("releaseLock", () => {
       it("releases lock when instance holds it", async () => {
         // Arrange
-        mockDbReg.schedulerRun.update.mockResolvedValue({
+        mockSchedulerRunUpdate.mockResolvedValue({
           id: "run-1",
           lockHolder: null,
           status: "COMPLETED",
@@ -349,7 +366,7 @@ describe("scheduler-catchup", () => {
 
         // Assert
         expect(result.released).toBe(true)
-        expect(mockDbReg.schedulerRun.update).toHaveBeenCalledWith(
+        expect(mockSchedulerRunUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
             where: expect.objectContaining({
               id: "run-1",
@@ -365,7 +382,7 @@ describe("scheduler-catchup", () => {
 
       it("fails to release lock when instance does not hold it", async () => {
         // Arrange: Update fails because lockHolder doesn't match
-        mockDbReg.schedulerRun.update.mockRejectedValue(new Error("Record not found"))
+        mockSchedulerRunUpdate.mockRejectedValue(new Error("Record not found"))
 
         // Act
         const result = await releaseLock("run-1", INSTANCE_ID, "COMPLETED")
@@ -378,7 +395,7 @@ describe("scheduler-catchup", () => {
     describe("lock contention handling", () => {
       it("marks run as MISSED when lock contention detected", async () => {
         // Arrange
-        mockDbReg.schedulerRun.update.mockResolvedValue({
+        mockSchedulerRunUpdate.mockResolvedValue({
           id: "run-1",
           status: "MISSED",
           errorMessage: "Lock contention - another instance processing",
@@ -388,7 +405,7 @@ describe("scheduler-catchup", () => {
         await markRunMissed("run-1", "Lock contention - another instance processing")
 
         // Assert
-        expect(mockDbReg.schedulerRun.update).toHaveBeenCalledWith(
+        expect(mockSchedulerRunUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
             where: { id: "run-1" },
             data: expect.objectContaining({
@@ -406,7 +423,7 @@ describe("scheduler-catchup", () => {
       it("creates a new EXPECTED run for scheduling", async () => {
         // Arrange
         const scheduledAt = new Date("2025-01-15T06:00:00Z")
-        mockDbReg.schedulerRun.create.mockResolvedValue({
+        mockSchedulerRunCreate.mockResolvedValue({
           id: "run-new",
           jobType: "discovery",
           scheduledAt,
@@ -420,7 +437,7 @@ describe("scheduler-catchup", () => {
         // Assert
         expect(run.status).toBe("EXPECTED")
         expect(run.jobType).toBe("discovery")
-        expect(mockDbReg.schedulerRun.create).toHaveBeenCalledWith(
+        expect(mockSchedulerRunCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
               jobType: "discovery",
@@ -434,10 +451,10 @@ describe("scheduler-catchup", () => {
       it("handles unique constraint violation gracefully", async () => {
         // Arrange: Run already exists for this jobType + scheduledAt
         const scheduledAt = new Date("2025-01-15T06:00:00Z")
-        mockDbReg.schedulerRun.create.mockRejectedValue(
+        mockSchedulerRunCreate.mockRejectedValue(
           new Error("Unique constraint failed on (jobType, scheduledAt)")
         )
-        mockDbReg.schedulerRun.findUnique.mockResolvedValue({
+        mockSchedulerRunFindUnique.mockResolvedValue({
           id: "existing-run",
           jobType: "discovery",
           scheduledAt,
@@ -466,17 +483,17 @@ describe("scheduler-catchup", () => {
           lockHolder: null,
         }
 
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
+        mockTransaction.mockImplementation(async (fn) => {
           // Mock updateMany to return count=1 (successful update)
-          mockDbReg.schedulerRun.updateMany.mockResolvedValue({ count: 1 })
+          mockSchedulerRunUpdateMany.mockResolvedValue({ count: 1 })
           // Mock findUnique to return the updated run
-          mockDbReg.schedulerRun.findUnique.mockResolvedValue({
+          mockSchedulerRunFindUnique.mockResolvedValue({
             ...run,
             status: "RUNNING",
             startedAt: new Date(),
             lockHolder: INSTANCE_ID,
           })
-          return fn(mockDbReg)
+          return fn(mockDbRegObject)
         })
 
         // Act
@@ -490,10 +507,10 @@ describe("scheduler-catchup", () => {
 
       it("fails transition if run is not in EXPECTED state", async () => {
         // Arrange: Run is already RUNNING, updateMany returns count=0
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
+        mockTransaction.mockImplementation(async (fn) => {
           // Simulate updateMany returning 0 (no rows matched)
-          mockDbReg.schedulerRun.updateMany.mockResolvedValue({ count: 0 })
-          return fn(mockDbReg)
+          mockSchedulerRunUpdateMany.mockResolvedValue({ count: 0 })
+          return fn(mockDbRegObject)
         })
 
         // Act
@@ -506,16 +523,16 @@ describe("scheduler-catchup", () => {
 
       it("uses UPDATE with WHERE status=EXPECTED for atomicity", async () => {
         // Arrange
-        mockDbReg.$transaction.mockImplementation(async (fn) => {
-          mockDbReg.schedulerRun.updateMany.mockResolvedValue({ count: 0 })
-          return fn(mockDbReg)
+        mockTransaction.mockImplementation(async (fn) => {
+          mockSchedulerRunUpdateMany.mockResolvedValue({ count: 0 })
+          return fn(mockDbRegObject)
         })
 
         // Act
         await transitionToRunning("run-1", INSTANCE_ID)
 
         // Assert: The update should include status constraint
-        expect(mockDbReg.$transaction).toHaveBeenCalled()
+        expect(mockTransaction).toHaveBeenCalled()
       })
     })
   })
@@ -537,8 +554,8 @@ describe("scheduler-catchup", () => {
         },
       ]
 
-      mockDbReg.schedulerRun.findMany.mockResolvedValue(missedRuns)
-      mockDbReg.schedulerRun.update.mockResolvedValue({
+      mockSchedulerRunFindMany.mockResolvedValue(missedRuns)
+      mockSchedulerRunUpdate.mockResolvedValue({
         ...missedRuns[0],
         status: "MISSED",
       })

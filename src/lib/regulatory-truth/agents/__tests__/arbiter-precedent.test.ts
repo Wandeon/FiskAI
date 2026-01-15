@@ -16,18 +16,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // Mock the db module before importing arbiter
+const mockFindMany = vi.fn()
+const mockCreate = vi.fn()
+
 vi.mock("@/lib/db", () => ({
   db: {},
   dbReg: {
     conflictResolutionAudit: {
-      findMany: vi.fn(),
-      create: vi.fn(),
+      findMany: (...args: unknown[]) => mockFindMany(...args),
+      create: (...args: unknown[]) => mockCreate(...args),
     },
   },
 }))
 
 import { findPrecedent, type PrecedentResult } from "../arbiter"
-import { dbReg } from "@/lib/db"
 
 // =============================================================================
 // TEST FIXTURES
@@ -102,7 +104,7 @@ describe("findPrecedent - finds matching precedents by concept + conflict type",
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("pausalni-revenue-threshold", "TEMPORAL_CONFLICT", "T2")
 
@@ -111,7 +113,7 @@ describe("findPrecedent - finds matching precedents by concept + conflict type",
     expect(result.winnerStrategy).toBe("temporal_newer")
 
     // Verify the query was made with correct filters
-    expect(dbReg.conflictResolutionAudit.findMany).toHaveBeenCalledWith(
+    expect(mockFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           metadata: expect.objectContaining({
@@ -124,7 +126,7 @@ describe("findPrecedent - finds matching precedents by concept + conflict type",
   })
 
   it("returns not found when no matching precedents exist", async () => {
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue([])
+    mockFindMany.mockResolvedValue([])
 
     const result = await findPrecedent("new-concept-slug", "SCOPE_CONFLICT", "T2")
 
@@ -146,7 +148,7 @@ describe("findPrecedent - finds matching precedents by concept + conflict type",
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("pausalni-revenue-threshold", "TEMPORAL_CONFLICT", "T2")
 
@@ -176,7 +178,7 @@ describe("findPrecedent - requires 3+ precedents to apply", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("vat-rate-standard", "INTERPRETATION_CONFLICT", "T2")
 
@@ -204,7 +206,7 @@ describe("findPrecedent - requires 3+ precedents to apply", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("vat-rate-standard", "INTERPRETATION_CONFLICT", "T2")
 
@@ -239,7 +241,7 @@ describe("findPrecedent - requires 3+ precedents to apply", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("vat-rate-standard", "INTERPRETATION_CONFLICT", "T2")
 
@@ -258,7 +260,7 @@ describe("findPrecedent - requires 3+ precedents to apply", () => {
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("vat-rate-standard", "INTERPRETATION_CONFLICT", "T2")
 
@@ -301,7 +303,7 @@ describe("findPrecedent - requires 70%+ agreement", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("contribution-rate", "TEMPORAL_CONFLICT", "T2")
 
@@ -342,7 +344,7 @@ describe("findPrecedent - requires 70%+ agreement", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("contribution-rate", "TEMPORAL_CONFLICT", "T2")
 
@@ -373,7 +375,7 @@ describe("findPrecedent - requires 70%+ agreement", () => {
       ),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("contribution-rate", "TEMPORAL_CONFLICT", "T2")
 
@@ -407,7 +409,7 @@ describe("findPrecedent - requires 70%+ agreement", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("contribution-rate", "TEMPORAL_CONFLICT", "T2")
 
@@ -449,7 +451,7 @@ describe("findPrecedent - requires 70%+ agreement", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("contribution-rate", "TEMPORAL_CONFLICT", "T2")
 
@@ -479,7 +481,7 @@ describe("findPrecedent - respects T0/T1 tier gating", () => {
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent(
       "constitutional-right",
@@ -504,7 +506,7 @@ describe("findPrecedent - respects T0/T1 tier gating", () => {
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent(
       "primary-tax-obligation",
@@ -529,7 +531,7 @@ describe("findPrecedent - respects T0/T1 tier gating", () => {
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("administrative-procedure", "SCOPE_CONFLICT", "T2")
 
@@ -549,7 +551,7 @@ describe("findPrecedent - respects T0/T1 tier gating", () => {
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("internal-practice", "TEMPORAL_CONFLICT", "T3")
 
@@ -578,7 +580,7 @@ describe("findPrecedent - creates audit trail for precedent-based resolutions", 
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
 
@@ -605,7 +607,7 @@ describe("findPrecedent - creates audit trail for precedent-based resolutions", 
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
 
@@ -623,7 +625,7 @@ describe("findPrecedent - creates audit trail for precedent-based resolutions", 
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("test-concept", "SCOPE_CONFLICT", "T2")
 
@@ -641,7 +643,7 @@ describe("findPrecedent - creates audit trail for precedent-based resolutions", 
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
 
@@ -662,7 +664,7 @@ describe("findPrecedent - creates audit trail for precedent-based resolutions", 
       })
     )
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result: PrecedentResult = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
 
@@ -700,7 +702,7 @@ describe("findPrecedent - edge cases", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     // Should not throw
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
@@ -727,7 +729,7 @@ describe("findPrecedent - edge cases", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     // Should not throw
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
@@ -736,9 +738,7 @@ describe("findPrecedent - edge cases", () => {
   })
 
   it("handles database errors gracefully", async () => {
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockRejectedValue(
-      new Error("Database connection failed")
-    )
+    mockFindMany.mockRejectedValue(new Error("Database connection failed"))
 
     // Should not throw, should return not found with error reason
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
@@ -749,7 +749,7 @@ describe("findPrecedent - edge cases", () => {
   })
 
   it("handles empty concept slug", async () => {
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue([])
+    mockFindMany.mockResolvedValue([])
 
     const result = await findPrecedent("", "TEMPORAL_CONFLICT", "T2")
 
@@ -783,7 +783,7 @@ describe("findPrecedent - edge cases", () => {
       }),
     ]
 
-    vi.mocked(dbReg.conflictResolutionAudit.findMany).mockResolvedValue(mockAudits)
+    mockFindMany.mockResolvedValue(mockAudits)
 
     const result = await findPrecedent("test-concept", "TEMPORAL_CONFLICT", "T2")
 

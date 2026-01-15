@@ -42,6 +42,7 @@ enum AlertType {
   CONFIDENCE_DEGRADED
   COVERAGE_GAP
   NEGATIVE_USER_FEEDBACK
+  STRUCTURAL_DRIFT
 
   @@schema("regulatory")
 }
@@ -207,6 +208,7 @@ model MonitoringAlert {
   sourceId            String?
   description         String        @db.Text
   autoAction          Json? // { action, executed, result }
+  metadata            Json? // Additional context data
   humanActionRequired Boolean       @default(false)
   acknowledgedBy      String?
   acknowledgedAt      DateTime?

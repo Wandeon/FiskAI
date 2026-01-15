@@ -140,7 +140,7 @@ async function getLatestSnapshot(ruleId: string): Promise<RuleSnapshotData | nul
     conceptSlug: snapshot.conceptSlug,
     valueHash: snapshot.valueHash,
     confidence: snapshot.confidence,
-    sourceVersions: snapshot.sourceVersions as SourceVersion[],
+    sourceVersions: snapshot.sourceVersions as unknown as SourceVersion[],
     snapshotAt: snapshot.snapshotAt,
   }
 }
