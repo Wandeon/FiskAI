@@ -1,21 +1,113 @@
 // src/lib/regulatory-truth/workers/scheduler.service.ts
 // Layer A: Morning discovery refresh - runs once daily to discover new content
 // Processing is handled by the continuous-drainer (Layer B)
+//
+// Task 1.2: RTL Autonomy - Added scheduler run persistence + catch-up logic
+// - Tracks scheduled vs actual runs in SchedulerRun table
+// - Detects missed runs on startup (24-hour lookback)
+// - Hourly staleness watchdog (26-hour threshold triggers catch-up)
+// - Distributed locking prevents concurrent execution
 
 import cron from "node-cron"
+import { randomUUID } from "crypto"
 import { sentinelQueue, scheduledQueue } from "./queues"
 import { closeRedis } from "./redis"
 import { logWorkerStartup } from "./startup-log"
 import { runEndpointHealthCheck } from "../watchdog/endpoint-health"
+import {
+  runStartupCatchUp,
+  runStalenessWatchdog,
+  createExpectedRun,
+  transitionToRunning,
+  releaseLock,
+  markRunMissed,
+  STALENESS_THRESHOLD_HOURS,
+} from "./scheduler-catchup"
 
 logWorkerStartup("scheduler")
 
 const TIMEZONE = process.env.WATCHDOG_TIMEZONE || "Europe/Zagreb"
 
+// Unique instance ID for distributed locking
+const INSTANCE_ID = `scheduler-${process.env.HOSTNAME || "local"}-${randomUUID().slice(0, 8)}`
+
+/**
+ * Execute the discovery job with distributed locking and persistence.
+ * Called both by scheduled cron and catch-up logic.
+ */
+async function executeDiscoveryJob(triggeredBy: "cron" | "catch-up" | "staleness"): Promise<void> {
+  const scheduledAt = new Date()
+  // Normalize to the hour for consistent scheduling
+  scheduledAt.setMinutes(0, 0, 0)
+
+  console.log(`[scheduler] Discovery triggered by: ${triggeredBy}`)
+
+  try {
+    // Create expected run record (or get existing)
+    const run = await createExpectedRun("discovery", scheduledAt)
+
+    // Try to acquire lock via atomic transition
+    const transition = await transitionToRunning(run.id, INSTANCE_ID)
+
+    if (!transition.success) {
+      // Lock contention - another instance is processing
+      console.log(`[scheduler] Discovery already running (lock held), skipping`)
+      await markRunMissed(run.id, `Lock contention - another instance processing (${triggeredBy})`)
+      return
+    }
+
+    console.log(`[scheduler] Acquired lock for discovery run ${run.id}`)
+    const runId = `discovery-${Date.now()}`
+
+    try {
+      // Queue sentinel jobs for all priorities
+      await sentinelQueue.add("sentinel-critical", { runId, priority: "CRITICAL" })
+      await sentinelQueue.add("sentinel-high", { runId, priority: "HIGH" }, { delay: 60000 })
+      await sentinelQueue.add("sentinel-normal", { runId, priority: "NORMAL" }, { delay: 120000 })
+      await sentinelQueue.add("sentinel-low", { runId, priority: "LOW" }, { delay: 180000 })
+
+      console.log("[scheduler] Discovery jobs queued for all priorities")
+
+      // Release lock with success status
+      await releaseLock(run.id, INSTANCE_ID, "COMPLETED")
+      console.log(`[scheduler] Released lock for discovery run ${run.id}`)
+    } catch (error) {
+      // Release lock with failure status
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      await releaseLock(run.id, INSTANCE_ID, "FAILED", errorMessage)
+      console.error(`[scheduler] Discovery job failed:`, error)
+      throw error
+    }
+  } catch (error) {
+    console.error(`[scheduler] Failed to execute discovery job:`, error)
+    // Don't re-throw - let the scheduler continue
+  }
+}
+
 async function startScheduler(): Promise<void> {
   console.log("[scheduler] Starting scheduler service (Layer A: Discovery only)")
   console.log(`[scheduler] Timezone: ${TIMEZONE}`)
+  console.log(`[scheduler] Instance ID: ${INSTANCE_ID}`)
   console.log("[scheduler] NOTE: Processing is handled by continuous-drainer (Layer B)")
+
+  // =========================================
+  // Startup: Catch-up for Missed Runs
+  // =========================================
+
+  console.log("[scheduler] Checking for missed runs on startup...")
+  try {
+    const catchUp = await runStartupCatchUp("discovery", INSTANCE_ID, () =>
+      executeDiscoveryJob("catch-up")
+    )
+    if (catchUp.catchUpTriggered) {
+      console.log(`[scheduler] Catch-up triggered for ${catchUp.missedCount} missed discovery runs`)
+    } else {
+      console.log("[scheduler] No catch-up needed - discovery is current")
+    }
+  } catch (error) {
+    console.error("[scheduler] Startup catch-up check failed:", error)
+    // Continue with normal scheduling
+  }
 
   // =========================================
   // Layer A: Morning Discovery Refresh
@@ -27,15 +119,7 @@ async function startScheduler(): Promise<void> {
     "0 6 * * *",
     async () => {
       console.log("[scheduler] Running morning discovery refresh...")
-      const runId = `discovery-${Date.now()}`
-
-      // Queue sentinel jobs for all priorities
-      await sentinelQueue.add("sentinel-critical", { runId, priority: "CRITICAL" })
-      await sentinelQueue.add("sentinel-high", { runId, priority: "HIGH" }, { delay: 60000 })
-      await sentinelQueue.add("sentinel-normal", { runId, priority: "NORMAL" }, { delay: 120000 })
-      await sentinelQueue.add("sentinel-low", { runId, priority: "LOW" }, { delay: 180000 })
-
-      console.log("[scheduler] Discovery jobs queued for all priorities")
+      await executeDiscoveryJob("cron")
     },
     { timezone: TIMEZONE }
   )
@@ -93,6 +177,35 @@ async function startScheduler(): Promise<void> {
     { timezone: TIMEZONE }
   )
   console.log("[scheduler] Scheduled: DLQ healing every 5 minutes")
+
+  // =========================================
+  // Staleness Watchdog (hourly)
+  // =========================================
+
+  // Hourly staleness check - triggers catch-up if >26 hours since last discovery
+  // This is a safety net in case the 6 AM cron fails silently
+  cron.schedule(
+    "0 * * * *", // Every hour at minute 0
+    async () => {
+      console.log("[scheduler] Running hourly staleness watchdog...")
+      try {
+        const result = await runStalenessWatchdog("discovery", INSTANCE_ID, () =>
+          executeDiscoveryJob("staleness")
+        )
+        if (result.triggered) {
+          console.log(`[scheduler] Staleness watchdog triggered catch-up: ${result.reason}`)
+        } else {
+          console.log(`[scheduler] Staleness watchdog: discovery is current`)
+        }
+      } catch (error) {
+        console.error("[scheduler] Staleness watchdog failed:", error)
+      }
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log(
+    `[scheduler] Scheduled: Staleness watchdog every hour (threshold: ${STALENESS_THRESHOLD_HOURS}h)`
+  )
 
   // =========================================
   // Maintenance Jobs (not processing)

@@ -398,3 +398,36 @@ model RuleFact {
   @@index([conceptId])
   @@schema("regulatory")
 }
+
+// =============================================================================
+// SCHEDULER RUN - Track expected vs actual job runs for catch-up logic
+// =============================================================================
+// Task 1.2: RTL Autonomy - Scheduler Run Persistence + Catch-up
+// Tracks scheduled job runs to detect missed executions and enable catch-up.
+// Uses row-level locking to prevent concurrent runs of the same job type.
+
+enum SchedulerRunStatus {
+  EXPECTED // Job is scheduled to run
+  RUNNING // Job is currently executing (lock held)
+  COMPLETED // Job finished successfully
+  FAILED // Job finished with error
+  MISSED // Job was skipped (lock contention or catch-up detected)
+
+  @@schema("regulatory")
+}
+
+model SchedulerRun {
+  id           String             @id @default(cuid())
+  jobType      String // "discovery", "health-check", "confidence-decay", etc.
+  scheduledAt  DateTime // When this run was scheduled to execute
+  startedAt    DateTime? // When execution actually started
+  completedAt  DateTime? // When execution finished (success or failure)
+  status       SchedulerRunStatus @default(EXPECTED)
+  errorMessage String? // Error details if FAILED
+  lockHolder   String? // Instance ID holding the distributed lock
+
+  @@unique([jobType, scheduledAt])
+  @@index([jobType, status])
+  @@index([scheduledAt])
+  @@schema("regulatory")
+}
