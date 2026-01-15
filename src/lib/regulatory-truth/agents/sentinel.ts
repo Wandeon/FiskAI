@@ -24,7 +24,12 @@ import {
 import { parseRSSFeed, filterRSSByDate, filterRSSByPattern } from "../parsers/rss-parser"
 import { logAuditEvent } from "../utils/audit-log"
 import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
-import { ocrQueue, extractQueue, evidenceEmbeddingQueue } from "../workers/queues"
+import {
+  ocrQueue,
+  extractQueue,
+  evidenceEmbeddingQueue,
+  selectorAdaptationQueue,
+} from "../workers/queues"
 import { isScannedPdf } from "../utils/ocr-processor"
 import { isBlockedDomain } from "../utils/concept-resolver"
 import { crawlSite, CrawlOptions } from "./site-crawler"
@@ -631,9 +636,17 @@ async function processEndpoint(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _currentFingerprint = generateFingerprint(content, { selectors: fingerprintSelectors })
 
+    // Track drift detection for potential selector adaptation trigger
+    let driftDetected = false
+    let driftPercent = 0
+
     if (baselineData?.fingerprint && baselineData.approvalStatus === "approved") {
       // Check for structural drift against approved baseline
       const driftResult = await checkStructuralDrift(endpoint.id, content, baselineData, raiseAlert)
+
+      // Capture drift state for later selector adaptation check
+      driftDetected = driftResult.shouldAlert
+      driftPercent = driftResult.driftPercent
 
       if (driftResult.shouldAlert) {
         log("warn", `Structural drift detected: ${driftResult.driftPercent.toFixed(1)}%`, {
@@ -964,6 +977,41 @@ async function processEndpoint(
       endpointId: endpoint.id,
       metadata: { newItems: newItemCount },
     })
+
+    // -------------------------------------------------------------------------
+    // SELECTOR ADAPTATION TRIGGER (Task 3.2)
+    // When drift is detected AND extraction yields 0 items, queue selector adaptation
+    // -------------------------------------------------------------------------
+    if (driftDetected && newItemCount === 0) {
+      const runId = crypto.randomUUID()
+      await selectorAdaptationQueue.add("adapt", {
+        runId,
+        endpointId: endpoint.id,
+        endpointUrl: baseUrl,
+        currentHtml: content,
+        currentSelectors: fingerprintSelectors,
+        driftPercent,
+      })
+
+      log("info", `Queued selector adaptation for ${baseUrl}`, {
+        operation: "selector-adaptation-trigger",
+        endpointId: endpoint.id,
+        url: baseUrl,
+        metadata: {
+          runId,
+          driftPercent,
+          yield: 0,
+        },
+      })
+
+      console.log(
+        `[sentinel] Queued selector adaptation for ${baseUrl} (drift: ${driftPercent.toFixed(1)}%, yield: 0)`
+      )
+    }
+    // -------------------------------------------------------------------------
+    // END SELECTOR ADAPTATION TRIGGER
+    // -------------------------------------------------------------------------
+
     return { newItems: newItemCount }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
