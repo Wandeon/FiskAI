@@ -459,3 +459,32 @@ model RuleFactSnapshot {
   @@index([conceptSlug, snapshotAt]) // Query by concept slug
   @@schema("regulatory")
 }
+
+// =============================================================================
+// RULE FEEDBACK - User feedback on AI assistant responses
+// =============================================================================
+// Task 4.1: RTL Autonomy - User Feedback Loop
+// Tracks user feedback (thumbs up/down) on AI assistant responses to correlate
+// feedback to specific regulatory rules and identify rules with poor accuracy.
+//
+// Critical Safeguards (Appendix A.4):
+// - Minimal Data: Store only ruleId, sentiment, timestamp, appVersion, optional reasonCode
+// - No PII: Do not store user identifiers by default
+// - Hashed ID: If needed, use one-way salted hash with consent
+// - Retention: 12-month retention policy
+// - UI Opt-in: Requires privacy policy update and UI opt-in
+
+model RuleFeedback {
+  id                String   @id @default(cuid())
+  ruleId            String // Soft ref to RegulatoryRule or RuleFact
+  sentiment         String // "positive" | "negative"
+  reasonCode        String? // Optional: "inaccurate" | "outdated" | "unclear" | "other"
+  appVersion        String // Application version when feedback was given
+  anonymousUserHash String? // SHA-256(salt + userId) ONLY if user consented
+  createdAt         DateTime @default(now())
+
+  @@index([ruleId])
+  @@index([createdAt]) // For retention cleanup queries
+  @@index([sentiment]) // For aggregation queries
+  @@schema("regulatory")
+}
