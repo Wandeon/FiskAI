@@ -85,6 +85,14 @@ export const regressionDetectorQueue = createQueue("regression-detector", {
   duration: 86400000, // Once per day
 })
 
+// Selector adaptation queue - LLM-based selector suggestions when format drift detected
+// Task 3.2: RTL Autonomy - LLM-Based Selector Adaptation
+// Low rate limit since each job involves LLM calls and human review
+export const selectorAdaptationQueue = createQueue("selector-adaptation", {
+  max: 1,
+  duration: 300000, // 5 min rate limit - don't overwhelm LLM
+})
+
 // Control queues
 export const scheduledQueue = createQueue("scheduled")
 
@@ -124,6 +132,7 @@ export const allQueues = {
   embedding: embeddingQueue,
   "evidence-embedding": evidenceEmbeddingQueue,
   "regression-detector": regressionDetectorQueue,
+  "selector-adaptation": selectorAdaptationQueue,
   scheduled: scheduledQueue,
   deadletter: deadletterQueue,
   "system-status": systemStatusQueue,
