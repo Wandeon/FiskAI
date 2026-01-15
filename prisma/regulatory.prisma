@@ -520,3 +520,30 @@ model RuleRevalidation {
   @@index([passed]) // Query failed revalidations
   @@schema("regulatory")
 }
+
+// =============================================================================
+// CONFIDENCE CALIBRATION - Platt scaling parameters for LLM confidence scores
+// =============================================================================
+// Task 4.3: RTL Autonomy - Confidence Calibration
+// Stores learned Platt scaling parameters to calibrate raw LLM confidence scores
+// based on historical human review outcomes.
+//
+// Platt Scaling: P(y=1|x) = 1 / (1 + exp(A*x + B))
+// Where A and B are learned from historical data, x is raw confidence.
+//
+// Critical Safeguards:
+// - Minimum sample size: 50 reviews required before calibration is applied
+// - Parameters refreshed weekly via scheduled job
+// - Cold-start handled gracefully (returns raw confidence unchanged)
+// - Retention: Keep 90 days of calibration records for trend analysis
+
+model ConfidenceCalibration {
+  id         String   @id @default(cuid())
+  paramA     Float // Platt scaling parameter A (slope)
+  paramB     Float // Platt scaling parameter B (intercept)
+  sampleSize Int // Number of reviews used to compute parameters
+  computedAt DateTime @default(now())
+
+  @@index([computedAt]) // Query latest calibration, TTL cleanup
+  @@schema("regulatory")
+}
