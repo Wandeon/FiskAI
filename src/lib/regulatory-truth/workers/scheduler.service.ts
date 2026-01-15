@@ -64,6 +64,37 @@ async function startScheduler(): Promise<void> {
   console.log("[scheduler] Scheduled: Endpoint health check at 06:30")
 
   // =========================================
+  // DLQ Auto-Healing (every 5 minutes)
+  // =========================================
+
+  // DLQ healing cycle - auto-replays transient failures
+  // Runs every 5 minutes to replay NETWORK/TIMEOUT errors after cooldown
+  // Replays QUOTA errors after 1-hour cooldown
+  // Never replays permanent failures (AUTH, VALIDATION, EMPTY)
+  cron.schedule(
+    "*/5 * * * *",
+    async () => {
+      console.log("[scheduler] Running DLQ healing cycle...")
+      await scheduledQueue.add(
+        "scheduled",
+        {
+          type: "dlq-healing",
+          runId: `dlq-heal-${Date.now()}`,
+          triggeredBy: "cron",
+        },
+        {
+          // Prevent duplicate healing jobs (only one should run at a time)
+          jobId: "dlq-healing-cycle",
+          // If a healing job is already pending, skip this one
+          removeOnComplete: true,
+        }
+      )
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: DLQ healing every 5 minutes")
+
+  // =========================================
   // Maintenance Jobs (not processing)
   // =========================================
 

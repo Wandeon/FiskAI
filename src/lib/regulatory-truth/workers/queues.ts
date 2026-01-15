@@ -137,4 +137,8 @@ export interface DeadLetterJobData {
   attemptsMade: number
   failedAt: string
   firstFailedAt?: string
+  // Classification fields for auto-healing
+  errorCategory?: string // ErrorCategory enum value
+  idempotencyKey?: string // jobId + payloadHash for deduplication
+  isRetryable?: boolean // Whether this error is eligible for auto-retry
 }

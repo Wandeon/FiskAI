@@ -22,6 +22,7 @@ interface ScheduledJobData {
     | "e2e-validation"
     | "health-snapshot"
     | "truth-consolidation-audit"
+    | "dlq-healing"
   runId: string
   triggeredBy?: string
 }
@@ -194,6 +195,31 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
             testDataLeakage: healthCheck.testDataLeakage,
             snapshotId: snapshot.id,
             alerts: healthCheck.alerts,
+          },
+        }
+      }
+
+      case "dlq-healing": {
+        // Run DLQ healing cycle to auto-replay transient failures
+        const { runHealingCycle } = await import("./dlq-healer")
+        const result = await runHealingCycle()
+
+        // Log summary
+        console.log(
+          `[orchestrator] DLQ healing complete: replayed=${result.replayed} ` +
+            `skipped=${result.skipped} escalated=${result.escalated}`
+        )
+
+        return {
+          success: result.errors.length === 0,
+          duration: Date.now() - start,
+          data: {
+            scanned: result.scanned,
+            replayed: result.replayed,
+            skipped: result.skipped,
+            escalated: result.escalated,
+            byCategory: result.byCategory,
+            errors: result.errors,
           },
         }
       }
