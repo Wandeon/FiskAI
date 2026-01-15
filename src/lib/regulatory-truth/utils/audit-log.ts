@@ -15,6 +15,7 @@ export type EntityType =
   | "PIPELINE"
   | "SOURCE_POINTER"
   | "WEBHOOK_EVENT"
+  | "DISCOVERY_ENDPOINT"
 
 interface LogParams {
   action: AuditAction

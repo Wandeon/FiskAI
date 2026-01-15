@@ -1,7 +1,7 @@
 // src/lib/regulatory-truth/watchdog/health-monitors.ts
 
 import { db, dbReg } from "@/lib/db"
-import type { WatchdogHealthStatus, WatchdogCheckType } from "@prisma/client"
+import { Prisma, type WatchdogHealthStatus, type WatchdogCheckType } from "@prisma/client"
 import type { HealthCheckResult } from "./types"
 import { getThreshold } from "./types"
 import { raiseAlert } from "./alerting"
@@ -15,6 +15,11 @@ import {
 import { pingAllProviders, getActiveProvider } from "./llm-provider-health"
 import { llmCircuitBreaker } from "./llm-circuit-breaker"
 import { runProgressGateChecks } from "./progress-gates"
+import {
+  calculateDrift,
+  DRIFT_THRESHOLD_PERCENT,
+  type BaselineMetadata,
+} from "../utils/structural-fingerprint"
 
 /**
  * Update health status in database
@@ -269,6 +274,89 @@ export async function checkRejectionRate(): Promise<HealthCheckResult> {
 }
 
 /**
+ * Task 3.1: Check for structural drift in discovery endpoints.
+ * Identifies endpoints where the page structure has drifted from baseline,
+ * which could cause silent scraper failures (0 items extracted, no error).
+ */
+export async function checkStructuralDrift(): Promise<HealthCheckResult[]> {
+  const results: HealthCheckResult[] = []
+
+  // Get endpoints with structural baselines
+  const endpoints = await db.discoveryEndpoint.findMany({
+    where: {
+      isActive: true,
+      metadata: { not: Prisma.JsonNull },
+    },
+    select: {
+      id: true,
+      name: true,
+      domain: true,
+      path: true,
+      metadata: true,
+    },
+  })
+
+  for (const endpoint of endpoints) {
+    const metadata = endpoint.metadata as Record<string, unknown> | null
+    const baseline = metadata?.structuralBaseline as BaselineMetadata | undefined
+
+    if (!baseline?.fingerprint) {
+      // No baseline yet - skip this endpoint
+      continue
+    }
+
+    // Check approval status
+    if (baseline.approvalStatus !== "approved") {
+      // Baseline pending approval - report as WARNING
+      const result: HealthCheckResult = {
+        checkType: "SCRAPER_FAILURE" as WatchdogCheckType, // Using existing type
+        entityId: endpoint.id,
+        status: "WARNING",
+        message: `Structural baseline pending approval for ${endpoint.name}`,
+      }
+      await updateHealth(result)
+      results.push(result)
+      continue
+    }
+
+    // Check if there's a recent fingerprint to compare
+    // Note: The actual drift check happens during scraping in sentinel.ts
+    // This health check reports endpoints with pending baseline approvals
+    // or alerts that were raised but not resolved
+
+    // Check for unresolved STRUCTURAL_DRIFT alerts for this endpoint
+    const unresolvedAlert = await db.watchdogAlert.findFirst({
+      where: {
+        type: "STRUCTURAL_DRIFT",
+        entityId: endpoint.id,
+        resolvedAt: null,
+      },
+      orderBy: { occurredAt: "desc" },
+    })
+
+    let status: WatchdogHealthStatus = "HEALTHY"
+    let message = `Structural baseline healthy for ${endpoint.name}`
+
+    if (unresolvedAlert) {
+      status = "CRITICAL"
+      message = `Unresolved structural drift alert for ${endpoint.name}: ${unresolvedAlert.message}`
+    }
+
+    const result: HealthCheckResult = {
+      checkType: "SCRAPER_FAILURE" as WatchdogCheckType,
+      entityId: endpoint.id,
+      status,
+      message,
+    }
+
+    await updateHealth(result)
+    results.push(result)
+  }
+
+  return results
+}
+
+/**
  * Run all health checks
  */
 export async function runAllHealthChecks(): Promise<HealthCheckResult[]> {
@@ -299,6 +387,10 @@ export async function runAllHealthChecks(): Promise<HealthCheckResult[]> {
   // Progress gates (LLM provider health gates)
   const progressResults = await runProgressGateChecks()
   results.push(...progressResults)
+
+  // Task 3.1: Structural drift detection
+  const structuralDriftResults = await checkStructuralDrift()
+  results.push(...structuralDriftResults)
 
   const healthy = results.filter((r) => r.status === "HEALTHY").length
   const warning = results.filter((r) => r.status === "WARNING").length

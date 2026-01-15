@@ -3160,6 +3160,7 @@ enum AuditAction {
   // Regulatory Truth Layer - Status Transitions & Pipeline
   RULE_STATUS_CHANGED
   PIPELINE_STAGE_COMPLETE
+  STRUCTURAL_DRIFT_DETECTED
 
   // Staff Portal - Client Data Access (GDPR compliance)
   STAFF_VIEW_CLIENT
@@ -4817,6 +4818,8 @@ enum WatchdogAlertType {
   PROGRESS_STALL_EVIDENCE // Evidence stuck without extraction
   PROGRESS_STALL_EXTRACTION // Extraction stuck without rule
   PROGRESS_STALL_RELEASE // Approved stuck without release
+  // Task 3.1: Structural fingerprinting
+  STRUCTURAL_DRIFT // Page structure changed >30% from baseline - format may have changed
 }
 
 enum AuditResult {

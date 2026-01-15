@@ -1,7 +1,7 @@
 // src/lib/regulatory-truth/workers/orchestrator.worker.ts
 import { Job } from "bullmq"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
-import { sentinelQueue, releaseQueue, arbiterQueue } from "./queues"
+import { sentinelQueue, releaseQueue, arbiterQueue, regressionDetectorQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { db, dbReg } from "@/lib/db"
 import { autoApproveEligibleRules } from "../agents/reviewer"
@@ -22,6 +22,10 @@ interface ScheduledJobData {
     | "e2e-validation"
     | "health-snapshot"
     | "truth-consolidation-audit"
+    | "dlq-healing"
+    | "regression-detection"
+    | "feedback-retention-cleanup"
+    | "feedback-review-flagging"
   runId: string
   triggeredBy?: string
 }
@@ -194,6 +198,138 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
             testDataLeakage: healthCheck.testDataLeakage,
             snapshotId: snapshot.id,
             alerts: healthCheck.alerts,
+          },
+        }
+      }
+
+      case "dlq-healing": {
+        // Run DLQ healing cycle to auto-replay transient failures
+        const { runHealingCycle } = await import("./dlq-healer")
+        const result = await runHealingCycle()
+
+        // Log summary
+        console.log(
+          `[orchestrator] DLQ healing complete: replayed=${result.replayed} ` +
+            `skipped=${result.skipped} escalated=${result.escalated}`
+        )
+
+        return {
+          success: result.errors.length === 0,
+          duration: Date.now() - start,
+          data: {
+            scanned: result.scanned,
+            replayed: result.replayed,
+            skipped: result.skipped,
+            escalated: result.escalated,
+            byCategory: result.byCategory,
+            errors: result.errors,
+          },
+        }
+      }
+
+      case "regression-detection": {
+        // Task 2.2: RTL Autonomy - Automated Regression Testing
+        // Queue the regression detector worker to create daily snapshots
+        // and detect silent value changes in PUBLISHED rules
+        await regressionDetectorQueue.add(
+          "regression-detection",
+          { runId },
+          { jobId: `regression-${runId}` }
+        )
+
+        console.log(`[orchestrator] Queued regression detection job: ${runId}`)
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: { queued: true, runId },
+        }
+      }
+
+      case "feedback-retention-cleanup": {
+        // Task 4.1: RTL Autonomy - User Feedback Loop
+        // Monthly cleanup of feedback records older than 12 months
+        // Critical Safeguard (Appendix A.4): Enforces data retention policy
+        const { cleanupOldFeedback, getFeedbackStats } = await import("../utils/user-feedback.db")
+
+        // Get stats before cleanup
+        const beforeStats = await getFeedbackStats()
+
+        // Run cleanup with default retention (12 months)
+        const deletedCount = await cleanupOldFeedback()
+
+        // Get stats after cleanup
+        const afterStats = await getFeedbackStats()
+
+        console.log(
+          `[orchestrator] Feedback retention cleanup: deleted=${deletedCount} ` +
+            `before=${beforeStats.total} after=${afterStats.total}`
+        )
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: {
+            deleted: deletedCount,
+            beforeTotal: beforeStats.total,
+            afterTotal: afterStats.total,
+            oldestRemaining: afterStats.oldestRecord?.toISOString() || null,
+          },
+        }
+      }
+
+      case "feedback-review-flagging": {
+        // Task 4.1: RTL Autonomy - User Feedback Loop
+        // Weekly check for rules with >30% negative feedback
+        // Creates monitoring alerts for flagged rules requiring human review
+        const { getRulesWithNegativeFeedback } = await import("../utils/user-feedback.db")
+        const { filterRulesWithHighNegativeFeedback } = await import("../utils/user-feedback")
+
+        // Get all rules with feedback statistics
+        const allStats = await getRulesWithNegativeFeedback()
+
+        // Filter to only rules exceeding the 30% negative feedback threshold
+        const flagged = filterRulesWithHighNegativeFeedback(allStats)
+
+        // Create monitoring alerts for flagged rules
+        for (const rule of flagged) {
+          await dbReg.monitoringAlert.create({
+            data: {
+              type: "NEGATIVE_USER_FEEDBACK",
+              severity: "HIGH",
+              description: `Rule ${rule.ruleId} has ${(rule.negativePercent * 100).toFixed(1)}% negative feedback (${rule.totalFeedback} total)`,
+              affectedRuleIds: [rule.ruleId],
+              autoAction: {
+                action: "FLAG_FOR_REVIEW",
+                executed: false,
+                result: null,
+                context: {
+                  negativePercent: rule.negativePercent,
+                  totalFeedback: rule.totalFeedback,
+                },
+              },
+              humanActionRequired: true,
+              resolvedAt: null,
+            },
+          })
+        }
+
+        console.log(
+          `[orchestrator] Feedback review flagging: checked=${allStats.length} ` +
+            `flagged=${flagged.length}`
+        )
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: {
+            checked: allStats.length,
+            flagged: flagged.length,
+            flaggedRules: flagged.map((r) => ({
+              ruleId: r.ruleId,
+              negativePercent: r.negativePercent,
+              totalFeedback: r.totalFeedback,
+            })),
           },
         }
       }

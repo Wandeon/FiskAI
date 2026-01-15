@@ -3,6 +3,8 @@ import { Worker, Job } from "bullmq"
 import { createWorkerConnection, closeRedis, BULLMQ_PREFIX } from "./redis"
 import { deadletterQueue, DLQ_THRESHOLD, type DeadLetterJobData } from "./queues"
 import { runStartupGuards, registerWorkerVersion } from "./utils/version-guard"
+import { classifyError } from "../utils/error-classifier"
+import { createIdempotencyKey } from "./dlq-healer"
 
 // Run version guards FIRST (before any Redis/BullMQ initialization)
 // Only run when WORKER_TYPE is set - indicates actual worker startup, not Next.js build import
@@ -49,6 +51,12 @@ async function moveToDeadLetterQueue<T>(
   queueName: string,
   workerName: string
 ): Promise<void> {
+  // Classify the error for auto-healing decisions
+  const classified = classifyError(error.message)
+
+  // Generate idempotency key for deduplication
+  const idempotencyKey = createIdempotencyKey(job.id, job.data)
+
   const dlqData: DeadLetterJobData = {
     originalQueue: queueName,
     originalJobId: job.id,
@@ -59,12 +67,22 @@ async function moveToDeadLetterQueue<T>(
     attemptsMade: job.attemptsMade,
     failedAt: new Date().toISOString(),
     firstFailedAt: job.processedOn ? new Date(job.processedOn).toISOString() : undefined,
+    // Classification fields for auto-healing
+    errorCategory: classified.category,
+    idempotencyKey,
+    isRetryable: classified.isRetryable,
   }
 
   // Add to DLQ with metadata for analysis
   await deadletterQueue.add("dead-letter", dlqData, {
     jobId: `dlq-${queueName}-${job.id}-${Date.now()}`,
   })
+
+  // Log classification for monitoring
+  console.log(
+    `[${workerName}] Job ${job.id} classified as ${classified.category} ` +
+      `(retryable=${classified.isRetryable}) - ${classified.suggestedAction}`
+  )
 
   // Remove from main queue to prevent memory pressure
   try {

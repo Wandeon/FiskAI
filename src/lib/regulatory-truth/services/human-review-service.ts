@@ -568,6 +568,11 @@ export async function requestConflictReview(
     ruleBTier?: string
     confidence?: number
     escalationReason?: string
+    precedentInfo?: {
+      count: number
+      agreement: number
+      strategy: string
+    }
   }
 ): Promise<string> {
   let reason: HumanReviewReason
@@ -594,6 +599,7 @@ export async function requestConflictReview(
       ruleBTier: options.ruleBTier,
       confidence: options.confidence,
       escalationReason: options.escalationReason,
+      precedentInfo: options.precedentInfo,
     },
     requestedBy: "arbiter",
   })

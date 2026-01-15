@@ -58,7 +58,8 @@ export function classifyError(errorMessage: string | null | undefined): Classifi
     msg.includes("403") ||
     msg.includes("unauthorized") ||
     msg.includes("forbidden") ||
-    msg.includes("authentication")
+    msg.includes("authentication") ||
+    msg.includes("credentials")
   ) {
     return {
       category: ErrorCategory.AUTH,
@@ -173,6 +174,41 @@ export function classifyError(errorMessage: string | null | undefined): Classifi
     isRetryable: false,
     suggestedAction: "Investigate error details manually",
   }
+}
+
+/**
+ * Cooldown periods for each error category (in milliseconds).
+ * Transient errors get short cooldowns, QUOTA gets longer cooldown.
+ */
+const COOLDOWN_MS: Record<ErrorCategory, number> = {
+  [ErrorCategory.NETWORK]: 5 * 60 * 1000, // 5 minutes
+  [ErrorCategory.TIMEOUT]: 5 * 60 * 1000, // 5 minutes
+  [ErrorCategory.QUOTA]: 60 * 60 * 1000, // 1 hour
+  [ErrorCategory.PARSE]: 5 * 60 * 1000, // 5 minutes (LLM may produce valid JSON on retry)
+  [ErrorCategory.AUTH]: Infinity, // Never auto-retry
+  [ErrorCategory.VALIDATION]: Infinity, // Never auto-retry
+  [ErrorCategory.EMPTY]: Infinity, // Never auto-retry
+  [ErrorCategory.UNKNOWN]: Infinity, // Never auto-retry
+}
+
+/**
+ * Check if an error category is transient (safe to auto-retry).
+ */
+export function isTransientError(category: ErrorCategory): boolean {
+  return (
+    category === ErrorCategory.NETWORK ||
+    category === ErrorCategory.TIMEOUT ||
+    category === ErrorCategory.QUOTA ||
+    category === ErrorCategory.PARSE
+  )
+}
+
+/**
+ * Get the cooldown period in milliseconds for an error category.
+ * Returns Infinity for non-retryable errors.
+ */
+export function getCooldownMs(category: ErrorCategory): number {
+  return COOLDOWN_MS[category]
 }
 
 /**
