@@ -1,7 +1,7 @@
 // src/lib/regulatory-truth/workers/orchestrator.worker.ts
 import { Job } from "bullmq"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
-import { sentinelQueue, releaseQueue, arbiterQueue } from "./queues"
+import { sentinelQueue, releaseQueue, arbiterQueue, regressionDetectorQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { db, dbReg } from "@/lib/db"
 import { autoApproveEligibleRules } from "../agents/reviewer"
@@ -23,6 +23,7 @@ interface ScheduledJobData {
     | "health-snapshot"
     | "truth-consolidation-audit"
     | "dlq-healing"
+    | "regression-detection"
   runId: string
   triggeredBy?: string
 }
@@ -221,6 +222,25 @@ async function processScheduledJob(job: Job<ScheduledJobData>): Promise<JobResul
             byCategory: result.byCategory,
             errors: result.errors,
           },
+        }
+      }
+
+      case "regression-detection": {
+        // Task 2.2: RTL Autonomy - Automated Regression Testing
+        // Queue the regression detector worker to create daily snapshots
+        // and detect silent value changes in PUBLISHED rules
+        await regressionDetectorQueue.add(
+          "regression-detection",
+          { runId },
+          { jobId: `regression-${runId}` }
+        )
+
+        console.log(`[orchestrator] Queued regression detection job: ${runId}`)
+
+        return {
+          success: true,
+          duration: Date.now() - start,
+          data: { queued: true, runId },
         }
       }
 

@@ -431,3 +431,31 @@ model SchedulerRun {
   @@index([scheduledAt])
   @@schema("regulatory")
 }
+
+// =============================================================================
+// RULE FACT SNAPSHOT - Daily snapshots for regression detection
+// =============================================================================
+// Task 2.2: RTL Autonomy - Automated Regression Testing
+// Creates daily snapshots of PUBLISHED RuleFacts to detect silent value changes.
+// Compares against previous snapshot to identify unexplained changes.
+//
+// Critical Safeguards (Appendix A.6):
+// - Retention Policy: Keep 90 days of snapshots, then archive
+// - TTL Cleanup Job: Daily job to purge old snapshots
+// - Diff Storage: After initial baseline, store diffs only
+// - Index: snapshotAt index for efficient TTL queries
+
+model RuleFactSnapshot {
+  id              String   @id @default(cuid())
+  ruleId          String // Soft ref to RuleFact.id (PUBLISHED rules only)
+  conceptSlug     String // Denormalized for query efficiency
+  valueHash       String // SHA-256 hash of the rule value
+  confidence      Float // Confidence score at snapshot time
+  sourceVersions  Json // Array of {evidenceId, contentHash} for diff explanation
+  snapshotAt      DateTime @default(now())
+
+  @@index([ruleId, snapshotAt]) // Query snapshots for a specific rule over time
+  @@index([snapshotAt]) // TTL cleanup queries
+  @@index([conceptSlug, snapshotAt]) // Query by concept slug
+  @@schema("regulatory")
+}

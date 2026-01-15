@@ -271,6 +271,23 @@ async function startScheduler(): Promise<void> {
   )
   console.log("[scheduler] Scheduled: Health snapshot at 00:00")
 
+  // Daily regression detection at 01:00 (after health check, before confidence decay)
+  // Task 2.2: RTL Autonomy - Automated Regression Testing
+  // Creates daily snapshots of PUBLISHED rules and detects silent value changes
+  cron.schedule(
+    "0 1 * * *",
+    async () => {
+      console.log("[scheduler] Running daily regression detection...")
+      await scheduledQueue.add("scheduled", {
+        type: "regression-detection",
+        runId: `regression-${Date.now()}`,
+        triggeredBy: "cron",
+      })
+    },
+    { timezone: TIMEZONE }
+  )
+  console.log("[scheduler] Scheduled: Regression detection at 01:00")
+
   console.log("[scheduler] Scheduler service started")
   console.log("[scheduler] ==================================")
   console.log("[scheduler] REMOVED: Daily pipeline processing (now continuous)")

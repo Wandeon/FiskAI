@@ -78,6 +78,13 @@ export const evidenceEmbeddingQueue = createQueue("evidence-embedding", {
   duration: 60000,
 })
 
+// Regression detection queue - daily snapshots of PUBLISHED rules
+// Task 2.2: RTL Autonomy - Automated Regression Testing
+export const regressionDetectorQueue = createQueue("regression-detector", {
+  max: 1,
+  duration: 86400000, // Once per day
+})
+
 // Control queues
 export const scheduledQueue = createQueue("scheduled")
 
@@ -116,6 +123,7 @@ export const allQueues = {
   backup: backupQueue,
   embedding: embeddingQueue,
   "evidence-embedding": evidenceEmbeddingQueue,
+  "regression-detector": regressionDetectorQueue,
   scheduled: scheduledQueue,
   deadletter: deadletterQueue,
   "system-status": systemStatusQueue,
