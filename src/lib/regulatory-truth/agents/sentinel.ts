@@ -35,6 +35,14 @@ import {
   calculateNextScan,
 } from "../utils/adaptive-sentinel"
 import { fetchWithHeadless, shouldUseHeadless } from "../fetchers/headless-fetcher"
+import {
+  generateFingerprint,
+  checkStructuralDrift,
+  createInitialBaseline,
+  type BaselineMetadata,
+  DRIFT_THRESHOLD_PERCENT,
+} from "../utils/structural-fingerprint"
+import { raiseAlert } from "../watchdog/alerting"
 
 // =============================================================================
 // STRUCTURED LOGGING
@@ -601,6 +609,99 @@ async function processEndpoint(
       })
     }
     const { hasChanged, newHash } = detectContentChange(content, endpoint.lastContentHash)
+
+    // -------------------------------------------------------------------------
+    // STRUCTURAL FINGERPRINTING (Task 3.1)
+    // Detect format changes that could cause silent failures (0 items extracted)
+    // -------------------------------------------------------------------------
+    const metadata = endpoint.metadata as Record<string, unknown> | null
+    const baselineData = metadata?.structuralBaseline as BaselineMetadata | undefined
+
+    // Get selectors from metadata for fingerprinting (if configured)
+    const fingerprintSelectors = (metadata?.fingerprintSelectors as string[]) || [
+      // Default selectors for common patterns
+      "article",
+      ".news-item",
+      ".views-row",
+      "#main",
+      ".content",
+    ]
+
+    // Generate current fingerprint (used for baseline creation and drift detection)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _currentFingerprint = generateFingerprint(content, { selectors: fingerprintSelectors })
+
+    if (baselineData?.fingerprint && baselineData.approvalStatus === "approved") {
+      // Check for structural drift against approved baseline
+      const driftResult = await checkStructuralDrift(endpoint.id, content, baselineData, raiseAlert)
+
+      if (driftResult.shouldAlert) {
+        log("warn", `Structural drift detected: ${driftResult.driftPercent.toFixed(1)}%`, {
+          operation: "structural-drift",
+          endpointId: endpoint.id,
+          url: baseUrl,
+          metadata: {
+            driftPercent: driftResult.driftPercent,
+            threshold: DRIFT_THRESHOLD_PERCENT,
+            baselineUpdatedAt: baselineData.baselineUpdatedAt,
+            baselineUpdatedBy: baselineData.baselineUpdatedBy,
+          },
+        })
+
+        // Log audit event for drift detection
+        await logAuditEvent({
+          action: "STRUCTURAL_DRIFT_DETECTED",
+          entityType: "DISCOVERY_ENDPOINT",
+          entityId: endpoint.id,
+          metadata: {
+            driftPercent: driftResult.driftPercent,
+            threshold: DRIFT_THRESHOLD_PERCENT,
+            currentFingerprint: driftResult.currentFingerprint,
+            baselineFingerprint: baselineData.fingerprint,
+          },
+        })
+      } else {
+        log("debug", `Structural check passed: ${driftResult.driftPercent.toFixed(1)}% drift`, {
+          operation: "structural-check",
+          endpointId: endpoint.id,
+        })
+      }
+    } else if (!baselineData?.fingerprint) {
+      // Create initial baseline (in pending state - requires human approval)
+      log("info", "Creating initial structural baseline (pending approval)", {
+        operation: "create-baseline",
+        endpointId: endpoint.id,
+        url: baseUrl,
+      })
+
+      const newBaseline = createInitialBaseline(content, fingerprintSelectors)
+
+      // Store baseline in metadata (will be persisted below)
+      const updatedMetadata = {
+        ...metadata,
+        structuralBaseline: newBaseline,
+        fingerprintSelectors,
+      }
+
+      // Update endpoint metadata with new baseline
+      await db.discoveryEndpoint.update({
+        where: { id: endpoint.id },
+        data: { metadata: updatedMetadata },
+      })
+
+      log("info", "Initial baseline created with pending approval", {
+        operation: "create-baseline",
+        endpointId: endpoint.id,
+        metadata: {
+          totalElements: newBaseline.fingerprint.totalElements,
+          tagCount: Object.keys(newBaseline.fingerprint.tagCounts).length,
+          contentRatio: newBaseline.fingerprint.contentRatio,
+        },
+      })
+    }
+    // -------------------------------------------------------------------------
+    // END STRUCTURAL FINGERPRINTING
+    // -------------------------------------------------------------------------
 
     // Update endpoint with new hash
     await db.discoveryEndpoint.update({
