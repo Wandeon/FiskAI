@@ -1,6 +1,7 @@
 // src/lib/regulatory-truth/agents/reviewer.ts
 
 import { db, runWithRegulatoryContext } from "@/lib/db"
+import { RiskTier } from "@prisma/client"
 import {
   ReviewerInputSchema,
   ReviewerOutputSchema,
@@ -54,12 +55,13 @@ async function findConflictingRules(rule: {
 /**
  * Check if a rule can be auto-approved.
  *
- * ABSOLUTE GATE: T0/T1 rules NEVER auto-approve, regardless of any other criteria.
+ * TIERED GATE: T0/T1 rules require explicit opt-in AND higher confidence threshold.
  * This is the single point of enforcement for tier-based auto-approval policy.
  *
- * This function implements the fix for Issue #845:
- * The tier check is the FIRST check, acting as an absolute gate before
- * any other auto-approval logic executes.
+ * Configuration (per Appendix A: Safe Human-Removal Policy):
+ * - AUTO_APPROVE_ALL_TIERS=true enables T0/T1 auto-approval
+ * - T0/T1 requires confidence >= 0.98 (AUTO_APPROVE_T0T1_CONFIDENCE)
+ * - T2/T3 requires confidence >= 0.90 (AUTO_APPROVE_MIN_CONFIDENCE)
  *
  * @param rule - Rule to check for auto-approval eligibility
  * @returns Whether auto-approval is allowed for this rule
@@ -70,31 +72,39 @@ export async function canAutoApprove(rule: {
   status: string
   confidence: number
 }): Promise<boolean> {
+  // Environment configuration
+  const autoApproveAllTiers = process.env.AUTO_APPROVE_ALL_TIERS === "true"
+  const gracePeriodHours = parseInt(process.env.AUTO_APPROVE_GRACE_HOURS || "24")
+
+  // Tiered confidence thresholds per Appendix A
+  const T0_T1_MIN_CONFIDENCE = parseFloat(process.env.AUTO_APPROVE_T0T1_CONFIDENCE || "0.98")
+  const T2_T3_MIN_CONFIDENCE = parseFloat(process.env.AUTO_APPROVE_MIN_CONFIDENCE || "0.90")
+
   // ========================================
-  // ABSOLUTE GATE: T0/T1 NEVER auto-approve
+  // TIERED GATE: T0/T1 require explicit opt-in AND higher confidence
   // ========================================
-  // This check MUST come first, before any other logic.
-  // No amount of confidence, grace period, or other factors
-  // can override this gate for critical risk tiers.
   if (rule.riskTier === "T0" || rule.riskTier === "T1") {
-    return false // No further checks needed
+    if (!autoApproveAllTiers) {
+      return false // T0/T1 blocked unless explicitly enabled
+    }
+    // T0/T1 requires higher confidence threshold (0.98)
+    if (rule.confidence < T0_T1_MIN_CONFIDENCE) {
+      return false
+    }
+  } else {
+    // T2/T3 use standard confidence threshold (0.90)
+    if (rule.confidence < T2_T3_MIN_CONFIDENCE) {
+      return false
+    }
   }
 
-  // Only T2/T3 can proceed to other checks
-  const gracePeriodHours = parseInt(process.env.AUTO_APPROVE_GRACE_HOURS || "24")
-  const minConfidence = parseFloat(process.env.AUTO_APPROVE_MIN_CONFIDENCE || "0.90")
-  const cutoffDate = new Date(Date.now() - gracePeriodHours * 60 * 60 * 1000)
-
-  // Check remaining criteria
+  // Only PENDING_REVIEW rules can be auto-approved
   if (rule.status !== "PENDING_REVIEW") {
     return false
   }
 
-  if (rule.confidence < minConfidence) {
-    return false
-  }
-
   // Check grace period via updatedAt
+  const cutoffDate = new Date(Date.now() - gracePeriodHours * 60 * 60 * 1000)
   const ruleData = await db.regulatoryRule.findUnique({
     where: { id: rule.id },
     select: { updatedAt: true },
@@ -120,12 +130,12 @@ export async function canAutoApprove(rule: {
 /**
  * Auto-approve PENDING_REVIEW rules that meet criteria:
  * - Have been pending for at least 24 hours (grace period)
- * - Have confidence >= 0.90
+ * - T0/T1: confidence >= 0.98 AND AUTO_APPROVE_ALL_TIERS=true
+ * - T2/T3: confidence >= 0.90 (existing behavior)
  * - No open conflicts
- * - ONLY T2/T3 rules (T0/T1 NEVER auto-approved)
  *
- * This provides a grace period for lower-risk rules while ensuring
- * T0/T1 rules always require explicit human approval.
+ * This provides a grace period for rules while applying tiered confidence
+ * thresholds per Appendix A: Safe Human-Removal Policy.
  *
  * POLICY NOTE: This is DIFFERENT from structured-source auto-approval:
  * - Structured sources (HNB, etc.) → require allowlist match via isAutoApprovalAllowed()
@@ -141,25 +151,35 @@ export async function autoApproveEligibleRules(): Promise<{
   errors: string[]
 }> {
   const gracePeriodHours = parseInt(process.env.AUTO_APPROVE_GRACE_HOURS || "24")
-  const minConfidence = parseFloat(process.env.AUTO_APPROVE_MIN_CONFIDENCE || "0.90")
+  const autoApproveAllTiers = process.env.AUTO_APPROVE_ALL_TIERS === "true"
+  const T0_T1_MIN_CONFIDENCE = parseFloat(process.env.AUTO_APPROVE_T0T1_CONFIDENCE || "0.98")
+  const T2_T3_MIN_CONFIDENCE = parseFloat(process.env.AUTO_APPROVE_MIN_CONFIDENCE || "0.90")
   const cutoffDate = new Date(Date.now() - gracePeriodHours * 60 * 60 * 1000)
 
   console.log(
-    `[auto-approve] Looking for PENDING_REVIEW rules older than ${gracePeriodHours}h with confidence >= ${minConfidence}`
+    `[auto-approve] Config: grace=${gracePeriodHours}h, allTiers=${autoApproveAllTiers}, ` +
+      `T0/T1 min=${T0_T1_MIN_CONFIDENCE}, T2/T3 min=${T2_T3_MIN_CONFIDENCE}`
   )
 
-  // Find eligible rules (NEVER auto-approve T0/T1)
+  // Find eligible rules with base criteria
+  // Query differs based on whether all tiers are enabled
   const eligibleRules = await db.regulatoryRule.findMany({
-    where: {
-      status: "PENDING_REVIEW",
-      updatedAt: { lt: cutoffDate },
-      confidence: { gte: minConfidence },
-      // NEVER auto-approve T0/T1 - only T2/T3
-      riskTier: { in: ["T2", "T3"] },
-      // No open conflicts
-      conflictsA: { none: { status: "OPEN" } },
-      conflictsB: { none: { status: "OPEN" } },
-    },
+    where: autoApproveAllTiers
+      ? {
+          status: "PENDING_REVIEW",
+          updatedAt: { lt: cutoffDate },
+          // All tiers if enabled - don't filter by confidence here, apply tiered thresholds per-rule
+          conflictsA: { none: { status: "OPEN" } },
+          conflictsB: { none: { status: "OPEN" } },
+        }
+      : {
+          status: "PENDING_REVIEW",
+          updatedAt: { lt: cutoffDate },
+          // Only T2/T3 by default
+          riskTier: { in: [RiskTier.T2, RiskTier.T3] },
+          conflictsA: { none: { status: "OPEN" } },
+          conflictsB: { none: { status: "OPEN" } },
+        },
     select: {
       id: true,
       conceptSlug: true,
@@ -170,30 +190,41 @@ export async function autoApproveEligibleRules(): Promise<{
     },
   })
 
-  // Log count of T0/T1 rules awaiting human approval
-  const skippedCritical = await db.regulatoryRule.count({
-    where: {
-      status: "PENDING_REVIEW",
-      riskTier: { in: ["T0", "T1"] },
-    },
-  })
-
-  if (skippedCritical > 0) {
-    console.log(`[auto-approve] ${skippedCritical} T0/T1 rules awaiting human approval`)
+  // Log count of T0/T1 rules status
+  if (!autoApproveAllTiers) {
+    const skippedCritical = await db.regulatoryRule.count({
+      where: {
+        status: "PENDING_REVIEW",
+        riskTier: { in: [RiskTier.T0, RiskTier.T1] },
+      },
+    })
+    if (skippedCritical > 0) {
+      console.log(
+        `[auto-approve] ${skippedCritical} T0/T1 rules awaiting human approval (AUTO_APPROVE_ALL_TIERS=false)`
+      )
+    }
   }
 
   const results = { approved: 0, skipped: 0, errors: [] as string[] }
 
   for (const rule of eligibleRules) {
     try {
-      // ========================================
-      // ABSOLUTE GATE: Defense-in-depth tier check (Issue #845)
-      // ========================================
-      // The query already filters by riskTier: { in: ["T2", "T3"] },
-      // but we verify again via canAutoApprove() to protect against:
-      // 1. Race conditions where tier changes between query and approval
-      // 2. Data corruption or unexpected tier values
-      // 3. Future code changes that might bypass the query filter
+      // Apply tiered confidence threshold
+      const minConfidence =
+        rule.riskTier === "T0" || rule.riskTier === "T1"
+          ? T0_T1_MIN_CONFIDENCE
+          : T2_T3_MIN_CONFIDENCE
+
+      if (rule.confidence < minConfidence) {
+        console.log(
+          `[auto-approve] SKIPPED: ${rule.conceptSlug} confidence ${rule.confidence} < ` +
+            `required ${minConfidence} for ${rule.riskTier}`
+        )
+        results.skipped++
+        continue
+      }
+
+      // Defense-in-depth: verify via canAutoApprove()
       if (!(await canAutoApprove(rule))) {
         console.log(
           `[auto-approve] BLOCKED: ${rule.conceptSlug} (tier: ${rule.riskTier}) failed canAutoApprove gate`
@@ -215,14 +246,11 @@ export async function autoApproveEligibleRules(): Promise<{
         continue
       }
 
-      // Log approval attempt with tier for audit trail (Issue #845 requirement)
       console.log(
         `[auto-approve] Attempting: ${rule.conceptSlug} (tier: ${rule.riskTier}, confidence: ${rule.confidence})`
       )
 
-      // Use approveRule service with proper context for audit trail
-      // Note: autoApprove=true marks this as automated, but we don't pass sourceSlug
-      // because grace-period auto-approve is not a structured-source flow
+      // Use approveRule service with proper context
       const approveResult = await runWithRegulatoryContext(
         { source: "grace-period-auto-approve", autoApprove: true },
         () => approveRule(rule.id, "AUTO_APPROVE_SYSTEM", "grace-period-auto-approve")
@@ -233,16 +261,16 @@ export async function autoApproveEligibleRules(): Promise<{
         continue
       }
 
-      // Update reviewer notes separately (service handles status + audit)
-      // Include tier in notes for audit trail (Issue #845)
+      // Update reviewer notes
       await db.regulatoryRule.update({
         where: { id: rule.id },
         data: {
           reviewerNotes: JSON.stringify({
             auto_approved: true,
-            reason: `Grace period (${gracePeriodHours}h) elapsed with confidence ${rule.confidence}`,
+            reason: `Grace period (${gracePeriodHours}h) elapsed with confidence ${rule.confidence} >= ${minConfidence} threshold for ${rule.riskTier}`,
             approved_at: new Date().toISOString(),
             tier: rule.riskTier,
+            threshold_applied: minConfidence,
           }),
         },
       })
