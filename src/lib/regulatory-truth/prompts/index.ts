@@ -217,7 +217,7 @@ OUTPUT FORMAT:
     "effective_from": "ISO date",
     "effective_until": "ISO date or null",
     "supersedes": "previous rule ID or null",
-    "confidence": 0.0-1.0,
+    "llm_confidence": 0.0-1.0,
     "composer_notes": "any uncertainties or edge cases"
   }
 }

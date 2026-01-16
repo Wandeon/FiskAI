@@ -8,11 +8,11 @@ import { runExtractor } from "../agents/extractor"
 import { updateRunOutcome } from "../agents/runner"
 import { dbReg } from "@/lib/db/regulatory"
 import { isReadyForExtraction } from "../utils/content-provider"
+import { FeatureFlags } from "./utils/feature-flags"
 
-// PHASE-D: Compose imports disabled until composer is migrated to CandidateFacts
-// import { composeQueue } from "./queues"
-// import { getDomainDelay } from "./rate-limiter"
-// import { db } from "@/lib/db"
+// PHASE-D: Compose queueing enabled with CandidateFact grouping
+import { composeQueue } from "./queues"
+import { db } from "@/lib/db"
 
 interface ExtractJobData {
   evidenceId: string
@@ -20,9 +20,73 @@ interface ExtractJobData {
   parentJobId?: string
 }
 
+interface CandidateFactGroup {
+  key: string
+  domain: string
+  candidateFactIds: string[]
+}
+
+/**
+ * Group CandidateFacts by suggestedConceptSlug (preferred) or domain+valueType fallback.
+ * Returns groups ready for compose job queueing.
+ */
+async function groupCandidateFactsForCompose(
+  candidateFactIds: string[]
+): Promise<CandidateFactGroup[]> {
+  if (candidateFactIds.length === 0) return []
+
+  // Fetch the CandidateFacts with grouping fields
+  const facts = await db.candidateFact.findMany({
+    where: { id: { in: candidateFactIds } },
+    select: {
+      id: true,
+      suggestedConceptSlug: true,
+      suggestedDomain: true,
+      suggestedValueType: true,
+    },
+  })
+
+  // Group by conceptSlug (preferred) or domain+valueType (fallback)
+  const groups = new Map<string, { domain: string; ids: string[] }>()
+
+  for (const fact of facts) {
+    // Primary: use suggestedConceptSlug
+    // Fallback: use domain-valueType
+    // Last resort: use domain only
+    const key =
+      fact.suggestedConceptSlug ||
+      (fact.suggestedDomain && fact.suggestedValueType
+        ? `${fact.suggestedDomain}-${fact.suggestedValueType}`.toLowerCase()
+        : fact.suggestedDomain?.toLowerCase() || "unknown")
+
+    const domain = fact.suggestedDomain || "unknown"
+
+    if (!groups.has(key)) {
+      groups.set(key, { domain, ids: [] })
+    }
+    groups.get(key)!.ids.push(fact.id)
+  }
+
+  return Array.from(groups.entries()).map(([key, { domain, ids }]) => ({
+    key,
+    domain,
+    candidateFactIds: ids,
+  }))
+}
+
 async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
   const start = Date.now()
   const { evidenceId, runId } = job.data
+
+  // Kill switch: Skip all extraction if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[extractor] Pipeline is OFF - skipping extraction for ${evidenceId}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   try {
     // Check if evidence is ready for extraction (has required artifacts)
@@ -69,19 +133,36 @@ async function processExtractJob(job: Job<ExtractJobData>): Promise<JobResult> {
       await updateRunOutcome(result.agentRunId, result.candidateFactIds.length)
     }
 
-    // PHASE-D: Compose queueing is DISABLED until composer is migrated to use CandidateFacts
-    // The composer agent (runComposer) is tightly coupled to SourcePointer:
-    // - Takes sourcePointerIds as input
-    // - Queries db.sourcePointer.findMany()
-    // - Connects rules to sourcePointers
-    //
-    // Since PHASE-D removed SourcePointer creation, compose would fail immediately.
-    // CandidateFacts are stored and itemsProduced is updated correctly above.
-    // TODO: Migrate composer.ts and composer.worker.ts to use CandidateFacts
-    //
-    // if (result.success && result.candidateFactIds.length > 0) {
-    //   ... queue compose jobs with candidateFactIds ...
-    // }
+    // PHASE-D: Queue compose jobs for CandidateFact groups
+    if (FeatureFlags.isPhaseD && result.success && result.candidateFactIds.length > 0) {
+      try {
+        const groups = await groupCandidateFactsForCompose(result.candidateFactIds)
+
+        for (const group of groups) {
+          // Use sorted IDs for stable, idempotent jobId
+          const sortedIds = [...group.candidateFactIds].sort().join(",")
+          const jobId = `compose-${group.key}-${sortedIds}`
+
+          await composeQueue.add(
+            "compose",
+            {
+              candidateFactIds: group.candidateFactIds,
+              domain: group.domain,
+              runId,
+              parentJobId: job.id,
+            },
+            { jobId }
+          )
+
+          console.log(
+            `[extractor] Queued compose job for ${group.key} with ${group.candidateFactIds.length} facts`
+          )
+        }
+      } catch (composeError) {
+        // Non-blocking: facts are saved even if compose queueing fails
+        console.error(`[extractor] Failed to queue compose jobs:`, composeError)
+      }
+    }
 
     const duration = Date.now() - start
     jobsProcessed.inc({ worker: "extractor", status: "success", queue: "extract" })
@@ -114,4 +195,4 @@ const worker = createWorker<ExtractJobData>("extract", processExtractJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[extractor] Worker started")
+console.log(`[extractor] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

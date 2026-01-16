@@ -10,6 +10,7 @@ import { scoutQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { runSentinel, fetchDiscoveredItems } from "../agents/sentinel"
 import { db, dbReg } from "@/lib/db"
+import { FeatureFlags } from "./utils/feature-flags"
 
 interface SentinelJobData {
   runId: string
@@ -47,7 +48,8 @@ async function processSentinelJob(job: Job<SentinelJobData>): Promise<JobResult>
 
     // Route new evidence through scout for pre-LLM quality assessment
     // Scout → Router → (OCR|Extract|Skip) based on content quality and budget
-    if (newEvidence.length > 0) {
+    // Kill switch: Only route when pipeline is enabled
+    if (newEvidence.length > 0 && FeatureFlags.pipelineEnabled) {
       await scoutQueue.addBulk(
         newEvidence.map((e) => ({
           name: "scout",
@@ -56,6 +58,10 @@ async function processSentinelJob(job: Job<SentinelJobData>): Promise<JobResult>
         }))
       )
       console.log(`[sentinel] Queued ${newEvidence.length} scout jobs`)
+    } else if (newEvidence.length > 0) {
+      console.log(
+        `[sentinel] Found ${newEvidence.length} evidence (pipeline ${FeatureFlags.pipelineMode} - not routing)`
+      )
     }
 
     const duration = Date.now() - start
@@ -89,4 +95,4 @@ const worker = createWorker<SentinelJobData>("sentinel", processSentinelJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[sentinel] Worker started")
+console.log(`[sentinel] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

@@ -4,6 +4,7 @@ import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter } from "./rate-limiter"
 import { runArbiter } from "../agents/arbiter"
+import { FeatureFlags } from "./utils/feature-flags"
 
 interface ArbiterJobData {
   conflictId: string
@@ -14,6 +15,16 @@ interface ArbiterJobData {
 async function processArbiterJob(job: Job<ArbiterJobData>): Promise<JobResult> {
   const start = Date.now()
   const { conflictId } = job.data
+
+  // Kill switch: Skip arbitration if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[arbiter] Pipeline is OFF - skipping arbitration for conflict ${conflictId}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   try {
     // Rate limit LLM calls
@@ -49,4 +60,4 @@ const worker = createWorker<ArbiterJobData>("arbiter", processArbiterJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[arbiter] Worker started")
+console.log(`[arbiter] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

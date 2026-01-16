@@ -6,6 +6,7 @@ import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter } from "./rate-limiter"
 import { runReviewer } from "../agents/reviewer"
 import { db } from "@/lib/db"
+import { FeatureFlags } from "./utils/feature-flags"
 
 interface ReviewJobData {
   ruleId: string
@@ -16,6 +17,16 @@ interface ReviewJobData {
 async function processReviewJob(job: Job<ReviewJobData>): Promise<JobResult> {
   const start = Date.now()
   const { ruleId, runId } = job.data
+
+  // Kill switch: Skip review if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[reviewer] Pipeline is OFF - skipping review for rule ${ruleId}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   try {
     // Rate limit LLM calls
@@ -83,4 +94,4 @@ const worker = createWorker<ReviewJobData>("review", processReviewJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[reviewer] Worker started")
+console.log(`[reviewer] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

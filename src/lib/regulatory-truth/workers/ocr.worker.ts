@@ -10,6 +10,7 @@ import { processScannedPdf } from "../utils/ocr-processor"
 import { hashContent } from "../utils/content-hash"
 import { logWorkerStartup } from "./startup-log"
 import { requestOcrReview } from "../services/human-review-service"
+import { FeatureFlags } from "./utils/feature-flags"
 
 logWorkerStartup("ocr")
 
@@ -21,6 +22,16 @@ interface OcrJobData {
 async function processOcrJob(job: Job<OcrJobData>): Promise<JobResult> {
   const start = Date.now()
   const { evidenceId, runId } = job.data
+
+  // Kill switch: Skip OCR if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[ocr] Pipeline is OFF - skipping OCR for evidence ${evidenceId}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   try {
     // 1. Get evidence
@@ -170,4 +181,4 @@ const worker = createWorker<OcrJobData>("ocr", processOcrJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[ocr] Worker started")
+console.log(`[ocr] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

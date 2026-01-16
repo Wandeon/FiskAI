@@ -10,6 +10,7 @@ import { applyQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { llmLimiter } from "./rate-limiter"
 import { generateComposerProposal } from "../agents/composer"
+import { FeatureFlags } from "./utils/feature-flags"
 
 // PHASE-D: Composer now accepts candidateFactIds instead of pointerIds
 interface ComposeJobData {
@@ -24,6 +25,16 @@ interface ComposeJobData {
 async function processComposeJob(job: Job<ComposeJobData>): Promise<JobResult> {
   const start = Date.now()
   const { candidateFactIds, domain, runId } = job.data
+
+  // Kill switch: Skip composition if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[composer] Pipeline is OFF - skipping composition for domain ${domain}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   // PHASE-D: Require candidateFactIds
   if (!candidateFactIds || candidateFactIds.length === 0) {
@@ -111,4 +122,4 @@ const worker = createWorker<ComposeJobData>("compose", processComposeJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[composer] Worker started")
+console.log(`[composer] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

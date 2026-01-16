@@ -130,6 +130,21 @@ services:
         limits:
           memory: 512M
 
+  # PHASE-D: Apply worker - handles persistence of composer proposals
+  # Creates SourcePointers from CandidateFacts and RegulatoryRules
+  worker-apply:
+    <<: *worker-common
+    container_name: fiskai-worker-apply
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/apply.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: apply
+      WORKER_CONCURRENCY: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
   worker-reviewer:
     <<: *worker-common
     container_name: fiskai-worker-reviewer
