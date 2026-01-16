@@ -23,6 +23,7 @@ import { dbReg } from "@/lib/db"
 import { createWorker, setupGracefulShutdown, type JobResult } from "./base"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { findQuoteInEvidence } from "../utils/quote-in-evidence"
+import { getExtractableContent } from "../utils/content-provider"
 import { detectStructuralConflicts } from "../utils/conflict-detector"
 import {
   REVALIDATION_INTERVALS,
@@ -125,12 +126,19 @@ async function runQuoteInEvidenceCheck(
     for (const quoteObj of quotes) {
       if (!quoteObj.evidenceId || !quoteObj.quote) continue
 
-      const evidence = await dbReg.evidence.findUnique({
-        where: { id: quoteObj.evidenceId },
-        select: { rawContent: true, contentHash: true },
-      })
-
-      if (!evidence) {
+      // Get extractable content (artifact text for PDFs, rawContent for HTML)
+      let evidenceContent: string
+      let contentHash: string | undefined
+      try {
+        const extractable = await getExtractableContent(quoteObj.evidenceId)
+        evidenceContent = extractable.text
+        // Also fetch contentHash for audit trail
+        const evidence = await dbReg.evidence.findUnique({
+          where: { id: quoteObj.evidenceId },
+          select: { contentHash: true },
+        })
+        contentHash = evidence?.contentHash
+      } catch {
         return {
           name: "quote-in-evidence",
           passed: false,
@@ -138,11 +146,7 @@ async function runQuoteInEvidenceCheck(
         }
       }
 
-      const matchResult = findQuoteInEvidence(
-        evidence.rawContent,
-        quoteObj.quote,
-        evidence.contentHash
-      )
+      const matchResult = findQuoteInEvidence(evidenceContent, quoteObj.quote, contentHash)
 
       if (!matchResult.found) {
         return {

@@ -17,6 +17,7 @@ import {
   type RuleProvenanceResult,
   type ProvenanceValidationResult,
 } from "../utils/quote-in-evidence"
+import { getExtractableContent } from "../utils/content-provider"
 
 /**
  * Prisma transaction client type - compatible with both full client and tx client.
@@ -83,16 +84,29 @@ async function validateRuleProvenance(
   })
 
   // Fetch evidence records separately via dbReg (soft reference via evidenceId)
+  // Include contentHash for audit trail
   const evidenceIds = sourcePointers.map((sp) => sp.evidenceId)
   const evidenceRecords = await dbReg.evidence.findMany({
     where: { id: { in: evidenceIds } },
     select: {
       id: true,
-      rawContent: true,
       contentHash: true,
     },
   })
-  const evidenceMap = new Map(evidenceRecords.map((e) => [e.id, e]))
+  const evidenceHashMap = new Map(evidenceRecords.map((e) => [e.id, e.contentHash]))
+
+  // Pre-fetch extractable content for all evidence IDs
+  // This uses content-provider which correctly resolves artifact text for PDFs
+  const evidenceContentMap = new Map<string, string>()
+  for (const evidenceId of new Set(evidenceIds)) {
+    try {
+      const content = await getExtractableContent(evidenceId)
+      evidenceContentMap.set(evidenceId, content.text)
+    } catch {
+      // Evidence not found - will fail validation below
+      evidenceContentMap.set(evidenceId, "")
+    }
+  }
 
   if (!rule) {
     return {
@@ -134,16 +148,17 @@ async function validateRuleProvenance(
   const isCriticalTier = riskTier === "T0" || riskTier === "T1"
 
   for (const pointer of sourcePointers) {
-    // Get evidence from map
-    const evidence = evidenceMap.get(pointer.evidenceId)
+    // Get extractable content (artifact text for PDFs, rawContent for HTML)
+    const evidenceContent = evidenceContentMap.get(pointer.evidenceId) ?? ""
+    const contentHash = evidenceHashMap.get(pointer.evidenceId) ?? undefined
 
-    // Validate quote exists in evidence
+    // Validate quote exists in evidence content
     const validationResult = validateQuoteInEvidence(
       pointer.id,
       pointer.evidenceId,
       pointer.exactQuote,
-      evidence?.rawContent ?? "",
-      evidence?.contentHash ?? undefined
+      evidenceContent,
+      contentHash
     )
 
     // Apply tier-based policy
