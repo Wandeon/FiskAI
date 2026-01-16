@@ -128,10 +128,12 @@ export async function selectRules(
   })
 
   // Query RegulatoryRule directly (PHASE-D: Single source of truth)
+  // Exclude revoked rules (per Appendix A: Rollback Capability)
   const allRulesRaw = await db.regulatoryRule.findMany({
     where: {
       conceptSlug: { in: conceptSlugs },
       status: "PUBLISHED",
+      revokedAt: null, // Exclude revoked rules
     },
     include: {
       sourcePointers: true,

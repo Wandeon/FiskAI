@@ -728,5 +728,135 @@ export async function approveRule(
   )
 }
 
+/**
+ * Revoke a published rule (mark as revoked but keep record).
+ *
+ * Per Appendix A: Rollback Capability. This sets revokedAt and revokedReason
+ * but does NOT delete the rule - it remains in the database for audit trail.
+ * Revoked rules are excluded from assistant queries (status check + revokedAt check).
+ *
+ * Use cases:
+ * - Quality issues detected after publication
+ * - Incorrect regulatory information
+ * - Safe mode escalation triggers
+ *
+ * @param ruleId - The rule ID to revoke
+ * @param reason - Human-readable reason for revocation
+ * @param actorUserId - User ID performing the revocation
+ */
+export async function revokeRule(
+  ruleId: string,
+  reason: string,
+  actorUserId?: string
+): Promise<RuleStatusResult> {
+  return runWithRegulatoryContext({ source: "revoke", actorUserId }, async () => {
+    try {
+      const existing = await db.regulatoryRule.findUnique({
+        where: { id: ruleId },
+        select: { status: true, conceptSlug: true, revokedAt: true },
+      })
+
+      if (!existing) {
+        return {
+          ruleId,
+          success: false,
+          previousStatus: "UNKNOWN",
+          newStatus: "REVOKED",
+          error: "Rule not found",
+        }
+      }
+
+      if (existing.revokedAt) {
+        return {
+          ruleId,
+          success: false,
+          previousStatus: existing.status,
+          newStatus: "REVOKED",
+          error: `Rule was already revoked at ${existing.revokedAt.toISOString()}`,
+        }
+      }
+
+      // Update rule with revocation fields
+      await db.regulatoryRule.update({
+        where: { id: ruleId },
+        data: {
+          revokedAt: new Date(),
+          revokedReason: reason,
+          // Keep status as-is - the revokedAt field indicates revocation
+          // This allows us to see what state the rule was in when revoked
+        },
+      })
+
+      await logAuditEvent({
+        action: "RULE_REVOKED",
+        entityType: "RULE",
+        entityId: ruleId,
+        performedBy: actorUserId,
+        metadata: {
+          previousStatus: existing.status,
+          reason,
+          conceptSlug: existing.conceptSlug,
+        },
+      })
+
+      console.log(`[rule-status] Revoked rule ${ruleId} (${existing.conceptSlug}): ${reason}`)
+
+      return {
+        ruleId,
+        success: true,
+        previousStatus: existing.status,
+        newStatus: "REVOKED",
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      return {
+        ruleId,
+        success: false,
+        previousStatus: "UNKNOWN",
+        newStatus: "REVOKED",
+        error: errorMessage,
+      }
+    }
+  })
+}
+
+/**
+ * Bulk revoke rules that match certain criteria.
+ *
+ * Per Appendix A: Automatic Rollback Trigger.
+ * Used when safe mode conditions are met.
+ *
+ * @param ruleIds - Array of rule IDs to revoke
+ * @param reason - Shared reason for all revocations
+ * @param actorUserId - User ID performing the revocations
+ */
+export async function revokeRules(
+  ruleIds: string[],
+  reason: string,
+  actorUserId?: string
+): Promise<{
+  success: boolean
+  revokedCount: number
+  failedCount: number
+  errors: string[]
+}> {
+  if (ruleIds.length === 0) {
+    return { success: true, revokedCount: 0, failedCount: 0, errors: [] }
+  }
+
+  const results = await Promise.all(ruleIds.map((id) => revokeRule(id, reason, actorUserId)))
+
+  const errors = results.filter((r) => !r.success).map((r) => r.error || "Unknown error")
+  const revokedCount = results.filter((r) => r.success).length
+  const failedCount = results.filter((r) => !r.success).length
+
+  return {
+    success: failedCount === 0,
+    revokedCount,
+    failedCount,
+    errors,
+  }
+}
+
 // Re-export provenance types for consumers
 export type { RuleProvenanceResult, ProvenanceValidationResult }
