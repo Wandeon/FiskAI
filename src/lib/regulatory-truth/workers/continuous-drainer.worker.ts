@@ -12,6 +12,7 @@ import {
 import { db, dbReg } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { fetchDiscoveredItems } from "../agents/sentinel"
+import { autoApproveEligibleRules } from "../agents/reviewer"
 import { closeRedis, updateDrainerHeartbeat, updateStageHeartbeat } from "./redis"
 import { logWorkerStartup } from "./startup-log"
 import { createCircuitBreaker } from "./circuit-breaker"
@@ -31,6 +32,7 @@ interface DrainerState {
     reviewJobsQueued: number
     arbiterJobsQueued: number
     releaseJobsQueued: number
+    autoApproveProcessed: number
     cycleCount: number
   }
 }
@@ -47,6 +49,7 @@ const state: DrainerState = {
     reviewJobsQueued: 0,
     arbiterJobsQueued: 0,
     releaseJobsQueued: 0,
+    autoApproveProcessed: 0,
     cycleCount: 0,
   },
 }
@@ -67,6 +70,7 @@ const stageMetrics: Record<string, StageMetrics> = {
   "fetched-evidence": { itemsProcessed: 0, totalDurationMs: 0 },
   "source-pointers": { itemsProcessed: 0, totalDurationMs: 0 },
   "draft-rules": { itemsProcessed: 0, totalDurationMs: 0 },
+  "pending-auto-approve": { itemsProcessed: 0, totalDurationMs: 0 },
   conflicts: { itemsProcessed: 0, totalDurationMs: 0 },
   "approved-rules": { itemsProcessed: 0, totalDurationMs: 0 },
 }
@@ -109,6 +113,14 @@ const stageCircuitBreakers = {
     name: "drainer-draft-rules",
     errorThresholdPercentage: 30,
   }),
+  "pending-auto-approve": createCircuitBreaker<number>(
+    (async (fn: () => Promise<number>) => fn()) as any,
+    {
+      timeout: 300000,
+      name: "drainer-pending-auto-approve",
+      errorThresholdPercentage: 30,
+    }
+  ),
   conflicts: createCircuitBreaker<number>((async (fn: () => Promise<number>) => fn()) as any, {
     timeout: 300000,
     name: "drainer-conflicts",
@@ -245,10 +257,10 @@ async function drainPendingOcr(): Promise<number> {
 
 /**
  * Check for FETCHED evidence without pointers and queue extract jobs
+ * PHASE-D: Check CandidateFacts instead of SourcePointers
  */
 async function drainFetchedEvidence(): Promise<number> {
-  // Find evidence IDs from FETCHED items that don't have source pointers yet
-  // Note: We use raw query because Evidence doesn't have discoveredItems relation
+  // Find evidence IDs from FETCHED items
   const fetchedItems = await db.discoveredItem.findMany({
     where: {
       status: "FETCHED",
@@ -264,32 +276,66 @@ async function drainFetchedEvidence(): Promise<number> {
     .map((i) => i.evidenceId)
     .filter((id): id is string => id !== null)
 
-  // Filter to only evidence without source pointers (soft reference pattern)
-  const existingPointers = await db.sourcePointer.findMany({
-    where: { evidenceId: { in: evidenceIds } },
-    select: { evidenceId: true },
-    distinct: ["evidenceId"],
-  })
-  const evidenceWithPointersSet = new Set(existingPointers.map((p) => p.evidenceId))
-  const newEvidenceIds = evidenceIds.filter((id) => !evidenceWithPointersSet.has(id)).slice(0, 50)
+  let newEvidenceIds: string[]
 
-  const newEvidence = newEvidenceIds.map((id) => ({ id }))
+  if (FeatureFlags.isPhaseD) {
+    // PHASE-D: Check CandidateFacts for processed evidence
+    // CandidateFacts store evidenceId in their groundingQuotes JSON array
+    const factsWithEvidence = await db.candidateFact.findMany({
+      where: {
+        groundingQuotes: {
+          path: [],
+          not: { equals: [] },
+        },
+      },
+      select: {
+        groundingQuotes: true,
+      },
+    })
 
-  if (newEvidence.length === 0) return 0
+    // Extract evidence IDs that have facts
+    const processedEvidenceIds = new Set<string>()
+    for (const fact of factsWithEvidence) {
+      const quotes = fact.groundingQuotes as Array<{ evidenceId?: string }>
+      if (Array.isArray(quotes)) {
+        for (const quote of quotes) {
+          if (quote.evidenceId && evidenceIds.includes(quote.evidenceId)) {
+            processedEvidenceIds.add(quote.evidenceId)
+          }
+        }
+      }
+    }
+
+    // Filter to unprocessed evidence
+    newEvidenceIds = evidenceIds.filter((id) => !processedEvidenceIds.has(id)).slice(0, 50)
+  } else {
+    // LEGACY: Check SourcePointers for processed evidence
+    const existingPointers = await db.sourcePointer.findMany({
+      where: { evidenceId: { in: evidenceIds } },
+      select: { evidenceId: true },
+      distinct: ["evidenceId"],
+    })
+    const evidenceWithPointersSet = new Set(existingPointers.map((p) => p.evidenceId))
+    newEvidenceIds = evidenceIds.filter((id) => !evidenceWithPointersSet.has(id)).slice(0, 50)
+  }
+
+  if (newEvidenceIds.length === 0) return 0
 
   const runId = `drain-${Date.now()}`
   await extractQueue.addBulk(
-    newEvidence.map((e) => ({
+    newEvidenceIds.map((id) => ({
       name: "extract",
-      data: { evidenceId: e.id, runId },
-      opts: { jobId: `extract-${e.id}` },
+      data: { evidenceId: id, runId },
+      opts: { jobId: `extract-${id}` },
     }))
   )
 
-  console.log(`[drainer] Queued ${newEvidence.length} extract jobs`)
-  state.stats.extractJobsQueued += newEvidence.length
+  console.log(
+    `[drainer] Queued ${newEvidenceIds.length} extract jobs (${FeatureFlags.pipelineMode} mode)`
+  )
+  state.stats.extractJobsQueued += newEvidenceIds.length
 
-  return newEvidence.length
+  return newEvidenceIds.length
 }
 
 /**
@@ -314,9 +360,65 @@ async function drainForClassification(): Promise<number> {
 
 /**
  * Check for unprocessed source pointers and queue compose jobs
+ * PHASE-D: This becomes a backstop for orphaned CandidateFacts
+ * (facts that weren't composed due to extractor queueing failure)
  */
 async function drainSourcePointers(): Promise<number> {
-  // Find pointers not yet composed into rules
+  if (FeatureFlags.isPhaseD) {
+    // PHASE-D: Find orphaned CandidateFacts with status=CAPTURED that are older than 5 minutes
+    // This is a backstop - normally extractor queues compose immediately
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    const orphanedFacts = await db.candidateFact.findMany({
+      where: {
+        status: "CAPTURED",
+        createdAt: { lt: fiveMinutesAgo },
+      },
+      select: {
+        id: true,
+        suggestedConceptSlug: true,
+        suggestedDomain: true,
+        suggestedValueType: true,
+      },
+      take: 50,
+    })
+
+    if (orphanedFacts.length === 0) return 0
+
+    // Group by conceptSlug (preferred) or domain+valueType (fallback)
+    const groups = new Map<string, { domain: string; ids: string[] }>()
+    for (const fact of orphanedFacts) {
+      const key =
+        fact.suggestedConceptSlug ||
+        (fact.suggestedDomain && fact.suggestedValueType
+          ? `${fact.suggestedDomain}-${fact.suggestedValueType}`.toLowerCase()
+          : fact.suggestedDomain?.toLowerCase() || "unknown")
+      const domain = fact.suggestedDomain || "unknown"
+      if (!groups.has(key)) groups.set(key, { domain, ids: [] })
+      groups.get(key)!.ids.push(fact.id)
+    }
+
+    let queued = 0
+    const runId = `drain-backstop-${Date.now()}`
+    for (const [key, { domain, ids }] of groups) {
+      const sortedIds = [...ids].sort().join(",")
+      await composeQueue.add(
+        "compose",
+        { candidateFactIds: ids, domain, runId },
+        { jobId: `compose-backstop-${key}-${sortedIds}` }
+      )
+      queued++
+    }
+
+    if (queued > 0) {
+      console.log(
+        `[drainer] Backstop: Queued ${queued} compose jobs for ${orphanedFacts.length} orphaned facts`
+      )
+    }
+    state.stats.composeJobsQueued += queued
+    return queued
+  }
+
+  // LEGACY: Find pointers not yet composed into rules
   const pointers = await db.sourcePointer.findMany({
     where: {
       rules: { none: {} },
@@ -386,6 +488,25 @@ async function drainDraftRules(): Promise<number> {
 }
 
 /**
+ * Auto-approve PENDING_REVIEW rules that meet eligibility criteria
+ * This runs after draft rules are reviewed, allowing grace period to elapse
+ */
+async function drainPendingAutoApprove(): Promise<number> {
+  const result = await autoApproveEligibleRules()
+
+  if (result.approved > 0) {
+    console.log(`[drainer] Auto-approved ${result.approved} rules`)
+    state.stats.autoApproveProcessed += result.approved
+  }
+
+  if (result.errors.length > 0) {
+    console.error(`[drainer] Auto-approve errors:`, result.errors)
+  }
+
+  return result.approved
+}
+
+/**
  * Check for open conflicts and queue arbiter jobs
  */
 async function drainConflicts(): Promise<number> {
@@ -450,6 +571,15 @@ async function drainApprovedRules(): Promise<number> {
 async function runDrainCycle(): Promise<boolean> {
   state.stats.cycleCount++
   let workDone = false
+
+  // Kill switch: Skip all LLM-related processing if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    if (state.stats.cycleCount % 60 === 1) {
+      // Log once per minute (60 cycles at 1s delay)
+      console.log("[drainer] Pipeline is OFF - skipping all processing")
+    }
+    return false
+  }
 
   // Stage 1: Fetch PENDING items → Evidence
   try {
@@ -518,6 +648,17 @@ async function runDrainCycle(): Promise<boolean> {
     console.error("[drainer] Stage 4 error:", error instanceof Error ? error.message : error)
   }
 
+  // Stage 4.5: Auto-approve eligible PENDING_REVIEW rules
+  try {
+    const autoApproved = await executeStage("pending-auto-approve", drainPendingAutoApprove)
+    if (autoApproved > 0) {
+      workDone = true
+      console.log(`[drainer] Stage 4.5: Auto-approved ${autoApproved} rules`)
+    }
+  } catch (error) {
+    console.error("[drainer] Stage 4.5 error:", error instanceof Error ? error.message : error)
+  }
+
   // Stage 5: Queue conflicts for arbiter
   try {
     const arbitrated = await executeStage("conflicts", drainConflicts)
@@ -553,6 +694,7 @@ async function runDrainCycle(): Promise<boolean> {
     state.stats.extractJobsQueued +
     state.stats.composeJobsQueued +
     state.stats.reviewJobsQueued +
+    state.stats.autoApproveProcessed +
     state.stats.arbiterJobsQueued +
     state.stats.releaseJobsQueued
 
@@ -580,8 +722,10 @@ function logState(): void {
     extractJobs: state.stats.extractJobsQueued,
     composeJobs: state.stats.composeJobsQueued,
     reviewJobs: state.stats.reviewJobsQueued,
+    autoApproveProcessed: state.stats.autoApproveProcessed,
     arbiterJobs: state.stats.arbiterJobsQueued,
     releaseJobs: state.stats.releaseJobsQueued,
+    pipelineMode: FeatureFlags.pipelineMode,
     classificationEnabled: FeatureFlags.classificationEnabled,
     backoffDelay: `${BACKOFF.currentDelay}ms`,
   })
@@ -591,7 +735,9 @@ function logState(): void {
  * Main continuous loop
  */
 async function startContinuousDraining(): Promise<void> {
-  console.log("[drainer] Starting continuous draining loop...")
+  console.log(
+    `[drainer] Starting continuous draining loop (pipeline mode: ${FeatureFlags.pipelineMode})`
+  )
   console.log("[drainer] This worker will run 24/7 until saturation")
   state.isRunning = true
 
