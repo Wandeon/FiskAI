@@ -10,6 +10,7 @@ import { reviewQueue } from "./queues"
 import { jobsProcessed, jobDuration } from "./metrics"
 import { applyComposerProposal, type ComposerProposal } from "../agents/composer"
 import { updateRunOutcome } from "../agents/runner"
+import { FeatureFlags } from "./utils/feature-flags"
 
 interface ApplyJobData {
   proposal: ComposerProposal
@@ -21,6 +22,16 @@ interface ApplyJobData {
 async function processApplyJob(job: Job<ApplyJobData>): Promise<JobResult> {
   const start = Date.now()
   const { proposal, domain, runId } = job.data
+
+  // Kill switch: Skip apply if pipeline is OFF
+  if (!FeatureFlags.pipelineEnabled) {
+    console.log(`[apply] Pipeline is OFF - skipping apply for domain ${domain}`)
+    return {
+      success: true,
+      duration: 0,
+      data: { skipped: true, reason: "pipeline_off" },
+    }
+  }
 
   // Validate proposal
   if (!proposal || !proposal.candidateFactIds) {
@@ -104,4 +115,4 @@ const worker = createWorker<ApplyJobData>("apply", processApplyJob, {
 
 setupGracefulShutdown([worker])
 
-console.log("[apply] Worker started")
+console.log(`[apply] Worker started (pipeline mode: ${FeatureFlags.pipelineMode})`)

@@ -30,6 +30,7 @@ import {
   evidenceEmbeddingQueue,
   selectorAdaptationQueue,
 } from "../workers/queues"
+import { FeatureFlags } from "../workers/utils/feature-flags"
 import { isScannedPdf } from "../utils/ocr-processor"
 import { isBlockedDomain } from "../utils/concept-resolver"
 import { crawlSite, CrawlOptions } from "./site-crawler"
@@ -1268,14 +1269,20 @@ async function processSingleItem(item: {
           },
         })
 
-        // Queue for OCR, NOT extract
-        const runId = `sentinel-${Date.now()}`
-        await ocrQueue.add(
-          "ocr",
-          { evidenceId: evidence.id, runId },
-          { jobId: `ocr-${evidence.id}` }
-        )
-        console.log(`[sentinel] Queued ${evidence.id} for OCR`)
+        // Queue for OCR only in LEGACY mode - in PHASE_D/OFF, drainer handles queueing
+        if (FeatureFlags.isLegacy) {
+          const runId = `sentinel-${Date.now()}`
+          await ocrQueue.add(
+            "ocr",
+            { evidenceId: evidence.id, runId },
+            { jobId: `ocr-${evidence.id}` }
+          )
+          console.log(`[sentinel] Queued ${evidence.id} for OCR (LEGACY mode)`)
+        } else {
+          console.log(
+            `[sentinel] Saved ${evidence.id} (${FeatureFlags.pipelineMode} mode - drainer will queue)`
+          )
+        }
 
         await logAuditEvent({
           action: "EVIDENCE_FETCHED",
@@ -1347,14 +1354,20 @@ async function processSingleItem(item: {
           },
         })
 
-        // Queue for extraction
-        const runId = `sentinel-${Date.now()}`
-        await extractQueue.add(
-          "extract",
-          { evidenceId: evidence.id, runId },
-          { jobId: `extract-${evidence.id}` }
-        )
-        console.log(`[sentinel] Queued ${evidence.id} for extraction`)
+        // Queue for extraction only in LEGACY mode - in PHASE_D/OFF, drainer handles queueing
+        if (FeatureFlags.isLegacy) {
+          const runId = `sentinel-${Date.now()}`
+          await extractQueue.add(
+            "extract",
+            { evidenceId: evidence.id, runId },
+            { jobId: `extract-${evidence.id}` }
+          )
+          console.log(`[sentinel] Queued ${evidence.id} for extraction (LEGACY mode)`)
+        } else {
+          console.log(
+            `[sentinel] Saved ${evidence.id} (${FeatureFlags.pipelineMode} mode - drainer will queue)`
+          )
+        }
 
         await logAuditEvent({
           action: "EVIDENCE_FETCHED",

@@ -1,5 +1,6 @@
 // src/lib/regulatory-truth/workers/continuous-pipeline.ts
 // Continuous 24/7 pipeline processing with self-healing
+// NOTE: This is the LEGACY pipeline - only active when RTL_PIPELINE_MODE=LEGACY
 
 import { db, dbReg } from "@/lib/db"
 import { fetchDiscoveredItems } from "../agents/sentinel"
@@ -9,6 +10,7 @@ import { autoApproveEligibleRules } from "../agents/reviewer"
 import { runArbiterBatch } from "../agents/arbiter"
 import { runReleaser } from "../agents/releaser"
 import { runDataRepair } from "../e2e/data-repair"
+import { FeatureFlags } from "./utils/feature-flags"
 
 interface PipelineStats {
   cycleCount: number
@@ -157,10 +159,18 @@ export async function startContinuousPipeline(): Promise<void> {
     return
   }
 
+  // Kill switch: Only run in LEGACY mode
+  // PHASE_D uses drainer + individual workers, OFF stops all processing
+  if (!FeatureFlags.isLegacy) {
+    console.log(`[pipeline] Pipeline mode is ${FeatureFlags.pipelineMode}, not LEGACY - exiting`)
+    console.log("[pipeline] Use RTL_PIPELINE_MODE=LEGACY to enable continuous-pipeline")
+    return
+  }
+
   isRunning = true
   shouldStop = false
 
-  console.log("[pipeline] Starting continuous pipeline processing")
+  console.log("[pipeline] Starting continuous pipeline processing (mode: LEGACY)")
   console.log(`[pipeline] Cycle delay: ${CYCLE_DELAY_MS}ms, Phase delay: ${PHASE_DELAY_MS}ms`)
 
   while (!shouldStop) {
@@ -201,7 +211,7 @@ export function getHealthStatus(): {
 
 // CLI entry point
 if (require.main === module) {
-  console.log("[pipeline] Starting as CLI...")
+  console.log(`[pipeline] Starting as CLI (pipeline mode: ${FeatureFlags.pipelineMode})...`)
 
   process.on("SIGINT", () => {
     console.log("\n[pipeline] Received SIGINT, stopping gracefully...")
