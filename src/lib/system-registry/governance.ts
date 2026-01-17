@@ -694,7 +694,7 @@ export const INTEGRATION_WRAPPER_ROOT = "src/lib/integrations"
  * Anything else is treated as a governance violation in harvesters.
  */
 export const ALLOWED_QUEUE_CONSTRUCTOR_PATHS = [
-  "src/lib/regulatory-truth/workers/queues.ts",
+  "external:fiskai-workers/src/lib/regulatory-truth/workers/queues.ts",
   "src/lib/outbox/outbox-worker.ts",
   // harvest-queues.ts contains Queue patterns in regex strings/comments (false positive)
   "src/lib/system-registry/harvesters/harvest-queues.ts",

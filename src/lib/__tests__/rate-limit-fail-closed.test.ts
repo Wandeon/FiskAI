@@ -1,7 +1,7 @@
 import { after, describe, it, mock } from "node:test"
 import assert from "node:assert"
 import { checkRateLimit } from "../security/rate-limit"
-import { closeRedis, redis } from "../regulatory-truth/workers/redis"
+import { closeRedis, redis } from "@/lib/infra/redis"
 
 describe("rate-limit fail closed", () => {
   after(async () => {

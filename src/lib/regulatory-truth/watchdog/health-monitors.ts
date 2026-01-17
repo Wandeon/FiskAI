@@ -11,7 +11,7 @@ import {
   deadletterQueue,
   getDrainerIdleMinutes,
   getDrainerHeartbeat,
-} from "../workers"
+} from "../worker-stubs"
 import { pingAllProviders, getActiveProvider } from "./llm-provider-health"
 import { llmCircuitBreaker } from "./llm-circuit-breaker"
 import { runProgressGateChecks } from "./progress-gates"

@@ -626,7 +626,7 @@ export async function runReleaser(approvedRuleIds: string[]): Promise<ReleaserRe
 
   try {
     // Dynamic import to avoid circular dependency
-    const { embeddingQueue } = await import("../workers/queues")
+    const { embeddingQueue } = await import("@/lib/infra/queues")
 
     for (const ruleId of approvedRuleIds) {
       await embeddingQueue.add(

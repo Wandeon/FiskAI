@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 const mockRedisStore = new Map<string, string>()
 
 // Mock Redis with stateful behavior (must be before imports that use it)
-vi.mock("@/lib/regulatory-truth/workers/redis", () => ({
+vi.mock("@/lib/infra/redis", () => ({
   redis: {
     get: vi.fn((key: string) => Promise.resolve(mockRedisStore.get(key) ?? null)),
     set: vi.fn((key: string, value: string) => {
@@ -20,16 +20,15 @@ vi.mock("@/lib/regulatory-truth/workers/redis", () => ({
   getBullMqOptions: vi.fn(() => ({
     connection: { host: "localhost", port: 6379 },
   })),
+  redisConnectionOptions: { host: "localhost", port: 6379 },
+  BULLMQ_PREFIX: "fiskai",
   createWorkerConnection: vi.fn(() => ({ host: "localhost", port: 6379 })),
   checkRedisHealth: vi.fn(() => Promise.resolve(true)),
   closeRedis: vi.fn(() => Promise.resolve()),
-  updateDrainerHeartbeat: vi.fn(() => Promise.resolve()),
-  getDrainerHeartbeat: vi.fn(() => Promise.resolve(null)),
-  getDrainerIdleMinutes: vi.fn(() => Promise.resolve(Infinity)),
 }))
 
-// Mock workers module (needs to be mocked because health-monitors imports from it)
-vi.mock("@/lib/regulatory-truth/workers", () => ({
+// Mock worker-stubs module (needs to be mocked because health-monitors imports from it)
+vi.mock("@/lib/regulatory-truth/worker-stubs", () => ({
   allQueues: {},
   checkRedisHealth: vi.fn(() => Promise.resolve(true)),
   deadletterQueue: {

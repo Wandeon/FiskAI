@@ -14,7 +14,7 @@ import {
   StockMovement,
 } from "@prisma/client"
 import { logger } from "@/lib/logger"
-import { backupQueue } from "@/lib/regulatory-truth/workers/queues"
+import { getBackupQueue } from "@/lib/infra/queues"
 import { requirePermission } from "@/lib/rbac"
 import { checkRateLimit } from "@/lib/security/rate-limit"
 
@@ -326,16 +326,16 @@ export async function scheduleBackup(
   }
 
   // Remove any existing scheduled backup for this company to avoid duplicates
-  const existingJobs = await backupQueue.getRepeatableJobs()
+  const existingJobs = await getBackupQueue().getRepeatableJobs()
   for (const job of existingJobs) {
     if (job.name === `scheduled-backup:${companyId}`) {
-      await backupQueue.removeRepeatableByKey(job.key)
+      await getBackupQueue().removeRepeatableByKey(job.key)
       logger.info({ companyId, oldKey: job.key }, "Removed existing backup schedule")
     }
   }
 
   // Add repeatable job with cron schedule
-  const job = await backupQueue.add(
+  const job = await getBackupQueue().add(
     `scheduled-backup:${companyId}`,
     {
       companyId,
@@ -381,12 +381,12 @@ export async function scheduleBackup(
  * Cancel scheduled backup for a company
  */
 export async function cancelScheduledBackup(companyId: string): Promise<boolean> {
-  const jobs = await backupQueue.getRepeatableJobs()
+  const jobs = await getBackupQueue().getRepeatableJobs()
   let cancelled = false
 
   for (const job of jobs) {
     if (job.name === `scheduled-backup:${companyId}`) {
-      await backupQueue.removeRepeatableByKey(job.key)
+      await getBackupQueue().removeRepeatableByKey(job.key)
       cancelled = true
       logger.info(
         { companyId, key: job.key, operation: "backup_cancelled" },
@@ -404,7 +404,7 @@ export async function cancelScheduledBackup(companyId: string): Promise<boolean>
 export async function getBackupSchedule(
   companyId: string
 ): Promise<{ frequency: BackupFrequency; cronExpression: string; nextRunAt: Date } | null> {
-  const jobs = await backupQueue.getRepeatableJobs()
+  const jobs = await getBackupQueue().getRepeatableJobs()
 
   for (const job of jobs) {
     if (job.name === `scheduled-backup:${companyId}`) {
@@ -432,7 +432,7 @@ export async function getBackupSchedule(
 export async function listAllBackupSchedules(): Promise<
   Array<{ companyId: string; frequency: BackupFrequency; nextRunAt: Date }>
 > {
-  const jobs = await backupQueue.getRepeatableJobs()
+  const jobs = await getBackupQueue().getRepeatableJobs()
   const schedules: Array<{ companyId: string; frequency: BackupFrequency; nextRunAt: Date }> = []
 
   for (const job of jobs) {

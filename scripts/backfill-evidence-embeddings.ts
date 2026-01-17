@@ -9,7 +9,7 @@
  */
 
 import { dbReg } from "@/lib/db"
-import { evidenceEmbeddingQueue } from "@/lib/regulatory-truth/workers/queues"
+import { getEvidenceEmbeddingQueue } from "@/lib/infra/queues"
 
 async function main() {
   const isDryRun = process.argv.includes("--dry-run")
@@ -59,7 +59,7 @@ async function main() {
 
   for (const evidence of pendingEvidence) {
     try {
-      await evidenceEmbeddingQueue.add(
+      await getEvidenceEmbeddingQueue().add(
         "generate-embedding",
         { evidenceId: evidence.id, runId },
         { jobId: `embed-${evidence.id}` }
@@ -81,7 +81,7 @@ async function main() {
   console.log(`[backfill] Complete: queued=${queued}, skipped=${skipped}`)
 
   // Show queue status
-  const counts = await evidenceEmbeddingQueue.getJobCounts()
+  const counts = await getEvidenceEmbeddingQueue().getJobCounts()
   console.log(`[backfill] Queue status:`, counts)
 
   process.exit(0)
