@@ -8,8 +8,8 @@
 
 Split the FiskAI monorepo into two separate repositories:
 
-- **fiskai-app**: Next.js application, einvoice polling, AI assistant
-- **fiskai-workers**: RTL knowledge base system (regulatory truth layer workers)
+- **fiskai-app**: Next.js application, einvoice inbound polling, AI assistant, knowledge hub tools
+- **fiskai-workers**: RTL knowledge base building system (regulatory truth layer workers only)
 
 ## Rationale
 
@@ -42,9 +42,10 @@ fiskai-app/
 │       ├── fiscal/             # Fiscal submission
 │       ├── fiscalization/      # Fiscalization logic
 │       ├── compliance/         # Compliance deadlines
-│       ├── e-invoice/
-│       │   └── providers/      # E-invoice providers (outbound)
-│       ├── knowledge-hub/      # Knowledge hub UI
+│       ├── e-invoice/          # Complete e-invoice system
+│       │   ├── providers/      # E-invoice providers (outbound)
+│       │   └── workers/        # Inbound polling (runs as app sidecar)
+│       ├── knowledge-hub/      # User tools (calculators, HUB3, wizard)
 │       ├── email/              # Email templates
 │       ├── admin/              # Admin utilities
 │       ├── tenancy/            # Multi-tenancy
@@ -75,7 +76,7 @@ fiskai-workers/
 ├── src/
 │   ├── lib/
 │   │   ├── regulatory-truth/   # Complete RTL system
-│   │   │   ├── workers/        # 15 worker implementations
+│   │   │   ├── workers/        # 14 RTL worker implementations
 │   │   │   ├── agents/         # LLM agents
 │   │   │   ├── pipeline/       # Orchestration
 │   │   │   ├── services/       # Core services
@@ -86,8 +87,6 @@ fiskai-workers/
 │   │   │   ├── quality/        # Quality gates
 │   │   │   ├── utils/          # RTL utilities
 │   │   │   └── [other RTL dirs]
-│   │   ├── e-invoice/
-│   │   │   └── workers/        # einvoice-inbound-poller
 │   │   ├── ai/                 # Ollama client
 │   │   ├── db/                 # Database clients (both)
 │   │   ├── logging/            # Pino logger
@@ -399,8 +398,7 @@ GITHUB_TOKEN=... (content sync)
 ### To fiskai-workers (MOVE)
 
 ```
-src/lib/regulatory-truth/           # Entire directory
-src/lib/e-invoice/workers/          # Inbound poller only
+src/lib/regulatory-truth/           # Entire RTL directory
 src/lib/ai/ollama-client.ts         # LLM client
 src/lib/db/regulatory.ts            # Regulatory DB client
 src/generated/regulatory-client/    # Generated Prisma client
@@ -430,8 +428,8 @@ src/infrastructure/                 # External services
 src/lib/assistant/                  # AI assistant
 src/lib/invoicing/                  # Invoicing
 src/lib/banking/                    # Banking
-src/lib/e-invoice/providers/        # E-invoice outbound
-src/lib/knowledge-hub/              # Knowledge hub UI
+src/lib/e-invoice/                  # Complete e-invoice (inbound + outbound)
+src/lib/knowledge-hub/              # User tools (calculators, HUB3, wizard)
 [all other app libs]
 prisma/schema.prisma                # Core schema
 Dockerfile                          # App image
