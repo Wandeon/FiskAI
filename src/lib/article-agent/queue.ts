@@ -4,7 +4,7 @@
  *
  * Provides functions to enqueue article generation jobs for background processing.
  */
-import { articleQueue } from "@/lib/regulatory-truth/workers/queues"
+import { getArticleQueue } from "@/lib/infra/queues"
 import type { ArticleType } from "@prisma/client"
 
 export interface EnqueueArticleJobParams {
@@ -57,7 +57,7 @@ export interface EnqueueResult {
  */
 export async function enqueueArticleJob(params: EnqueueArticleJobParams): Promise<EnqueueResult> {
   try {
-    const job = await articleQueue.add(
+    const job = await getArticleQueue().add(
       "article.generate",
       {
         action: "generate",
@@ -107,7 +107,7 @@ export async function enqueueExistingArticleJob(
   triggeredBy?: string
 ): Promise<EnqueueResult> {
   try {
-    const job = await articleQueue.add(
+    const job = await getArticleQueue().add(
       "article.process",
       {
         action: "process",

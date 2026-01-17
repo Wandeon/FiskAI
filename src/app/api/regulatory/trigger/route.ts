@@ -1,7 +1,7 @@
 // src/app/api/regulatory/trigger/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth-utils"
-import { scheduledQueue } from "@/lib/regulatory-truth/workers/queues"
+import { getScheduledQueue } from "@/lib/infra/queues"
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const phases = body.phases || ["sentinel", "extract", "compose", "review", "release"]
 
-    const job = await scheduledQueue.add("scheduled", {
+    const job = await getScheduledQueue().add("scheduled", {
       type: "pipeline-run",
       runId: `api-${Date.now()}`,
       triggeredBy: "api",

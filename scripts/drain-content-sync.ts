@@ -12,7 +12,7 @@
 import { eq } from "drizzle-orm"
 import { drizzleDb } from "../src/lib/db/drizzle"
 import { contentSyncEvents } from "../src/lib/db/schema/content-sync"
-import { enqueueContentSyncJob } from "../src/lib/regulatory-truth/workers/content-sync.worker"
+import { enqueueContentSyncJob } from "@/lib/infra/queues"
 
 async function drainPendingEvents() {
   console.log("Draining pending content sync events...\n")
