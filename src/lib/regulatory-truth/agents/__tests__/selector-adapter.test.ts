@@ -23,15 +23,15 @@ import {
   MAX_YIELD,
 } from "../selector-adapter"
 
-// Mock the Ollama client
-vi.mock("@/lib/ai/ollama-client", () => ({
-  chatJSON: vi.fn(),
+// Mock the Ollama client (uses article-agent's client, not app's)
+vi.mock("@/lib/article-agent/llm/ollama-client", () => ({
+  callOllamaJSON: vi.fn(),
 }))
 
-import { chatJSON } from "@/lib/ai/ollama-client"
+import { callOllamaJSON } from "@/lib/article-agent/llm/ollama-client"
 
 describe("Selector Adapter", () => {
-  const mockedChatJSON = vi.mocked(chatJSON)
+  const mockedCallOllamaJSON = vi.mocked(callOllamaJSON)
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -74,7 +74,7 @@ describe("Selector Adapter", () => {
       }
 
       // Mock LLM response
-      mockedChatJSON.mockResolvedValueOnce({
+      mockedCallOllamaJSON.mockResolvedValueOnce({
         suggestedSelectors: ["article.document", ".document h2.title", "main article"],
         reasoning: "The page structure changed from .zakon to article.document class pattern",
       })
@@ -83,7 +83,7 @@ describe("Selector Adapter", () => {
       const result = await generateSelectorSuggestions(input)
 
       // Assert
-      expect(mockedChatJSON).toHaveBeenCalledTimes(1)
+      expect(mockedCallOllamaJSON).toHaveBeenCalledTimes(1)
       expect(result.suggestedSelectors).toEqual([
         "article.document",
         ".document h2.title",
@@ -100,7 +100,7 @@ describe("Selector Adapter", () => {
         currentSelectors: [".old-selector"],
       }
 
-      mockedChatJSON.mockResolvedValueOnce({
+      mockedCallOllamaJSON.mockResolvedValueOnce({
         suggestedSelectors: [],
         reasoning: "Could not identify suitable selectors",
       })
@@ -119,7 +119,7 @@ describe("Selector Adapter", () => {
         currentSelectors: [".selector"],
       }
 
-      mockedChatJSON.mockRejectedValueOnce(new Error("LLM timeout"))
+      mockedCallOllamaJSON.mockRejectedValueOnce(new Error("LLM timeout"))
 
       await expect(generateSelectorSuggestions(input)).rejects.toThrow("LLM timeout")
     })
