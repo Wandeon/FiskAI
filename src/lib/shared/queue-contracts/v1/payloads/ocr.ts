@@ -13,6 +13,8 @@ import { JobEnvelopeV1Schema } from "../envelope"
 export const OcrJobV1Schema = JobEnvelopeV1Schema.extend({
   /** Evidence ID to OCR. */
   evidenceId: z.string().min(1),
+  /** Parent job ID for correlation (from router). */
+  parentJobId: z.string().optional(),
 })
 
 export type OcrJobV1 = z.infer<typeof OcrJobV1Schema>
