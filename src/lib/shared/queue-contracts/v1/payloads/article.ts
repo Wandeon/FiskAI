@@ -8,16 +8,9 @@ import { z } from "zod"
 import { JobEnvelopeV1Schema } from "../envelope"
 
 /**
- * Article types supported by the article agent.
+ * Article types - must match Prisma ArticleType enum.
  */
-export const ArticleTypeSchema = z.enum([
-  "NEWS",
-  "GUIDE",
-  "HOWTO",
-  "COMPARISON",
-  "ANALYSIS",
-  "UPDATE",
-])
+export const ArticleTypeSchema = z.enum(["NEWS", "GUIDE", "HOWTO", "GLOSSARY", "COMPARISON"])
 
 export type ArticleType = z.infer<typeof ArticleTypeSchema>
 

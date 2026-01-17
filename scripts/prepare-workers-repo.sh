@@ -52,6 +52,9 @@ echo ""
 COPY_DIRS=(
     "src/lib/regulatory-truth"       # Complete RTL system
     "src/lib/e-invoice/workers"      # E-invoice inbound poller
+    "src/lib/article-agent"          # Article agent (used by RTL workers)
+    "src/lib/shared/dsl"             # Shared DSL (applies-when, outcome)
+    "src/lib/shared/queue-contracts" # Queue contracts (payload schemas)
     "src/generated/regulatory-client" # Generated Prisma client (if exists)
 )
 
@@ -68,8 +71,6 @@ COPY_FILES=(
     "src/lib/cache/redis.ts"
     "src/lib/infra/redis.ts"
     "src/lib/infra/circuit-breaker.ts"
-    "src/lib/shared/dsl/index.ts"
-    "src/lib/shared/queue-contracts.ts"
 
     # Prisma
     "prisma/regulatory.prisma"

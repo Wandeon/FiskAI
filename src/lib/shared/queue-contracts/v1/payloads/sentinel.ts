@@ -9,9 +9,9 @@ import { JobEnvelopeV1Schema } from "../envelope"
 
 /**
  * Discovery priority levels.
- * Maps to DiscoveryPriority enum from Prisma.
+ * Must match Prisma DiscoveryPriority enum.
  */
-export const DiscoveryPrioritySchema = z.enum(["CRITICAL", "HIGH", "NORMAL", "LOW"])
+export const DiscoveryPrioritySchema = z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"])
 export type DiscoveryPriority = z.infer<typeof DiscoveryPrioritySchema>
 
 /**

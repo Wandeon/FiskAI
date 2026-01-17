@@ -22,6 +22,13 @@ export const ScheduledJobTypeSchema = z.enum([
   "revalidation",
   "selector-adaptation",
   "feedback-review-flagging",
+  // Orchestrator maintenance job types
+  "confidence-decay",
+  "e2e-validation",
+  "health-snapshot",
+  "truth-consolidation-audit",
+  "dlq-healing",
+  "feedback-retention-cleanup",
 ])
 
 export type ScheduledJobType = z.infer<typeof ScheduledJobTypeSchema>
