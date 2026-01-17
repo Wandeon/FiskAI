@@ -310,6 +310,99 @@ services:
         limits:
           memory: 256M
 
+  # RTL: Content Scout - pre-LLM quality assessment
+  # Runs deterministic checks before expensive LLM calls
+  worker-content-scout:
+    <<: *worker-common
+    container_name: fiskai-worker-content-scout
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/content-scout.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: content-scout
+      WORKER_CONCURRENCY: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # RTL: Router - decides pipeline path based on scout output + budget
+  # No LLM calls - pure routing logic
+  worker-router:
+    <<: *worker-common
+    container_name: fiskai-worker-router
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/router.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: router
+      WORKER_CONCURRENCY: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # RTL: Regression Detector - daily snapshot and diff detection
+  # Creates snapshots of published rules, flags unexplained changes
+  worker-regression-detector:
+    <<: *worker-common
+    container_name: fiskai-worker-regression-detector
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/regression-detector.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: regression-detector
+      WORKER_CONCURRENCY: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # RTL: Selector Adaptation - LLM-based CSS selector suggestions
+  # Triggers when fingerprint drift detected with 0 items extracted
+  worker-selector-adaptation:
+    <<: *worker-common
+    container_name: fiskai-worker-selector-adaptation
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/selector-adaptation.worker.js"]
+    environment:
+      <<: *worker-env
+      OLLAMA_ENDPOINT: ${OLLAMA_ENDPOINT}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      WORKER_TYPE: selector-adaptation
+      WORKER_CONCURRENCY: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # RTL: Revalidation - scheduled re-validation of published rules
+  # Tier-based schedules: T0=weekly, T1=bi-weekly, T2=monthly, T3=quarterly
+  worker-revalidation:
+    <<: *worker-common
+    container_name: fiskai-worker-revalidation
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/revalidation.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: revalidation
+      WORKER_CONCURRENCY: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # RTL: Consolidator - merges duplicate rules, assigns canonical IDs
+  # Handles rule deduplication and pointer reassignment
+  worker-consolidator:
+    <<: *worker-common
+    container_name: fiskai-worker-consolidator
+    command: ["node", "dist/workers/lib/regulatory-truth/workers/consolidator.worker.js"]
+    environment:
+      <<: *worker-env
+      WORKER_TYPE: consolidator
+      WORKER_CONCURRENCY: 1
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
 volumes:
   fiskai_redis_data:
 

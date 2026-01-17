@@ -7,8 +7,8 @@
 #   - ghcr.io/wandeon/fiskai-worker-ocr:<sha> (OCR worker, AMD64 for VPS)
 #
 # Architecture note:
-#   - App runs on VPS-01 (ARM64) so built for linux/arm64
-#   - Workers run on VPS (x86_64) so built for linux/amd64
+#   - App runs on VPS-01 (ARM64) so built for linux/arm64 using remote ARM64 BuildKit
+#   - Workers run on VPS (x86_64) so built for linux/amd64 using local buildx
 #
 # All images also get :latest tag on main branch for convenience.
 # Production deploys should use SHA or digest for reproducibility.
@@ -38,13 +38,94 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Remote BuildKit on VPS-01 (ARM64) via Tailscale
-  BUILDKIT_HOST: tcp://100.64.123.81:1234
 
 jobs:
-  # Build all images in parallel using matrix strategy
-  build-images:
-    name: Build ${{ matrix.image }}
+  # Build ARM64 app image using remote ARM64 BuildKit on VPS-01
+  build-app:
+    name: Build fiskai-app (ARM64)
+    runs-on: [self-hosted, linux, x64, fiskai-build]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Use remote ARM64 BuildKit for native ARM64 builds
+      - name: Set up Docker Buildx with remote builder
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://100.64.123.81:1234
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/wandeon/fiskai-app
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=,format=short
+            type=sha,prefix=,format=long
+
+      - name: Record build start time
+        id: build_start
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Build and push fiskai-app
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event.inputs.dry_run != 'true' }}
+          platforms: linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/wandeon/fiskai-app:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.REGISTRY }}/wandeon/fiskai-app:buildcache,mode=max
+          build-args: |
+            DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy?schema=public
+            REGULATORY_DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy?schema=public
+          provenance: false
+          sbom: false
+
+      - name: Calculate build duration
+        id: build_time
+        run: |
+          end=$(date +%s)
+          start=${{ steps.build_start.outputs.start }}
+          duration=$((end - start))
+          minutes=$((duration / 60))
+          seconds=$((duration % 60))
+          echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
+
+      - name: Write build summary
+        run: |
+          echo "### fiskai-app (ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build time:** ${{ steps.build_time.outputs.duration }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # Build AMD64 worker images using local buildx (native on x64 runner)
+  build-workers:
+    name: Build ${{ matrix.image }} (AMD64)
     runs-on: [self-hosted, linux, x64, fiskai-build]
     permissions:
       contents: read
@@ -54,22 +135,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: fiskai-app
-            dockerfile: Dockerfile
-            platform: linux/arm64  # VPS-01 is ARM64
-            build-args: |
-              DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy?schema=public
-              REGULATORY_DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy?schema=public
           - image: fiskai-worker
-            dockerfile: Dockerfile.worker
-            platform: linux/amd64  # VPS (worker host) is x86_64
             build-args: |
               WITH_OCR=false
               GIT_SHA=${{ github.sha }}
               BUILD_DATE=${{ github.event.head_commit.timestamp }}
           - image: fiskai-worker-ocr
-            dockerfile: Dockerfile.worker
-            platform: linux/amd64  # VPS (worker host) is x86_64
             build-args: |
               WITH_OCR=true
               GIT_SHA=${{ github.sha }}
@@ -79,11 +150,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx with remote builder
+      # Use local buildx for native AMD64 builds (self-hosted runner is x64)
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: remote
-          endpoint: ${{ env.BUILDKIT_HOST }}
+          driver: docker-container
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -111,9 +182,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./${{ matrix.dockerfile }}
+          file: ./Dockerfile.worker
           push: ${{ github.event.inputs.dry_run != 'true' }}
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
@@ -136,7 +207,7 @@ jobs:
 
       - name: Write build summary
         run: |
-          echo "### ${{ matrix.image }}" >> $GITHUB_STEP_SUMMARY
+          echo "### ${{ matrix.image }} (AMD64)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Build time:** ${{ steps.build_time.outputs.duration }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -151,7 +222,7 @@ jobs:
   summarize:
     name: Summarize Builds
     runs-on: [self-hosted, linux, x64, fiskai-build]
-    needs: build-images
+    needs: [build-app, build-workers]
     if: always()
 
     steps:
@@ -174,7 +245,7 @@ jobs:
   deploy-app:
     name: Deploy App to Coolify
     runs-on: [self-hosted, linux, x64, fiskai-build]
-    needs: build-images
+    needs: build-app
     if: github.ref == 'refs/heads/main' && github.event.inputs.dry_run != 'true'
 
     steps:
