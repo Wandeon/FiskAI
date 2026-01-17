@@ -20,6 +20,10 @@ let _articleQueue: Queue | null = null
 let _backupQueue: Queue | null = null
 let _evidenceEmbeddingQueue: Queue | null = null
 let _contentSyncQueue: Queue | null = null
+let _extractQueue: Queue | null = null
+let _ocrQueue: Queue | null = null
+let _embeddingQueue: Queue | null = null
+let _selectorAdaptationQueue: Queue | null = null
 
 /**
  * Get the scheduled queue for triggering pipeline runs
@@ -99,6 +103,114 @@ export async function enqueueContentSyncJob(eventId: string): Promise<string | u
 }
 
 /**
+ * Get the extract queue for fact extraction jobs
+ */
+export function getExtractQueue(): Queue {
+  if (!_extractQueue) {
+    _extractQueue = new Queue("extractor", {
+      connection: redisOptions,
+      prefix: BULLMQ_PREFIX,
+    })
+  }
+  return _extractQueue
+}
+
+/**
+ * Get the OCR queue for OCR processing jobs
+ */
+export function getOcrQueue(): Queue {
+  if (!_ocrQueue) {
+    _ocrQueue = new Queue("ocr", {
+      connection: redisOptions,
+      prefix: BULLMQ_PREFIX,
+    })
+  }
+  return _ocrQueue
+}
+
+/**
+ * Get the embedding queue for rule embedding generation
+ */
+export function getEmbeddingQueue(): Queue {
+  if (!_embeddingQueue) {
+    _embeddingQueue = new Queue("embedding", {
+      connection: redisOptions,
+      prefix: BULLMQ_PREFIX,
+    })
+  }
+  return _embeddingQueue
+}
+
+/**
+ * Get the selector adaptation queue
+ */
+export function getSelectorAdaptationQueue(): Queue {
+  if (!_selectorAdaptationQueue) {
+    _selectorAdaptationQueue = new Queue("selector-adaptation", {
+      connection: redisOptions,
+      prefix: BULLMQ_PREFIX,
+    })
+  }
+  return _selectorAdaptationQueue
+}
+
+// Backwards-compatible queue exports (proxy to lazy getters)
+export const extractQueue = new Proxy({} as Queue, {
+  get(_, prop: string | symbol) {
+    const instance = getExtractQueue()
+    const value = (instance as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
+
+export const ocrQueue = new Proxy({} as Queue, {
+  get(_, prop: string | symbol) {
+    const instance = getOcrQueue()
+    const value = (instance as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
+
+export const embeddingQueue = new Proxy({} as Queue, {
+  get(_, prop: string | symbol) {
+    const instance = getEmbeddingQueue()
+    const value = (instance as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
+
+export const evidenceEmbeddingQueue = new Proxy({} as Queue, {
+  get(_, prop: string | symbol) {
+    const instance = getEvidenceEmbeddingQueue()
+    const value = (instance as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
+
+export const selectorAdaptationQueue = new Proxy({} as Queue, {
+  get(_, prop: string | symbol) {
+    const instance = getSelectorAdaptationQueue()
+    const value = (instance as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
+
+/**
  * Close all queue connections (for cleanup)
  */
 export async function closeQueues(): Promise<void> {
@@ -108,6 +220,10 @@ export async function closeQueues(): Promise<void> {
     _backupQueue,
     _evidenceEmbeddingQueue,
     _contentSyncQueue,
+    _extractQueue,
+    _ocrQueue,
+    _embeddingQueue,
+    _selectorAdaptationQueue,
   ].filter(Boolean) as Queue[]
   await Promise.all(queues.map((q) => q.close()))
   _scheduledQueue = null
@@ -115,4 +231,8 @@ export async function closeQueues(): Promise<void> {
   _backupQueue = null
   _evidenceEmbeddingQueue = null
   _contentSyncQueue = null
+  _extractQueue = null
+  _ocrQueue = null
+  _embeddingQueue = null
+  _selectorAdaptationQueue = null
 }

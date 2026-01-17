@@ -4,7 +4,7 @@ import { db } from "@/lib/db" // For WebhookEvent, WebhookSubscription (still in
 import { dbReg } from "@/lib/db/regulatory" // For Evidence, RegulatorySource (in regulatory)
 import { hashContent } from "../utils/content-hash"
 import { fetchWithRateLimit } from "../utils/rate-limiter"
-import { extractQueue, ocrQueue } from "../workers/queues"
+import { extractQueue, ocrQueue } from "@/lib/infra/queues"
 import { detectBinaryType, parseBinaryContent } from "../utils/binary-parser"
 import { isScannedPdf } from "../utils/ocr-processor"
 import { logAuditEvent } from "../utils/audit-log"
