@@ -46,3 +46,17 @@ export {
   type EntityProvenanceMap,
   type ProvenanceDisplay,
 } from "./data-provenance.service"
+
+export {
+  PaymentMatchingService,
+  paymentMatchingService,
+  MatchConfidenceLevel,
+  type AutoMatchMethod,
+  type MatchMethod,
+  type MatchIndicator,
+  type PotentialMatch,
+  type MatchHistory,
+  type AuditEntry,
+  type MatchDisplay,
+  type MatchingResult,
+} from "./payment-matching.service"
