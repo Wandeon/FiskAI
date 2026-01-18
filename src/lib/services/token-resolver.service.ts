@@ -56,9 +56,17 @@ export interface TokenUser {
  * Context provided to the token resolver
  */
 export interface TokenContext {
+  /** Company data for company-specific tokens */
   company?: TokenCompany
+  /** User data for user-specific tokens */
   user?: TokenUser
+  /** Year for historical regulatory values (defaults to current year) */
   year?: number
+  /**
+   * Locale for formatting (reserved for future i18n)
+   * Currently only 'hr' Croatian formatting is implemented
+   * @default 'hr'
+   */
   locale?: string
 }
 
