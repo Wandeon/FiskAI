@@ -148,9 +148,9 @@ export function DocumentUpload({
           <FileText className="h-6 w-6 text-muted" />
         </div>
 
-        <h3 className="text-body-base font-medium text-foreground mb-1">Ucitaj Obrtnicu</h3>
+        <h3 className="text-body-base font-medium text-foreground mb-1">Učitaj Obrtnicu</h3>
 
-        <p className="text-body-sm text-secondary mb-4">Automatski cemo prepoznati vase podatke.</p>
+        <p className="text-body-sm text-secondary mb-4">Automatski ćemo prepoznati vaše podatke.</p>
 
         <div className="flex items-center gap-3">
           <Button type="button" variant="outline" onClick={handleButtonClick}>
@@ -160,7 +160,7 @@ export function DocumentUpload({
           <span className="text-body-sm text-muted">ili povuci ovdje</span>
         </div>
 
-        <p className="text-body-xs text-muted mt-4">Podrzani: {displayTypes}</p>
+        <p className="text-body-xs text-muted mt-4">Podržani: {displayTypes}</p>
 
         <input
           ref={fileInputRef}
@@ -168,7 +168,7 @@ export function DocumentUpload({
           accept={acceptedTypesString}
           onChange={handleFileInputChange}
           className="sr-only"
-          aria-label="Odaberi datoteku za ucitavanje"
+          aria-label="Odaberi datoteku za učitavanje"
         />
       </div>
     </div>

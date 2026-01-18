@@ -217,7 +217,7 @@ export function OnboardingStep1Identity({
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-surface px-4 text-body-sm text-muted">ili unesite rucno</span>
+              <span className="bg-surface px-4 text-body-sm text-muted">ili unesite ručno</span>
             </div>
           </div>
         </>
@@ -263,7 +263,7 @@ export function OnboardingStep1Identity({
               onChange={(e) => handleOibChange(e.target.value)}
               placeholder="12345678901"
               maxLength={11}
-              className="w-32"
+              className="w-40"
               error={oibValidation && !oibValidation.isValid ? true : undefined}
               aria-describedby="oib-status"
             />
@@ -344,7 +344,7 @@ export function OnboardingStep1Identity({
           Natrag
         </Button>
         <Button type="button" variant="primary" onClick={handleSubmit} disabled={!isFormValid}>
-          {mode === "parsed" ? "Potvrdujem, dalje" : "Dalje"}
+          {mode === "parsed" ? "Potvrđujem, dalje →" : "Dalje →"}
         </Button>
       </div>
     </div>
