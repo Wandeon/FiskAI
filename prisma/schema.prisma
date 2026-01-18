@@ -5944,4 +5944,5 @@ model DataProvenance {
   @@index([entityType, entityId, field])
   @@index([source])
   @@index([capturedAt])
+  @@unique([entityType, entityId, field])
 }
