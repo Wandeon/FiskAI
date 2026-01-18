@@ -13,6 +13,17 @@ import {
 } from "../utils/error-classifier"
 import { deadletterQueue, allQueues, type DeadLetterJobData } from "./queues"
 
+// Lazy import for retry-learning to avoid DB dependency in unit tests
+// This module is only loaded when adaptive cooldowns are actually used
+let retryLearningModule: typeof import("../utils/retry-learning") | null = null
+
+async function getRetryLearning() {
+  if (!retryLearningModule) {
+    retryLearningModule = await import("../utils/retry-learning")
+  }
+  return retryLearningModule
+}
+
 /** Maximum auto-retry attempts per DLQ entry */
 export const MAX_AUTO_RETRIES = 3
 
@@ -60,7 +71,7 @@ export function createIdempotencyKey(jobId: string | undefined, payload: unknown
 }
 
 /**
- * Check if a DLQ entry should be auto-replayed.
+ * Check if a DLQ entry should be auto-replayed (sync version using fixed cooldowns).
  * Returns true only if:
  * 1. Error category is transient (NETWORK, TIMEOUT, QUOTA, PARSE)
  * 2. Retry count < MAX_AUTO_RETRIES (3)
@@ -83,7 +94,7 @@ export function shouldAutoReplay(entry: DLQEntryWithClassification): boolean {
     return false
   }
 
-  // Check cooldown period with exponential backoff
+  // Check cooldown period with exponential backoff (fixed cooldowns)
   const cooldownMs = getCooldownMs(entry.errorCategory)
   const backoffMultiplier = Math.pow(2, entry.retryCount)
   const totalCooldownMs = cooldownMs * backoffMultiplier
@@ -95,6 +106,46 @@ export function shouldAutoReplay(entry: DLQEntryWithClassification): boolean {
   }
 
   return true
+}
+
+/**
+ * Check if a DLQ entry should be auto-replayed using adaptive cooldowns.
+ * Uses learned optimal wait times per error category when available.
+ * Returns the actual wait time used for learning feedback.
+ */
+export async function shouldAutoReplayAdaptive(
+  entry: DLQEntryWithClassification
+): Promise<{ canReplay: boolean; actualWaitMs: number }> {
+  // Check if error is retryable
+  if (!isTransientError(entry.errorCategory)) {
+    return { canReplay: false, actualWaitMs: 0 }
+  }
+
+  // Check retry cap
+  if (entry.retryCount >= MAX_AUTO_RETRIES) {
+    return { canReplay: false, actualWaitMs: 0 }
+  }
+
+  // Check if already replayed (idempotency)
+  if (replayedJobs.has(entry.idempotencyKey)) {
+    return { canReplay: false, actualWaitMs: 0 }
+  }
+
+  // Get adaptive cooldown (learned from historical data)
+  const retryLearning = await getRetryLearning()
+  const baseCooldownMs = await retryLearning.getAdaptiveCooldownMs(entry.errorCategory)
+  const backoffMultiplier = Math.pow(2, entry.retryCount)
+  const totalCooldownMs = baseCooldownMs * backoffMultiplier
+
+  const failedAt = new Date(entry.failedAt).getTime()
+  const now = Date.now()
+  const actualWaitMs = now - failedAt
+
+  if (actualWaitMs < totalCooldownMs) {
+    return { canReplay: false, actualWaitMs }
+  }
+
+  return { canReplay: true, actualWaitMs }
 }
 
 /**
@@ -169,13 +220,33 @@ export interface HealingCycleResult {
   escalated: number
   errors: string[]
   byCategory: Record<ErrorCategory, number>
+  adaptiveLearning?: {
+    outcomesRecorded: number
+    avgWaitTimeMs: number
+  }
+}
+
+/**
+ * Healing cycle options
+ */
+export interface HealingCycleOptions {
+  /** Use adaptive cooldowns learned from historical data */
+  useAdaptiveCooldowns?: boolean
+  /** Record outcomes for adaptive learning */
+  recordLearningData?: boolean
 }
 
 /**
  * Run a single healing cycle.
  * Scans DLQ jobs, auto-replays eligible ones, escalates permanent failures.
+ *
+ * @param options - Configuration for adaptive learning
  */
-export async function runHealingCycle(): Promise<HealingCycleResult> {
+export async function runHealingCycle(
+  options: HealingCycleOptions = {}
+): Promise<HealingCycleResult> {
+  const { useAdaptiveCooldowns = true, recordLearningData = true } = options
+
   const result: HealingCycleResult = {
     scanned: 0,
     replayed: 0,
@@ -194,6 +265,13 @@ export async function runHealingCycle(): Promise<HealingCycleResult> {
     },
   }
 
+  // Track wait times for learning feedback
+  const waitTimesForLearning: Array<{
+    errorCategory: ErrorCategory
+    waitTimeMs: number
+    success: boolean
+  }> = []
+
   try {
     // Get all waiting/active DLQ jobs
     const jobs = await deadletterQueue.getJobs(["waiting", "active"], 0, 1000)
@@ -206,8 +284,22 @@ export async function runHealingCycle(): Promise<HealingCycleResult> {
       // Track by category
       result.byCategory[entry.errorCategory]++
 
-      // Check if eligible for auto-replay
-      if (shouldAutoReplay(entry)) {
+      // Check if eligible for auto-replay (using adaptive or fixed cooldowns)
+      let canReplay: boolean
+      let actualWaitMs = 0
+
+      if (useAdaptiveCooldowns) {
+        const adaptiveResult = await shouldAutoReplayAdaptive(entry)
+        canReplay = adaptiveResult.canReplay
+        actualWaitMs = adaptiveResult.actualWaitMs
+      } else {
+        canReplay = shouldAutoReplay(entry)
+        // Calculate wait time for fixed cooldowns
+        const failedAt = new Date(entry.failedAt).getTime()
+        actualWaitMs = Date.now() - failedAt
+      }
+
+      if (canReplay) {
         const targetQueue = allQueues[entry.originalQueue as keyof typeof allQueues]
 
         if (!targetQueue) {
@@ -236,14 +328,34 @@ export async function runHealingCycle(): Promise<HealingCycleResult> {
           await job.remove()
 
           result.replayed++
+
+          // Record successful replay for learning
+          if (recordLearningData && isTransientError(entry.errorCategory)) {
+            waitTimesForLearning.push({
+              errorCategory: entry.errorCategory,
+              waitTimeMs: actualWaitMs,
+              success: true, // Replay was initiated (actual success tracked on next cycle)
+            })
+          }
+
           console.log(
-            `[dlq-healer] Replayed job ${job.id} (${entry.errorCategory}, retry ${entry.retryCount + 1})`
+            `[dlq-healer] Replayed job ${job.id} (${entry.errorCategory}, retry ${entry.retryCount + 1}, ` +
+              `wait ${Math.round(actualWaitMs / 1000)}s${useAdaptiveCooldowns ? ", adaptive" : ""})`
           )
         } catch (error) {
           result.errors.push(
             `Failed to replay job ${job.id}: ${error instanceof Error ? error.message : String(error)}`
           )
           result.skipped++
+
+          // Record failed replay for learning
+          if (recordLearningData && isTransientError(entry.errorCategory)) {
+            waitTimesForLearning.push({
+              errorCategory: entry.errorCategory,
+              waitTimeMs: actualWaitMs,
+              success: false,
+            })
+          }
         }
       } else if (!isTransientError(entry.errorCategory)) {
         // Permanent failure - escalate (keep in DLQ for human review)
@@ -253,6 +365,29 @@ export async function runHealingCycle(): Promise<HealingCycleResult> {
         result.skipped++
       }
     }
+
+    // Record learning data
+    if (recordLearningData && waitTimesForLearning.length > 0) {
+      try {
+        const retryLearning = await getRetryLearning()
+        for (const outcome of waitTimesForLearning) {
+          await retryLearning.recordRetryOutcome(outcome)
+        }
+
+        const avgWaitMs =
+          waitTimesForLearning.reduce((sum, o) => sum + o.waitTimeMs, 0) /
+          waitTimesForLearning.length
+
+        result.adaptiveLearning = {
+          outcomesRecorded: waitTimesForLearning.length,
+          avgWaitTimeMs: avgWaitMs,
+        }
+      } catch (learningError) {
+        console.warn(
+          `[dlq-healer] Failed to record learning data: ${learningError instanceof Error ? learningError.message : String(learningError)}`
+        )
+      }
+    }
   } catch (error) {
     result.errors.push(
       `Healing cycle failed: ${error instanceof Error ? error.message : String(error)}`
@@ -260,9 +395,12 @@ export async function runHealingCycle(): Promise<HealingCycleResult> {
   }
 
   // Log summary
+  const adaptiveInfo = result.adaptiveLearning
+    ? ` learning=${result.adaptiveLearning.outcomesRecorded}`
+    : ""
   console.log(
     `[dlq-healer] Cycle complete: scanned=${result.scanned} replayed=${result.replayed} ` +
-      `skipped=${result.skipped} escalated=${result.escalated} errors=${result.errors.length}`
+      `skipped=${result.skipped} escalated=${result.escalated} errors=${result.errors.length}${adaptiveInfo}`
   )
 
   return result

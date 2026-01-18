@@ -560,3 +560,73 @@ model ConfidenceCalibration {
   @@index([computedAt]) // Query latest calibration, TTL cleanup
   @@schema("regulatory")
 }
+
+// =============================================================================
+// EXTRACTION FEEDBACK - Tracks extraction outcomes for learning
+// =============================================================================
+// RTL Self-Improvement: Extraction Feedback Loop (Priority 2A)
+// Records every extraction outcome to identify patterns:
+// - Which domains/sources have high failure rates?
+// - What confidence levels correlate with success/failure?
+// - Common error patterns for prompt improvement
+//
+// Retention: 6 months for trend analysis
+
+enum ExtractionOutcome {
+  PUBLISHED     // Successfully published as a rule
+  APPROVED      // Approved but not yet published
+  REJECTED      // Rejected by reviewer/arbiter
+  QUOTE_MISMATCH // Quote not found in evidence
+  VALIDATION_FAIL // Failed deterministic validation
+  USER_NEGATIVE  // Negative user feedback on published rule
+  USER_POSITIVE  // Positive user feedback on published rule
+
+  @@schema("regulatory")
+}
+
+model ExtractionFeedback {
+  id             String            @id @default(cuid())
+  evidenceId     String
+  sourceSlug     String?           // Denormalized for aggregation
+  domain         String            // Extraction domain
+  outcomeType    ExtractionOutcome
+  confidenceAt   Float             // Confidence when extracted
+  extractedValue String?           // The value that was extracted
+  errorDetails   String?           // Error message if failure
+  metadata       Json?             @db.JsonB // Additional context
+  createdAt      DateTime          @default(now())
+
+  @@index([domain])
+  @@index([sourceSlug])
+  @@index([outcomeType])
+  @@index([confidenceAt])
+  @@index([createdAt])
+  @@schema("regulatory")
+}
+
+// =============================================================================
+// SOURCE HEALTH PATTERN - Learns failure patterns per source/time
+// =============================================================================
+// RTL Self-Improvement: Source-Specific Pattern Learning (Priority 3B)
+// Tracks historical failure rates by source and time-of-day/day-of-week.
+// Enables predictive scheduling and early warning.
+//
+// Example insight: "Source X fails 80% on Mondays at 2am"
+
+model SourceHealthPattern {
+  id          String   @id @default(cuid())
+  sourceSlug  String
+  dayOfWeek   Int?     // 0-6 (Sunday-Saturday), null for any day
+  hourOfDay   Int?     // 0-23, null for any hour
+  failureRate Float    // Historical failure rate (0-1)
+  successRate Float    // Historical success rate (0-1)
+  sampleSize  Int      // Number of observations
+  avgLatencyMs Float?  // Average scrape latency
+  lastUpdated DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sourceSlug, dayOfWeek, hourOfDay])
+  @@index([sourceSlug])
+  @@index([failureRate])
+  @@schema("regulatory")
+}

@@ -103,6 +103,23 @@ export const revalidationQueue = createQueue("revalidation", {
   duration: 3600000, // 1 hour rate limit - allow time for full validation
 })
 
+// Quote Healer queue - attempts to repair broken provenance quotes
+// Part of RTL Self-Healing Pipeline (Priority 1A)
+// Processes ExtractionRejected entries with QUOTE_NOT_IN_EVIDENCE rejection type
+// Low rate limit since each repair requires evidence content loading and fuzzy matching
+export const quoteHealerQueue = createQueue("quote-healer", {
+  max: 5,
+  duration: 60000, // 5 per minute
+})
+
+// Auto-remediation queue - autonomous handling of common failure patterns
+// Part of RTL Self-Healing Pipeline (Priority 4B)
+// Processes failures based on learned remediation rules
+export const autoRemediationQueue = createQueue("auto-remediation", {
+  max: 2,
+  duration: 60000,
+})
+
 // Control queues
 export const scheduledQueue = createQueue("scheduled")
 
@@ -144,6 +161,8 @@ export const allQueues = {
   "regression-detector": regressionDetectorQueue,
   "selector-adaptation": selectorAdaptationQueue,
   revalidation: revalidationQueue,
+  "quote-healer": quoteHealerQueue,
+  "auto-remediation": autoRemediationQueue,
   scheduled: scheduledQueue,
   deadletter: deadletterQueue,
   "system-status": systemStatusQueue,
