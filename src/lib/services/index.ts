@@ -24,3 +24,13 @@ export {
   type TokenCompany,
   type TokenUser,
 } from "./token-resolver.service"
+
+export {
+  ComplianceService,
+  complianceService,
+  ComplianceState,
+  ComplianceReasonCodes,
+  type ComplianceStatus,
+  type ComplianceReason,
+  type ComplianceReasonSeverity,
+} from "./compliance.service"
