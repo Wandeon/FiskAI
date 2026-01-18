@@ -1,20 +1,28 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Postavljanje tvrtke | FiskAI",
   description: "Postavite svoju tvrtku u nekoliko jednostavnih koraka",
 }
 
-interface OnboardingLayoutProps {
+interface OnboardingGroupLayoutProps {
   children: React.ReactNode
 }
 
 /**
- * Minimal layout for general onboarding flow
- * Reduced chrome to focus user attention on the onboarding steps
- * No sidebar, no full navigation - just the essentials
+ * Minimal layout for all onboarding flows.
+ * This route group is separate from (app) to avoid the dashboard sidebar.
+ * Provides a focused, distraction-free experience for new user setup.
  */
-export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
+export default async function OnboardingGroupLayout({ children }: OnboardingGroupLayoutProps) {
+  // Still require authentication - onboarding is for logged-in users without a company
+  const session = await auth()
+  if (!session?.user) {
+    redirect("/auth")
+  }
+
   return (
     <div className="min-h-screen bg-surface">
       {/* Minimal header */}
