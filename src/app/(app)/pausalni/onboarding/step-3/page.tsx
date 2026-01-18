@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { OnboardingStep3Setup, type Step3FormData } from "@/components/patterns/onboarding"
+import { savePausalniStep3, getPausalniOnboardingData } from "@/app/actions/pausalni-onboarding"
 
 /**
  * Pausalni Obrt Onboarding - Step 3: Setup Checklist
@@ -18,46 +19,80 @@ import { OnboardingStep3Setup, type Step3FormData } from "@/components/patterns/
  */
 export default function PausalniOnboardingStep3Page() {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState<string>("")
 
-  // Get Step 2 data from session storage or default
-  // In a real app, this would come from a global store or server state
+  // Get Step 2 data from session storage or server
   const [situation, setSituation] = useState<{ acceptsCash: boolean }>({
     acceptsCash: true, // Default to true for demo purposes
   })
 
-  // Load Step 2 data on mount
+  // Load data on mount
   useEffect(() => {
-    // Try to load from session storage (set by Step 2 page)
-    if (typeof window !== "undefined") {
-      const step2Data = sessionStorage.getItem("onboarding-step2")
-      if (step2Data) {
-        try {
-          const parsed = JSON.parse(step2Data)
-          setSituation({
-            acceptsCash: parsed.acceptsCash ?? true,
-          })
-        } catch {
-          // Use default if parsing fails
+    async function loadData() {
+      // First try session storage for acceptsCash
+      if (typeof window !== "undefined") {
+        const step2Data = sessionStorage.getItem("onboarding-step2")
+        if (step2Data) {
+          try {
+            const parsed = JSON.parse(step2Data)
+            setSituation({
+              acceptsCash: parsed.acceptsCash ?? true,
+            })
+          } catch {
+            // Use default if parsing fails
+          }
+        }
+      }
+
+      // Load existing data from server
+      const data = await getPausalniOnboardingData()
+      if (data) {
+        if (data.acceptsCash !== undefined) {
+          setSituation({ acceptsCash: data.acceptsCash })
+        }
+        if (data.email) {
+          setEmail(data.email)
         }
       }
     }
+    void loadData()
   }, [])
 
   // Handle step 3 completion
   const handleComplete = useCallback(
     (data: Step3FormData) => {
-      // TODO: Save to server/store
-      console.log("Step 3 completed:", data)
+      setError(null)
+      startTransition(async () => {
+        // Require email for completion
+        const emailToSave = email || prompt("Unesite vašu email adresu za završetak registracije:")
+        if (!emailToSave || !emailToSave.includes("@")) {
+          setError("Email adresa je obavezna za završetak registracije")
+          return
+        }
 
-      // Clear session storage
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem("onboarding-step2")
-      }
+        const result = await savePausalniStep3({
+          iban: data.iban.value || undefined,
+          hasFiscalizationCert: data.fiscalization.hasCertificate,
+          email: emailToSave,
+        })
 
-      // Navigate to dashboard
-      router.push("/pausalni")
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+
+        // Clear session storage
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("onboarding-step2")
+        }
+
+        // Navigate to dashboard
+        router.push("/dashboard")
+      })
     },
-    [router]
+    [router, email]
   )
 
   // Handle back navigation
@@ -67,6 +102,18 @@ export default function PausalniOnboardingStep3Page() {
   }, [router])
 
   return (
-    <OnboardingStep3Setup situation={situation} onBack={handleBack} onComplete={handleComplete} />
+    <div>
+      {error && (
+        <div className="mb-4 p-4 rounded-lg bg-destructive/10 border border-destructive text-destructive">
+          {error}
+        </div>
+      )}
+      <OnboardingStep3Setup situation={situation} onBack={handleBack} onComplete={handleComplete} />
+      {isPending && (
+        <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      )}
+    </div>
   )
 }

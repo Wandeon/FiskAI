@@ -6,9 +6,16 @@ import type { User, Company } from "@prisma/client"
 import { requirePermission, type Permission } from "@/lib/rbac"
 
 /**
+ * Valid legal forms for Croatian businesses.
+ * User must choose one of these during onboarding.
+ */
+const VALID_LEGAL_FORMS = ["OBRT_PAUSAL", "OBRT_REAL", "OBRT_VAT", "JDOO", "DOO"] as const
+
+/**
  * Check if a company has completed the minimum required onboarding fields.
  * A company is considered to have completed onboarding if it has:
- * - Basic info (name, OIB, legalForm) - required
+ * - Basic info (name, OIB) - required
+ * - Valid legalForm (business type chosen) - required
  * - Email address - required for dashboard access
  *
  * Address is optional but recommended. Without email, users should be
@@ -21,18 +28,40 @@ export function isOnboardingComplete(company: {
   email: string | null
 }): boolean {
   // Step 1: Basic info must be complete
-  const hasBasicInfo = !!(
-    company.name?.trim() &&
-    company.oib?.match(/^\d{11}$/) &&
-    company.legalForm
-  )
+  const hasBasicInfo = !!(company.name?.trim() && company.oib?.match(/^\d{11}$/))
 
   if (!hasBasicInfo) return false
 
-  // Step 4: Email is required for dashboard access
+  // Business type must be a valid choice (not null, not invalid)
+  const hasValidLegalForm =
+    company.legalForm !== null &&
+    VALID_LEGAL_FORMS.includes(company.legalForm as (typeof VALID_LEGAL_FORMS)[number])
+
+  if (!hasValidLegalForm) return false
+
+  // Email is required for dashboard access
   const hasEmail = !!company.email?.includes("@")
 
   return hasEmail
+}
+
+/**
+ * Get the appropriate onboarding route based on company's legal form.
+ * OBRT_PAUSAL users get the specialized paušalni wizard.
+ * Other business types use the generic onboarding flow.
+ */
+export function getOnboardingRoute(company: { legalForm: string | null } | null): string {
+  if (!company?.legalForm) {
+    return "/onboarding" // No company or no legal form yet
+  }
+
+  // Paušalni users get the specialized wizard
+  if (company.legalForm === "OBRT_PAUSAL") {
+    return "/pausalni/onboarding"
+  }
+
+  // All other business types use generic onboarding
+  return "/onboarding"
 }
 
 export async function getCurrentUser() {
@@ -131,10 +160,10 @@ export async function requireCompany(userId: string) {
     }
     redirect("/onboarding")
   }
-  // Check if onboarding is complete - redirect back if company exists but is incomplete
+  // Check if onboarding is complete - redirect to appropriate wizard if incomplete
   // This prevents a redirect loop where dashboard shows incomplete state
   if (!isOnboardingComplete(company)) {
-    redirect("/onboarding")
+    redirect(getOnboardingRoute(company))
   }
   return company
 }
