@@ -1,5 +1,10 @@
 import { LegacyBanner } from "@/components/layout/LegacyBanner"
-import { requireAuth, getCurrentCompany, isOnboardingComplete } from "@/lib/auth-utils"
+import {
+  requireAuth,
+  getCurrentCompany,
+  isOnboardingComplete,
+  getOnboardingRoute,
+} from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { Prisma, EInvoiceStatus } from "@prisma/client"
@@ -38,8 +43,9 @@ export default async function DashboardPage() {
 
   // Redirect to onboarding if no company or if onboarding is incomplete
   // This prevents redirect loop when company exists but has missing required fields
+  // Uses getOnboardingRoute to send paušalni users to the specialized wizard
   if (!company || !isOnboardingComplete(company)) {
-    redirect("/onboarding")
+    redirect(getOnboardingRoute(company))
   }
 
   // Get counts and financial data
