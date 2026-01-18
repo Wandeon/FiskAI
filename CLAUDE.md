@@ -310,12 +310,12 @@ FiskAI uses a distributed architecture across multiple servers:
 
 **Coolify Dashboard:** https://ci.fiskai.hr (or http://152.53.146.3:8000)
 
-**Application UUID:** `bsswgo8ggwgkw8c88wo8wcw8`
+**Application UUID:** `tgg4gkcco8k8s0wwg08cck40`
 
 **Deploy API (trigger deployment):**
 
 ```bash
-curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
+curl -X POST "http://152.53.146.3:8000/api/v1/applications/tgg4gkcco8k8s0wwg08cck40/start" \
   -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
@@ -324,14 +324,14 @@ curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8w
 **Check deployment status:**
 
 ```bash
-curl -s "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8" \
+curl -s "http://152.53.146.3:8000/api/v1/applications/tgg4gkcco8k8s0wwg08cck40" \
   -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" | jq '.status'
 ```
 
 **Update environment variables:**
 
 ```bash
-curl -X PATCH "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/envs" \
+curl -X PATCH "http://152.53.146.3:8000/api/v1/applications/tgg4gkcco8k8s0wwg08cck40/envs" \
   -H "Authorization: Bearer $(grep COOLIFY_API_TOKEN .env | cut -d'=' -f2)" \
   -H "Content-Type: application/json" \
   -d '{"key": "KEY_NAME", "value": "value"}'
@@ -370,7 +370,7 @@ See `.claude/skills/coolify-deployment/SKILL.md` for complete API documentation.
 gh workflow run "Build and Publish Images" --ref main
 
 # Or via Coolify API
-curl -X POST "http://152.53.146.3:8000/api/v1/applications/bsswgo8ggwgkw8c88wo8wcw8/start" \
+curl -X POST "http://152.53.146.3:8000/api/v1/applications/tgg4gkcco8k8s0wwg08cck40/start" \
   -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
