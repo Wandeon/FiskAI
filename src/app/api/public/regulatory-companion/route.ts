@@ -39,7 +39,7 @@ const subscribeSchema = z.object({
     .max(255, "Email too long")
     .transform((v) => v.toLowerCase().trim()),
   businessType: z.enum(BUSINESS_TYPES, {
-    errorMap: () => ({ message: "Invalid business type" }),
+    message: "Invalid business type",
   }),
   // Honeypot field - if filled, reject silently (bot trap)
   website: z.string().optional(),
