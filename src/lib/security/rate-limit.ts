@@ -130,6 +130,11 @@ export const RATE_LIMITS = {
     window: 60 * 60 * 1000, // 1 hour
     blockDuration: 60 * 60 * 1000,
   },
+  REGULATORY_COMPANION: {
+    attempts: 5, // 5 requests per IP per hour (from marketing site)
+    window: 60 * 60 * 1000, // 1 hour
+    blockDuration: 60 * 60 * 1000,
+  },
 }
 
 /**
