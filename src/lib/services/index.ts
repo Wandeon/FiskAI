@@ -34,3 +34,15 @@ export {
   type ComplianceReason,
   type ComplianceReasonSeverity,
 } from "./compliance.service"
+
+export {
+  DataProvenanceService,
+  dataProvenanceService,
+  DataSource,
+  ConfidenceLevel,
+  type RecordProvenanceParams,
+  type UpdateProvenanceParams,
+  type FieldProvenance,
+  type EntityProvenanceMap,
+  type ProvenanceDisplay,
+} from "./data-provenance.service"
