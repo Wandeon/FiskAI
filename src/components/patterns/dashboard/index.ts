@@ -3,3 +3,6 @@
 
 export * from "./ComplianceStatusCard"
 export * from "./ComplianceReasonItem"
+export * from "./DeadlineTimelineWidget"
+export * from "./IncomeTrackingWidget"
+export * from "./PaymentMatchDisplay"
