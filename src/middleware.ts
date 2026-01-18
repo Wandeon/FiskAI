@@ -30,6 +30,7 @@ const PUBLIC_API_ROUTES = [
   "/api/email/callback", // Email callback (external system)
   "/api/newsletter/unsubscribe", // Newsletter unsubscribe (public action)
   "/api/sandbox/", // Sandbox endpoints (for testing)
+  "/api/public/", // Public API endpoints (regulatory companion, etc.)
 ]
 
 // Check if an API route is public

@@ -21,4 +21,5 @@ export * from "./news"
 export * from "./newsletter"
 // Export pausalni module (includes the canonical 'company' reference table)
 export * from "./pausalni"
+export * from "./regulatory-companion"
 export * from "./tutorials"
