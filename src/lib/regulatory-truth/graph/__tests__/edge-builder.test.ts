@@ -351,11 +351,12 @@ describe("selectRuleFromDb edge integration", () => {
     vi.mocked(db.regulatoryRule.findMany).mockResolvedValue([newerRule, olderRule] as any)
 
     // Mock edge queries based on query structure
-    vi.mocked(db.graphEdge.findMany).mockImplementation(async (args: any) => {
-      const where = args?.where
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(db.graphEdge.findMany as any).mockImplementation(async (args: unknown) => {
+      const { where } = args as { where?: { toRuleId?: string; relation?: string } }
       // findSupersedingRules queries WHERE toRuleId = X
       if (where?.toRuleId === "rule-2024" && where?.relation === "SUPERSEDES") {
-        return [{ fromRuleId: "rule-2025" }] as any
+        return [{ fromRuleId: "rule-2025" }]
       }
       if (where?.toRuleId === "rule-2025" && where?.relation === "SUPERSEDES") {
         return [] // Nothing supersedes the newest rule
@@ -367,15 +368,16 @@ describe("selectRuleFromDb edge integration", () => {
       return []
     })
 
-    vi.mocked(db.graphEdge.findFirst).mockImplementation(async (args: any) => {
-      const where = args?.where
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(db.graphEdge.findFirst as any).mockImplementation(async (args: unknown) => {
+      const { where } = args as { where?: { fromRuleId?: string; relation?: string } }
       // buildEdgeTrace SUPERSEDES traversal
       if (where?.fromRuleId === "rule-2025" && where?.relation === "SUPERSEDES") {
         return {
           fromRuleId: "rule-2025",
           toRuleId: "rule-2024",
           relation: "SUPERSEDES",
-        } as any
+        }
       }
       return null
     })

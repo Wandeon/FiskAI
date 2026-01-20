@@ -388,13 +388,14 @@ export async function buildEdgeTrace(ruleId: string): Promise<EdgeTrace> {
   while (currentId && !visited.has(currentId)) {
     visited.add(currentId)
 
-    const supersedesEdge = await db.graphEdge.findFirst({
-      where: {
-        fromRuleId: currentId,
-        relation: "SUPERSEDES",
-        namespace: "SRG",
-      },
-    })
+    const supersedesEdge: { fromRuleId: string; toRuleId: string } | null =
+      await db.graphEdge.findFirst({
+        where: {
+          fromRuleId: currentId,
+          relation: "SUPERSEDES",
+          namespace: "SRG",
+        },
+      })
 
     if (supersedesEdge) {
       trace.traversedEdges.push({

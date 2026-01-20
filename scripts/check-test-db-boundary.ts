@@ -75,6 +75,7 @@ const MOCKED_FILES = [
   "src/lib/e-invoice/workers/__tests__/eposlovanje-inbound-poller.test.ts",
   "src/lib/e-invoice/providers/__tests__/send-invoice.test.ts",
   "src/lib/regulatory-truth/agents/__tests__/runner-invariants.test.ts",
+  "src/lib/regulatory-truth/graph/__tests__/edge-builder.test.ts",
 ]
 
 async function main() {
