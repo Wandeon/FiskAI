@@ -932,6 +932,31 @@ export async function applyComposerProposal(
       createdSourcePointerIds
     )
 
+    // RTL2: Update lineage arrays on the existing rule
+    // Fetch existing lineage to append (not overwrite)
+    const existingRule = await db.regulatoryRule.findUnique({
+      where: { id: resolution.existingRuleId },
+      select: { originatingCandidateFactIds: true, originatingAgentRunIds: true },
+    })
+
+    const updatedCandidateFactIds = [
+      ...new Set([...(existingRule?.originatingCandidateFactIds || []), ...candidateFactIds]),
+    ]
+    const updatedAgentRunIds = [
+      ...new Set([
+        ...(existingRule?.originatingAgentRunIds || []),
+        ...(proposal.agentRunId ? [proposal.agentRunId] : []),
+      ]),
+    ]
+
+    await db.regulatoryRule.update({
+      where: { id: resolution.existingRuleId },
+      data: {
+        originatingCandidateFactIds: updatedCandidateFactIds,
+        originatingAgentRunIds: updatedAgentRunIds,
+      },
+    })
+
     await logAuditEvent({
       action: "RULE_MERGED",
       entityType: "RULE",
@@ -940,6 +965,8 @@ export async function applyComposerProposal(
         proposedSlug: draftRule.concept_slug,
         canonicalSlug: resolution.canonicalSlug,
         addedPointers: mergeResult.addedPointers,
+        addedCandidateFactIds: candidateFactIds,
+        addedAgentRunId: proposal.agentRunId,
         reason: resolution.mergeReason,
       },
     })
@@ -1004,6 +1031,7 @@ export async function applyComposerProposal(
   }
 
   // Create the RegulatoryRule
+  // RTL2: Populate lineage fields for audit trail
   const rule = await db.regulatoryRule.create({
     data: {
       conceptSlug: finalConceptSlug,
@@ -1025,6 +1053,9 @@ export async function applyComposerProposal(
       derivedConfidence,
       composerNotes: draftRule.composer_notes,
       meaningSignature,
+      // RTL2 lineage: Track where this rule came from
+      originatingCandidateFactIds: candidateFactIds,
+      originatingAgentRunIds: proposal.agentRunId ? [proposal.agentRunId] : [],
       sourcePointers: {
         connect: createdSourcePointerIds.map((id) => ({ id })),
       },
