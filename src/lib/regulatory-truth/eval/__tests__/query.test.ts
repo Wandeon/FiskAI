@@ -224,15 +224,28 @@ describe("Temporal Selection", () => {
     })
   })
 
-  describe("rule not yet effective", () => {
-    it("returns error when query date is before rule effectiveFrom", () => {
+  describe("rule not yet effective (no coverage)", () => {
+    it("returns NO_COVERAGE when query date is before any rule's effectiveFrom", () => {
       // Query before the rule's effectiveFrom date (2025-01-01)
       const result = answerMoramLiUciUPdv(92000, "OBRT", new Date("2024-06-15"))
 
       expect(result.success).toBe(false)
       expect(result.temporalSelection?.wasSelected).toBe(false)
-      expect(result.temporalSelection?.reason).toBe("FUTURE")
-      expect(result.answer.answerHr).toContain("nije stupilo na snagu")
+      expect(result.temporalSelection?.reason).toBe("NO_COVERAGE")
+      // Should tell user when coverage starts
+      expect(result.temporalSelection?.earliestCoverageDate).toBe("2025-01-01")
+      expect(result.answer.answerHr).toContain("Nema podataka")
+      expect(result.answer.answerHr).toContain("2025-01-01")
+    })
+
+    it("does not provide an answer for dates without coverage", () => {
+      // This is the key behavior: don't answer with 60k for 2024
+      const result = answerMoramLiUciUPdv(92000, "OBRT", new Date("2024-12-31"))
+
+      expect(result.success).toBe(false)
+      expect(result.answer.evaluated).toBe(false)
+      // Should NOT contain the 60k answer
+      expect(result.answer.answerHr).not.toContain("moraš ući u sustav PDV-a")
     })
   })
 

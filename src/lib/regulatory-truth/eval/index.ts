@@ -69,4 +69,15 @@ export {
   type QueryType,
   type QueryInput,
   type QueryOutput,
+  type TemporalSelectionReason,
 } from "./query"
+
+// Rule store (DB-backed selection - for future use)
+export {
+  selectRuleFromDb,
+  hasRuleForTopic,
+  getRuleCoverage,
+  type TopicKey,
+  type RuleSelectionResult,
+  type RuleSelectionReason,
+} from "./rule-store"

@@ -29,6 +29,15 @@ export interface QueryInput {
   asOfDate?: Date
 }
 
+/** Reasons for temporal selection outcome */
+export type TemporalSelectionReason =
+  | "EFFECTIVE"
+  | "FUTURE" // Query date is before any rule's effectiveFrom
+  | "EXPIRED" // Query date is after all rules' effectiveUntil
+  | "NO_RULE_FOUND" // No rules exist for this topic
+  | "NO_COVERAGE" // Rules exist but none cover this date (clearer than FUTURE for historical queries)
+  | "CONFLICT_MULTIPLE_EFFECTIVE" // Multiple rules effective at same date without supersession
+
 export interface QueryOutput {
   success: boolean
   queryType: QueryType
@@ -41,12 +50,16 @@ export interface QueryOutput {
     /** Whether rule was temporally selected */
     wasSelected: boolean
     /** Reason if selection failed */
-    reason?: "EFFECTIVE" | "FUTURE" | "EXPIRED" | "NO_RULE_FOUND"
+    reason?: TemporalSelectionReason
     /** The selected rule's effective dates */
     effectivePeriod?: {
       from: string | null
       until: string | null
     }
+    /** Conflicting rule IDs if reason is CONFLICT_MULTIPLE_EFFECTIVE */
+    conflictingRuleIds?: string[]
+    /** Earliest available coverage date (for NO_COVERAGE) */
+    earliestCoverageDate?: string
   }
   raw?: {
     evaluationResult: ReturnType<typeof evaluateRule>
@@ -96,21 +109,36 @@ const RULE_REGISTRY: Map<TopicKey, RegisteredRule[]> = new Map([
   ],
 ])
 
+interface SelectionSuccess {
+  rule: RegisteredRule
+  reason: "EFFECTIVE"
+}
+
+interface SelectionFailure {
+  rule: null
+  reason: Exclude<TemporalSelectionReason, "EFFECTIVE">
+  /** Earliest coverage date if reason is NO_COVERAGE/FUTURE */
+  earliestCoverageDate?: string
+  /** Conflicting rule IDs if reason is CONFLICT_MULTIPLE_EFFECTIVE */
+  conflictingRuleIds?: string[]
+}
+
+type SelectionResult = SelectionSuccess | SelectionFailure
+
 /**
  * Select the correct rule for a topic at a given date.
  *
  * Selection algorithm:
  * 1. Get all rules for the topic
  * 2. Filter to those temporally effective at asOfDate
- * 3. If multiple remain, pick the one with the latest effectiveFrom (most recent amendment wins)
- * 4. If none remain, return null with reason
+ * 3. If multiple remain:
+ *    a. Check for supersession chain (rule.supersedesId)
+ *    b. If all but one are superseded, use the superseding rule
+ *    c. Otherwise return CONFLICT_MULTIPLE_EFFECTIVE
+ * 4. If single rule, return it
+ * 5. If none remain, return appropriate reason with coverage info
  */
-function selectRule(
-  topicKey: TopicKey,
-  asOfDate: Date
-):
-  | { rule: RegisteredRule; reason: "EFFECTIVE" }
-  | { rule: null; reason: "FUTURE" | "EXPIRED" | "NO_RULE_FOUND" } {
+function selectRule(topicKey: TopicKey, asOfDate: Date): SelectionResult {
   const candidates = RULE_REGISTRY.get(topicKey)
 
   if (!candidates || candidates.length === 0) {
@@ -127,25 +155,66 @@ function selectRule(
   )
 
   if (effective.length === 0) {
-    // Check if all rules are future or expired
-    const allResults = candidates.map((r) =>
-      isTemporallyEffective(
-        { effectiveFrom: r.effectiveFrom, effectiveUntil: r.effectiveUntil },
-        asOfDate
-      )
+    // Find the earliest coverage date for helpful error message
+    const sortedByFrom = [...candidates].sort(
+      (a, b) => a.effectiveFrom.getTime() - b.effectiveFrom.getTime()
     )
-    const hasFuture = allResults.some((r) => r.reason === "FUTURE")
-    const hasExpired = allResults.some((r) => r.reason === "EXPIRED")
+    const earliestRule = sortedByFrom[0]
+    const earliestCoverageDate = earliestRule.effectiveFrom.toISOString().split("T")[0]
 
-    // Prefer FUTURE if any (query date is before any rule), otherwise EXPIRED
-    return { rule: null, reason: hasFuture ? "FUTURE" : hasExpired ? "EXPIRED" : "NO_RULE_FOUND" }
+    // Check if query date is before any coverage (NO_COVERAGE is clearer than FUTURE for users)
+    const queryBeforeAllRules = candidates.every((r) => asOfDate < r.effectiveFrom)
+    if (queryBeforeAllRules) {
+      return {
+        rule: null,
+        reason: "NO_COVERAGE",
+        earliestCoverageDate,
+      }
+    }
+
+    // Check if query date is after all rules expired
+    const queryAfterAllRules = candidates.every(
+      (r) => r.effectiveUntil !== null && asOfDate >= r.effectiveUntil
+    )
+    if (queryAfterAllRules) {
+      return { rule: null, reason: "EXPIRED" }
+    }
+
+    // Gap in coverage (between rules)
+    return {
+      rule: null,
+      reason: "NO_COVERAGE",
+      earliestCoverageDate,
+    }
   }
 
-  // If multiple effective rules, pick the one with latest effectiveFrom
-  // (most recent amendment wins)
-  const sorted = effective.sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime())
+  // Single effective rule - success
+  if (effective.length === 1) {
+    return { rule: effective[0], reason: "EFFECTIVE" }
+  }
 
-  return { rule: sorted[0], reason: "EFFECTIVE" }
+  // Multiple effective rules - check for supersession
+  // Sort by effectiveFrom desc (most recent first)
+  const sorted = [...effective].sort(
+    (a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime()
+  )
+
+  // In the static registry, we don't have supersedesId yet
+  // TODO: Add supersedesId to RegisteredRule when migrating to DB
+  // For now, if multiple rules are effective, it's a conflict
+  // UNLESS they have different effectiveFrom dates (take most recent)
+  const uniqueDates = new Set(sorted.map((r) => r.effectiveFrom.getTime()))
+  if (uniqueDates.size === sorted.length) {
+    // All have different effectiveFrom dates - take most recent (safe heuristic)
+    return { rule: sorted[0], reason: "EFFECTIVE" }
+  }
+
+  // Multiple rules with same effectiveFrom = conflict
+  return {
+    rule: null,
+    reason: "CONFLICT_MULTIPLE_EFFECTIVE",
+    conflictingRuleIds: sorted.map((r) => r.rule.ruleId),
+  }
 }
 
 // =============================================================================
@@ -188,12 +257,22 @@ export function answerQuery(input: QueryInput): QueryOutput {
       // Temporal selection: find the correct rule for asOfDate
       const selection = selectRule("TAX/VAT/REGISTRATION", effectiveDate)
 
-      // If no rule found, return error
+      // If no rule found, return error with helpful context
       if (!selection.rule) {
-        const reasonMessages: Record<string, string> = {
+        const queryDateStr = effectiveDate.toISOString().split("T")[0]
+        const reasonMessages: Record<TemporalSelectionReason, string> = {
+          EFFECTIVE: "", // Won't happen for failures
           NO_RULE_FOUND: "Nije pronađeno pravilo za ovaj upit.",
-          FUTURE: `Pravilo za ovaj upit još nije stupilo na snagu (datum upita: ${effectiveDate.toISOString().split("T")[0]}).`,
-          EXPIRED: `Nema važećeg pravila za ovaj datum (${effectiveDate.toISOString().split("T")[0]}).`,
+          NO_COVERAGE: selection.earliestCoverageDate
+            ? `Nema podataka za datum ${queryDateStr}. Pokrivenost počinje od ${selection.earliestCoverageDate}.`
+            : `Nema podataka za datum ${queryDateStr}.`,
+          FUTURE: selection.earliestCoverageDate
+            ? `Pravilo još nije stupilo na snagu. Vrijedi od ${selection.earliestCoverageDate}.`
+            : `Pravilo za ovaj upit još nije stupilo na snagu.`,
+          EXPIRED: `Pravilo je isteklo za datum ${queryDateStr}.`,
+          CONFLICT_MULTIPLE_EFFECTIVE:
+            `Pronađeno više pravila koja vrijede na datum ${queryDateStr}. ` +
+            `Potrebna je ručna provjera.`,
         }
 
         return {
@@ -210,6 +289,8 @@ export function answerQuery(input: QueryInput): QueryOutput {
           temporalSelection: {
             wasSelected: false,
             reason: selection.reason,
+            earliestCoverageDate: selection.earliestCoverageDate,
+            conflictingRuleIds: selection.conflictingRuleIds,
           },
         }
       }
