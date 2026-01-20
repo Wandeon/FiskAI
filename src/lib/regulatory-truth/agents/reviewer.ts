@@ -163,6 +163,7 @@ export async function autoApproveEligibleRules(): Promise<{
 
   // Find eligible rules with base criteria
   // Query differs based on whether all tiers are enabled
+  // RTL2 GUARD: Only select rules with RTL2 lineage - skip legacy rules
   const eligibleRules = await db.regulatoryRule.findMany({
     where: autoApproveAllTiers
       ? {
@@ -171,6 +172,8 @@ export async function autoApproveEligibleRules(): Promise<{
           // All tiers if enabled - don't filter by confidence here, apply tiered thresholds per-rule
           conflictsA: { none: { status: "OPEN" } },
           conflictsB: { none: { status: "OPEN" } },
+          // RTL2: Must have lineage to be eligible for auto-approval
+          originatingCandidateFactIds: { isEmpty: false },
         }
       : {
           status: "PENDING_REVIEW",
@@ -179,6 +182,8 @@ export async function autoApproveEligibleRules(): Promise<{
           riskTier: { in: [RiskTier.T2, RiskTier.T3] },
           conflictsA: { none: { status: "OPEN" } },
           conflictsB: { none: { status: "OPEN" } },
+          // RTL2: Must have lineage to be eligible for auto-approval
+          originatingCandidateFactIds: { isEmpty: false },
         },
     select: {
       id: true,

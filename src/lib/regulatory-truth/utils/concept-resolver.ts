@@ -225,15 +225,36 @@ export async function resolveCanonicalConcept(
       ],
     },
     orderBy: { createdAt: "asc" }, // Prefer oldest rule
+    select: {
+      id: true,
+      conceptSlug: true,
+      conceptId: true,
+      originatingCandidateFactIds: true,
+      originatingAgentRunIds: true,
+    },
   })
 
   if (existingRule) {
-    return {
-      canonicalSlug: existingRule.conceptSlug,
-      existingConceptId: existingRule.conceptId,
-      existingRuleId: existingRule.id,
-      shouldMerge: true,
-      mergeReason: `Existing rule found with same value "${value}" (${valueType}) and overlapping time window`,
+    // RTL2 GUARD: Only merge into rules that have RTL2 lineage.
+    // Legacy rules (no lineage) must NOT be merged into - this prevents
+    // RTL2 data from contaminating legacy rules and vice versa.
+    const hasRTL2Lineage =
+      existingRule.originatingCandidateFactIds.length > 0 ||
+      existingRule.originatingAgentRunIds.length > 0
+
+    if (!hasRTL2Lineage) {
+      console.log(
+        `[concept-resolver] [LEGACY_SKIP] Found existing rule ${existingRule.id} but it lacks RTL2 lineage. Creating new rule instead.`
+      )
+      // Don't merge - fall through to create new rule
+    } else {
+      return {
+        canonicalSlug: existingRule.conceptSlug,
+        existingConceptId: existingRule.conceptId,
+        existingRuleId: existingRule.id,
+        shouldMerge: true,
+        mergeReason: `Existing rule found with same value "${value}" (${valueType}) and overlapping time window`,
+      }
     }
   }
 
