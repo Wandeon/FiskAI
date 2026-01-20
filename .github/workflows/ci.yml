@@ -53,6 +53,9 @@ jobs:
       - name: Check no legacy secret access (Phase 5 guardrail)
         run: npx tsx scripts/check-legacy-secrets.ts
 
+      - name: Check repo boundary (worker files belong in fiskai-workers)
+        run: npx tsx scripts/check-repo-boundary.ts
+
   lint-ratchet:
     name: Lint Ratchet
     runs-on: ubuntu-latest
