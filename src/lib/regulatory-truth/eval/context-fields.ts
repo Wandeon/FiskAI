@@ -147,7 +147,7 @@ export function getContextValue(context: EvaluationContext, path: string): unkno
  */
 export function setContextValue(context: EvaluationContext, path: string, value: unknown): void {
   const parts = path.split(".")
-  let current: Record<string, unknown> = context as Record<string, unknown>
+  let current: Record<string, unknown> = context as unknown as Record<string, unknown>
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]
     if (!(part in current) || current[part] === null || current[part] === undefined) {

@@ -123,7 +123,7 @@ async function logAuditEvent(
       jobKey: context.jobKey ?? null,
       issueCount: context.issueCount ?? null,
       itemCount: context.itemCount ?? null,
-      details: context.details ?? null,
+      details: context.details ?? undefined,
     },
   })
 }
