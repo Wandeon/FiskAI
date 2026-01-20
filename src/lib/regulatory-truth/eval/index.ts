@@ -69,4 +69,23 @@ export {
   type QueryType,
   type QueryInput,
   type QueryOutput,
+  type TemporalSelectionReason,
 } from "./query"
+
+// Rule store types (safe to import in unit tests)
+export {
+  type TopicKey,
+  type RuleSelectionResult,
+  type RuleSelectionReason,
+} from "./rule-store-types"
+
+// Note: Rule store FUNCTIONS (selectRuleFromDb, hasRuleForTopic, getRuleCoverage)
+// are NOT re-exported here to avoid pulling in DB dependencies.
+// Import them directly from "./rule-store" when needed.
+
+// Edge types (separate from implementation to avoid DB imports in unit tests)
+export { type EdgeBuildResult, type EdgeTrace } from "../graph/edge-types"
+
+// Note: Edge tracing FUNCTIONS (rebuildEdgesForRule, buildEdgeTrace, findSupersedingRules, findSupersededRules)
+// are NOT re-exported here to avoid pulling in DB dependencies.
+// Import them directly from "../graph/edge-builder" when needed.

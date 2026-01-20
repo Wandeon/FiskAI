@@ -430,7 +430,7 @@ describe("NNEnqueuedJob-based Idempotency", () => {
     const jobs1: NNFetchJob[] = []
     await runNNSentinelEnumeration(config, "run-A", "run-A", {
       fetcher,
-      enqueueJob: async (job) => jobs1.push(job),
+      enqueueJob: async (job) => void jobs1.push(job),
     })
 
     expect(jobs1.length).toBe(8)
@@ -444,7 +444,7 @@ describe("NNEnqueuedJob-based Idempotency", () => {
     const jobs2: NNFetchJob[] = []
     const result2 = await runNNSentinelEnumeration(config, "run-B", "run-B", {
       fetcher,
-      enqueueJob: async (job) => jobs2.push(job),
+      enqueueJob: async (job) => void jobs2.push(job),
     })
 
     // No new jobs should be enqueued
@@ -607,7 +607,7 @@ describe("Job Key Format", () => {
     const enqueuedJobs: NNFetchJob[] = []
     await runNNSentinelEnumeration(config, "run-1", "run-1", {
       fetcher,
-      enqueueJob: async (job) => enqueuedJobs.push(job),
+      enqueueJob: async (job) => void enqueuedJobs.push(job),
     })
 
     // Check format: nn:item:YYYY:ISSUE:ITEM
@@ -631,7 +631,7 @@ describe("Job Key Format", () => {
     const enqueuedJobs: NNFetchJob[] = []
     await runNNSentinelEnumeration(config, "run-1", "run-1", {
       fetcher,
-      enqueueJob: async (job) => enqueuedJobs.push(job),
+      enqueueJob: async (job) => void enqueuedJobs.push(job),
     })
 
     const job = enqueuedJobs.find((j) => j.nn.item === 2509)

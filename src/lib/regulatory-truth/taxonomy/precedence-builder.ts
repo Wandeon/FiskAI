@@ -54,7 +54,8 @@ export async function buildOverridesEdges(): Promise<{
       // Check if edge already exists
       const existingEdge = await db.graphEdge.findUnique({
         where: {
-          fromRuleId_toRuleId_relation: {
+          namespace_fromRuleId_toRuleId_relation: {
+            namespace: "SRG",
             fromRuleId: overridingRule.id,
             toRuleId: claim.rule.id,
             relation: "OVERRIDES",
