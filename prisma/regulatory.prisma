@@ -115,6 +115,10 @@ model RegulatorySource {
 model Evidence {
   id            String    @id @default(cuid())
   sourceId      String
+
+  // Stable identity (survives URL format changes)
+  sourceKey           String?   // "nn:item:2024:152:2505" or ELI
+
   fetchedAt     DateTime  @default(now())
   contentHash   String
   rawContent    String    @db.Text // Full HTML/PDF text
@@ -168,6 +172,7 @@ model Evidence {
   @@index([lastVerifiedAt])
   @@index([embeddingStatus]) // For retry queue queries
   @@index([instrumentId]) // Query evidence by instrument
+  @@index([sourceKey])
   @@schema("regulatory")
 }
 
