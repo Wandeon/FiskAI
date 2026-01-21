@@ -262,6 +262,7 @@ If ArtifactKind enum exists, ensure it has these values:
 enum ArtifactKind {
   HTML_RAW
   HTML_CLEANED
+  CLEAN_TEXT        // ⚠️ CRITICAL: Parser's clean text output (distinct from HTML_CLEANED)
   PDF_TEXT
   OCR_TEXT
   OCR_HOCR
@@ -271,6 +272,8 @@ enum ArtifactKind {
   ANNEX_SPLIT       // Reserved: split annexes
 }
 ```
+
+> **AUDIT FIX:** CLEAN_TEXT is separate from HTML_CLEANED. HTML_CLEANED is cleaned HTML markup; CLEAN_TEXT is the plain text extracted by the parser that offsets are anchored to. Drift detection compares cleanTextHash to CLEAN_TEXT artifact, not HTML_CLEANED.
 
 If it doesn't exist, add it.
 
@@ -1536,7 +1539,56 @@ function extractMetadata($: cheerio.CheerioAPI): DocumentMetadata {
     else if (lowerTitle.includes("odluka")) textType = "odluka"
   }
 
-  return { title, textType }
+  // ⚠️ AUDIT FIX: Extract full NN metadata required by Phase 2-3
+  // Parse NN reference from URL pattern or document content
+  let nnYear: number | undefined
+  let nnIssue: number | undefined
+  let nnItem: number | undefined
+  let eli: string | undefined
+  let publishedAt: Date | undefined
+  let effectiveFrom: Date | undefined
+
+  // Try to extract from NN URL pattern: /clanci/sluzbeni/YYYY_NN_ITEM.html
+  const urlMeta = $('meta[property="og:url"]').attr("content") || ""
+  const urlMatch = urlMeta.match(/(\d{4})_(\d+)_(\d+)/)
+  if (urlMatch) {
+    nnYear = parseInt(urlMatch[1], 10)
+    nnIssue = parseInt(urlMatch[2], 10)
+    nnItem = parseInt(urlMatch[3], 10)
+  }
+
+  // Try to extract from document header text "Narodne novine br. 152/2024"
+  const headerText = $("body").text()
+  const nnRefMatch = headerText.match(/Narodne\s+novine[,\s]+br\.?\s*(\d+)\/(\d{4})/i)
+  if (nnRefMatch && !nnYear) {
+    nnIssue = parseInt(nnRefMatch[1], 10)
+    nnYear = parseInt(nnRefMatch[2], 10)
+  }
+
+  // Try to extract ELI from meta tag or link
+  eli = $('meta[name="eli"]').attr("content") || $('link[rel="eli"]').attr("href") || undefined
+
+  // Try to extract publication date
+  const dateMatch = headerText.match(/objavljeno[:\s]+(\d{1,2})\.(\d{1,2})\.(\d{4})/i)
+  if (dateMatch) {
+    publishedAt = new Date(
+      parseInt(dateMatch[3], 10),
+      parseInt(dateMatch[2], 10) - 1,
+      parseInt(dateMatch[1], 10)
+    )
+  }
+
+  // Try to extract effective date ("stupa na snagu")
+  const effectiveMatch = headerText.match(/stupa\s+na\s+snagu[:\s]+(\d{1,2})\.(\d{1,2})\.(\d{4})/i)
+  if (effectiveMatch) {
+    effectiveFrom = new Date(
+      parseInt(effectiveMatch[3], 10),
+      parseInt(effectiveMatch[2], 10) - 1,
+      parseInt(effectiveMatch[1], 10)
+    )
+  }
+
+  return { title, textType, nnYear, nnIssue, nnItem, eli, publishedAt, effectiveFrom }
 }
 
 function parseNodes($: cheerio.CheerioAPI, cleanText: string, warnings: Warning[]): NodeOutput[] {
@@ -1681,23 +1733,72 @@ function findTextPosition(
   searchText: string,
   hint: number
 ): TextPosition | null {
-  // Normalize for matching
-  const normalizedSearch = searchText.replace(/\s+/g, " ").trim()
-  const normalizedClean = cleanText.replace(/\s+/g, " ")
+  // ⚠️ AUDIT FIX: Offsets MUST be exact indices into cleanText, not normalized text.
+  // PARSE-INV-003 requires: cleanText.substring(startOffset, endOffset) === rawText
+  //
+  // Strategy:
+  // 1. Try exact match in cleanText first
+  // 2. If no exact match, use fuzzy search but return EXACT offsets from cleanText
+  // 3. Store rawText as the exact substring from cleanText at those offsets
 
-  // Try exact match first
-  let index = normalizedClean.indexOf(normalizedSearch)
-  if (index === -1) {
-    // Try with more aggressive normalization
-    const looseSearch = normalizedSearch.substring(0, Math.min(50, normalizedSearch.length))
-    index = normalizedClean.indexOf(looseSearch)
+  // Try exact match first (preferred)
+  let index = cleanText.indexOf(searchText)
+  if (index !== -1) {
+    return {
+      start: index,
+      end: index + searchText.length,
+    }
   }
 
-  if (index === -1) return null
+  // Try searching near the hint position (±500 chars)
+  const searchWindow = 500
+  const windowStart = Math.max(0, hint - searchWindow)
+  const windowEnd = Math.min(cleanText.length, hint + searchWindow + searchText.length)
+  const window = cleanText.substring(windowStart, windowEnd)
+
+  index = window.indexOf(searchText)
+  if (index !== -1) {
+    return {
+      start: windowStart + index,
+      end: windowStart + index + searchText.length,
+    }
+  }
+
+  // Fuzzy fallback: normalize for matching, but map back to exact cleanText offsets
+  const normalizedSearch = searchText.replace(/\s+/g, " ").trim()
+
+  // Build offset map: normalized index -> cleanText index
+  const offsetMap: number[] = []
+  let normalizedIndex = 0
+  let normalized = ""
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i]
+    if (/\s/.test(char)) {
+      if (normalized.length > 0 && !normalized.endsWith(" ")) {
+        normalized += " "
+        offsetMap.push(i)
+        normalizedIndex++
+      }
+    } else {
+      normalized += char
+      offsetMap.push(i)
+      normalizedIndex++
+    }
+  }
+  offsetMap.push(cleanText.length) // Sentinel for end offset
+
+  const normalizedMatchIndex = normalized.indexOf(normalizedSearch)
+  if (normalizedMatchIndex === -1) return null
+
+  // Map normalized offsets back to cleanText offsets
+  const startInClean = offsetMap[normalizedMatchIndex]
+  const endNormalizedIndex = normalizedMatchIndex + normalizedSearch.length
+  const endInClean =
+    endNormalizedIndex < offsetMap.length ? offsetMap[endNormalizedIndex] : cleanText.length
 
   return {
-    start: index,
-    end: index + normalizedSearch.length,
+    start: startInClean,
+    end: endInClean,
   }
 }
 
@@ -1794,7 +1895,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ```typescript
 import { describe, it, expect } from "vitest"
-import { NNParser, getParserVersion, getParserConfigHash } from "../index"
+import { NNParser, getParserVersion, getParserConfigHash, getParentPath } from "../index"
 
 describe("NNParser", () => {
   describe("metadata", () => {
@@ -2365,10 +2466,12 @@ async function main() {
   // 5. Store results
   console.log("\nStoring results...")
 
-  // Create clean text artifact if not exists
+  // ⚠️ AUDIT FIX: Use CLEAN_TEXT artifact kind (not HTML_CLEANED)
+  // CLEAN_TEXT is the exact text that offsets are anchored to.
+  // HTML_CLEANED is cleaned HTML markup - different purpose.
   let cleanTextArtifactId: string | undefined
   const existingCleanText = evidence.artifacts.find(
-    (a) => a.kind === "HTML_CLEANED" && a.contentHash === result.cleanTextHash
+    (a) => a.kind === "CLEAN_TEXT" && a.contentHash === result.cleanTextHash
   )
 
   if (existingCleanText) {
@@ -2377,55 +2480,77 @@ async function main() {
     const newArtifact = await dbReg.evidenceArtifact.create({
       data: {
         evidenceId,
-        kind: "HTML_CLEANED",
+        kind: "CLEAN_TEXT", // ⚠️ CRITICAL: Must be CLEAN_TEXT, not HTML_CLEANED
         content: result.cleanText,
         contentHash: result.cleanTextHash,
       },
     })
     cleanTextArtifactId = newArtifact.id
-    console.log("Created clean text artifact:", cleanTextArtifactId)
+    console.log("Created CLEAN_TEXT artifact:", cleanTextArtifactId)
   }
 
-  // Mark existing parses as not latest
-  await dbReg.parsedDocument.updateMany({
-    where: {
-      evidenceId,
-      parserId: NNParser.parserId,
-      isLatest: true,
-    },
-    data: { isLatest: false },
-  })
+  // ⚠️ AUDIT FIX: Supersession MUST be atomic.
+  // If we set isLatest=false first and then fail to insert, we have no latest parse.
+  // Solution: Wrap in transaction - insert new parse first, then update old.
+  const parsedDoc = await dbReg.$transaction(async (tx) => {
+    // 1. Find existing latest parse (if any) to supersede
+    const existingLatest = await tx.parsedDocument.findFirst({
+      where: {
+        evidenceId,
+        parserId: NNParser.parserId,
+        isLatest: true,
+      },
+    })
 
-  // Create ParsedDocument
-  const parsedDoc = await dbReg.parsedDocument.create({
-    data: {
-      evidenceId,
-      parserId: NNParser.parserId,
-      parserVersion: NNParser.parserVersion,
-      parseConfigHash: NNParser.parseConfigHash,
-      status: result.status as ParseStatus,
-      errorMessage: result.errorMessage,
-      warnings: result.warnings,
-      unparsedSegments: result.unparsedSegments,
-      docMeta: result.docMeta,
-      cleanTextArtifactId,
-      cleanTextLength: result.cleanText.length,
-      cleanTextHash: result.cleanTextHash,
-      offsetUnit: "UTF16",
-      nodeCount: result.stats.nodeCount,
-      maxDepth: result.stats.maxDepth,
-      statsByType: result.stats.byType,
-      coverageChars: result.stats.coverageChars,
-      coveragePercent: result.stats.coveragePercent,
-      isLatest: true,
-      parseDurationMs: durationMs,
-    },
+    // 2. Create new ParsedDocument FIRST (before marking old as not latest)
+    const newDoc = await tx.parsedDocument.create({
+      data: {
+        evidenceId,
+        parserId: NNParser.parserId,
+        parserVersion: NNParser.parserVersion,
+        parseConfigHash: NNParser.parseConfigHash,
+        status: result.status as ParseStatus,
+        errorMessage: result.errorMessage,
+        warnings: result.warnings,
+        unparsedSegments: result.unparsedSegments,
+        docMeta: result.docMeta,
+        cleanTextArtifactId,
+        cleanTextLength: result.cleanText.length,
+        cleanTextHash: result.cleanTextHash,
+        offsetUnit: "UTF16",
+        nodeCount: result.stats.nodeCount,
+        maxDepth: result.stats.maxDepth,
+        statsByType: result.stats.byType,
+        coverageChars: result.stats.coverageChars,
+        coveragePercent: result.stats.coveragePercent,
+        isLatest: true,
+        supersedesId: existingLatest?.id,
+        parseDurationMs: durationMs,
+      },
+    })
+
+    // 3. THEN mark old parse as not latest and link supersession
+    if (existingLatest) {
+      await tx.parsedDocument.update({
+        where: { id: existingLatest.id },
+        data: {
+          isLatest: false,
+          supersededById: newDoc.id,
+        },
+      })
+    }
+
+    return newDoc
   })
 
   console.log("Created ParsedDocument:", parsedDoc.id)
 
   // Create ProvisionNodes
+  // ⚠️ AUDIT FIX: Must populate parentId during node creation.
+  // Phase 3 tree rendering requires parentId to build the tree structure.
+  // parentId is derived deterministically from nodePath.
   if (result.nodes.length > 0) {
+    // First pass: create all nodes without parentId to get their IDs
     const nodeData = result.nodes.map((node) => ({
       parsedDocumentId: parsedDoc.id,
       nodeType: node.nodeType,
@@ -2445,7 +2570,29 @@ async function main() {
       data: nodeData,
     })
 
-    console.log("Created", nodeData.length, "ProvisionNodes")
+    // Second pass: update parentId based on nodePath derivation
+    // parentId is the node whose nodePath is the parent of this node's nodePath
+    const createdNodes = await dbReg.provisionNode.findMany({
+      where: { parsedDocumentId: parsedDoc.id },
+      select: { id: true, nodePath: true },
+    })
+
+    const nodeByPath = new Map(createdNodes.map((n) => [n.nodePath, n.id]))
+
+    for (const node of createdNodes) {
+      const parentPath = getParentPath(node.nodePath)
+      if (parentPath) {
+        const parentId = nodeByPath.get(parentPath)
+        if (parentId) {
+          await dbReg.provisionNode.update({
+            where: { id: node.id },
+            data: { parentId },
+          })
+        }
+      }
+    }
+
+    console.log("Created", nodeData.length, "ProvisionNodes with parentId links")
   }
 
   // Summary
@@ -2698,15 +2845,22 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ## Exit Criteria Verification
 
+> **AUDIT FIX:** Exit criteria now include full NN metadata verification and offset integrity checks.
+
 After completing all tasks, verify:
 
-| Criteria                  | Verification                                                        |
-| ------------------------- | ------------------------------------------------------------------- |
-| Schema migrations applied | `npx prisma migrate status` shows all migrations applied            |
-| Parser unit tests pass    | `npx vitest run src/lib/regulatory-truth/nn-parser/` all green      |
-| Fixture tests pass        | At least 1 fixture passes all checks                                |
-| Integration test passes   | DB test creates and queries records successfully                    |
-| Parse 50 diverse items    | Run `scripts/run-nn-parser.ts` on 50 Evidence records, >95% success |
+| Criteria                  | Verification                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema migrations applied | `npx prisma migrate status` shows all migrations applied                                                                                                      |
+| Parser unit tests pass    | `npx vitest run src/lib/regulatory-truth/nn-parser/` all green                                                                                                |
+| Fixture tests pass        | At least 1 fixture passes all checks                                                                                                                          |
+| Integration test passes   | DB test creates and queries records successfully                                                                                                              |
+| Parse 50 diverse items    | Run `scripts/run-nn-parser.ts` on 50 Evidence records, >95% success                                                                                           |
+| **NN metadata present**   | `SELECT COUNT(*) FROM "ParsedDocument" WHERE (docMeta->>'nnYear') IS NULL OR (docMeta->>'nnIssue') IS NULL OR (docMeta->>'nnItem') IS NULL;` returns 0 or <5% |
+| **Unique nodePaths**      | `SELECT parsedDocumentId, nodePath, COUNT(*) FROM "ProvisionNode" GROUP BY 1,2 HAVING COUNT(*)>1;` returns 0 rows                                             |
+| **Offset integrity**      | Zero PARSE-INV-003 violations in warnings for parsed documents                                                                                                |
+| **CLEAN_TEXT artifacts**  | All ParsedDocument.cleanTextArtifactId points to kind='CLEAN_TEXT' artifacts                                                                                  |
+| **parentId populated**    | `SELECT COUNT(*) FROM "ProvisionNode" WHERE depth > 1 AND "parentId" IS NULL;` returns 0                                                                      |
 
 ---
 
@@ -2721,3 +2875,14 @@ After completing all tasks, verify:
 4. **Parser version**: Update `PARSER_VERSION` when making breaking changes to parse logic.
 
 5. **Coverage calculation**: Uses interval union algorithm to avoid double-counting overlapping nodes.
+
+6. **Schema sync for workers** (AUDIT FIX): Workers import Prisma types from shared schema. Pin Prisma version in workers package.json and add CI check:
+
+   ```bash
+   # In workers CI:
+   MAIN_PRISMA=$(cat app/package.json | jq -r '.dependencies.prisma // .devDependencies.prisma')
+   WORKER_PRISMA=$(cat workers/package.json | jq -r '.dependencies.prisma // .devDependencies.prisma')
+   [ "$MAIN_PRISMA" = "$WORKER_PRISMA" ] || { echo "Prisma version mismatch"; exit 1; }
+   ```
+
+7. **Worker → DB access policy**: Workers write directly to DB (`dbReg`) via Tailscale. If API-only is required, add endpoints before Phase 2. Current architecture: direct DB access is acceptable within VPN.

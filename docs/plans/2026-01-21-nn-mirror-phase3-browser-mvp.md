@@ -67,19 +67,22 @@ import { dbReg } from "@/lib/db"
 import Link from "next/link"
 
 async function getYearStats() {
+  // ⚠️ AUDIT FIX: Use docMeta.nnYear for grouping, NOT fetchedAt
+  // fetchedAt is when we scraped it, nnYear is the actual publication year
   const stats = await dbReg.$queryRaw<Array<{
     year: number
     issue_count: bigint
     item_count: bigint
   }>>`
     SELECT
-      EXTRACT(YEAR FROM "fetchedAt")::int as year,
-      COUNT(DISTINCT (("docMeta"->>'nnIssue')::int)) as issue_count,
+      (pd."docMeta"->>'nnYear')::int as year,
+      COUNT(DISTINCT (pd."docMeta"->>'nnIssue')::int) as issue_count,
       COUNT(*) as item_count
-    FROM "Evidence" e
-    JOIN "ParsedDocument" pd ON pd."evidenceId" = e.id
-    WHERE pd."isLatest" = true AND pd.status = 'SUCCESS'
-    GROUP BY year
+    FROM "ParsedDocument" pd
+    WHERE pd."isLatest" = true
+      AND pd.status = 'SUCCESS'
+      AND (pd."docMeta"->>'nnYear') IS NOT NULL
+    GROUP BY (pd."docMeta"->>'nnYear')::int
     ORDER BY year DESC
   `
 
@@ -154,20 +157,21 @@ interface Props {
 }
 
 async function getIssuesForYear(year: number) {
+  // ⚠️ AUDIT FIX: Use docMeta.nnYear for filtering, NOT fetchedAt
+  // Use docMeta.publishedAt for display date
   const issues = await dbReg.$queryRaw<Array<{
     issue: number
     item_count: bigint
-    earliest_date: Date | null
+    published_at: Date | null
   }>>`
     SELECT
       (pd."docMeta"->>'nnIssue')::int as issue,
       COUNT(*) as item_count,
-      MIN(e."fetchedAt") as earliest_date
-    FROM "Evidence" e
-    JOIN "ParsedDocument" pd ON pd."evidenceId" = e.id
+      MIN((pd."docMeta"->>'publishedAt')::timestamp) as published_at
+    FROM "ParsedDocument" pd
     WHERE pd."isLatest" = true
       AND pd.status = 'SUCCESS'
-      AND EXTRACT(YEAR FROM e."fetchedAt") = ${year}
+      AND (pd."docMeta"->>'nnYear')::int = ${year}
     GROUP BY issue
     ORDER BY issue DESC
   `
@@ -175,7 +179,7 @@ async function getIssuesForYear(year: number) {
   return issues.map(i => ({
     issue: i.issue,
     itemCount: Number(i.item_count),
-    date: i.earliest_date
+    date: i.published_at
   }))
 }
 
@@ -1469,18 +1473,175 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ## Exit Criteria Verification
 
+> **AUDIT FIX:** Exit criteria now include proper grouping verification and Parse Debug View.
+
 After completing all tasks, verify:
 
-| Criteria                  | Verification                                               |
-| ------------------------- | ---------------------------------------------------------- |
-| Year index loads          | `/nn-browser` shows years with counts                      |
-| Issue navigation works    | `/nn-browser/2024` shows issues                            |
-| Item list loads           | `/nn-browser/2024/100` shows items                         |
-| Article tree renders      | Item page shows hierarchical tree                          |
-| Citation URLs work        | `/nn-browser/2024/100/1/članak:1/stavak:2` loads provision |
-| Search returns results    | Document search finds matching text                        |
-| Instrument timeline works | `/nn-browser/instrument/{id}` shows timeline               |
-| Internal dogfooding       | Team uses browser for 2 weeks                              |
+| Criteria                  | Verification                                                 |
+| ------------------------- | ------------------------------------------------------------ |
+| Year index loads          | `/nn-browser` shows years with counts (using docMeta.nnYear) |
+| Issue navigation works    | `/nn-browser/2024` shows issues (using docMeta.nnIssue)      |
+| Item list loads           | `/nn-browser/2024/100` shows items (using docMeta.nnItem)    |
+| Article tree renders      | Item page shows hierarchical tree with parentId links        |
+| Citation URLs work        | `/nn-browser/2024/100/1/članak:1/stavak:2` loads provision   |
+| Search returns results    | Document search finds matching text                          |
+| Instrument timeline works | `/nn-browser/instrument/{id}` shows timeline                 |
+| **Parse Debug View**      | `/nn-browser/debug/{evidenceId}` shows parse diagnostics     |
+| **URL routing correct**   | URLs use (nnYear, nnIssue, nnItem) + nodePath, NOT fetchedAt |
+| Internal dogfooding       | Team uses browser for 2 weeks                                |
+
+---
+
+## Task A9: Add Parse Debug View Page (AUDIT FIX)
+
+> **AUDIT FIX:** Add a debug page to inspect parse results, offsets, and warnings.
+
+**Files:**
+
+- Create: `src/app/(app)/nn-browser/debug/[evidenceId]/page.tsx`
+
+**Step 1: Create the debug page**
+
+```typescript
+import { dbReg } from "@/lib/db"
+import { notFound } from "next/navigation"
+
+interface Props {
+  params: { evidenceId: string }
+}
+
+async function getParseDebugData(evidenceId: string) {
+  const evidence = await dbReg.evidence.findUnique({
+    where: { id: evidenceId },
+    include: {
+      parsedDocuments: {
+        where: { isLatest: true },
+        include: {
+          nodes: {
+            orderBy: { startOffset: "asc" },
+          },
+          cleanTextArtifact: true,
+        },
+      },
+      artifacts: true,
+    },
+  })
+  return evidence
+}
+
+export default async function ParseDebugPage({ params }: Props) {
+  const data = await getParseDebugData(params.evidenceId)
+
+  if (!data) {
+    notFound()
+  }
+
+  const parsedDoc = data.parsedDocuments[0]
+  const cleanText = parsedDoc?.cleanTextArtifact?.content || ""
+  const docMeta = (parsedDoc?.docMeta as Record<string, unknown>) || {}
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Parse Debug: {params.evidenceId}</h2>
+
+      {/* Document Metadata */}
+      <section className="bg-white rounded-lg border p-4">
+        <h3 className="font-medium mb-2">Document Metadata</h3>
+        <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
+          {JSON.stringify(docMeta, null, 2)}
+        </pre>
+      </section>
+
+      {/* Parse Status */}
+      <section className="bg-white rounded-lg border p-4">
+        <h3 className="font-medium mb-2">Parse Status</h3>
+        <dl className="grid grid-cols-2 gap-2 text-sm">
+          <dt>Status:</dt><dd className="font-mono">{parsedDoc?.status}</dd>
+          <dt>Node Count:</dt><dd className="font-mono">{parsedDoc?.nodeCount}</dd>
+          <dt>Coverage:</dt><dd className="font-mono">{parsedDoc?.coveragePercent?.toFixed(1)}%</dd>
+          <dt>Clean Text Length:</dt><dd className="font-mono">{parsedDoc?.cleanTextLength}</dd>
+        </dl>
+      </section>
+
+      {/* Warnings */}
+      {parsedDoc?.warnings && (
+        <section className="bg-yellow-50 rounded-lg border border-yellow-200 p-4">
+          <h3 className="font-medium mb-2">Warnings ({(parsedDoc.warnings as unknown[]).length})</h3>
+          <ul className="text-sm space-y-1">
+            {(parsedDoc.warnings as Array<{code: string; message: string; nodePath?: string}>).map((w, i) => (
+              <li key={i} className="font-mono">
+                [{w.code}] {w.message} {w.nodePath && `@ ${w.nodePath}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Node Offset Verification */}
+      <section className="bg-white rounded-lg border p-4">
+        <h3 className="font-medium mb-2">Node Offsets (first 20)</h3>
+        <table className="text-xs w-full">
+          <thead>
+            <tr className="text-left">
+              <th>Path</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Match?</th>
+              <th>Extract Preview</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parsedDoc?.nodes.slice(0, 20).map((node) => {
+              const extracted = cleanText.substring(node.startOffset, node.endOffset)
+              const matches = node.rawText ? extracted === node.rawText : "N/A"
+              return (
+                <tr key={node.id} className="border-t">
+                  <td className="font-mono">{node.nodePath}</td>
+                  <td>{node.startOffset}</td>
+                  <td>{node.endOffset}</td>
+                  <td className={matches === true ? "text-green-600" : matches === false ? "text-red-600" : ""}>
+                    {String(matches)}
+                  </td>
+                  <td className="truncate max-w-xs">{extracted.substring(0, 50)}...</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  )
+}
+```
+
+**Step 2: Add link from item page**
+
+Update item page to include debug link for staff:
+
+```typescript
+// Add at bottom of item detail page
+{session?.user?.systemRole === "ADMIN" && (
+  <Link
+    href={`/nn-browser/debug/${evidence.id}`}
+    className="text-xs text-gray-400 hover:text-gray-600"
+  >
+    [Debug Parse]
+  </Link>
+)}
+```
+
+**Step 3: Commit**
+
+```bash
+git add src/app/\(app\)/nn-browser/debug/
+git commit -m "feat(nn-browser): add Parse Debug View page
+
+AUDIT FIX: Internal page for inspecting parse results, offsets, warnings.
+Verifies PARSE-INV-003 offset integrity visually.
+Admin-only access.
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+```
 
 ---
 
@@ -1495,3 +1656,7 @@ After completing all tasks, verify:
 4. **Copy Link button**: Requires client-side JavaScript. Add a fallback for SSR or use a Server Action.
 
 5. **Authorization**: This is marked as internal tool. Ensure route is protected by authentication middleware.
+
+6. **⚠️ AUDIT FIX - Navigation URLs**: All navigation MUST use (nnYear, nnIssue, nnItem) from docMeta, NOT Evidence.fetchedAt. This ensures proper chronological ordering and stable URLs.
+
+7. **⚠️ AUDIT FIX - Tree requires parentId**: The tree rendering assumes ProvisionNode.parentId is populated. This is done in Phase 1. Verify Phase 1 exit criteria before Phase 3.

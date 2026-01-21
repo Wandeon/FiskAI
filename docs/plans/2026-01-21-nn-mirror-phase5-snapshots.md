@@ -6,9 +6,20 @@
 
 **Architecture:** InstrumentSnapshot stores point-in-time consolidated texts. ConsolidationEngine applies amendment directives to base texts. Every character in a snapshot traces back to specific Evidence via SnapshotProvenance.
 
-**Tech Stack:** Prisma (App), TypeScript workers, Next.js pages, diff-match-patch for text comparison
+**Tech Stack:** Prisma (App), TypeScript workers, Next.js pages, `diff` package for line-based text comparison (⚠️ AUDIT FIX: Changed from diff-match-patch to `diff` for simplicity; `npm install diff @types/diff`)
 
 **Reference:** `docs/specs/nn-mirror-v1.md` Section 8 Phase 5
+
+> **⚠️ AUDIT FIX - Phase 4 Exit Criteria Gate:**
+> Phase 5 MUST NOT begin until Phase 4 exit criteria are met for 7 consecutive days:
+>
+> - Offset integrity ≥99%
+> - Node coverage ≥90%
+> - Unparsed segments <5%
+> - Link confidence HIGH/MEDIUM ≥80%
+> - DLQ depth <50
+>
+> Verify with: `SELECT AVG("integrityRate") FROM "IntegrityCheck" WHERE "checkType" = 'ANCHOR_INTEGRITY' AND "createdAt" > NOW() - INTERVAL '7 days';`
 
 ---
 
@@ -116,6 +127,10 @@ model InstrumentSnapshot {
   computedBy      String?         // "consolidation-engine-v1.2.3"
   computeDurationMs Int?
   errorMessage    String?
+
+  // ⚠️ AUDIT FIX: Track inputs for reproducibility
+  inputsHash      String?         // Hash of (contributingEvidenceIds + their cleanTextHashes)
+  engineVersion   String?         // e.g., "consolidation-engine-v1.2.3"
 
   // Versioning
   version         Int             @default(1)  // Increment on recompute
@@ -582,7 +597,7 @@ git commit -m "feat(browser): add as-of date snapshot viewer page"
 ```typescript
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import type { InstrumentSnapshot, SnapshotProvenance } from '@prisma/client'
 import { ProvenancePopover } from './provenance-popover'
@@ -597,46 +612,60 @@ interface Props {
 export function SnapshotViewer({ snapshot, showProvenance = false }: Props) {
   const [selectedProvenance, setSelectedProvenance] = useState<SnapshotProvenance | null>(null)
 
-  // Build provenance map for quick lookup
-  const provenanceByOffset = new Map<number, SnapshotProvenance>()
-  for (const p of snapshot.provenance) {
-    for (let i = p.startOffset; i < p.endOffset; i++) {
-      provenanceByOffset.set(i, p)
-    }
-  }
+  // ⚠️ AUDIT FIX: Use range-based interval rendering, NOT per-character iteration
+  // Previous O(n) per-char approach is too slow for large texts.
+  // Provenance records already have (startOffset, endOffset) ranges.
 
-  // Render text with provenance highlighting
+  // Sort provenance by startOffset for sequential rendering
+  const sortedProvenance = useMemo(() => {
+    return [...snapshot.provenance].sort((a, b) => a.startOffset - b.startOffset)
+  }, [snapshot.provenance])
+
+  // Render text with provenance highlighting - O(m) where m = provenance records
   const renderTextWithProvenance = () => {
     const text = snapshot.consolidatedText
     const segments: JSX.Element[] = []
-    let currentProvenance: SnapshotProvenance | null = null
-    let segmentStart = 0
+    let lastEnd = 0
 
-    for (let i = 0; i <= text.length; i++) {
-      const p = provenanceByOffset.get(i) || null
-
-      if (p !== currentProvenance || i === text.length) {
-        if (i > segmentStart) {
-          const segmentText = text.slice(segmentStart, i)
-          segments.push(
-            <span
-              key={segmentStart}
-              className={cn(
-                'cursor-pointer transition-colors',
-                currentProvenance?.changeType === 'MODIFIED' && 'bg-yellow-100 hover:bg-yellow-200',
-                currentProvenance?.changeType === 'INSERTED' && 'bg-green-100 hover:bg-green-200',
-                currentProvenance?.changeType === 'DELETED' && 'bg-red-100 line-through',
-                selectedProvenance?.id === currentProvenance?.id && 'ring-2 ring-primary'
-              )}
-              onClick={() => currentProvenance && setSelectedProvenance(currentProvenance)}
-            >
-              {segmentText}
-            </span>
-          )
-        }
-        currentProvenance = p
-        segmentStart = i
+    for (const p of sortedProvenance) {
+      // Add any gap before this provenance range
+      if (p.startOffset > lastEnd) {
+        segments.push(
+          <span key={`gap-${lastEnd}`}>
+            {text.slice(lastEnd, p.startOffset)}
+          </span>
+        )
       }
+
+      // Add the provenance-highlighted segment
+      const segmentText = text.slice(p.startOffset, p.endOffset)
+      segments.push(
+        <span
+          key={p.id}
+          className={cn(
+            'cursor-pointer transition-colors',
+            p.changeType === 'MODIFIED' && 'bg-yellow-100 hover:bg-yellow-200',
+            p.changeType === 'INSERTED' && 'bg-green-100 hover:bg-green-200',
+            p.changeType === 'DELETED' && 'bg-red-100 line-through',
+            selectedProvenance?.id === p.id && 'ring-2 ring-primary'
+          )}
+          onClick={() => setSelectedProvenance(p)}
+          title={`${p.changeType} from ${p.sourceEvidenceId}`}
+        >
+          {segmentText}
+        </span>
+      )
+
+      lastEnd = p.endOffset
+    }
+
+    // Add any remaining text after last provenance
+    if (lastEnd < text.length) {
+      segments.push(
+        <span key={`tail-${lastEnd}`}>
+          {text.slice(lastEnd)}
+        </span>
+      )
     }
 
     return segments
@@ -2845,15 +2874,20 @@ git commit -m "test(consolidation): add integration test for snapshot creation"
 
 ## Exit Criteria Verification
 
-| Criteria                                             | Verification                                                                        |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| InstrumentSnapshot model with provenance             | `SELECT COUNT(*) FROM "InstrumentSnapshot"` returns > 0 after running consolidation |
-| Amendment directive parser handles Croatian patterns | Unit tests pass for REPLACE_ARTICLE, INSERT_AFTER, DELETE, REPLACE_WORDS            |
-| Consolidation engine applies amendments in order     | Engine test shows correct text after applying amendments                            |
-| Provenance maps each character to source Evidence    | SnapshotProvenance records created with correct sourceEvidenceId                    |
-| As-of date browsing works                            | Navigate to `/nn-browser/instruments/{id}/as-of?date=2023-01-01`                    |
-| Version diff shows changes                           | Navigate to `/nn-browser/instruments/{id}/diff` with two snapshots                  |
-| Changelog lists all amendments                       | Navigate to `/nn-browser/instruments/{id}/changelog`                                |
+> **⚠️ AUDIT FIX:** Exit criteria now include inputsHash storage and range provenance verification.
+
+| Criteria                                             | Verification                                                                                        |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Phase 4 gate passed**                              | Phase 4 SLOs met for 7 consecutive days before starting Phase 5                                     |
+| InstrumentSnapshot model with provenance             | `SELECT COUNT(*) FROM "InstrumentSnapshot"` returns > 0 after running consolidation                 |
+| Amendment directive parser handles Croatian patterns | Unit tests pass for REPLACE_ARTICLE, INSERT_AFTER, DELETE, REPLACE_WORDS                            |
+| Consolidation engine applies amendments in order     | Engine test shows correct text after applying amendments                                            |
+| **Provenance uses ranges, not per-char**             | SnapshotProvenance records have (startOffset, endOffset) ranges; rendering is O(m)                  |
+| **inputsHash and engineVersion stored**              | `SELECT id, "inputsHash", "engineVersion" FROM "InstrumentSnapshot" LIMIT 5;` shows non-null values |
+| As-of date browsing works                            | Navigate to `/nn-browser/instruments/{id}/as-of?date=2023-01-01`                                    |
+| Version diff shows changes                           | Navigate to `/nn-browser/instruments/{id}/diff` with two snapshots                                  |
+| Changelog lists all amendments                       | Navigate to `/nn-browser/instruments/{id}/changelog`                                                |
+| **CONSOLIDATED baseline used**                       | Initial snapshots built from CONSOLIDATED event type, not ORIGINAL                                  |
 
 ---
 
@@ -2866,3 +2900,36 @@ Task 1-5 (Schema) → Task 6 (Migration) → Task 13-15 (Engine) → Task 16-17 
 ```
 
 UI tasks (7-12) can run in parallel with engine tasks (13-17) after migration completes.
+
+---
+
+## Notes for Implementer
+
+1. **⚠️ AUDIT FIX - Phase 4 Gate**: DO NOT start Phase 5 until Phase 4 exit criteria (offset integrity ≥99%, node coverage ≥90%, etc.) have been met for 7 consecutive days. This ensures the foundation is stable before building snapshots.
+
+2. **⚠️ AUDIT FIX - Use CONSOLIDATED baseline**: When building initial snapshots, prefer CONSOLIDATED event type (pročišćeni tekst) as the baseline rather than ORIGINAL + amendments. This reduces amendment application complexity and starts from a known-good state.
+
+   ```typescript
+   // In findBaselineEvidence():
+   const consolidated = links.find((l) => l.eventType === "CONSOLIDATED")
+   if (consolidated) {
+     return consolidated // Prefer consolidated as baseline
+   }
+   return links.find((l) => l.eventType === "ORIGINAL") // Fallback to original
+   ```
+
+3. **⚠️ AUDIT FIX - Diff package**: Install `diff` package (not `diff-match-patch`): `npm install diff @types/diff`. The plan uses `diffLines` from `diff` package.
+
+4. **⚠️ AUDIT FIX - inputsHash computation**: Compute inputsHash as hash of sorted (evidenceId, cleanTextHash) pairs. This ensures reproducibility - same inputs should produce same snapshot.
+
+   ```typescript
+   function computeInputsHash(evidence: Array<{ id: string; cleanTextHash: string }>): string {
+     const sorted = [...evidence].sort((a, b) => a.id.localeCompare(b.id))
+     const input = sorted.map((e) => `${e.id}:${e.cleanTextHash}`).join("|")
+     return createHash("sha256").update(input).digest("hex")
+   }
+   ```
+
+5. **⚠️ AUDIT FIX - Range provenance rendering**: The SnapshotViewer uses O(m) range-based rendering where m = number of provenance records, not O(n) per-character. This is critical for large texts.
+
+6. **Amendment directive coverage**: Current implementation covers REPLACE_ARTICLE, INSERT_AFTER, DELETE. Tables and annexes amendments (⚠️ AUDIT: mentioned as needing expanded coverage) should be added in a follow-up iteration.

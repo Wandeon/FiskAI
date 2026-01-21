@@ -540,7 +540,9 @@ export class DriftDetector {
         evidence: {
           include: {
             artifacts: {
-              where: { kind: "HTML_CLEANED" },
+              // ⚠️ AUDIT FIX: Use CLEAN_TEXT artifact, not HTML_CLEANED
+              // cleanTextHash is computed from CLEAN_TEXT, not HTML_CLEANED
+              where: { kind: "CLEAN_TEXT" },
               orderBy: { createdAt: "desc" },
               take: 1,
             },
@@ -556,6 +558,7 @@ export class DriftDetector {
 
       const result = detectDrift({
         cleanTextHash: parse.cleanTextHash,
+        // ⚠️ AUDIT FIX: Compare against CLEAN_TEXT artifact hash
         currentArtifactHash: currentArtifact.contentHash,
       })
 
@@ -790,8 +793,9 @@ export class ReparseWorker {
         throw new Error(`Evidence not found: ${job.evidenceId}`)
       }
 
-      // Get primary artifact
-      const artifact = evidence.artifacts.find((a) => a.kind === "HTML_CLEANED") || {
+      // ⚠️ AUDIT FIX: Use HTML_RAW as input, create CLEAN_TEXT artifact from parse output
+      // Parser takes raw HTML, outputs cleanText which becomes CLEAN_TEXT artifact
+      const artifact = evidence.artifacts.find((a) => a.kind === "HTML_RAW") || {
         id: "raw",
         kind: "HTML_RAW",
         content: evidence.rawContent,
@@ -818,36 +822,70 @@ export class ReparseWorker {
         throw new Error(result.errorMessage || "Parse failed")
       }
 
-      // Mark previous parse as not latest
-      if (job.previousParseId) {
-        await dbReg.parsedDocument.update({
-          where: { id: job.previousParseId },
-          data: { isLatest: false },
+      // ⚠️ AUDIT FIX: Create CLEAN_TEXT artifact for the new parse output
+      let cleanTextArtifactId: string | undefined
+      const existingCleanText = evidence.artifacts.find(
+        (a) => a.kind === "CLEAN_TEXT" && a.contentHash === result.cleanTextHash
+      )
+
+      if (existingCleanText) {
+        cleanTextArtifactId = existingCleanText.id
+      } else {
+        const newArtifact = await dbReg.evidenceArtifact.create({
+          data: {
+            evidenceId: job.evidenceId,
+            kind: "CLEAN_TEXT",
+            content: result.cleanText,
+            contentHash: result.cleanTextHash,
+          },
         })
+        cleanTextArtifactId = newArtifact.id
       }
 
-      // Create new parse record
-      const newParse = await dbReg.parsedDocument.create({
-        data: {
-          evidenceId: job.evidenceId,
-          parserId: NNParser.parserId,
-          parserVersion: NNParser.parserVersion,
-          parseConfigHash: NNParser.parseConfigHash,
-          status: result.status,
-          warnings: result.warnings,
-          unparsedSegments: result.unparsedSegments,
-          docMeta: result.docMeta,
-          cleanTextLength: result.cleanText.length,
-          cleanTextHash: result.cleanTextHash,
-          offsetUnit: "UTF16",
-          nodeCount: result.stats.nodeCount,
-          maxDepth: result.stats.maxDepth,
-          statsByType: result.stats.byType,
-          coverageChars: result.stats.coverageChars,
-          coveragePercent: result.stats.coveragePercent,
-          isLatest: true,
-          supersedesId: job.previousParseId,
-        },
+      // ⚠️ AUDIT FIX: Use atomic supersession (same as Phase 1)
+      const newParse = await dbReg.$transaction(async (tx) => {
+        // Find existing latest
+        const existingLatest = job.previousParseId
+          ? await tx.parsedDocument.findUnique({ where: { id: job.previousParseId } })
+          : null
+
+        // Create new parse FIRST
+        const created = await tx.parsedDocument.create({
+          data: {
+            evidenceId: job.evidenceId,
+            parserId: NNParser.parserId,
+            parserVersion: NNParser.parserVersion,
+            parseConfigHash: NNParser.parseConfigHash,
+            status: result.status,
+            warnings: result.warnings,
+            unparsedSegments: result.unparsedSegments,
+            docMeta: result.docMeta,
+            cleanTextArtifactId,
+            cleanTextLength: result.cleanText.length,
+            cleanTextHash: result.cleanTextHash,
+            offsetUnit: "UTF16",
+            nodeCount: result.stats.nodeCount,
+            maxDepth: result.stats.maxDepth,
+            statsByType: result.stats.byType,
+            coverageChars: result.stats.coverageChars,
+            coveragePercent: result.stats.coveragePercent,
+            isLatest: true,
+            supersedesId: job.previousParseId,
+          },
+        })
+
+        // THEN mark old as not latest
+        if (existingLatest) {
+          await tx.parsedDocument.update({
+            where: { id: existingLatest.id },
+            data: {
+              isLatest: false,
+              supersededById: created.id,
+            },
+          })
+        }
+
+        return created
       })
 
       // Create nodes
@@ -1782,17 +1820,63 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ## Exit Criteria Verification
 
+> **AUDIT FIX:** Exit criteria now include explicit SLOs and distribution checks. Phase 5 is gated on these criteria being met for 7 consecutive days.
+
 After completing all tasks, verify:
 
-| Criteria                  | Verification                                                    |
-| ------------------------- | --------------------------------------------------------------- |
-| Schema migrations applied | `npx prisma migrate status`                                     |
-| Integrity checker works   | `npx tsx scripts/run-nightly-monitoring.ts` runs without errors |
-| Drift detection works     | Create test drift, verify it's detected and queued              |
-| Reparse worker works      | Process a reparse job, verify new parse created                 |
-| GC works                  | Create old superseded parses, verify they're cleaned            |
-| Dashboard loads           | `/nn-browser/dashboard` shows stats                             |
-| <1% failures sustained    | Integrity rate >99% for 7 consecutive days                      |
+| Criteria                  | Verification                                                             |
+| ------------------------- | ------------------------------------------------------------------------ |
+| Schema migrations applied | `npx prisma migrate status`                                              |
+| Integrity checker works   | `npx tsx scripts/run-nightly-monitoring.ts` runs without errors          |
+| Drift detection works     | Create test drift, verify it's detected and queued                       |
+| Reparse worker works      | Process a reparse job, verify new parse created with CLEAN_TEXT artifact |
+| GC works                  | Create old superseded parses, verify they're cleaned                     |
+| Dashboard loads           | `/nn-browser/dashboard` shows stats                                      |
+
+**⚠️ AUDIT FIX - Explicit SLOs (must be met for 7 consecutive days before Phase 5):**
+
+| SLO                      | Target | Verification SQL                                                                                                                                                    |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Offset integrity         | ≥99%   | `SELECT AVG("integrityRate") FROM "IntegrityCheck" WHERE "checkType" = 'ANCHOR_INTEGRITY' AND "createdAt" > NOW() - INTERVAL '7 days';`                             |
+| Node coverage            | ≥90%   | `SELECT AVG("coveragePercent") FROM "ParsedDocument" WHERE "isLatest" = true AND status = 'SUCCESS';`                                                               |
+| Unparsed segments        | <5%    | `SELECT COUNT(*) FILTER (WHERE jsonb_array_length(COALESCE("unparsedSegments", '[]'::jsonb)) > 0)::float / COUNT(*) FROM "ParsedDocument" WHERE "isLatest" = true;` |
+| Link confidence HIGH/MED | ≥80%   | `SELECT COUNT(*) FILTER (WHERE confidence IN ('HIGH','MEDIUM'))::float / COUNT(*) FROM "InstrumentEvidenceLink";`                                                   |
+| DLQ depth                | <50    | Check Redis `LLEN bull:nn-reparse:failed`                                                                                                                           |
+
+**Distribution Checks Monitoring Job:**
+
+```typescript
+// Add to scripts/run-nightly-monitoring.ts
+async function checkDistributions() {
+  // Confidence distribution per resolver version
+  const confidenceDist = await dbReg.$queryRaw`
+    SELECT
+      ira."resolverVersion",
+      iel.confidence,
+      COUNT(*) as count
+    FROM "InstrumentEvidenceLink" iel
+    JOIN "InstrumentResolutionAttempt" ira
+      ON ira."chosenInstrumentId" = iel."instrumentId"
+      AND ira."evidenceId" = iel."evidenceId"
+    GROUP BY ira."resolverVersion", iel.confidence
+  `
+
+  // Parse status distribution
+  const parseStatusDist = await dbReg.$queryRaw`
+    SELECT status, COUNT(*) as count
+    FROM "ParsedDocument"
+    WHERE "isLatest" = true
+    GROUP BY status
+  `
+
+  // Log for monitoring/alerting
+  console.log("Confidence distribution:", confidenceDist)
+  console.log("Parse status distribution:", parseStatusDist)
+
+  // Alert if HIGH < 60% or LOW > 20%
+  // (implementation left to monitoring system)
+}
+```
 
 ---
 

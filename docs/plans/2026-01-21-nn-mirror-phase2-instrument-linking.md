@@ -10,7 +10,12 @@
 
 **Reference:** `docs/specs/nn-mirror-v1.md` Sections 2.6-2.9, 3.3
 
-**Prerequisite:** Phase 1 complete (ParsedDocument, ProvisionNode tables exist)
+**Prerequisite:** Phase 1 complete with ALL exit criteria met:
+
+- ParsedDocument, ProvisionNode tables exist
+- ⚠️ AUDIT FIX: docMeta must include (nnYear, nnIssue, nnItem, publishedAt) - resolver depends on this
+- CLEAN_TEXT artifacts created (not HTML_CLEANED)
+- Offset integrity verified (no PARSE-INV-003 violations)
 
 ---
 
@@ -3035,16 +3040,21 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ## Exit Criteria Verification
 
+> **AUDIT FIX:** Exit criteria now include resolution attempt logging and confidence tracking.
+
 After completing all tasks, verify:
 
-| Criteria                  | Verification                                                             |
-| ------------------------- | ------------------------------------------------------------------------ |
-| Schema migrations applied | `npx prisma migrate status` shows all migrations applied                 |
-| Resolver unit tests pass  | `npx vitest run src/lib/regulatory-truth/instrument-resolver/` all green |
-| Event classifier accurate | >90% accuracy on test titles                                             |
-| Timeline ordering correct | Entries ordered by date, then event type priority                        |
-| Integration test passes   | DB test creates links and logs attempts successfully                     |
-| >80% HIGH/MEDIUM links    | Run resolver on 50 Evidence, measure confidence distribution             |
+| Criteria                       | Verification                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Schema migrations applied      | `npx prisma migrate status` shows all migrations applied                                                                 |
+| Resolver unit tests pass       | `npx vitest run src/lib/regulatory-truth/instrument-resolver/` all green                                                 |
+| Event classifier accurate      | >90% accuracy on test titles                                                                                             |
+| Timeline ordering correct      | Entries ordered by date, then event type priority                                                                        |
+| Integration test passes        | DB test creates links and logs attempts successfully                                                                     |
+| >80% HIGH/MEDIUM links         | `SELECT COUNT(*) FILTER (WHERE confidence IN ('HIGH','MEDIUM'))::float / COUNT(*) FROM "InstrumentEvidenceLink";` ≥ 0.80 |
+| **Resolution attempts logged** | Every Evidence processed has an InstrumentResolutionAttempt row                                                          |
+| **Ambiguity rate < 5%**        | `SELECT COUNT(*) FILTER (WHERE "failReason" = 'AMBIGUOUS')::float / COUNT(*) FROM "InstrumentResolutionAttempt";` < 0.05 |
+| **publishedAt populated**      | All InstrumentEvidenceLinks have publishedAt from docMeta                                                                |
 
 ---
 
@@ -3061,3 +3071,26 @@ After completing all tasks, verify:
 5. **Confidence calibration**: Initial thresholds (0.95/0.85/0.70) should be validated against real data and potentially adjusted.
 
 6. **Coverage recomputation**: InstrumentCoverage should be recomputed when links change. Consider a background job for this.
+
+7. **⚠️ AUDIT FIX - Never update Evidence.instrumentId directly**: The linking relationship lives in InstrumentEvidenceLink, NOT Evidence. Never set `evidence.instrumentId` directly. This maintains proper separation and allows multiple links (e.g., an amendment linking to multiple instruments).
+
+8. **⚠️ AUDIT FIX - Linking prerequisites**: Resolver MUST only run on Evidence with:
+   - A successful ParsedDocument with `isLatest=true`
+   - Stable docMeta with at least (nnYear, nnIssue, nnItem) populated
+   - If docMeta is incomplete, log ResolutionAttempt with `failReason: MISSING_METADATA`
+
+9. **⚠️ AUDIT FIX - Confidence calibration loop**: Add a task to track confidence distribution per resolver version:
+   ```sql
+   -- Weekly analysis query for calibration
+   SELECT
+     "resolverVersion",
+     confidence,
+     COUNT(*) as count,
+     COUNT(*)::float / SUM(COUNT(*)) OVER (PARTITION BY "resolverVersion") as ratio
+   FROM "InstrumentEvidenceLink" iel
+   JOIN "InstrumentResolutionAttempt" ira ON ira."chosenInstrumentId" = iel."instrumentId"
+     AND ira."evidenceId" = iel."evidenceId"
+   GROUP BY "resolverVersion", confidence
+   ORDER BY "resolverVersion", confidence;
+   ```
+   If HIGH drops below 60% or LOW exceeds 20%, review threshold calibration.
