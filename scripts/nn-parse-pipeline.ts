@@ -123,7 +123,7 @@ async function main() {
       a.kind === "CLEAN_TEXT" && a.contentHash === result.cleanTextHash
   )
 
-  await dbReg.$transaction(async (tx: typeof dbReg) => {
+  await dbReg.$transaction(async (tx) => {
     if (existingCleanText) {
       cleanTextArtifactId = existingCleanText.id
     } else {

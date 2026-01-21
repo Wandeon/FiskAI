@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio"
 import { createHash } from "crypto"
-import { ProvisionNodeType } from "../../../generated/regulatory-client"
+import { ProvisionNodeType } from "@/generated/regulatory-client"
 import type {
   ParseOutput,
   NodeOutput,
@@ -77,7 +77,7 @@ export function parseHtml(html: string): ParseOutput {
   }
 }
 
-function extractMetadata($: cheerio.CheerioAPI): DocumentMetadata {
+function extractMetadata($: cheerio.Root): DocumentMetadata {
   const title =
     $("title").text().trim() ||
     $("h1").first().text().trim() ||
@@ -97,7 +97,7 @@ function extractMetadata($: cheerio.CheerioAPI): DocumentMetadata {
   return { title, textType }
 }
 
-function parseNodes($: cheerio.CheerioAPI, cleanText: string, warnings: Warning[]): NodeOutput[] {
+function parseNodes($: cheerio.Root, cleanText: string, warnings: Warning[]): NodeOutput[] {
   const nodes: NodeOutput[] = []
 
   // State tracking
@@ -227,7 +227,7 @@ interface TextBlock {
   selector?: string
 }
 
-function findTextBlocks($: cheerio.CheerioAPI): TextBlock[] {
+function findTextBlocks($: cheerio.Root): TextBlock[] {
   const blocks: TextBlock[] = []
   let position = 0
 
@@ -248,8 +248,11 @@ function findTextBlocks($: cheerio.CheerioAPI): TextBlock[] {
 }
 
 function generateSelector(el: cheerio.Element): string {
-  // Generate a CSS selector for the element (for future HTML anchor linking)
-  const tagName = el.tagName?.toLowerCase() || "unknown"
+  if (el.type !== "tag" && el.type !== "script" && el.type !== "style") {
+    return "unknown"
+  }
+
+  const tagName = el.tagName?.toLowerCase() || el.name?.toLowerCase() || "unknown"
   const id = el.attribs?.id
   const className = el.attribs?.class?.split(" ")[0]
 

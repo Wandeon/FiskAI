@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { parseHtml } from "../html-parser"
-import { ProvisionNodeType } from "../../../generated/regulatory-client"
+import { ProvisionNodeType } from "@/generated/regulatory-client"
 
 describe("HTML Parser", () => {
   it("parses simple article structure", () => {

@@ -1,4 +1,4 @@
-import { ProvisionNodeType, ArtifactKind } from "../../../generated/regulatory-client"
+import { ProvisionNodeType } from "@/generated/regulatory-client"
 
 /**
  * Parser contract as defined in nn-mirror-v1.md Section 4.1
@@ -18,7 +18,7 @@ export interface ParseInput {
   contentClass: ContentClass
   artifact: {
     id: string
-    kind: ArtifactKind | string
+    kind: string
     content: string
     contentHash: string
   }

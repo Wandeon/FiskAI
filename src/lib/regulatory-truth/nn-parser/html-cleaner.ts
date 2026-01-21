@@ -12,7 +12,7 @@ export function cleanHtml(html: string): string {
   // Remove comments
   $("*")
     .contents()
-    .filter(function () {
+    .filter(function (this: cheerio.Element) {
       return this.type === "comment"
     })
     .remove()
@@ -20,10 +20,10 @@ export function cleanHtml(html: string): string {
   // Normalize whitespace in text nodes (but preserve structure)
   $("*")
     .contents()
-    .filter(function () {
+    .filter(function (this: cheerio.Element) {
       return this.type === "text"
     })
-    .each(function () {
+    .each(function (this: cheerio.Element) {
       const text = $(this).text()
       const normalized = text.replace(/[ \t]+/g, " ")
       $(this).replaceWith(normalized)
@@ -39,12 +39,12 @@ export function extractText(html: string): string {
   const $ = cheerio.load(html)
 
   // Replace block elements with newlines
-  $("p, div, br, h1, h2, h3, h4, h5, h6, li, tr").each(function () {
+  $("p, div, br, h1, h2, h3, h4, h5, h6, li, tr").each(function (this: cheerio.Element) {
     $(this).append("\n")
   })
 
   // Get text and normalize
-  let text = $.text()
+  let text = $.root().text()
 
   // Normalize whitespace
   text = text

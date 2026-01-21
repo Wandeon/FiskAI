@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { dbReg } from "@/lib/db"
 import { NNParser } from "../index"
-import { ParseStatus, ProvisionNodeType } from "../../../../generated/regulatory-client"
+import { ParseStatus, ProvisionNodeType } from "@/generated/regulatory-client"
 import { createHash } from "crypto"
 
 // This is a DB test - only runs in integration environment
@@ -33,8 +33,6 @@ describe.skipIf(!process.env.REGULATORY_DATABASE_URL)("NN Parser Integration", (
         slug: "test-source-" + Date.now(),
         url: "https://test.example.com",
         isActive: true,
-        scrapeFrequency: "daily",
-        priority: 1,
       },
     })
 
