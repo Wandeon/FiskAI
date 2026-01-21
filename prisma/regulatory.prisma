@@ -178,7 +178,7 @@ model Evidence {
 model EvidenceArtifact {
   id          String   @id @default(cuid())
   evidenceId  String
-  kind        String // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, TABLE_JSON, CLEAN_TEXT
+  kind        String // PDF_TEXT, OCR_TEXT, OCR_HOCR, HTML_CLEANED, CLEAN_TEXT, TABLE_JSON (CLEAN_TEXT = parser's plain text output that offsets are anchored to)
   content     String   @db.Text
   contentHash String
   pageMap     Json? // Per-page metadata: [{page, confidence, method}]
