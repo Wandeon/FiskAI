@@ -6,11 +6,11 @@ import { prisma } from "@/lib/prisma"
 import { generateR2Key } from "@/lib/r2-client"
 import { uploadWithRetention } from "@/lib/r2-client-retention"
 import { recordStoredArtifact } from "@/lib/artifacts/service"
-
-// TODO: Migrate to Intelligence API for rule lookup
-// Previously used: getEffectiveRuleVersion from @/lib/fiscal-rules/service
-// Previously used: createSnapshotCache, getOrCreateSnapshotCached from @/lib/rules/applied-rule-snapshot-service
-// These features require Intelligence API integration to restore functionality
+import {
+  resolveRule,
+  isIntelligenceConfigured,
+  IntelligenceNotConfiguredError,
+} from "@/lib/intelligence"
 
 import { generateJoppdXml, type JoppdLineInput } from "./joppd-generator"
 import { signJoppdXml, type SigningCredentials } from "./joppd-signer"
@@ -57,8 +57,18 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
     throw new Error("Payout not found for provided company")
   }
 
-  // TODO: Migrate to Intelligence API for rule lookup
-  // Previously: const ruleVersion = await getEffectiveRuleVersion("JOPPD_CODEBOOK", payout.payoutDate)
+  // Resolve JOPPD codebook rules via Intelligence API
+  let ruleVersionId: string | null = null
+  if (isIntelligenceConfigured()) {
+    try {
+      const ruleVersion = await resolveRule("JOPPD_CODEBOOK", payout.payoutDate)
+      ruleVersionId = ruleVersion.ruleVersionId
+    } catch (error) {
+      // Log but don't fail - allow submission without rule version if API is degraded
+      console.warn("Failed to resolve JOPPD rules from Intelligence API:", error)
+    }
+  }
+
   const correctionLookup = input.lineCorrections ?? {}
   const lineInputs: JoppdLineInput[] = payout.lines.map((line, index) => ({
     lineNumber: line.lineNumber ?? index + 1,
@@ -74,10 +84,6 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
   }))
 
   const submission = await prisma.$transaction(async (tx) => {
-    // TODO: Migrate to Intelligence API for rule snapshots
-    // Previously used createSnapshotCache() and getOrCreateSnapshotCached()
-    // For now, appliedRuleSnapshotId will be null
-
     const created = await tx.joppdSubmission.create({
       data: {
         companyId: input.companyId,
@@ -96,8 +102,8 @@ export async function prepareJoppdSubmission(input: PrepareJoppdSubmissionInput)
         lineNumber: line.lineNumber,
         lineData: line.lineData as Prisma.InputJsonValue,
         originalLineId: line.originalLineId,
-        ruleVersionId: line.ruleVersionId ?? null,
-        appliedRuleSnapshotId: null, // TODO: Restore via Intelligence API
+        ruleVersionId: line.ruleVersionId ?? ruleVersionId,
+        appliedRuleSnapshotId: null, // Snapshots pending Intelligence API v2
       })),
     })
 
@@ -248,10 +254,18 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
     throw new Error("Correction workflow requires a single payout per submission")
   }
 
-  // TODO: Migrate to Intelligence API for rule lookup
-  // Previously: defaultRuleVersionId from getEffectiveRuleVersion("JOPPD_CODEBOOK", payout.payoutDate)
-  const defaultRuleVersionId =
+  // Try to resolve rule version from original submission, then fall back to Intelligence API
+  let defaultRuleVersionId =
     originalSubmission.lines.find((line) => line.ruleVersionId)?.ruleVersionId ?? null
+
+  if (!defaultRuleVersionId && isIntelligenceConfigured()) {
+    try {
+      const ruleVersion = await resolveRule("JOPPD_CODEBOOK", payout.payoutDate)
+      defaultRuleVersionId = ruleVersion.ruleVersionId
+    } catch (error) {
+      console.warn("Failed to resolve JOPPD rules from Intelligence API:", error)
+    }
+  }
 
   const originalLineLookup = new Map(
     originalSubmission.lines.map((line) => [line.payoutLineId, line])
@@ -271,9 +285,6 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
   }))
 
   const submission = await prisma.$transaction(async (tx) => {
-    // TODO: Migrate to Intelligence API for rule snapshots
-    // Previously used createSnapshotCache() and getOrCreateSnapshotCached()
-
     const created = await tx.joppdSubmission.create({
       data: {
         companyId: input.companyId,
@@ -293,7 +304,7 @@ export async function prepareJoppdCorrection(input: PrepareJoppdCorrectionInput)
         originalLineId: line.originalLineId,
         ruleVersionId:
           originalLineLookup.get(line.payoutLineId)?.ruleVersionId ?? defaultRuleVersionId,
-        appliedRuleSnapshotId: null, // TODO: Restore via Intelligence API
+        appliedRuleSnapshotId: null, // Snapshots pending Intelligence API v2
       })),
     })
 
