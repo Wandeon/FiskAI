@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { validateInvariants } from "../invariants"
 import type { NodeOutput } from "../types"
-import { ProvisionNodeType } from "../../../../generated/regulatory-client"
+import { ProvisionNodeType } from "@/generated/regulatory-client"
 
 describe("Invariant Validator", () => {
   const makeNode = (overrides: Partial<NodeOutput>): NodeOutput => ({

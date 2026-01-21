@@ -7,7 +7,7 @@ import type {
   UnparsedSegment,
   NNParserContract,
 } from "../types"
-import { ProvisionNodeType } from "../../../../generated/regulatory-client"
+import { ProvisionNodeType } from "@/generated/regulatory-client"
 
 describe("Parser Types", () => {
   it("ParseInput has required fields", () => {
