@@ -5,6 +5,7 @@
  * and stores results as immutable ExtractionArtifacts.
  */
 
+import type { Prisma } from "@prisma/client"
 import { db } from "../../db"
 import {
   ExtractionJob,
@@ -456,41 +457,59 @@ function isV2Assertion(assertion: LegalAssertion): boolean {
 /**
  * Build the assertionPayload JSON for v2 assertions
  */
-function buildAssertionPayload(assertion: LegalAssertion): object | null {
+function buildAssertionPayload(assertion: LegalAssertion): Prisma.InputJsonValue | undefined {
   if (!isV2Assertion(assertion)) {
-    return null
+    return undefined
   }
 
   // Atomic types have value field
   if (assertion.value) {
-    return {
+    const span: Prisma.InputJsonObject = {
+      start: assertion.value.span.start,
+      end: assertion.value.span.end,
+    }
+    const value: Prisma.InputJsonObject = {
+      verbatim: assertion.value.verbatim,
+      canonical: assertion.value.canonical,
+      unit: assertion.value.unit,
+      span,
+    }
+    const payload: Prisma.InputJsonObject = {
       type: "atomic",
       assertionType: assertion.assertionType,
-      value: {
-        verbatim: assertion.value.verbatim,
-        canonical: assertion.value.canonical,
-        unit: assertion.value.unit,
-        span: assertion.value.span,
-      },
+      value,
       conditions: assertion.conditions || [],
     }
+    return payload
   }
 
   // Textual types have statement field
   if (assertion.statement) {
-    return {
+    const span: Prisma.InputJsonObject = {
+      start: assertion.statement.span.start,
+      end: assertion.statement.span.end,
+    }
+    const statement: Prisma.InputJsonObject = {
+      verbatim: assertion.statement.verbatim,
+      span,
+    }
+    const tokens: Prisma.InputJsonObject = {
+      ...(assertion.tokens?.subject ? { subject: assertion.tokens.subject } : {}),
+      ...(assertion.tokens?.actionVerb ? { actionVerb: assertion.tokens.actionVerb } : {}),
+      ...(assertion.tokens?.object ? { object: assertion.tokens.object } : {}),
+    }
+
+    const payload: Prisma.InputJsonObject = {
       type: "textual",
       assertionType: assertion.assertionType,
-      statement: {
-        verbatim: assertion.statement.verbatim,
-        span: assertion.statement.span,
-      },
-      tokens: assertion.tokens || {},
+      statement,
+      tokens,
       conditions: assertion.conditions || [],
     }
+    return payload
   }
 
-  return null
+  return undefined
 }
 
 /**

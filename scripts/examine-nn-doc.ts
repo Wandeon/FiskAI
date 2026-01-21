@@ -52,37 +52,6 @@ async function main() {
   console.log("Total paragraphs (Stavak):", stavcaMatches.length)
   console.log("Total points (Točka):", tockaMatches.length)
 
-  // TODO: CandidateFact doesn't have evidenceId directly - need to join through AgentRun
-  // The model uses suggestedValueType and overallConfidence, not valueType and confidence
-  // Commenting out until properly fixed
-  /*
-  const candidateFacts = await db.candidateFact.findMany({
-    where: { evidenceId: evidenceId },
-    select: {
-      id: true,
-      extractedValue: true,
-      suggestedValueType: true,
-      overallConfidence: true,
-      status: true,
-    }
-  })
-
-  console.log("\n=== Existing Extractions ===")
-  console.log("CandidateFacts found:", candidateFacts.length)
-
-  // Group by valueType
-  const byType = new Map<string, number>()
-  for (const cf of candidateFacts) {
-    const t = cf.suggestedValueType || "unknown"
-    byType.set(t, (byType.get(t) || 0) + 1)
-  }
-
-  console.log("\nBy value type:")
-  for (const [type, count] of byType) {
-    console.log(`  ${type}: ${count}`)
-  }
-  */
-
   console.log("\n=== Existing Extractions ===")
   console.log("(CandidateFact query disabled - needs AgentRun join)")
 
