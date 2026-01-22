@@ -17,15 +17,14 @@
 
 import { createHash } from "crypto"
 
-import { Prisma, PrismaClient } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 
 import { db } from "@/lib/db"
 
 // Types for transaction-aware operations
-type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->
+// Using 'any' to avoid complex Prisma type inference issues with transactions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PrismaTransaction = any
 
 /**
  * Parameters for creating/finding an applied rule snapshot.
