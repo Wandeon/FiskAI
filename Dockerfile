@@ -70,6 +70,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
+# Install Prisma CLI globally for runtime migrations
+# This ensures all dependencies (valibot, etc.) are properly installed
+RUN npm install -g prisma@6
+
 # Copy public assets
 COPY --from=builder /app/public ./public
 
@@ -80,10 +84,10 @@ RUN mkdir .next && chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma client and CLI (required at runtime for migrations)
+# Copy Prisma client (required at runtime)
+# Note: Prisma CLI is installed globally, so we only need the generated client
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
 # Copy Prisma schemas, configs and migrations (required for runtime migrations)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma

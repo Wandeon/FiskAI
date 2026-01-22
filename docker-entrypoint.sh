@@ -2,7 +2,7 @@
 set -e
 
 echo "🔄 Running Prisma migrations..."
-if ! node ./node_modules/prisma/build/index.js migrate deploy; then
+if ! prisma migrate deploy; then
   echo "❌ Prisma migrations failed"
   exit 1
 fi
