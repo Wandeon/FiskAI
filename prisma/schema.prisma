@@ -22,6 +22,7 @@ model User {
   betaOptInAt                 DateTime?
   registrationIntent          RegistrationIntent?
   intentChosenAt              DateTime? // For drop-off analytics
+  onboardingDraft             Json? // Temporary storage for onboarding data before Company creation
   accounts                    Account[]
   companies                   CompanyUser[]
   passwordResetTokens         PasswordResetToken[]
