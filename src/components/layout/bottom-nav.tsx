@@ -40,20 +40,20 @@ export function BottomNav() {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - z-modalBackdrop (1300) */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 md:hidden",
+          "fixed inset-0 z-modalBackdrop bg-black/40 transition-opacity duration-200 md:hidden",
           isQuickOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setIsQuickOpen(false)}
         aria-hidden="true"
       />
 
-      {/* Quick actions drawer */}
+      {/* Quick actions drawer - z-modal (1400) */}
       <div
         className={cn(
-          "fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden transition-all duration-250 ease-out",
+          "fixed bottom-20 left-0 right-0 z-modal px-4 md:hidden transition-all duration-250 ease-out",
           isQuickOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
         )}
       >
@@ -82,7 +82,7 @@ export function BottomNav() {
         </div>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur safe-bottom md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-fixed border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur safe-bottom md:hidden">
         <div className="flex items-center justify-around px-2 py-1">
           {navItems
             .filter((item) =>

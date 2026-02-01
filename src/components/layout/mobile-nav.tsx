@@ -62,29 +62,29 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
 
   return (
     <>
-      {/* Hamburger Button */}
+      {/* Hamburger Button - z-fixed (1200) to appear above header (z-sticky: 1100) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-4 z-40 md:hidden rounded-lg bg-[var(--surface)] p-2 shadow-card border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-colors"
+        className="fixed left-4 top-4 z-fixed md:hidden rounded-lg bg-[var(--surface)] p-2 shadow-card border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-colors"
         aria-label="Otvori izbornik"
       >
         <Menu className="h-5 w-5 text-[var(--foreground)]" />
       </button>
 
-      {/* Backdrop */}
+      {/* Backdrop - z-modalBackdrop (1300) */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-modalBackdrop bg-black/50 transition-opacity duration-300 md:hidden",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setIsOpen(false)}
         aria-hidden="true"
       />
 
-      {/* Slide-out Drawer */}
+      {/* Slide-out Drawer - z-modal (1400) */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-72 bg-[var(--surface)] shadow-elevated transition-transform duration-300 md:hidden",
+          "fixed top-0 left-0 z-modal h-full w-72 bg-[var(--surface)] shadow-elevated transition-transform duration-300 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -200,8 +200,8 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
         )}
       </aside>
 
-      {/* Mobile command palette trigger */}
-      <div className="fixed right-4 bottom-32 z-40 md:hidden">
+      {/* Mobile command palette trigger - z-fixed (1200) to appear above header */}
+      <div className="fixed right-4 bottom-32 z-fixed md:hidden">
         <CommandPalette triggerType="fab" />
       </div>
     </>
