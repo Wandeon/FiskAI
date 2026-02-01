@@ -9,6 +9,7 @@ import { navigation, isNavItemActive } from "@/lib/navigation"
 import { CommandPalette } from "@/components/ui/command-palette"
 import { VisibleNavItem } from "@/lib/visibility"
 import type { ElementId } from "@/lib/visibility/elements"
+import type { ModuleKey } from "@/lib/modules/definitions"
 
 // Map navigation paths to visibility element IDs
 function getNavElementId(href: string): ElementId | null {
@@ -37,11 +38,19 @@ function getNavElementId(href: string): ElementId | null {
 interface MobileNavProps {
   companyName?: string
   userName?: string
+  company?: {
+    name: string
+    legalForm?: string | null
+    entitlements?: string[] // Raw string array from DB
+  }
 }
 
-export function MobileNav({ companyName, userName }: MobileNavProps) {
+export function MobileNav({ companyName, userName, company }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+
+  // Cast raw DB entitlements to known module keys
+  const entitlements = (company?.entitlements || []) as ModuleKey[]
 
   // Close on route change
   useEffect(() => {
@@ -119,73 +128,87 @@ export function MobileNav({ companyName, userName }: MobileNavProps) {
               </h3>
 
               <div className="space-y-1">
-                {section.items.map((item) => {
-                  const isActive = isNavItemActive(item, pathname)
-                  const Icon = item.icon
-                  const elementId = getNavElementId(item.href)
+                {section.items
+                  .filter((item) => {
+                    // 1. Check Module Entitlement (Database Truth)
+                    if (item.module && company && !entitlements.includes(item.module)) {
+                      return false
+                    }
 
-                  // Use VisibleNavItem if we have an element ID, otherwise fallback to Link
-                  if (elementId) {
+                    // 2. Check Legal Form (Legacy/Visibility)
+                    if (item.showFor && company?.legalForm) {
+                      if (!item.showFor.includes(company.legalForm)) return false
+                    }
+
+                    return true
+                  })
+                  .map((item) => {
+                    const isActive = isNavItemActive(item, pathname)
+                    const Icon = item.icon
+                    const elementId = getNavElementId(item.href)
+
+                    // Use VisibleNavItem if we have an element ID, otherwise fallback to Link
+                    if (elementId) {
+                      return (
+                        <div key={item.href} className="relative">
+                          <VisibleNavItem
+                            id={elementId}
+                            href={item.href}
+                            icon={
+                              <Icon
+                                className={cn(
+                                  "h-5 w-5",
+                                  isActive
+                                    ? "text-brand-600 dark:text-brand-400"
+                                    : "text-[var(--muted)]"
+                                )}
+                              />
+                            }
+                            label={item.name}
+                            isActive={isActive}
+                            className={cn(
+                              "text-sm font-medium py-2.5",
+                              isActive
+                                ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
+                                : ""
+                            )}
+                          />
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span className="absolute right-3 top-3 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    }
+
+                    // Fallback for items without element IDs
                     return (
-                      <div key={item.href} className="relative">
-                        <VisibleNavItem
-                          id={elementId}
-                          href={item.href}
-                          icon={
-                            <Icon
-                              className={cn(
-                                "h-5 w-5",
-                                isActive
-                                  ? "text-brand-600 dark:text-brand-400"
-                                  : "text-[var(--muted)]"
-                              )}
-                            />
-                          }
-                          label={item.name}
-                          isActive={isActive}
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
+                            : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]"
+                        )}
+                      >
+                        <Icon
                           className={cn(
-                            "text-sm font-medium py-2.5",
-                            isActive
-                              ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
-                              : ""
+                            "h-5 w-5",
+                            isActive ? "text-brand-600 dark:text-brand-400" : "text-[var(--muted)]"
                           )}
                         />
+                        <span className="flex-1">{item.name}</span>
                         {item.badge !== undefined && item.badge > 0 && (
-                          <span className="absolute right-3 top-3 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">
+                          <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">
                             {item.badge}
                           </span>
                         )}
-                      </div>
+                      </Link>
                     )
-                  }
-
-                  // Fallback for items without element IDs
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400"
-                          : "text-[var(--foreground)] hover:bg-[var(--surface-secondary)]"
-                      )}
-                    >
-                      <Icon
-                        className={cn(
-                          "h-5 w-5",
-                          isActive ? "text-brand-600 dark:text-brand-400" : "text-[var(--muted)]"
-                        )}
-                      />
-                      <span className="flex-1">{item.name}</span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  )
-                })}
+                  })}
               </div>
             </div>
           ))}
