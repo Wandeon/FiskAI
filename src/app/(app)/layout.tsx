@@ -134,7 +134,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <GuidanceProvider>
-      <div className="flex min-h-screen flex-col relative">
+      <div className="flex min-h-screen flex-col relative overflow-x-hidden">
         <DashboardSkipLinks />
         <DashboardBackground />
         <Header />
