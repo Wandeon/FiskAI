@@ -9,7 +9,6 @@ interface ChangelogEntry {
   date: string
   highlights: {
     title: string
-    description: string
     type: "added" | "changed" | "fixed"
   }[]
 }
@@ -28,12 +27,10 @@ const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     highlights: [
       {
         title: "Sustav obavijesti o novostima",
-        description: "Saznajte o novim funkcijama i poboljsanjima izravno u aplikaciji",
         type: "added",
       },
       {
-        title: "Poboljsane performanse",
-        description: "Brze ucitavanje nadzorne ploce i optimizirana navigacija",
+        title: "Poboljšane performanse i brže učitavanje",
         type: "changed",
       },
     ],
@@ -43,29 +40,22 @@ const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     date: "2024-12-15",
     highlights: [
       {
-        title: "AI Asistent v2",
-        description: "Poboljsani prikaz razloga i dokaza za regulatorne odgovore",
+        title: "AI Asistent v2 s boljim prikazom dokaza",
         type: "added",
       },
       {
-        title: "Personalizacija asistenta",
-        description: "Prilagodite postavke AI asistenta prema vasim potrebama",
+        title: "Personalizacija postavki asistenta",
         type: "added",
       },
     ],
   },
 ]
 
-const typeColors = {
-  added: "bg-success/10 text-success-text border-success-border/20",
-  changed: "bg-interactive/10 text-link border-focus/20",
-  fixed: "bg-warning/10 text-warning-text border-warning/20",
-}
-
-const typeLabels = {
-  added: "Novo",
-  changed: "Promjena",
-  fixed: "Ispravak",
+// Color-coded left border styles
+const typeStyles = {
+  added: "border-l-success text-success-text",
+  changed: "border-l-info text-info-text",
+  fixed: "border-l-warning text-warning-text",
 }
 
 export function WhatsNewModal() {
@@ -93,7 +83,7 @@ export function WhatsNewModal() {
   if (!mounted || !isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -101,73 +91,60 @@ export function WhatsNewModal() {
         aria-hidden="true"
       />
 
-      {/* Modal */}
+      {/* Modal - slides up on mobile, centered on desktop */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="whats-new-title"
-        className="relative w-full max-w-lg rounded-2xl bg-[var(--surface)] shadow-elevated animate-scale-in overflow-hidden"
+        className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-[var(--surface)] shadow-elevated animate-slide-up sm:animate-scale-in overflow-hidden"
       >
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] px-6 py-8 text-white">
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={handleDismiss}
-              className="rounded-lg p-1.5 text-white/70 hover:bg-surface/10 hover:text-white transition-colors"
-              aria-label="Zatvori"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-surface/20 p-2.5">
-              <Sparkles className="h-6 w-6" />
-            </div>
+        {/* Compact Header */}
+        <div className="relative bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-4 text-white">
+          <button
+            onClick={handleDismiss}
+            className="absolute top-3 right-3 rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+            aria-label="Zatvori"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="h-5 w-5" />
             <div>
-              <h2 id="whats-new-title" className="text-xl font-bold">
-                Sto je novo?
+              <h2 id="whats-new-title" className="text-lg font-semibold">
+                Što je novo?
               </h2>
-              <p className="text-sm text-white/80">Verzija {CURRENT_VERSION}</p>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
+        {/* Compact Content */}
+        <div className="max-h-[50vh] overflow-y-auto px-4 py-3">
           {CHANGELOG_ENTRIES.map((entry, entryIndex) => (
             <div
               key={entry.version}
-              className={cn(entryIndex > 0 && "mt-6 pt-6 border-t border-[var(--border)]")}
+              className={cn(entryIndex > 0 && "mt-4 pt-4 border-t border-[var(--border)]")}
             >
-              <div className="flex items-center gap-2 text-sm text-[var(--muted)] mb-3">
-                <span className="font-medium text-[var(--foreground)]">v{entry.version}</span>
-                <span>-</span>
+              <div className="flex items-center gap-2 text-xs text-[var(--muted)] mb-2">
+                <span className="font-semibold text-[var(--foreground)]">v{entry.version}</span>
+                <span className="text-[var(--border)]">•</span>
                 <span>
                   {new Date(entry.date).toLocaleDateString("hr-HR", {
                     day: "numeric",
-                    month: "long",
+                    month: "short",
                     year: "numeric",
                   })}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {entry.highlights.map((highlight, index) => (
                   <div
                     key={index}
-                    className="flex gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] p-3"
+                    className={cn(
+                      "border-l-2 pl-3 py-1 text-sm text-[var(--foreground)]",
+                      typeStyles[highlight.type]
+                    )}
                   >
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-md border px-2 py-0.5 text-xs font-medium",
-                        typeColors[highlight.type]
-                      )}
-                    >
-                      {typeLabels[highlight.type]}
-                    </span>
-                    <div>
-                      <h3 className="font-medium text-[var(--foreground)]">{highlight.title}</h3>
-                      <p className="mt-0.5 text-sm text-[var(--muted)]">{highlight.description}</p>
-                    </div>
+                    {highlight.title}
                   </div>
                 ))}
               </div>
@@ -175,20 +152,20 @@ export function WhatsNewModal() {
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-between items-center border-t border-[var(--border)] px-6 py-4 bg-[var(--surface-secondary)]">
+        {/* Compact Footer */}
+        <div className="flex justify-between items-center border-t border-[var(--border)] px-4 py-3 bg-[var(--surface-secondary)]">
           <a
             href="/postavke/changelog"
-            className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
+            className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
           >
-            Pogledaj puni changelog
-            <ArrowRight className="h-4 w-4" />
+            Puni changelog
+            <ArrowRight className="h-3.5 w-3.5" />
           </a>
           <button
             onClick={handleDismiss}
-            className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
           >
-            Shvacam
+            Shvaćam
           </button>
         </div>
       </div>
