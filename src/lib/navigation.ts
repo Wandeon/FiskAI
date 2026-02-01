@@ -42,7 +42,7 @@ export const navigation: NavSection[] = [
     items: [
       {
         name: "Kontrolni centar",
-        href: "/control-center",
+        href: "/cc",
         icon: Command,
         module: "platform-core",
       },
