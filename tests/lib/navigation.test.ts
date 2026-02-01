@@ -5,7 +5,7 @@ describe("Navigation", () => {
   it("has Control Center as first navigation item", () => {
     const firstSection = navigation[0]
     const firstItem = firstSection.items[0]
-    expect(firstItem.href).toBe("/control-center")
+    expect(firstItem.href).toBe("/cc")
     expect(firstItem.name).toBe("Kontrolni centar")
   })
 
