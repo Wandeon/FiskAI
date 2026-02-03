@@ -15,12 +15,14 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet for @fiskai/shared\""
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^2.1.8"
   }
 }
