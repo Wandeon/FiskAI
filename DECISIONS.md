@@ -1,222 +1,245 @@
-# DECISIONS.md - Architectural Decision Records
+# DECISIONS.md - FiskAI Fresh Start Discussion
 
-> **Master Index**: This document serves as the central registry for all architectural decisions, technical choices, and design rationale for the FiskAI project. All significant decisions should be documented here or linked from this index.
-
----
-
-## Quick Links
-
-| Document           | Contents                        |
-| ------------------ | ------------------------------- |
-| CLAUDE.md          | AI assistant instructions       |
-| AGENTS.md          | Agent definitions and workflows |
-| ROADMAP.md         | Development roadmap             |
-| CHANGELOG.md       | Version history                 |
-| docs/STATUS.md     | Module implementation status    |
-| docs/DEPLOYMENT.md | Deployment procedures           |
+> **Purpose:** This document captures our discussion about starting FiskAI-App from scratch.
+> **Status:** PLANNING - Not yet implemented
+> **Date:** 2026-02-03
 
 ---
 
-## Project Overview
+## The Problem
 
-| Attribute        | Value                                        |
-| ---------------- | -------------------------------------------- |
-| **Product**      | FiskAI - Croatian accounting/ERP SaaS        |
-| **Domain**       | fiskai.hr (app.fiskai.hr for application)    |
-| **Stack**        | Next.js 15, Prisma 7, PostgreSQL, TypeScript |
-| **Architecture** | 3-repository split                           |
+The current FiskAI codebase has accumulated significant technical debt:
 
----
+1. **Feature creep before fundamentals** - Built 17 modules before core invoicing worked
+2. **Over-engineering** - 15 background workers, regulatory truth layer, DDD architecture
+3. **Mixed concerns** - Marketing, workers, and app were all in one repo before split
+4. **Broken integrations** - E-poslovanje integration exists but isn't wired up properly
+5. **Invoice numbering issues** - Can't sync with externally-created invoices
+6. **Configuration complexity** - Multiple integration paths (V1 env vars, V2 IntegrationAccount)
 
-## Key Architecture Decisions
-
-### ADR-001: 3-Repository Architecture
-
-|            |            |
-| ---------- | ---------- |
-| **Date**   | 2026-01-22 |
-| **Status** | Accepted   |
-
-**Context**
-The original monorepo architecture became unwieldy as the project grew. Different components had different deployment cadences and the codebase became difficult to navigate.
-
-**Decision**
-Split the codebase into three separate repositories:
-
-- **FiskAI-App** - Main application (Next.js frontend + API)
-- **fiskai-intelligence** - AI/ML services and regulatory processing
-- **fiskai-marketing** - Marketing website and landing pages
-
-**Consequences**
-
-- Cleaner separation of concerns
-- Independent deployment cycles for each repository
-- HTTPS API calls required between repositories
-- Need for clear API contracts between services
+**Root cause:** We went for endless features before the most basic logic was functional.
 
 ---
 
-### ADR-002: Module System
+## The Goal
 
-|            |            |
-| ---------- | ---------- |
-| **Date**   | 2026-01-22 |
-| **Status** | Accepted   |
+Build a **working** Croatian e-invoicing app that:
 
-**Context**
-Different customers require different feature sets. A modular approach allows flexible pricing and feature gating.
+1. **Creates e-invoices** in Croatian fiscalization format
+2. **Sends to e-poslovanje** (or other providers)
+3. **Receives inbound invoices** and syncs invoice numbers correctly
+4. **Tracks invoice status** (draft, sent, delivered, accepted, rejected)
 
-**Decision**
-Implement 17 toggleable modules controlled via `Company.entitlements[]` array:
-
-- **8 default modules** - Included in base subscription
-- **9 optional modules** - Available as add-ons
-
-**Consequences**
-
-- Flexible feature gating per company
-- Module status checked at runtime
-- Clear upgrade paths for customers
+That's it. No AI assistant, no regulatory truth layer, no 17 modules.
 
 ---
 
-### ADR-003: Domain-Driven Design
+## Questions to Decide
 
-|            |            |
-| ---------- | ---------- |
-| **Date**   | 2026-01-22 |
-| **Status** | Accepted   |
+### Q1: Start completely fresh or salvage from current repo?
 
-**Context**
-Accounting and ERP systems have complex business logic that needs clear organization and testability.
+**Option A: Brand new repo (empty)**
+- Pro: Zero cruft, zero confusion
+- Pro: Latest tooling (Next.js 16? Prisma 8?)
+- Con: Need to re-implement everything from scratch
+- Con: Lose any working code
 
-**Decision**
-Adopt Domain-Driven Design with the following structure:
+**Option B: Clean branch in current repo**
+- Pro: Git history preserved
+- Pro: Can cherry-pick working code
+- Con: Temptation to keep "just this one thing"
+- Con: Old patterns might leak through
+
+**Option C: New repo, copy specific files**
+- Pro: Start fresh but reuse proven code
+- Pro: Explicit about what we keep
+- Con: Need to carefully audit what we copy
+
+**Your choice:** ___
+
+---
+
+### Q2: Tech stack - Latest or stable?
+
+**Framework:**
+- [ ] Next.js 15 (current stable, what we have now)
+- [ ] Next.js 16 (latest, Turbopack default, React 19.2)
+
+**Database:**
+- [ ] Prisma 7 (current)
+- [ ] Prisma 8 (if available)
+- [ ] Drizzle (alternative)
+
+**Auth:**
+- [ ] NextAuth v5 (current, but never reached stable)
+- [ ] Better Auth (newer, TypeScript-first)
+- [ ] Lucia Auth (lightweight)
+
+**Styling:**
+- [ ] Tailwind v3 (current)
+- [ ] Tailwind v4 (latest)
+
+**Your choice:** ___
+
+---
+
+### Q3: What's the absolute minimum for v1.0?
+
+**Must have (MVP):**
+- [ ] User authentication (login/register)
+- [ ] Company setup (OIB, name, address)
+- [ ] E-invoice creation (buyer, items, amounts, VAT)
+- [ ] Croatian invoice numbering (broj-poslovni_prostor-naplatni_uređaj)
+- [ ] E-poslovanje integration (send invoice)
+- [ ] Invoice list with status
+- [ ] Basic settings (business premises, payment devices)
+
+**Nice to have (v1.1):**
+- [ ] Inbound invoice polling
+- [ ] Contact management (buyers/suppliers)
+- [ ] Document upload
+- [ ] Expense tracking
+
+**Later (v2+):**
+- [ ] Bank reconciliation
+- [ ] Multi-company support
+- [ ] Staff portal
+- [ ] AI features
+- [ ] Regulatory updates
+
+**Your choice:** ___
+
+---
+
+### Q4: Infrastructure - Simple or distributed?
+
+**Option A: All-in-one**
+- Single Next.js app with API routes
+- Single PostgreSQL database
+- No background workers (use Vercel cron or simple polling)
+- Deploy to Vercel or single VPS
+
+**Option B: Minimal split**
+- Next.js app on Coolify/Vercel
+- PostgreSQL on managed service (Neon/Supabase/same VPS)
+- One optional worker for async tasks (BullMQ)
+
+**Option C: Current architecture** (NOT RECOMMENDED)
+- Multiple VPS servers
+- 15 workers
+- Tailscale networking
+- Complex deployment
+
+**Your choice:** ___
+
+---
+
+### Q5: E-poslovanje integration approach?
+
+**Option A: Direct API calls**
+- Simple fetch() to e-poslovanje API
+- Store credentials in env vars
+- Poll for inbound in API route or cron
+
+**Option B: IntegrationAccount model**
+- Store credentials per company in DB
+- Encrypted secrets vault
+- Support multiple providers
+
+**Option C: External service**
+- Use a third-party e-invoice gateway
+- Let them handle the API complexity
+
+**Your choice:** ___
+
+---
+
+## Code to Reuse (If Choosing Option C)
+
+These are well-written and worth keeping:
 
 ```
-src/
-├── domain/          # Pure business logic (entities, value objects)
-├── application/     # Use cases and application services
-├── infrastructure/  # External services (database, APIs, email)
-└── interfaces/      # API routes and controllers
+src/domain/shared/           # Money, VatRate value objects
+src/components/ui/           # Button, Card, Input, DataTable
+src/lib/e-invoice/providers/eposlovanje-einvoice.ts  # API client
+src/lib/invoice-numbering.ts # Croatian format logic
 ```
 
-**Consequences**
+These should be simplified or rewritten:
 
-- Business logic isolated and testable
-- Clear dependency direction (inward)
-- Infrastructure can be swapped without affecting domain
+```
+src/lib/e-invoice/poll-*.ts  # Too complex, multiple paths
+src/lib/integration/         # Over-engineered vault
+prisma/schema.prisma         # 50+ tables, need ~10
+```
 
----
+These should be dropped:
 
-### ADR-004: Regulatory Truth Layer
-
-|            |            |
-| ---------- | ---------- |
-| **Date**   | 2026-01-22 |
-| **Status** | Accepted   |
-
-**Context**
-Croatian tax and accounting regulations change frequently. The system needs to stay current with regulatory requirements automatically.
-
-**Decision**
-Implement a two-layer execution model:
-
-- **Layer A (Discovery)** - Daily scanning for regulatory changes from official sources
-- **Layer B (Processing)** - 24/7 processing and application of regulatory updates
-
-**Location**: This functionality now lives in the `fiskai-intelligence` repository.
-
-**Consequences**
-
-- Automated compliance updates
-- Reduced manual monitoring burden
-- Clear audit trail of regulatory changes
+```
+src/lib/regulatory-truth/    # Not needed for MVP
+src/lib/news/                # Not needed for MVP
+src/lib/assistant/           # Not needed for MVP
+src/app/staff/               # Phase 2
+src/app/admin/               # Phase 2
+```
 
 ---
 
-## Infrastructure Decisions
+## Proposed Roadmap (If We Agree)
 
-| Decision           | Choice                     | Rationale                                              |
-| ------------------ | -------------------------- | ------------------------------------------------------ |
-| **Hosting**        | Vercel                     | Optimal for Next.js, edge functions, automatic scaling |
-| **Database**       | PostgreSQL (Neon/Supabase) | ACID compliance, JSON support, mature ecosystem        |
-| **ORM**            | Prisma 7                   | Type safety, migrations, excellent DX                  |
-| **Authentication** | NextAuth.js                | Native Next.js integration, multiple providers         |
-| **File Storage**   | S3-compatible              | Document storage for invoices, reports                 |
-| **Deployment**     | Git-based CI/CD            | Automatic deploys on push to main                      |
-| **Monitoring**     | Vercel Analytics + Sentry  | Performance and error tracking                         |
+**Phase 0: Foundation (1-2 days)**
+- [ ] Project scaffold (Next.js + Prisma + Tailwind)
+- [ ] Database schema (User, Company, EInvoice, Contact, BusinessPremises, PaymentDevice, InvoiceSequence)
+- [ ] Authentication setup
+- [ ] Basic UI components
+
+**Phase 1: Core Invoicing (2-3 days)**
+- [ ] Company setup flow
+- [ ] Business premises & payment device configuration
+- [ ] Invoice creation form
+- [ ] Invoice number generation
+- [ ] Invoice list view
+
+**Phase 2: E-Poslovanje Integration (1-2 days)**
+- [ ] API client (reuse existing)
+- [ ] Send invoice flow
+- [ ] Status polling
+- [ ] Error handling
+
+**Phase 3: Polish & Deploy (1-2 days)**
+- [ ] Settings pages
+- [ ] Error states
+- [ ] Loading states
+- [ ] Production deployment
+
+**Total: ~7-10 days to working MVP**
 
 ---
 
-## Code Style Decisions
+## Next Steps
 
-### TypeScript
+After you answer the questions above, I'll:
 
-| Rule                      | Setting                       |
-| ------------------------- | ----------------------------- |
-| **Strict Mode**           | Enabled (`"strict": true`)    |
-| **No Any**                | Enforced via ESLint           |
-| **Explicit Return Types** | Required for public functions |
-| **Null Checks**           | Strict null checks enabled    |
-
-### Testing
-
-| Type                  | Tool                     | Coverage Target      |
-| --------------------- | ------------------------ | -------------------- |
-| **Unit Tests**        | Vitest                   | 80% for domain layer |
-| **Integration Tests** | Vitest + Testing Library | Critical paths       |
-| **E2E Tests**         | Playwright               | Happy paths          |
-
-### Git Workflow
-
-| Aspect              | Convention                                   |
-| ------------------- | -------------------------------------------- |
-| **Branch Naming**   | `feature/`, `fix/`, `docs/`, `refactor/`     |
-| **Commit Messages** | Conventional Commits (feat, fix, docs, etc.) |
-| **PRs**             | Required for main branch                     |
-| **Reviews**         | At least 1 approval required                 |
+1. Create ROADMAP.md with detailed sprints and gates
+2. Create CLAUDE.md with project rules
+3. Create AGENTS.md with Definition of Done
+4. Set up the project scaffold
+5. Start Phase 0
 
 ---
 
 ## Discussion Log
 
-### 2026-02-01: Recovery Initiative
+### Session 1 - 2026-02-03
 
-**Context**
-Project documentation and structure needed consolidation after rapid development phase.
+**Context:** User frustrated with current state. Many features built but basic invoicing doesn't work. E-poslovanje integration exists but isn't connected to user's company. Invoice numbers conflict with externally-created invoices.
 
-**Actions Taken**
+**Key insight from user:** "I did the most basic and fundamental mistake which was going for endless features before I had the most basic logic functional."
 
-- Created master documentation index (this file)
-- Established ADR format for future decisions
-- Linked all key documentation files
-- Documented existing architectural decisions retroactively
+**Decision:** Start fresh, step by step, properly documented.
 
-**Participants**
-
-- Development Team
-- AI Assistant (Claude)
-
-**Next Steps**
-
-- Continue documenting decisions as they are made
-- Review and update ADRs quarterly
-- Ensure all team members reference this index
+**Reference:** WebVB repo structure (DECISIONS.md, ROADMAP.md, CLAUDE.md, AGENTS.md, CHANGELOG.md)
 
 ---
 
-## Adding New Decisions
-
-When adding a new architectural decision:
-
-1. Assign the next ADR number (ADR-XXX)
-2. Include: Date, Status, Context, Decision, Consequences
-3. Update the Discussion Log with the rationale
-4. Commit with message: `docs: add ADR-XXX for [topic]`
-
-**Status Options**: Proposed | Accepted | Deprecated | Superseded
-
----
-
-_Last Updated: 2026-02-01_
+_Waiting for your answers to proceed._
