@@ -1,7 +1,0 @@
- contentType | mismatch | total 
--------------+----------+-------
- html        |       10 |    60
- json        |        0 |    18
- json-ld     |        0 |    17
-(3 rows)
-

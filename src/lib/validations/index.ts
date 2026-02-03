@@ -1,7 +1,0 @@
-export * from "./auth"
-export * from "./company"
-export * from "./contact"
-export * from "./e-invoice"
-export * from "./product"
-export * from "./marketing-contact"
-export * from "./person"

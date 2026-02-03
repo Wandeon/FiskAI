@@ -1,6 +1,0 @@
-          rule_id          |           conceptSlug            |  status   | riskTier |     approvedBy      
----------------------------+----------------------------------+-----------+----------+---------------------
- cmjg0bkdz00019fwa4xgr92ic | payment-deadlines-2025           | PUBLISHED | T0       | AUTO_APPROVE_SYSTEM
- cmjg23gga0011j1warhmderru | regulation-application-date-2026 | PUBLISHED | T0       | AUTO_APPROVE_SYSTEM
-(2 rows)
-

@@ -1,5 +1,0 @@
- evidence_count | source_pointer_count | rule_count | conflict_count | release_count 
-----------------+----------------------+------------+----------------+---------------
-            124 |                   95 |         29 |              0 |             2
-(1 row)
-

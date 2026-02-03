@@ -1,1 +1,0 @@
-ALTER TABLE "PostingRule" ADD COLUMN "vatAccountId" TEXT;\n\nALTER TABLE "PostingRule" ADD CONSTRAINT "PostingRule_vatAccountId_fkey" FOREIGN KEY ("vatAccountId") REFERENCES "ChartOfAccounts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;\n

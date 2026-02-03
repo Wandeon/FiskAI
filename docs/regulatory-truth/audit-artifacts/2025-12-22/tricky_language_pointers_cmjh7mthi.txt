@@ -1,4 +1,0 @@
- id | extractedValue | quote 
-----+----------------+-------
-(0 rows)
-

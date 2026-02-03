@@ -1,127 +1,81 @@
 # FiskAI-App
 
-Croatian AI-first accounting and invoicing SaaS platform - Application Repository.
+Croatian e-invoicing made simple.
 
 ## Overview
 
-FiskAI-App is the web application for the FiskAI platform. It provides a cloud-based, modular accounting solution designed for Croatian companies, from paušalni obrt to d.o.o.
+FiskAI-App is a modern Croatian e-invoicing application built with:
+- Next.js 15 (App Router + Turbopack)
+- TypeScript (strict mode)
+- PostgreSQL + Prisma
+- tRPC for type-safe APIs
+- Tailwind CSS v4 + shadcn/ui
 
-### Platform Architecture
+## Getting Started
 
-| Repository            | Purpose                                        | URL            |
-| --------------------- | ---------------------------------------------- | -------------- |
-| **FiskAI-App** (this) | Accounting web application                     | app.fiskai.hr  |
-| fiskai-intelligence   | Intelligence API + RTL workers + regulatory DB | iapi.fiskai.hr |
-| fiskai-marketing      | Marketing landing pages                        | fiskai.hr      |
+### Prerequisites
+- Node.js 20+
+- pnpm 9.15+
+- PostgreSQL 16+
 
-### Key Capabilities
+### Installation
 
-- **E-Invoicing & Fiscalization** - Fiskalizacija 2.0, e-Račun, UBL/EN 16931 compliance
-- **Regulatory Compliance** - Rule resolution via Intelligence API (external service)
-- **Multi-Tenant Architecture** - Single database with company-level isolation
-- **AI-Powered Automation** - OCR, categorization, anomaly detection
+```bash
+# Clone the repository
+git clone https://github.com/wandeon/FiskAI-App.git
+cd FiskAI-App
 
-### Architectural Boundaries
+# Install dependencies
+pnpm install
 
-This repository contains **only the accounting/ERP application**:
+# Copy environment files
+cp .env.example .env
+cp apps/web/.env.example apps/web/.env.local
 
-- ✅ Web UI (Client, Staff, Admin portals)
-- ✅ API routes and server actions
-- ✅ Core database schema
-- ✅ Intelligence API client (HTTP calls only)
+# Generate Prisma client
+pnpm db:generate
 
-Regulatory processing is **external**:
+# Run migrations
+pnpm db:migrate
 
-- ❌ No NN Mirror parsing (→ fiskai-intelligence)
-- ❌ No regulatory truth layer (→ fiskai-intelligence)
-- ❌ No background workers (→ fiskai-intelligence)
-- ❌ No regulatory database schema (→ fiskai-intelligence)
+# Start development server
+pnpm dev
+```
 
-## Quick Links
+### Development
 
-| Resource                                         | Purpose                        |
-| ------------------------------------------------ | ------------------------------ |
-| [CLAUDE.md](./CLAUDE.md)                         | AI context and quick reference |
-| [docs/](./docs/)                                 | Full documentation             |
-| [docs/PRODUCT_BIBLE.md](./docs/PRODUCT_BIBLE.md) | Product specifications         |
+```bash
+pnpm dev        # Start all dev servers
+pnpm build      # Build all packages
+pnpm typecheck  # Type check
+pnpm lint       # Lint
+pnpm test       # Run tests
+```
+
+## Project Structure
+
+```
+apps/
+  web/          # Next.js frontend
+
+packages/
+  db/           # Prisma schema + client
+  shared/       # Zod schemas, constants
+  trpc/         # tRPC routers
+  ui/           # shadcn/ui components
+
+docs/
+  DECISIONS.md  # Architectural decisions
+  ROADMAP.md    # Development roadmap
+```
 
 ## Documentation
 
-### Architecture
-
-- [System Overview](docs/01_ARCHITECTURE/overview.md) - High-level architecture
-- [Two-Layer Model](docs/01_ARCHITECTURE/two-layer-model.md) - Discovery + processing layers
-- [Trust Guarantees](docs/01_ARCHITECTURE/trust-guarantees.md) - Evidence and verification
-
-### Features
-
-- [Feature Registry](docs/02_FEATURES/FEATURE_REGISTRY.md) - All product features
-- [Module Matrix](docs/COMPLETE_MODULE_MATRIX.md) - Module capabilities
-
-### Regulatory Truth
-
-- [Overview](docs/05_REGULATORY/OVERVIEW.md) - Regulatory processing system
-- [Pipeline](docs/05_REGULATORY/PIPELINE.md) - Processing stages
-
-### Operations
-
-- [Operations Runbook](docs/04_OPERATIONS/OPERATIONS_RUNBOOK.md) - Operational procedures
-- [Deployment](docs/DEPLOYMENT.md) - Deployment guide
-
-### Research
-
-- [Fiskalizacija 2.0](docs/research/fiskalizacija-2.md) - Croatian fiscalization
-- [E-Invoice Providers](docs/research/e-invoice-providers.md) - Provider analysis
-
-## Browser Support
-
-The application supports the following browsers:
-
-| Browser | Minimum Version |
-| ------- | --------------- |
-| Chrome  | Last 2 versions |
-| Firefox | Last 2 versions |
-| Safari  | Last 2 versions |
-| Edge    | Last 2 versions |
-
-We target browsers with >0.5% global usage, excluding Opera Mini and discontinued browsers. See `browserslist` in `package.json` for the exact configuration.
-
-## Tech Stack
-
-| Layer    | Technology                    |
-| -------- | ----------------------------- |
-| Frontend | Next.js 15, React, TypeScript |
-| Database | PostgreSQL 16, Prisma 7       |
-| Auth     | NextAuth v5 (Auth.js)         |
-| Queue    | BullMQ + Redis                |
-| AI/LLM   | Ollama, OpenRouter            |
-| Deploy   | Coolify on Hetzner ARM64      |
-
-## Portals
-
-| Portal       | URL                 | Audience       |
-| ------------ | ------------------- | -------------- |
-| Marketing    | fiskai.hr           | Public         |
-| Client App   | app.fiskai.hr       | Clients        |
-| Staff Portal | app.fiskai.hr/staff | Accountants    |
-| Admin Portal | app.fiskai.hr/admin | Platform owner |
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
-```
+- [CLAUDE.md](./CLAUDE.md) - AI assistant instructions
+- [docs/DECISIONS.md](./docs/DECISIONS.md) - Architectural decisions
+- [docs/ROADMAP.md](./docs/ROADMAP.md) - Development phases and sprints
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) - System architecture
 
 ## License
 
-Proprietary - All rights reserved
+Private - All rights reserved

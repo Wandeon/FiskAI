@@ -1,8 +1,0 @@
--- Add LLM_PROVIDER_HEALTH to WatchdogCheckType enum
-ALTER TYPE "WatchdogCheckType" ADD VALUE IF NOT EXISTS 'LLM_PROVIDER_HEALTH';
-
--- Add LLM_PROVIDER_DOWN to WatchdogAlertType enum
-ALTER TYPE "WatchdogAlertType" ADD VALUE IF NOT EXISTS 'LLM_PROVIDER_DOWN';
-
--- Add LLM_CIRCUIT_OPEN to WatchdogAlertType enum
-ALTER TYPE "WatchdogAlertType" ADD VALUE IF NOT EXISTS 'LLM_CIRCUIT_OPEN';

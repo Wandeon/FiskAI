@@ -1,5 +1,0 @@
- edges_total | supersedes_total 
--------------+------------------
-           0 |                0
-(1 row)
-

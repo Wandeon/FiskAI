@@ -1,1 +1,0 @@
-DROP INDEX "idx_content_sync_events_event_id";

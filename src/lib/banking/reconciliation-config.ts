@@ -1,2 +1,0 @@
-export const AUTO_MATCH_THRESHOLD = 85
-export const PARTIAL_MATCH_THRESHOLD = 70

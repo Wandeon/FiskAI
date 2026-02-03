@@ -1,5 +1,0 @@
- sources_null_lastfetched 
---------------------------
-                       12
-(1 row)
-

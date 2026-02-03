@@ -1,4 +1,0 @@
- id | conceptSlug | status | riskTier | approvedBy 
-----+-------------+--------+----------+------------
-(0 rows)
-

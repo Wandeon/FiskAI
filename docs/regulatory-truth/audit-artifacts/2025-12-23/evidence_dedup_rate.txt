@@ -1,5 +1,0 @@
- duplicate_rows | total_rows | dup_rate_pct 
-----------------+------------+--------------
-              0 |        146 |         0.00
-(1 row)
-

@@ -1,5 +1,0 @@
-            id             | version | releaseType |                           contentHash                            |       releasedAt        |                                                 changelogHr                                                  
----------------------------+---------+-------------+------------------------------------------------------------------+-------------------------+--------------------------------------------------------------------------------------------------------------
- cmjigw63m0001odwatc7584ow | 1.2.0   | major       | 81caf349b1fb709ee3b36345faa64c0b821b32bfc347030870d7ccc766d9605a | 2025-12-23 10:54:00.399 | Ažuriran prag za porez na dohodak i dodana nova osnovica osobnog odbitka sukladno novim zakonskim odredbama.
-(1 row)
-

@@ -1,5 +1,0 @@
- sources_needing_check 
------------------------
-                    16
-(1 row)
-
