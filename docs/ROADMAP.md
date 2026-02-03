@@ -25,8 +25,8 @@ The basic invoicing flow works before anything else is added.
 
 | Phase | Focus                    | Duration | Status          |
 |-------|--------------------------|----------|-----------------|
-| 0     | Foundation               | 1-2 days | **In Progress** |
-| 1     | Core Invoicing           | 2-3 days | Planned         |
+| 0     | Foundation               | 1-2 days | **Complete**    |
+| 1     | Core Invoicing           | 2-3 days | **Next**        |
 | 2     | E-Poslovanje Integration | 1-2 days | Planned         |
 | 3     | Polish & Deploy          | 1-2 days | Planned         |
 | 4     | Inbound & Contacts       | 2 days   | Future          |
@@ -36,7 +36,7 @@ The basic invoicing flow works before anything else is added.
 
 ---
 
-## Phase 0: Foundation ⬜ IN PROGRESS
+## Phase 0: Foundation ✅ COMPLETE
 
 **Owner:** Setup
 
@@ -52,15 +52,17 @@ The basic invoicing flow works before anything else is added.
 * [x] UI package with basic components
 * [x] Documentation structure
 
-### Sprint 0.2 – Database & Auth (NEXT)
+### Sprint 0.2 – Database & Auth ✅ DONE
 
-* [ ] Connect to PostgreSQL (VPS-01)
-* [ ] Run initial migration
-* [ ] NextAuth v5 setup
-* [ ] Login/register pages
-* [ ] Protected routes
+* [x] Connect to PostgreSQL (VPS-01 fiskai-db:5434)
+* [x] Run initial migration (fiskai_fresh database)
+* [x] NextAuth v5 setup (credentials + Google providers)
+* [x] Login/register pages with glassmorphic UI
+* [x] Protected routes (/dashboard)
+* [x] OTP verification flow
+* [x] Password reset flow
 
-**Gate:**
+**Gate:** ✅ PASSED
 * User can register, login, logout
 * Database connection verified
 * `pnpm build` passes

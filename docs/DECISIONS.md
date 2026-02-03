@@ -172,3 +172,60 @@ packages/db/prisma/schema/
 - New features = new file (expense.prisma, banking.prisma, etc.)
 
 **Why:** Old repo had 50+ tables in one file (1000+ lines). Impossible to maintain.
+
+---
+
+## Decision 8: Prisma 7 with PrismaPg Adapter
+
+**Date:** 2026-02-03
+**Status:** Implemented
+
+**Decision:** Use Prisma 7 with PrismaPg driver adapter instead of native engine.
+
+**Why:**
+- Prisma 7 removed `url` from datasource block
+- Requires `prisma.config.ts` for configuration
+- Connection via `@prisma/adapter-pg` with node `pg` pool
+
+**Files:**
+- `packages/db/prisma.config.ts` - Prisma configuration
+- `packages/db/src/index.ts` - Client initialization with adapter
+
+---
+
+## Decision 9: Auth UI Reuse
+
+**Date:** 2026-02-03
+**Status:** Implemented
+
+**Decision:** Reuse the premium glassmorphic auth UI from old FiskAI repo.
+
+**Components copied:**
+- GlassCard - Mouse-following spotlight, 3D tilt
+- FloatingOrbs - Animated background orbs with state-based colors
+- AnimatedButton - Loading/success/error states
+- OTPInput - 6-digit code input with auto-advance
+- AuthFlow - Multi-step orchestrator
+- Step components - Identify, Authenticate, Register, Verify, Reset, Success
+
+**Why:** The auth UX was production-quality and Croatian-localized.
+
+---
+
+## Decision 10: NextAuth v5 with JWT Sessions
+
+**Date:** 2026-02-03
+**Status:** Implemented
+
+**Decision:** Use NextAuth v5 (beta) with JWT sessions and credentials provider.
+
+**Configuration:**
+- JWT sessions (no database sessions table)
+- Credentials provider with bcryptjs password hashing
+- Google OAuth ready (needs client ID/secret)
+- OTP verification via VerificationCode model
+
+**Why:**
+- JWT sessions are simpler and faster
+- Credentials provider gives full control over auth flow
+- OTP adds security without requiring email verification links
