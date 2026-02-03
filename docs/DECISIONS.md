@@ -36,10 +36,10 @@ packages/ui/   → shadcn components
 
 | Component | Choice | Why |
 |-----------|--------|-----|
-| Framework | Next.js 15 | Latest stable with Turbopack |
+| Framework | Next.js 16 | Latest (16.1.6) with Turbopack |
 | Build | Turborepo 2.3 | Monorepo orchestration |
 | Package Manager | pnpm 9.15 | Fast, deterministic |
-| Database | PostgreSQL 16 + Prisma 6 | Type-safe ORM |
+| Database | PostgreSQL 16 + Prisma 7 | Type-safe ORM, multi-file schema |
 | API | tRPC 11 | Type-safe client-server |
 | Styling | Tailwind CSS v4 | Latest, simplified config |
 | UI Components | shadcn/ui | Copy-paste components |
@@ -147,3 +147,28 @@ src/app/admin/               # Phase 2+
 **Decision:** Start fresh, step by step, properly documented.
 
 **Reference:** Used GenAI2 repo structure as template for Turborepo scaffolding.
+
+---
+
+## Decision 7: Prisma Multi-File Schema
+
+**Date:** 2026-02-03
+**Status:** Implemented
+
+**Decision:** Use Prisma's multi-file schema feature to keep files small and organized.
+
+**Structure:**
+```
+packages/db/prisma/schema/
+├── base.prisma      # Generator + datasource (13 lines)
+├── auth.prisma      # User, Account, Session (66 lines)
+├── company.prisma   # Company, BusinessPremises (90 lines)
+└── invoice.prisma   # Invoice, InvoiceLine (101 lines)
+```
+
+**Rules:**
+- Each file stays under 200 lines
+- Each domain gets its own file
+- New features = new file (expense.prisma, banking.prisma, etc.)
+
+**Why:** Old repo had 50+ tables in one file (1000+ lines). Impossible to maintain.
