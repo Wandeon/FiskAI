@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { router, protectedProcedure } from '../index';
+import { z } from "zod"
+import { router, protectedProcedure } from "../trpc"
 import { createInvoiceSchema } from '@fiskai/shared/schemas';
 import { formatInvoiceNumber } from '@fiskai/shared';
 

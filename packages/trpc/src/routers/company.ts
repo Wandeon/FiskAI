@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { router, protectedProcedure } from '../index';
+import { z } from "zod"
+import { router, protectedProcedure } from "../trpc"
 import { createCompanySchema, createBusinessPremisesSchema, createPaymentDeviceSchema } from '@fiskai/shared/schemas';
 
 export const companyRouter = router({
