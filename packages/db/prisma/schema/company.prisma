@@ -2,14 +2,54 @@
 // FiskAI - Company & Business Setup Models
 // =============================================================================
 
+// Legal forms for Croatian businesses
+enum LegalForm {
+  OBRT_PAUSAL  // Paušalni obrt - flat-rate taxation
+  OBRT_REAL    // Obrt - actual income/expenses
+  DOO          // d.o.o. - Limited liability company
+  JDOO         // j.d.o.o. - Simple limited liability company
+}
+
+// Tracks where company data originated from
+enum DataSource {
+  MANUAL          // User entered manually
+  OCR_OBRTNICA    // Extracted from Obrtnica document
+  OCR_SUDSKO      // Extracted from Sudsko rješenje
+  VIES            // Fetched from EU VIES API
+  SUDSKI_REGISTAR // Fetched from Croatian court registry
+}
+
 model Company {
   id        String   @id @default(cuid())
   name      String
   oib       String   @unique // Croatian tax number (11 digits)
+  legalForm LegalForm @default(OBRT_PAUSAL)
+
+  // Address fields
   address   String?
   city      String?
   zipCode   String?
   country   String   @default("HR")
+
+  // Tax and fiscal settings
+  isVatPayer    Boolean @default(false)
+  vatNumber     String? // EU VAT format: HRxxxxxxxxxxx
+  acceptsCash   Boolean @default(false)
+  fiscalEnabled Boolean @default(false)
+
+  // Contact information
+  email String?
+  phone String?
+  iban  String?
+
+  // Onboarding progress
+  onboardingStep     Int     @default(0)
+  onboardingComplete Boolean @default(false)
+
+  // Data tracking
+  dataSource   DataSource @default(MANUAL)
+  featureFlags Json?      // For paušalni-specific options and feature toggles
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
