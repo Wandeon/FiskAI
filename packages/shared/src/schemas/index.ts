@@ -1,7 +1,5 @@
 import { z } from 'zod';
-
-// Croatian OIB validation (11-digit number with checksum)
-export const oibSchema = z.string().regex(/^\d{11}$/, 'OIB must be exactly 11 digits');
+import { oibSchema } from '../validations/oib';
 
 // Company schemas
 export const createCompanySchema = z.object({
