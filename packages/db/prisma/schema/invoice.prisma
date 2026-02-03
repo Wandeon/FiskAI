@@ -1,0 +1,101 @@
+// =============================================================================
+// FiskAI - Invoice Models
+// =============================================================================
+
+model Contact {
+  id        String      @id @default(cuid())
+  companyId String
+  type      ContactType
+  name      String
+  oib       String?     // Croatian tax ID (optional for foreign contacts)
+  email     String?
+  phone     String?
+  address   String?
+  city      String?
+  zipCode   String?
+  country   String      @default("HR")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@map("contacts")
+}
+
+enum ContactType {
+  CUSTOMER
+  SUPPLIER
+  BOTH
+}
+
+model Invoice {
+  id                 String        @id @default(cuid())
+  companyId          String
+  businessPremisesId String
+  paymentDeviceId    String
+  contactId          String?
+
+  // Croatian invoice number: broj-oznaka_prostora-oznaka_uredaja
+  invoiceNumber     Int           // Sequential within year
+  invoiceNumberFull String        @unique // e.g., "1-1-1"
+  year              Int
+
+  status       InvoiceStatus @default(DRAFT)
+  issueDate    DateTime
+  dueDate      DateTime?
+  deliveryDate DateTime?
+
+  // Amounts in cents (lipe)
+  subtotalCents  Int    @default(0)
+  vatAmountCents Int    @default(0)
+  totalCents     Int    @default(0)
+  currency       String @default("EUR")
+
+  // E-invoice fields (Phase 2)
+  eInvoiceId     String?
+  eInvoiceSentAt DateTime?
+  eInvoiceStatus String?   // SENT, DELIVERED, ACCEPTED, REJECTED
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  businessPremises BusinessPremises @relation(fields: [businessPremisesId], references: [id])
+  paymentDevice    PaymentDevice    @relation(fields: [paymentDeviceId], references: [id])
+  contact          Contact?         @relation(fields: [contactId], references: [id])
+  lines            InvoiceLine[]
+
+  @@index([companyId, year])
+  @@index([status])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  SENT
+  DELIVERED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model InvoiceLine {
+  id        String @id @default(cuid())
+  invoiceId String
+  sortOrder Int    @default(0)
+
+  description String
+  quantity    Int    @default(100) // quantity * 100 for precision
+  unitPrice   Int    // cents/lipe
+  vatRate     Int    @default(25)  // 25, 13, 5, 0
+
+  lineTotalCents Int @default(0)
+  vatAmountCents Int @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_lines")
+}

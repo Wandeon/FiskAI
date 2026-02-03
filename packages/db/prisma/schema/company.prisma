@@ -1,0 +1,90 @@
+// =============================================================================
+// FiskAI - Company & Business Setup Models
+// =============================================================================
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  oib       String   @unique // Croatian tax number (11 digits)
+  address   String?
+  city      String?
+  zipCode   String?
+  country   String   @default("HR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members          CompanyMember[]
+  businessPremises BusinessPremises[]
+  invoices         Invoice[]
+  contacts         Contact[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String      @id @default(cuid())
+  userId    String
+  companyId String
+  role      CompanyRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@map("company_members")
+}
+
+enum CompanyRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Croatian fiscalization requirements
+model BusinessPremises {
+  id        String   @id @default(cuid())
+  companyId String
+  code      String   // Oznaka poslovnog prostora (e.g., "1", "PROD")
+  name      String
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  paymentDevices PaymentDevice[]
+  invoices       Invoice[]
+
+  @@unique([companyId, code])
+  @@map("business_premises")
+}
+
+model PaymentDevice {
+  id                 String   @id @default(cuid())
+  businessPremisesId String
+  code               String   // Oznaka naplatnog uređaja (e.g., "1", "2")
+  name               String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  businessPremises BusinessPremises @relation(fields: [businessPremisesId], references: [id], onDelete: Cascade)
+  invoices         Invoice[]
+
+  @@unique([businessPremisesId, code])
+  @@map("payment_devices")
+}
+
+model InvoiceSequence {
+  id                 String   @id @default(cuid())
+  companyId          String
+  businessPremisesId String
+  paymentDeviceId    String
+  year               Int
+  lastNumber         Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([companyId, businessPremisesId, paymentDeviceId, year])
+  @@map("invoice_sequences")
+}
