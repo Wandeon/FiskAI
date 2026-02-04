@@ -46,7 +46,7 @@ export function useAuthFlow() {
         const data: UserInfo = await res.json()
 
         if (!res.ok) {
-          setError(data.error || "Greska pri provjeri emaila")
+          setError(data.error || "Greška pri provjeri emaila")
           return
         }
 
@@ -60,8 +60,8 @@ export function useAuthFlow() {
           isLoading: false,
           error: null,
         }))
-      } catch (error) {
-        setError("Greska pri povezivanju")
+      } catch (_error) {
+        setError("Greška pri povezivanju")
       }
     },
     [setLoading, setError]
@@ -85,13 +85,13 @@ export function useAuthFlow() {
 
         if (!res.ok) {
           const data = await res.json()
-          setError(data.error || "Greska pri slanju koda")
+          setError(data.error || "Greška pri slanju koda")
           return
         }
 
         setState((s) => ({ ...s, step: "verify", isLoading: false }))
-      } catch (error) {
-        setError("Greska pri slanju koda")
+      } catch (_error) {
+        setError("Greška pri slanju koda")
       }
     },
     [state.email, setLoading, setError]
@@ -128,8 +128,8 @@ export function useAuthFlow() {
         }
 
         handleSuccess()
-      } catch (error) {
-        setError("Greska pri prijavi")
+      } catch (_error) {
+        setError("Greška pri prijavi")
       }
     },
     [state.email, setLoading, setError, sendVerificationCode, handleSuccess]
@@ -156,14 +156,14 @@ export function useAuthFlow() {
         const data = await res.json()
 
         if (!res.ok) {
-          setError(data.error || "Greska pri registraciji")
+          setError(data.error || "Greška pri registraciji")
           return
         }
 
         // Send verification code
         await sendVerificationCode("EMAIL_VERIFICATION", data.userId)
-      } catch (error) {
-        setError("Greska pri registraciji")
+      } catch (_error) {
+        setError("Greška pri registraciji")
       }
     },
     [state.email, setLoading, setError, sendVerificationCode]
@@ -200,15 +200,15 @@ export function useAuthFlow() {
           })
 
           if (result?.error) {
-            setError("Greska pri prijavi")
+            setError("Greška pri prijavi")
             return false
           }
         }
 
         handleSuccess()
         return true
-      } catch (error) {
-        setError("Greska pri verifikaciji")
+      } catch (_error) {
+        setError("Greška pri verifikaciji")
         return false
       }
     },
@@ -231,13 +231,13 @@ export function useAuthFlow() {
 
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error || "Greska pri slanju koda")
+        setError(data.error || "Greška pri slanju koda")
         return
       }
 
       setState((s) => ({ ...s, step: "reset", isLoading: false }))
-    } catch (error) {
-      setError("Greska pri slanju koda")
+    } catch (_error) {
+      setError("Greška pri slanju koda")
     }
   }, [state.email, setLoading, setError])
 
@@ -260,7 +260,7 @@ export function useAuthFlow() {
         const data = await res.json()
 
         if (!res.ok) {
-          setError(data.error || "Greska pri resetiranju lozinke")
+          setError(data.error || "Greška pri resetiranju lozinke")
           return false
         }
 
@@ -272,14 +272,14 @@ export function useAuthFlow() {
         })
 
         if (result?.error) {
-          setError("Greska pri prijavi")
+          setError("Greška pri prijavi")
           return false
         }
 
         handleSuccess()
         return true
-      } catch (error) {
-        setError("Greska pri resetiranju lozinke")
+      } catch (_error) {
+        setError("Greška pri resetiranju lozinke")
         return false
       }
     },
@@ -288,7 +288,7 @@ export function useAuthFlow() {
 
   const authenticateWithPasskey = useCallback(async () => {
     // Passkey auth - simplified version without WebAuthn for now
-    setError("Passkeys nisu trenutno podrzani")
+    setError("Passkeys nisu trenutno podržani")
   }, [setError])
 
   const goBack = useCallback(() => {

@@ -31,7 +31,7 @@ export function Step2Tax({ onNext, onBack }: StepProps) {
   )
 
   const handleIncomeChange = useCallback(
-    (value: typeof data.expectedIncomeRange) => updateData({ expectedIncomeRange: value }),
+    (value: OnboardingData["expectedIncomeRange"]) => updateData({ expectedIncomeRange: value }),
     [updateData]
   )
 
