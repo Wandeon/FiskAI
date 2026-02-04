@@ -77,6 +77,14 @@ model Invoice {
   eInvoiceSentAt DateTime?
   eInvoiceStatus String?   // SENT, DELIVERED, ACCEPTED, REJECTED
 
+  // E-invoice provider tracking
+  eInvoiceProviderRef   String?   // Provider's document ID
+  eInvoiceProviderData  Json?     // Full provider response
+  eInvoiceDeliveredAt   DateTime?
+
+  // Buyer reference for e-invoice (PO number, etc.)
+  buyerReference        String?
+
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -111,6 +119,8 @@ model InvoiceLine {
   quantity    Int    @default(100) // quantity * 100 for precision
   unitPrice   Int    // cents/lipe
   vatRate     Int    @default(25)  // 25, 13, 5, 0
+  unit        String @default("C62")  // UN/CEFACT code
+  vatCategory String @default("S")    // S, AA, E, Z, O
 
   lineTotalCents Int @default(0)
   vatAmountCents Int @default(0)

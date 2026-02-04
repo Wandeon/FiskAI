@@ -37,6 +37,11 @@ model Company {
   acceptsCash   Boolean @default(false)
   fiscalEnabled Boolean @default(false)
 
+  // E-Invoice settings (Phase 1)
+  eInvoiceProvider        String?   // "e-poslovanje" | "mock" | null
+  eInvoiceApiKeyEncrypted String?   // AES-256-GCM encrypted API key
+  eInvoiceEnabled         Boolean   @default(false)
+
   // Contact information
   email String?
   phone String?
