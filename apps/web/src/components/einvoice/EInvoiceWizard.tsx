@@ -150,10 +150,12 @@ export function EInvoiceWizard({ companyId }: EInvoiceWizardProps) {
     setData((prev) => ({ ...prev, lines }))
   }, [])
 
-  const handleSubmit = useCallback(() => {
-    // TODO: Submit invoice via tRPC
-    console.log("Submitting invoice:", data)
-  }, [data])
+  const handleReviewDataChange = useCallback(
+    (updates: Partial<Pick<WizardData, "notes">>) => {
+      setData((prev) => ({ ...prev, ...updates }))
+    },
+    []
+  )
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -189,8 +191,20 @@ export function EInvoiceWizard({ companyId }: EInvoiceWizardProps) {
               onBack={handleBack}
             />
           )}
-          {currentStep === 3 && (
-            <ReviewStep onSubmit={handleSubmit} onBack={handleBack} />
+          {currentStep === 3 && data.buyerId && (
+            <ReviewStep
+              companyId={companyId}
+              data={{
+                buyerId: data.buyerId,
+                issueDate: data.issueDate,
+                dueDate: data.dueDate,
+                buyerReference: data.buyerReference,
+                lines: data.lines,
+                notes: data.notes,
+              }}
+              onDataChange={handleReviewDataChange}
+              onBack={handleBack}
+            />
           )}
         </motion.div>
       </AnimatePresence>

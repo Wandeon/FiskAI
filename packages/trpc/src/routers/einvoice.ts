@@ -26,6 +26,73 @@ const createDraftInputSchema = z.object({
 type CreateDraftInput = z.infer<typeof createDraftInputSchema>
 
 export const eInvoiceRouter = router({
+  // Get company info for invoice preview (seller info)
+  getCompanyInfo: protectedProcedure
+    .input(z.object({
+      companyId: z.string().cuid(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const company = await ctx.db.company.findFirst({
+        where: {
+          id: input.companyId,
+          members: {
+            some: { userId: ctx.userId },
+          },
+        },
+        include: {
+          businessPremises: {
+            where: { isActive: true },
+            include: {
+              paymentDevices: {
+                where: { isActive: true },
+              },
+            },
+          },
+        },
+      })
+
+      if (!company) {
+        throw new Error("UNAUTHORIZED")
+      }
+
+      return company
+    }),
+
+  // Get buyer (contact) by ID
+  getBuyerById: protectedProcedure
+    .input(z.object({
+      companyId: z.string().cuid(),
+      contactId: z.string().cuid(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Verify user has access to company
+      const company = await ctx.db.company.findFirst({
+        where: {
+          id: input.companyId,
+          members: {
+            some: { userId: ctx.userId },
+          },
+        },
+      })
+
+      if (!company) {
+        throw new Error("UNAUTHORIZED")
+      }
+
+      const contact = await ctx.db.contact.findFirst({
+        where: {
+          id: input.contactId,
+          companyId: input.companyId,
+        },
+      })
+
+      if (!contact) {
+        throw new Error("Contact not found")
+      }
+
+      return contact
+    }),
+
   // Get contacts that can be buyers (CUSTOMER or BOTH)
   getBuyers: protectedProcedure
     .input(z.object({
