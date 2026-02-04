@@ -1,0 +1,34 @@
+{
+  "id": 194571,
+  "insertedOn": "2026-01-04T20:09:43.64",
+  "modifiedOn": "2026-01-04T20:12:01.58",
+  "documentId": "E-DRY-RUN-1767553782200",
+  "documentType": "Invoice",
+  "issuedOn": "2026-01-04T19:09:42",
+  "amount": 1250,
+  "currency": "EUR",
+  "supplierPartyName": "Metrica d.o.o.",
+  "supplierPartyVATId": "45480824373",
+  "customerPartyName": "INOXMONT-VS d.o.o.",
+  "customerPartyVATId": "17079690143",
+  "status": 9,
+  "statusHistory": [
+    {
+      "createdOn": "2026-01-04T20:09:43.64",
+      "status": 1,
+      "statusText": "Zaprimljeno u sustav, čeka validaciju"
+    },
+    {
+      "createdOn": "2026-01-04T20:09:43.665",
+      "status": 2,
+      "statusText": "Validacija završena, čeka slanje"
+    },
+    {
+      "createdOn": "2026-01-04T20:12:01.58",
+      "status": 9,
+      "statusText": "Neuspješno slanje inf. posredniku primatelja",
+      "note": ""
+    }
+  ],
+  "eReportingRequests": []
+}

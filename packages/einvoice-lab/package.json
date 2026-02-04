@@ -1,0 +1,20 @@
+{
+  "name": "@fiskai/einvoice-lab",
+  "version": "0.0.1",
+  "private": true,
+  "description": "E-invoice integration lab - salvaged code from old FiskAI for validation and testing",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --test src/__tests__/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "xml2js": "^0.6.2",
+    "xmlbuilder2": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

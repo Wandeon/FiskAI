@@ -1,0 +1,2306 @@
+openapi: 3.0.1
+info:
+  title: ePoslovanje - API (zadnja izmjena 02.01.2026. u 11:51)
+  version: 2.0.19
+  description: |
+    API dokumentacija za korištenje ePoslovanje v.2 API-ja, uključuje krajnje
+    točke za slanje, primanje, dohvat i promjenu statusa eDokumenata, kreiranje vizualizacija,
+    slanje eIzvještaja, korištenje bankarskih usluga i dohvat informacija o korisničkom
+    računu
+
+    **Testno okruženje**
+
+    Za testiranje koristite testno okruženje i testni server **https://test.eposlovanje.hr**
+    
+    Za otvaranje korisničkog računa (ili više njih ako ćete testirati slanje i primanje između njih) koristite sljedeći [link](https://test.eposlovanje.hr/client/register)
+
+    Za prijavu u web sučelje na testnom okruženju koristite sljedeći [link](https://test.eposlovanje.hr/client/)
+    
+    **Autorizacija**
+    
+    Svi requestovi, osim registracije novog korisnika, se **moraju** autorizirati putem API key-a u headeru requesta. Polje u headeru u kojem se šalje API key je: **Authorization**
+
+    **Dodatni sadržaj:**
+
+    * [Specifikacija osnovne upotrebe eRačuna s proširenjima](https://doc.eposlovanje.hr/download/specifikacija_osnovne_upotrebe_eracuna_s_prosirenjima.pdf)
+    
+    * [UBL 2.1 Invoice i CreditNote XSD schema](https://doc.eposlovanje.hr/download/invoice_creditnote_schema.zip)
+    
+    * [Primjeri eRačuna po EN16931 specifikaciji](https://eposlovanje.hr/dokumenti/primjeri-racuna-en16931.zip) 
+
+    * [Primjeri eRačuna po CIUS-2025 specifikaciji](https://eposlovanje.hr/dokumenti/primjeri-racuna-cius-2025.zip)
+
+    * **Napomena:** Određeni inf. posrednici neće zaprimati račune prije 1.1.2026. godine. Do tada šaljite račune po staroj specifikaciji (EN16931), nakon 1.1.2026. šaljite račune po novoj specifikaciji (CIUS-2025)
+
+    **Promjena statusa dokumenta vs eIzvještavanje**
+
+    S obzirom da imamo veliki broj upita na ovu temu i da dosta developera ne razumije razliku između procesnog statusa dokumenta i slanja zahtjeva za eIzvještavanje, pokušat ćemo vam objasniti što je što i kada se što koristi:
+
+    * **Status dokumenta i promjena statusa dokumenta: (metode /api/v2/document/status/ i /api/v2/document/changestatus/)** - ove metode se koriste za promjenu procesnog statusa dokumenta (odobren, odbijen, parcijalno plaćen i plaćen u potpunosti). Promjenu procesnih statusa dokumenata radi isključivo kupac. Promjena statusa u **odbijen** automatski ne šalje zahtjev za eIzvještavanjem > Odbijanje, već je isti potrebno odvojeno pozvati.
+
+    * **eIzvještavanje (metode /api/v2/ereporting/... )**  - ove metode se koriste za slanje eIzvještavanje zahtjeva prema Poreznoj upravi. 
+        
+        * eIzvještavanje > Odbijen šalje kupac isključivo za dokument za koji je odrađena fiskalizacija ulaznog dokumenta. Ne šalje se automatski promjenom procesnog statusa dokumenta u procesni status odbijen. 
+        
+        * eIzvještavanje > Naplaćen šalje prodavatelj isključivo za dokument za koji je odrađena fiskalizacija izlaznog dokumenta. Ne brkati sa procesnim statusom Naplaćen / Parcijalno naplaćen. Procesne statuse šalje kupac, dok eIzvještavanje > Naplaćen šalje prodavatelj. Moguće je više puta slati zahtjev za naplatom (npr. kod više parcijalnih naplata). Također je moguće slati negativne iznose (kod korekcija u naplaćenom iznosu / storno pogrešno poslanog izvještaja o naplati)
+
+    **Changelog:**
+    2.0.19:
+    - **dodan endpoint /api/v2/ereporting/fiscalize/{id}** endpointi služe za fiskalizaciju postojećeg eDokumenta na temelju ID-a dokumenta
+
+    2.0.18:
+    - **dodani endpointi /api/v2/account/f2settings i /api/v2/account/updatef2settings** endpointi služe za mijenjanje postavki automatske fiskalizacije dokumenata u F2 fiskalizaciji
+
+    2.0.17:
+    - **/api/v2/document/send** dodan parametar sendAsEmail u #/components/schemas/DocumentSendRequest.
+
+    2.0.16:
+    - dodana dodatna objašnjenja razlike između procesnih statusa i eIzvještavanje zahtjeva.
+
+    2.0.15:
+    - dodano filtriranje eIzvještavanje zahtjeva u **/api/v2/ereporting/requests** metodi. Dodana neobavezna polja supplierPartyVATId, customerPartyVATId. 
+    Naime, kod dohvata npr. zahtjeva za fiskalizacijom ulaznih računa, može postojati više računa sa istim brojem u istoj godini od različitih dobavljača. Zbog toga bi kod dohvata zahtjeva za fiskalizacijom ulaznih i izlaznih računa, te zahtjeva za izdavanje računa koje nije moguće izdati kao eRačun bilo dobro koristiti OIB kupca i prodavatelja kako bi se dohvatio ispravan zahtjev.
+
+    2.0.14:
+    - ažurirana schema **#/components/schemas/DocumentStatusHistory** dodani elementi partialPaymentAmount i note. Već su postojali kao elementi u API-ju ali nisu bili dokumentirani
+
+    2.0.13:
+    - dodani primjeri XML-ova po staroj i novoj specifikaciji. Računi po novoj specifikaciji su preuzeti sa portala Porezne uprave, ali su ispravljeni jer su njihovi sadržavali neispravne namespaceove (pogledati readme.txt unutar ZIP datoteke) 
+    
+    2.0.12:
+    - dodan endpoint [POST]/api/v2/ams/check za provjeru postoji li identifikator korisnika na AMS servisu Porezne uprave
+
+    2.0.11:
+    - u endpointima [GET]/api/v2/document/incoming i [GET] /api/v2/document/outgoing dodani parametri limit i offset
+
+    2.0.10:
+    - u schemi **#/components/schemas/EReportingRequestsResponse** u dokumentaciji je bio naveden pogrešan naziv property-a **eReportingRequests**, pravilan naziv je **requests**
+
+    2.0.9:
+    - dodan endpoint **/api/v2/ping** za provjeru dosupnosti servisa
+
+    2.0.8:
+    - dodan endpoint **/api/v2/document/validate** za validaciju dokumenata bez zaprimanja u sustav ePoslovanja
+
+    2.0.7:
+    - **nema promjena u funkcionalnosti samog API-ja**, samo su mijenjani opisi pojedinih endpointa jer smo imali veliki broj upita od developera koji su brkali promjenu statusa dokumenta i zahtjeva eIzvještavanja
+    - proširen opis endpointa **/api/v2/document/send** (automatska fiskalizacija ako je korisnik omogućio automatsku fiskalizaciju izlaznih računa)
+    - proširen opis endpointa **/api/v2/document/changestatus/{id}** (promjena statusa ne šalje automatske zahtjeve za eIzvještavanje)
+    - proširen opis endpointa **/api/v2/ereporting/paid/{id}** i **/api/v2/ereporting/rejected/{id}** (zahtjevi za eIzvještavanje ne mijenjaju procesni status dokumenta)
+
+    2.0.6:
+    - ispravljena greška u  **/api/v2/document/changestatus/{id}**: success response vraća DocumentChangeStatusResponse tip objekta (prethodno je bilo pogrešno navedeno da vraća DocumentStatusResponse tip objekta)
+
+    2.0.5:
+    - modificiran endpoint **/api/v2/document/incoming** i **/api/v2/document/outgoing**: dodani filteri **issuedFrom** i **issuedTo** za filtriranje po datumu izdavanja dokumenta
+
+    2.0.4:
+    - modificiran endpoint **/api/v2/document/incoming** i **/api/v2/document/outgoing**: filteri **from** i **to** preimenovani u **insertedFrom** i **insertedTo**, dodani filteri **modifiedFrom** i **modifiedTo** za filtriranje po datumu i vremenu zadnje izmjene statusa dokumenta (transportnog, poslovnog ili eIzvještavanje)
+    - modificiran **'#/components/schemas/DocumentStatusResponse'**: dodano polje **modifiedOn** koje sadrži datum i vrijeme zadnje izmjene statusa dokumenta (transportnog, poslovnog ili eIzvještavanje)
+
+
+    2.0.3:
+    - dodana podrška za fiskalizaciju ulaznog i izlaznog eRačuna koji se ne nalaze u sustavu ePoslovanja, te računa za koji nije moguće izdati eRačun
+    - dodana podrška za eIzvještavanje naplate i odbijanja računa koji se ne nalazi u sustavu ePoslovanja
+    - dodan endpoint za dohvat statusa eIzvještavanja po broju računa i godini izdavanja računa
+
+    2.0.2: 
+    - definirana obavezna polja u  #/components/schemas/AccountRegistrationRequest
+    
+    2.0.1: 
+    - dodana podrška za datum isteka prepaid sredstava u #/component/schemas/AccountBalanceResponse
+    - dodan endpoint za transfer prepaid sredstava (/api/v2/account/transferprepaidfunds)
+
+    2.0.0: 
+    - inicijalna verzija API-ja
+externalDocs:
+  url: https://test.eposlovanje.hr/client/register
+  description: Registracija testnog korisničkog računa
+servers:
+- url: https://test.eposlovanje.hr
+  variables: {}
+  description: Testni server
+- url: https://eracun.eposlovanje.hr
+  variables: {}
+  description: Produkcijski server
+tags:
+- name: Ping
+- name: Dokumenti
+- name: eIzvještavanje
+- name: Korisnički račun
+- name: Bankarstvo
+- name: Poslovne jedinice
+- name: AMS
+paths:
+  /api/v2/ping:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Provjera dostupnosi servisa
+      description: Endpoint služi za provjeru statusa ePoslovanje servisa
+      operationId: GetDocument
+      tags:
+      - Ping
+      responses:
+        '200':
+          description: Servis je up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+        '400':
+          description: Greška prilikom procesuiranja Ping zahtjeva (neautorizirani korisnik i sl.). Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/send:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Slanje dokumenta
+      description: | 
+        Mogu se slati isključivo UBL 2.1 dokument tipa **Invoice** ili **CreditNote**
+        po specifikaciji **urn:cen.eu:en16931:2017** (nakon 1.1.2026 više neće biti dozvoljeno) ili 
+        **urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0.**
+
+        Dokument se prilikom slanja validira i, ako je generiran po speficikaciji 
+        urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0.,
+        automatski fiskalizira kao odlazni dokument (ako je izlazna fiskalizacija uključena u korisnikovom profilu u web sučelju),
+        nakon čega stavlja se u red čekanja (queue) za slanje prema informatičkom
+        posredniku primatelja.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentSendRequest'
+      operationId: SendDocument
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Dokument je uspješno zaprimljen u sustav, potpisan certifikatom,
+            poslan na fiskalizaciju izlaznog dokumenta i čeka slanje prema informatičkom
+            posredniku primatelja
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSendResponse'
+        '400':
+          description: Dokument nije zaprimljen jer podaci ne prolaze validaciju,
+            korisnički račun nije aktivan ili nema dovoljno sredstava na računu. Više
+            detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/get/{id}:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat dokumenta
+      description: Endpoint vraća sadržaj potpisane XML datoteke (ulaznog ili izlaznog
+        eRačuna/eOdobrenja)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      operationId: GetDocument
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Vraća sadržaj datoteke
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentGetResponse'
+        '400':
+          description: Dokument nije moguće dohvatiti (arhivirani dokument, dokument
+            sa ID-em ne pripada korisniku itd...). Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/visualization/{id}:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat ePoslovanje vizualizacije
+      description: Endpoint vraća PDF vizualizaciju koju je ePoslovanje kreiralo na
+        temelju podataka iz XML datoteke.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      operationId: GetVisualization
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Vraća PDF vizualizaciju enkodiranu kao Base64 string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVisualizationResponse'
+        '400':
+          description: Vizualizaciju nije moguće dohvatiti (arhivirani dokument, dokument
+            sa ID-em ne pripada korisniku itd...). Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/incoming:
+    get:
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: query
+        name: insertedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su ubačeni u ePoslovanje nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: insertedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su ubačeni u ePoslovanje prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: modifiedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente čiji se status (transportni, poslovni ili eIzvještavanje) promijenio nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: modifiedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente čiji se status (transportni, poslovni ili eIzvještavanje) promijenio prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: issuedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su izdani nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: issuedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su izdani prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: status
+        schema:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+        description: |
+          Vraća dokumente koji imaju navedeni status.
+          
+          * 1 - Na čekanju (zaprimljeno u ePoslovanje, čeka validaciju)
+
+          * 2 - Na slanju (dokument je zaprimljen u ePoslovanje, potpisan i čeka slanje
+              prema informatičkom posredniku primatelja)
+
+          * 3 - Poslan (dokument je uspješno poslan prema informatičkom posredniku primatelja)
+
+          * 4 - Isporučen (dokument je uspješno isporučen kupcu)
+
+          * 5 - Odobren (dokument je odobren od strane kupca)
+
+          * 6 - Odbijen (dokument je odbijen od strane kupca)
+
+          * 7 - Plaćen u potpunosti (dokument je u potpunosti plaćen)
+
+          * 8 - Parcijalno plaćen (dokument je djelomično plaćen)
+
+          * 9 - Neuspješna isporuka (neuspješno slanje dokumenta prema informatičkom posredniku
+              primatelja)
+      - in: query
+        name: limit
+        schema:
+          type: number
+          format: integer
+        description: Pomoć pri pagingu / segmentaciji kod velikog broja recorda. Limitira broj recorda koje vraća upit. Po defaultu limit je 1000 (ako se parametar ne navede prilikom requesta). Dozvoljene vrijednosti su od 1 do 1000.
+      - in: query
+        name: offset
+        schema:
+          type: number
+          format: integer
+        description: Pomoć pri paging / segmentaciji kod velikog broja recorda. Preskače <offset> recorda koje vraća upit. Po defaultu limit je 0 (ako se parametar ne navede prilikom requesta). Dozvoljene vrijednosti su od 0 do N.
+      summary: Dohvat inf. o ulaznim dokumentima. 
+      description: |
+        Endpoint vraća listu koja sadrži podatke o ulaznim dokumentima
+        korisnika (id dokumenta, broj i tip dokument, datum i vrijeme kreiranja /
+        zaprimanja, podatke o statusima, eIzvještavanju...)
+
+        Maksimalan broj rezultata je 1000. 
+        
+        Rezultati su sortirani po datumu i vremenu ubacivanja u
+        sustav ePoslovanja, od najnovijih prema starijima.
+      operationId: GetIncomingDocumentsStatus
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Vraća array objekata koji sadrže informacije o ulaznim dokumentima
+            korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentIncomingResponse'
+        '400':
+          description: Greška u parametrima po kojima se filtriraju rezultati. Detalji
+            greške se nalaze u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/outgoing:
+    get:
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: query
+        name: insertedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su ubačeni u ePoslovanje nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: insertedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su ubačeni u ePoslovanje prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: modifiedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente čiji se status (transportni, poslovni ili eIzvještavanje) promijenio nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: modifiedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente čiji se status (transportni, poslovni ili eIzvještavanje) promijenio prije navedenog
+          datuma. ISO-8601 format
+      - in: query
+        name: issuedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su izdani nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: issuedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća dokumente koji su izdani prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: status 
+        schema:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+        description: |
+          Vraća dokumente koji imaju navedeni status.
+          
+          * 1 - Na čekanju (zaprimljeno u ePoslovanje, čeka validaciju)
+
+          * 2 - Na slanju (dokument je zaprimljen u ePoslovanje, potpisan i čeka slanje
+              prema informatičkom posredniku primatelja)
+
+          * 3 - Poslan (dokument je uspješno poslan prema informatičkom posredniku primatelja)
+
+          * 4 - Isporučen (dokument je uspješno isporučen kupcu)
+
+          * 5 - Odobren (dokument je odobren od strane kupca)
+
+          * 6 - Odbijen (dokument je odbijen od strane kupca)
+
+          * 7 - Plaćen u potpunosti (dokument je u potpunosti plaćen)
+
+          * 8 - Parcijalno plaćen (dokument je djelomično plaćen)
+
+          * 9 - Neuspješna isporuka (neuspješno slanje dokumenta prema informatičkom posredniku
+              primatelja)
+      - in: query
+        name: limit
+        schema:
+          type: number
+          format: integer
+        description: Pomoć pri pagingu / segmentaciji kod velikog broja recorda. Limitira broj recorda koje vraća upit. Po defaultu limit je 1000 (ako se parametar ne navede prilikom requesta). Dozvoljene vrijednosti su od 1 do 1000.
+      - in: query
+        name: offset
+        schema:
+          type: number
+          format: integer
+        description: Pomoć pri paging / segmentaciji kod velikog broja recorda. Preskače <offset> recorda koje vraća upit. Po defaultu limit je 0 (ako se parametar ne navede prilikom requesta). Dozvoljene vrijednosti su od 0 do N.
+      summary: Dohvat inf. o izlaznim dokumentima. 
+      description: |
+        Endpoint vraća listu koja sadrži podatke o izlaznim dokumentima
+        korisnika (id dokumenta, broj i tip dokumenta, datum i vrijeme kreiranja /
+        zaprimanja, podatke o statusima, eIzvještavanju...)
+
+        Maksimalan broj rezultata je 1000. 
+        
+        Rezultati su sortirani po datumu i vremenu ubacivanja u
+        sustav ePoslovanja, od najnovijih prema starijima.
+      operationId: GetOutgoingDocumentsStatus
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Vraća array objekata koji sadrže informacije o izlaznim dokumentima
+            korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentIncomingResponse'
+        '400':
+          description: Greška u parametrima po kojima se filtriraju rezultati. Detalji
+            greške se nalaze u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/status/{id}:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat inf. o statusu pojedinog dokumenta
+      description: Endpoint vraća podatke o pojedinom dokumentu korisnika (id dokumenta,
+        broj i tip dokument, datum i vrijeme kreiranja / zaprimanja, podatke o statusima,
+        eIzvještavanju...)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      operationId: GetDocumentStatus
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Vraća objekt koji sadrže informacije o pojedinom dokumentu
+            korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStatusResponse'
+        '400':
+          description: Status dokumenta nije moguće dohvatiti (dokument sa ID-em ne
+            pripada korisniku itd...). Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/changestatus/{id}:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Promjena statusa dokumenta
+      description: |
+        Endpoint mijenja status dokumenta, šalje obavijest o promjeni inf. posredniku druge stranke (ako je to moguće) 
+
+        ** NAPOMENA: ** promjena statusa dokumenta u plaćeno ili odbijeno **ne šalje zahtjev za eIzvještavanje prema Poreznoj upravi**, već je za to potrebno koristiti endpoint za eIzvještavanje i poslati odvijeni zahtjev. Ovaj endpoint mijenja isključivo procesni status dokumenta.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentChangeStatusRequest'
+      operationId: ChangeDocumentStatus
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Status dokumenta je promijenjen i vraća se novi status dokumenta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentChangeStatusResponse'
+        '400':
+          description: Statud dokumenta nije moguće promijeniti (prethodni status
+            ne dozvoljava postavljanje statusa, dokument sa ID-em ne pripada korisniku
+            itd...). Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/document/validate:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Validacija dokumenta bez slanja u sustav ePoslovanja
+      description: | 
+        Mogu se slati isključivo UBL 2.1 dokument tipa **Invoice** ili **CreditNote**
+        po specifikaciji **urn:cen.eu:en16931:2017** (nakon 1.1.2026 više neće biti dozvoljeno) ili 
+        **urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0.**
+
+        Dokument se validira (Schematron validacija) i ako postoje greške u validaciji, vraća popis grešaka. Ako je je dokument validan, vraća prazan element.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentValidateRequest'
+      operationId: SendDocument
+      tags:
+      - Dokumenti
+      responses:
+        '200':
+          description: Dokument je prošao proces validacije, vraćen popis grešaka (prazan array ako je dokument validan)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentValidateResponse'
+        '400':
+          description: Greška u authentifikaciji i sl.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/fiscalize/{id}:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Fiskalizira postojeći eDokument
+      description: |
+        Fiskalizira postojeći eDokument na temelju ID-a dokumenta
+
+        Ako je riječ o izlaznom dokumentu, napravit će izlaznu fiskalizaciju
+        Ako je riječ o ulaznom dokumentu, napravit će ulaznu fiskalizaciju
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      operationId: eReportingFiscalize
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev za fiskalizacijom je uredno zaprimljen
+        '400':
+          description: Greška prilikom zaprimanje zahtjeva za fiskalizacijom
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/reportdocument:
+    post:
+      security:
+        - ApiKeyAuth: []
+      summary: Evidentiraj dokument
+      description: |
+        Endpoint šalje zahtjev Poreznoj upravi za fiskalizaciju izlaznog ili ulaznog eRačuna ili 
+        eIzvještavanje zahtjev za račun za kojeg nije moguće izdati eRačuna.
+
+        Ako se račun šalje kao eRačun, nije potrebno raditi odvojenu evidenciju računa
+        jer se dokumenti automatski fiskaliziraju prilikom slanja i zaprimanja u ePoslovanje 
+        (ako je to uključeno u korisnikovim postavkama u profilu na webu)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EReportingReportDocumentRequest'
+      operationId: eReportingReportDocument
+      tags: 
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev o evidenciji računa je uspješno poslan na 
+            Poreznu upravu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EReportingReportDocumentResponse'
+        '400':
+          description: Greška u parametrima zahtjeva ili prilikom slanja 
+            zahtjeva na Poreznu upravu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/paid/{id}:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Označi kao naplaćen (ID)
+      description: |
+        Šalje zahtjev za eIzvještavanjem Poreznoj upravi o naplati eRačuna za 
+        račun koji se već nalazi u sustavu ePoslovanja.
+
+        Ovaj zahtjev može slati isključivo Prodavatelj, odnosno subjekt koji je poslao
+        dokument. Dokument za koji se radi eIzvještavanje > Naplaćen mora prethodno biti fiskaliziran kao izlazni dokument.
+
+        Moguće je poslati više zahtjeva za eIzvještavanje > Naplata za isti račun (npr. kod parcijalnih uplata). Također je moguće slati negativne iznose u svrhu storna/korekcije prethodno poslanog eIzvještavanje > Naplata zahtjeva.
+
+        ** NAPOMENA: ** ovaj endpoint ne mijenja procesni status dokumenta.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EReportingDocumentPaidRequest'
+      operationId: eReportingPaidIDRequest
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev za eIzvještavanje o naplati računa je uspješno zaprimljen
+            i čeka slanje prema Poreznoj upravi
+        '400':
+          description: Greška u parametrima zahtjeva. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/paid:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Označi kao naplaćen
+      description: |
+        Šalje zahtjev za eIzvještavanjem Poreznoj upravi o naplati računa koji 
+        se ne nalazi u sustavu ePoslovanja.
+
+        Ovaj zahtjev može slati isključivo Prodavatelj, odnosno subjekt koji je poslao
+        dokument.  Dokument za koji se radi eIzvještavanje > Naplaćen mora prethodno biti fiskaliziran kao izlazni dokument.
+
+        Moguće je poslati više zahtjeva za eIzvještavanje > Naplata za isti račun (npr. kod parcijalnih uplata). Također je moguće slati negativne iznose u svrhu storna/korekcije prethodno poslanog eIzvještavanje > Naplata zahtjeva.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EReportingDocumentPaidRequest'
+      operationId: eReportingPaidRequest
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev za eIzvještavanje je uspješno isporučen na Poreznu upravu
+        '400':
+          description: Greška u parametrima ili slanju zahtjeva. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/rejected/{id}:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Označi kao odbijen (ID)
+      description: |
+        Šalje zahtjev za eIzvještavanjem Poreznoj upravi o odbijanju eRačuna
+        koji se nalazi u sustavu ePoslovanja.
+
+        Ovaj zahtjev može slati isključivo Kupac, odnosno subjekt koji je zaprimio
+        dokument. Dokument za koji se radi eIzvještavanje > Odbijen mora prethodno biti fiskaliziran kao ulazni dokument.
+
+        ** NAPOMENA: ** ovaj endpoint ne mijenja procesni status dokumenta.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          $ref: '#/components/parameters/id'
+        required: true
+        description: ID dokumenta iz sustava ePoslovanja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EReportingDocumentRejectedRequest'
+      operationId: eReportingRejectIDRequest
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev za eIzvještavanje o odbijanju računa je uspješno zaprimljen
+            i čeka slanje prema Poreznoj upravi
+        '400':
+          description: Greška u parametrima zahtjeva. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/rejected:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Označi kao odbijen
+      description: |
+        Šalje zahtjev za eIzvještavanjem Poreznoj upravi o odbijanju računa
+        koji se ne nalazi u sustavu ePoslovanja.
+
+        Ovaj zahtjev može slati isključivo Kupac, odnosno subjekt koji je zaprimio
+        dokument. Dokument za koji se radi eIzvještavanje > Odbijen mora prethodno biti fiskaliziran kao ulazni dokument.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EReportingDocumentRejectedRequest'
+      operationId: eReportingRejectRequest
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Zahtjev za eIzvještavanje o odbijanju računa je uspješno zaprimljen
+            i čeka slanje prema Poreznoj upravi
+        '400':
+          description: Greška u parametrima zahtjeva. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/ereporting/requests:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat zahtjeva eIzvještavanje
+      description: |
+        Vraća sve zahtjeve eIzvještavanja i Fiskalizaciju 2.0 
+        za dokument po broju i godini izdavanja dokumenta 
+
+        Kod dohvata zahtjeva za fiskalizacijom ulaznih i izlaznih računa, 
+        kao i zahtjeva za eIzvještavanjem računa koje nije moguće izdati kao eRačun, 
+        preporučamo korištenje supplierPartyVATId i customerPartyVATId parametara. 
+        
+        Kod ulaznih računa može biti više računa sa istim brojem računa u istoj godini 
+        od različitih prodavatelja
+      parameters:
+      - in: query
+        name: documentId
+        schema:
+          $ref: '#/components/parameters/documentId'
+        required: true
+        description: Broj računa/odobrenja (fiskalni broj računa)
+      - in: query
+        name: issueYear
+        schema:
+          $ref: '#/components/parameters/issueYear'
+        required: true
+        description: Godina izdavanja dokumenta
+      - in: query
+        name: supplierPartyVATId
+        schema:
+          $ref: '#/components/parameters/supplierPartyVATId'
+        description: OIB prodavatelja. 
+      - in: query
+        name: customerPartyVATId
+        schema:
+          $ref: '#/components/parameters/customerPartyVATId'
+        description: OIB kupca. 
+      - in: query
+        name: type
+        schema:
+          $ref: '#/components/schemas/eReportingRequestTypeEnum'
+        example: 1
+        
+      operationId: eReportingStatus
+      tags:
+      - eIzvještavanje
+      responses:
+        '200':
+          description: Vraća popis svih zahtjeva za eIzvještavanje i Fiskalizaciju 2.0 za vezani dokument
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EReportingRequestsResponse'
+        '400':
+          description: Greška u parametrima zahtjeva. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/banking/accounts:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat bankovnih računa korisnika
+      description: |
+        Endpoint vraća listu bankovnih računa korisnika, uključuje ID računa,
+        naziv, IBAN, valutu, naziv banke, datum i vrijeme zadnjeg dohvaćanja transakcija,
+        datum i vrijeme isteka pristupa računu i trenutno stanje na računu
+      operationId: GetBankingAccounts
+      tags:
+      - Bankarstvo
+      responses:
+        '200':
+          description: Vraća listu bankovnih računa korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankingAccountResponse'
+        '400':
+          description: Greška u dohvaćanju bankovnih računa. Više detalja u body-u
+            responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/banking/transactions:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat bankovnih transakcija
+      description: |
+        Endpoint vraća listu bankovnih transakcija korisnika, uključuje
+        ID transakcije, datum i vrijeme knjiženja, IBAN, tip transakcije, iznos, valutu,
+        naziv vjerovnika i dužnika, ID transakcije u banci...
+
+        Maksimalno 1000 rezultata.
+
+        Transakcije su sortirane po redosljedu kako su ubačene u sustav ePoslovanja,
+        od najnovijih prema starijima.
+      operationId: GetBankingTransactions
+      tags:
+      - Bankarstvo
+      parameters:
+      - in: query
+        name: insertedFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća transakcije koje su ubačene u ePoslovanje nakon navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: insertedTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća transakcije koje su ubačene u ePoslovanje prije navedenog
+          datuma. ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: bookingFrom
+        schema:
+          type: string
+          format: date-time
+        description: Vraća transakcije koje su knjižene u banci nakon navedenog datuma.
+          ISO-8601 format
+        example: '2025-07-15T00:00:00'
+      - in: query
+        name: bookingTo
+        schema:
+          type: string
+          format: date-time
+        description: Vraća transakcije koje su knjižene u banci prije navedenog datuma.
+          ISO-8601 format
+        example: '2025-07-16T00:00:00'
+      - in: query
+        name: iban
+        required: true
+        schema:
+          type: string
+        description: Vraća transakcije koje su vezane uz navedeni IBAN bankovnog računa
+          korisnika
+        example: HR1212345678901234567
+      - in: query
+        name: currency
+        required: true
+        schema:
+          type: string
+        description: Vraća transakcije koje su vezane uz navedenu valutu
+        example: EUR
+      responses:
+        '200':
+          description: Vraća listu bankovnih transakcija korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankingTransactionResponse'
+        '400':
+          description: Greška u dohvaćanju bankovnih transakcija. Više detalja u body-u
+            responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/account/balance:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat balancea na računu
+      description: |
+        Endpoint vraća trenutno stanje na računu korisnika za prepaid korisnike,
+        odnosno potrošnju za postpaid korisnike
+      operationId: GetAccountBalance
+      tags:
+      - Korisnički račun
+      responses:
+        '200':
+          description: Vraća trenutno stanje na računu korisnika
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalanceResponse'
+        '400':
+          description: Greška u dohvaćanju stanja na računu. Više detalja u body-u
+            responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/account/transferprepaidfunds:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Prebacivanje prepaid sredstava
+      description:  |
+        Endpoint omogućava transfer prepaid sredstava sa računa API korisnika na korinički račun drugog korisnika. 
+        
+        Oba korisnika moraju imate aktivan korisnički račun i biti prepaid korisnici. 
+        
+        Pošiljatelj mora imati dovoljno sredstava na računu. 
+        
+        Pošiljateljeva sredstva moraju biti valjana. Minimum koji se može prebaciti je 4.00€
+      operationId: TransferPrepaidFunds
+      tags:
+      - Korisnički račun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountTransferPrepaidFundsRequest'
+      responses:
+        '200':
+          description: Sredstva uspješno prebačena. Vraća se balance API korisnika nakon prebacivanja.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTransferPrepaidFundsResponse'
+        '400':
+          description: Greška u dohvatu API ključa. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/account/apikey:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat API ključa
+      description: |
+        Endpoint dohvaća API ključa na temelju korisničkog imena i lozinke 
+        koji se koristi za autentifikaciju korisnika prilikom korištenja ePoslovanje API-ja. 
+        
+        Korisnik mora biti aktiviran
+      operationId: GetAccountApiKey
+      tags:
+      - Korisnički račun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountApiKeyRequest'
+      responses:
+        '200':
+          description: Vraća novi API ključ koji se koristi za autentifikaciju
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountApiKeyResponse'
+        '400':
+          description: Greška u dohvatu API ključa. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/account/f2settings:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat postavki za automatsku fiskalizaciju za F2.0
+      description: |
+        Endpoint dohvaća postavke za automatsku fiskalizaciju eRačuna u fiskalizaciji F2.0
+      operationId: GetF2Settings
+      tags:
+      - Korisnički račun
+      responses:
+        '200':
+          description: Vraća postavke automatske fiskalizacije ulaznih i izlaznih dokumenata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/F2Settings'
+        '400':
+          description: Greška u dohvatu postavki. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/account/updatef2settings:
+    put:
+      security:
+      - ApiKeyAuth: []
+      summary: Izmjena postavki za automatsku fiskalizaciju za F2.0
+      description: |
+        Endpoint mijenja postavke za automatsku fiskalizaciju ulaznih i izlaznih računa
+      operationId: UpdateF2Settings
+      tags:
+      - Korisnički račun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/F2Settings'
+      responses:
+        '200':
+          description: Nove postavke su uredno promijenjene
+        '400':
+          description: Greška promjeni postavki za F2 fiskalizaciju. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v2/account/register/{erptag}:
+    post:
+      summary: Registracija novog korisnika
+      description: |
+        Endpoint registrira novog korisnika u sustav ePoslovanja
+      parameters:
+      - in: path
+        name: erptag
+        schema:
+          $ref: '#/components/parameters/erptag'
+        required: true
+        description: ERP identifikator koji se koristi za registraciju korisnika
+      operationId: RegisterAccount
+      tags:
+      - Korisnički račun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRegistrationRequest'
+      responses:
+        '200':
+          description: Korisnik je uspješno registriran u sustav ePoslovanja, vraćamo
+            API ključ koji se koristi za autentifikaciju
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountRegistrationResponse'
+        '400':
+          description: Greška u registraciji korisnika. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/businessunits/{vatid}:
+    get:
+      security:
+      - ApiKeyAuth: []
+      summary: Dohvat poslovnih jedinica
+      description: |
+        Endpoint vraća listu poslovnih jedinica na temelju OIB-a
+      parameters:
+      - in: path
+        name: vatid
+        schema:
+          $ref: '#/components/parameters/vatid'
+        required: true
+        description: OIB poslovnog subjekta za kojeg se dohvaćaju poslovne jedinice
+      operationId: GetBusinessUnits
+      tags:
+      - Poslovne jedinice
+      responses:
+        '200':
+          description: Vraća listu poslovnih jedinica korisnika
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetBusinessUnitsResponse'
+        '400':
+          description: Greška u dohvaćanju poslovnih jedinica. Više detalja u body-u
+            responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /api/v2/ams/check:
+    post:
+      security:
+      - ApiKeyAuth: []
+      summary: Provjera postoji li identifikator korisnika na AMS servisu porezne uprave
+      description: |
+        Provjerava ima li korisnik identifikator koji pokazuje na MPS servis
+      operationId: AmsCheck
+      tags:
+      - AMS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmsCheckRequest'
+      responses:
+        '200':
+          description: AMS record uspješno provjeren, vraća postoji li ili ne identifikator korisnika na AMS-u
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AmsCheckResponse'
+        '400':
+          description: Greška u dohvatu API ključa. Više detalja u body-u responsea.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      description: ID dokumenta u sustavu ePoslovanja
+      required: true
+      schema:
+        type: integer
+        example: 12345
+    erptag:
+      name: erptag
+      in: path
+      description: ERP identifikator
+      required: true
+      schema:
+        type: string
+        example: NUMICUS-001
+    vatid:
+      name: vatid
+      in: path
+      description: OIB poslovnog subjekta
+      required: true
+      schema:
+        type: string
+        example: '12345678901'
+    documentId:
+      name: documentId
+      in: query
+      description: Broj računa (fiskalni broj računa)
+      required: true
+      schema:
+        type: string
+        example: 1234/1/2025
+    issueYear:
+      name: issueYear
+      in: query
+      description: Godina izdavanja dokumenta
+      required: true
+      schema:
+        type: integer
+        example: 2025
+    supplierPartyVATId:
+      name: supplierPartyVATId
+      in: query
+      description: OIB prodavatelja
+      schema:
+        type: string
+        example: 12345678901
+    customerPartyVATId:
+      name: customerPartyVATId
+      in: query
+      description: OIB kupca
+      schema:
+        type: string
+        example: 10987654321
+  schemas:
+    PingResponse:
+      type: object
+      required:
+      - status
+      - message
+      properties:
+        status:
+          type: string
+          description: Status servisa (fiksno OK)
+          example: 'OK'
+        message:
+          type: string
+          description: Dodatna napomena
+          example: Svi servisi su pokrenuti i ispravno rade...
+    DocumentSendRequest:
+      type: object
+      required:
+      - document
+      - softwareId
+      properties:
+        document:
+          type: string
+          description: XML dokumenta (UBL 2.1 Invoice ili CreditNote po urn:cen.eu:en16931:2017 (ovaj format zaprimamo do 1.1.2026.) ili 
+            urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0.)
+          example: '<?xml version="1.0" encoding="UTF-8"?><Invoice...'
+        softwareId:
+          type: string
+          description: Identifikator programskog riješenja preko kojeg se šalju eDokumenti
+          example: NUMICUS-001
+        sendAsEmail:
+          type: boolean
+          description: |
+            Ovaj parametar nije obavezan. Po defaultu je **false**. 
+            
+            Ako je **true**: 
+              * **ne provjeravamo je li kupac registriran u AMS-u porezne uprave**
+              * **ne provodimo automatsku fiskalizaciju** izlaznog računa
+              * račun se šalje kao **download link** prema korisniku, email adresa kupca je obavezna!
+
+             Ovu opciju možete koristiti npr. ako ćete slati eRačune prema B2C korisnicima
+    DocumentSendResponse:
+      type: object
+      required:
+      - id
+      - insertedOn
+      - message
+      properties:
+        id:
+          type: integer
+          description: ID dokumenta u sustavu ePoslovanja
+          example: 12345
+        insertedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme ubacivanja dokumenta u sustav (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        message:
+          type: string
+          description: Dodatna napomena (neobavezno)
+          example: Dokument uspješno zaprimljen i digitalno potpisan. Čeka fiskalizaciju
+            ulaznog računa i slanje primatelju.
+    DocumentGetResponse:
+      type: object
+      required:
+      - document
+      properties:
+        document:
+          type: string
+          description: XML dokumenta
+          example: '<?xml version="1.0" encoding="UTF-8"?><Invoice...'
+    DocumentVisualizationResponse:
+      type: object
+      required:
+      - pdf
+      properties:
+        pdf:
+          type: string
+          description: Base64 enkodirana PDF datoteka koja sadrži vizualizaciju eDokumenta
+          example: VEVTVCBQREY...
+    DocumentOutgoingResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/DocumentStatusResponse'
+      description: Lista izlaznih dokumenata korisnika, uključuje ID dokumenta, broj
+        i tip dokumenta, datum i vrijeme kreiranja / zaprimanja, podatke o statusima,
+        eIzvještavanju...
+    DocumentIncomingResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/DocumentStatusResponse'
+      description: Lista ulaznih dokumenata korisnika, uključuje ID dokumenta, broj
+        i tip dokumenta, datum i vrijeme kreiranja / zaprimanja, podatke o statusima,
+        eIzvještavanju...
+    DocumentStatusResponse:
+      type: object
+      required:
+      - id
+      - insertedOn
+      - modifiedOn
+      - documentId
+      - documentType
+      - issuedOn
+      - amount
+      - currency
+      - supplierPartyName
+      - supplierPartyVATId
+      - customerPartyName
+      - customerPartyVATId
+      - status
+      - statusHistory
+      properties:
+        id:
+          type: integer
+          description: ID dokumenta u sustavu ePoslovanja
+          example: 12345
+        insertedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme ubacivanja dokumenta u sustav ePoslovanja (ISO-8601
+            format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        modifiedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme zadnje izmjene statusa dokumenta (transportnog, poslovnog ili eIzvještavanje) u sustavu ePoslovanja (ISO-8601
+            format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        documentId:
+          type: string
+          description: Broj računa/odobrenja
+          example: 12345/01/2025
+        documentType:
+          type: string
+          description: Tip dokumenta (Invoice, CreditNote)
+          example: Invoice
+        issuedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme izdavanja dokumenta (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        amount:
+          type: number
+          format: float
+          description: Ukupan iznos računa/odobrenja
+          example: 1000.5
+        currency:
+          type: string
+          description: Valuta dokumenta
+          example: EUR
+        supplierPartyName:
+          type: string
+          description: Naziv prodavatelja (izdavatelja, odnosno pošiljatelja dokumenta)
+          example: Dobavljač d.o.o.
+        supplierPartyVATId:
+          type: string
+          description: OIB prodavatelja (izdavatelja, odnosno pošiljatelja dokumenta)
+          example: '12345678901'
+        supplierPartyBusinessUnit:
+          type: string
+          description: Poslovna jedinica prodavatelja (izdavatelja, odnosno pošiljatelja
+            dokumenta). Šalje se samo ako je prodavatelj adresiran putem poslovne
+            jedinice.
+          example: 9934:12345678901::HR99:1000
+        supplierPartyGLN:
+          type: string
+          description: GLN prodavatelja (izdavatelja, odnosno pošiljatelja dokumenta).
+            Šalje se samo ako je prodavatelj adresiran putem GLN-a
+          example: '1234567890123'
+        customerPartyName:
+          type: string
+          description: Naziv kupca (primatelja) dokumenta
+          example: Kupac d.o.o.
+        customerPartyVATId:
+          type: string
+          description: OIB kupca (primatelja) dokumenta
+          example: '10987654321'
+        customerPartyBusinessUnit:
+          type: string
+          description: Poslovna jedinica kupca (primatelja) dokumenta. Šalje se samo
+            ako je kupac adresiran putem poslovne jedinice.
+          example: 9934:10987654321::HR99:2000
+        customerPartyGLN:
+          type: string
+          description: GLN kupca (primatelja) dokumenta. Šalje se samo ako je kupac
+            adresiran putem GLN-a
+          example: '1098765432109'
+        status:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+          description: Status dokumenta (poslan, zaprimljen, odobren, odbijen, plaćen
+            itd.)
+          example: '4'
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentStatusHistory'
+          description: Lista povijesti statusa dokumenta, uključuje datum i vrijeme
+            promjene statusa, status i tekstualni opis statusa
+        eReportingRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/EReportingRequest'
+          description: Lista eIzvještavanje zahtjeva vezanih uz dokument, uključuje
+            tip zahtjeva, datum kreiranja, datum završetka, referentni ID i druge
+            relevantne informacije
+    DocumentChangeStatusRequest:
+      type: object
+      required:
+      - status
+      - changedOn
+      properties:
+        status:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+          description: Novi status dokumenta koji se postavlja
+
+            * 1 - Na čekanju (zaprimljeno u ePoslovanje, čeka validaciju)
+
+            * 2 - Na slanju (dokument je zaprimljen u ePoslovanje, potpisan i čeka slanje
+            prema informatičkom posredniku primatelja)
+
+            * 3 - Poslan (dokument je uspješno poslan prema informatičkom posredniku primatelja)
+
+            * 4 - Isporučen (dokument je uspješno isporučen kupcu)
+
+            * 5 - Odobren (dokument je odobren od strane kupca)
+
+            * 6 - Odbijen (dokument je odbijen od strane kupca)
+
+            * 7 - Plaćen u potpunosti (dokument je u potpunosti plaćen)
+
+            * 8 - Parcijalno plaćen (dokument je djelomično plaćen)
+
+            * 9 - Neuspješna isporuka (neuspješno slanje dokumenta prema informatičkom posredniku
+            primatelja)'
+          example: 5
+        changedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je status promijenjen (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        note:
+          type: string
+          description: Obavezno polje kada se status mijenja u "Odbijen". Sadrži tekstualni
+            opis razloga odbijanja statusa
+          example: Odbijen zbog neusklađenosti podataka
+        partialPaymentAmount:
+          type: number
+          format: float
+          description: Iznos djelomične naplate dokumenta. Šalje se samo ako se status
+            mijenja u "Parcijalno plaćen"
+          example: 500.25
+    DocumentChangeStatusResponse:
+      type: object
+      required:
+      - id
+      - status
+      - changedOn
+      properties:
+        id:
+          type: integer
+          description: ID dokumenta u sustavu ePoslovanja
+          example: 12345
+        status:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+          description: Novi status dokumenta nakon promjene
+          example: 5
+        changedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je status promijenjen (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+    DocumentValidateRequest:
+      type: object
+      required:
+      - document
+      properties:
+        document:
+          type: string
+          description: XML dokumenta (UBL 2.1 Invoice ili CreditNote po urn:cen.eu:en16931:2017 (ovaj format zaprimamo do 1.1.2026.) ili 
+            urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0.)
+          example: '<?xml version="1.0" encoding="UTF-8"?><Invoice...'
+    DocumentValidateResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          description: Lista validacijskih grešaka ako dokument nije ispravan, ili prazan array ako je ok
+          example: []   
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          description: Naziv greške
+          example: Greška pri autentifikaciji korisnika
+        details:
+          type: string
+          description: Detaljnije informacije o greški
+          example: Korisnički račun nije aktiviran
+    DocumentStatusHistory:
+      type: object
+      required:
+      - createdOn
+      - status
+      - statusText
+      properties:
+        createdOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je status promijenjen (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        status:
+          $ref: '#/components/schemas/DocumentStatusEnum'
+          description: Status dokumenta
+        statusText:
+          type: string
+          description: Tekstualni opis statusa dokumenta
+          example: Dokument uspješno poslan prema inf. posredniku primatelja
+        partialPaymentAmount:
+          type: number
+          description: Iznos parcijalne uplate (kod statusa Parcijalno plaćen)
+          example: 1234.56
+        note:
+          type: string
+          description: Dodatna napomena uz statuse Odobren i Odbijen. Npr razlog odbijanja kod statusa Odbijen ili nekakva napomena uz status Odobren
+          example: 'Odbijen jer iznos nije ispravan'
+    EReportingRequest:
+      type: object
+      required:
+      - type
+      - description
+      - createdOn
+      properties:
+        type:
+          $ref: '#/components/schemas/eReportingRequestTypeEnum'
+          example: 1
+        description:
+          type: string
+          description: Tekstualni opis vrste zahtjeva
+          example: Evidencija izlaznog računa
+        createdOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kreiranja zahtjeva (ISO-8601 format)
+        success:
+          type: boolean
+          description: U slučaju da je zahtjev već poslan na servis Porezne uprave, 
+            označava je li zahtjev uspještno zaprimljen
+        errorCode:
+          type: string
+          description: U slučaju da je zahtjev poslan na servis Porezne uprave, 
+            ali ga je Porezna uprava odbila, sadrži kod greške koju je vratila Porezna uprava
+        errorDescription:
+          type: string
+          description: U slučaju da je zahtjev poslan na servis Porezne uprave, 
+            ali ga je Porezna uprava odbila, sadrži opis greške koju je vratila Porezna uprava
+        completedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je zahtjev uspješno evidentiraj na Poreznoj
+            upravi (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        referenceId:
+          type: string
+          description: Referentni ID zahtjeva koji se šalje u Poreznu upravu (id povratne
+            poruke za Fiskalizaciju 2.0 itd.)
+          example: af2cd-1234-5678-90ab-cdef12345678
+        paymentDate:
+          type: string
+          format: date
+          description: Datum naplate dokumenta (yyyy-MM-dd format). Šalje se samo za zahtjeve
+            tipa 4 (Evidencija naplate računa)
+          example: '2025-07-15'
+        paidAmount:
+          type: number
+          format: float
+          description: Iznos naplate dokumenta. Šalje se samo za zahtjeve tipa 4 (Evidencija
+            naplate računa)
+          example: 1000.5
+        paymentType:
+          $ref: '#/components/schemas/eReportingPaymentTypeEnum'
+          example: 1
+        rejectionDate:
+          type: string
+          format: date
+          description: Datum odbijanja računa (yyyy-MM-dd format). Šalje se samo za
+            zahtjeve tipa 5 (Evidencija odbijanja računa)
+          example: '2025-07-15'
+        rejectionType:
+          $ref: '#/components/schemas/eReportingRejectionTypeEnum'
+          example: 1
+        rejectionReason:
+          type: string
+          description: Razlog odbijanja računa. Šalje se samo za zahtjeve tipa 5 (Evidencija
+            odbijanja računa)
+          example: Upisana kriva stavka u računu
+    EReportingReportDocumentRequest:
+      type: object
+      required:
+      - document
+      - type
+      properties:
+        document:
+          type: string
+          description: Račun ili odobrenje u XML formatu (UBL 2.1 Invoice ili CreditNote po 
+            urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0. ) 
+          example: '<?xml version="1.0" encoding="UTF-8"?><Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"..'
+        type:
+          type: string
+          description: 
+            Vrsta računa/odobrenja koje se šalje. 
+
+            Dozvoljene vrijednosti 
+
+            * U - ulazni eRačun 
+
+            * I - izlazni eRačun
+
+            * IR - račun za kojeg nije moguće izdati eRačun (npr. primatelj se ne nalazi u adresaru subjekata)
+          example: 'I'
+    EReportingReportDocumentResponse:
+      type: object
+      required:
+        - responseId
+        - message
+      properties:
+        responseId:
+          type: string
+          description: ID zahtjeva Porezne uprave
+        message:
+          type: string
+          description: Odgovor SOAP servisa Porezne uprave
+    EReportingDocumentPaidRequest:
+      type: object
+      required:
+      - paymentDate
+      - paidAmount
+      - paymentType
+      properties:
+        documentId:
+          type: string
+          description: Broj računa. Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: 1234/56/789
+        issueDate:
+          type: string
+          format: date
+          description: Datum izdavanja računa (yyyy-MM-dd format). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '2025-06-27'
+        supplierPartyId: 
+          type: string
+          description: OIB prodavatelja (izdavatelja računa). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '12345678912'
+        customerPartyId:
+          type: string
+          description: OIB kupca (primatelja računa). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '21987654321'
+        paymentDate:
+          type: string
+          format: date
+          description: Datum naplate dokumenta (yyyy-MM-dd format)
+          example: '2025-07-15'
+        paidAmount:
+          type: number
+          format: float
+          description: Iznos naplate dokumenta
+          example: 1000.5
+        paymentType:
+          type: number
+          $ref: '#/components/schemas/eReportingPaymentTypeEnum'
+    EReportingDocumentRejectedRequest:
+      type: object
+      required:
+      - rejectionDate
+      - rejectionType
+      - rejectionReason
+      properties:
+        documentId:
+          type: string
+          description: Broj računa. Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: 1234/56/789
+        issueDate:
+          type: string
+          format: date
+          description: Datum izdavanja računa (yyyy-MM-dd format). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '2025-06-27'
+        supplierPartyId: 
+          type: string
+          description: OIB prodavatelja (izdavatelja računa). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '12345678912'
+        customerPartyId:
+          type: string
+          description: OIB kupca (primatelja računa). Nije potrebno navoditi ako se šalje sa query parametrom ID, odnosno ako se dokument nalazi u sustavu ePoslovanja 
+          example: '21987654321'
+        rejectionDate:
+          type: string
+          format: date
+          description: Datum odbijanja računa (yyyy-MM-dd format)
+          example: '2025-07-15'
+        rejectionType:
+          type: number
+          $ref: '#/components/schemas/eReportingRejectionTypeEnum'
+          example: 1
+        rejectionReason:
+          type: string
+          description: Razlog odbijanja računa
+          example: Upisana kriva stavka u računu
+    EReportingRequestsResponse:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          items: 
+            $ref: '#/components/schemas/EReportingRequest'
+      
+    BankingAccountResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/BankingAccount'
+      description: Lista bankovnih računa korisnika, uključuje ID računa, naziv
+    BankingAccount:
+      type: object
+      required:
+      - id
+      - name
+      - iban
+      - currency
+      - bankName
+      - lastTransactionRetrievedOn
+      - accessExpiresOn
+      - balance
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID bankovnog računa u sustavu ePoslovanja
+          example: 123e4567-e89b-12d3-a456-4266
+        name:
+          type: string
+          description: Naziv bankovnog računa
+          example: PBZ EUR račun
+        iban:
+          type: string
+          description: IBAN bankovnog računa
+          example: HR1234567890123456789
+        currency:
+          type: string
+          description: Valuta bankovnog računa
+          example: EUR
+        bankName:
+          type: string
+          description: Naziv banke u kojoj je otvoren račun
+          example: Privredna banka Zagreb d.d.
+        lastTransactionRetrievedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme zadnjeg dohvaćanja transakcija s računa (ISO-8601
+            format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        accessExpiresOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada ističe Vaša dozvola za pristup bankovnom
+            računu (ISO-8601 format). Nakon isteka ovog datuma, potrebno je ponovno
+            autorizirati pristup bankovnom računu.
+          example: '2025-07-30T12:00:00.123+02:00'
+        balance:
+          type: number
+          format: float
+          description: Trenutno stanje na bankovnom računu
+    BankingTransactionResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/BankingTransaction'
+      description: Lista bankovnih transakcija korisnika, uključuje ID transakcije,
+        datum i vrijeme knjiženja...
+    BankingTransaction:
+      type: object
+      required:
+      - id
+      - insertedOn
+      - iban
+      - transactionType
+      - amount
+      - currency
+      - creditorName
+      - creditorAccount
+      - debtorName
+      - debtorAccount
+      - bankTransactionId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID transakcije u sustavu ePoslovanja
+          example: 123e4567-e89b-12d3-a456-426614174000
+        insertedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je transakcija ubačena u sustav ePoslovanja
+            (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        iban:
+          type: string
+          description: IBAN bankovnog računa na kojem je transakcija izvršena
+          example: HR1234567890123456789
+        bookedOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme kada je transakcija knjižena na bankovnom računu
+            (ISO-8601 format)
+          example: '2025-07-15T12:00:00.123+02:00'
+        transactionType:
+          type: integer
+          $ref: '#/components/schemas/bankingTransactionTypeEnum'
+          example: 1
+        amount:
+          type: number
+          format: float
+          description: Iznos transakcije
+          example: 1000.5
+        currency:
+          type: string
+          description: Valuta transakcije
+          example: EUR
+        exchangeRate:
+          type: number
+          format: float
+          description: Tečaj transakcije (ako je primjenjivo)
+          example: 1.0
+        sourceCurrency:
+          type: string
+          description: Valuta izvora transakcije (ako je primjenjivo)
+          example: USD
+        creditorName:
+          type: string
+          description: Naziv vjerovnika (primatelja) transakcije
+          example: Primatelj d.o.o.
+        creditorAccount:
+          type: string
+          description: IBAN vjerovnika (primatelja) transakcije
+          example: HR9876543210987654321
+        ultimateCreditor:
+          type: string
+          description: Naziv krajnjeg vjerovnika (ako je primjenjivo)
+          example: Krajnji vjerovnik d.o.o.
+        debtorName:
+          type: string
+          description: Naziv dužnika (pošiljatelja) transakcije
+          example: Dužnik d.o.o.
+        debtorAccount:
+          type: string
+          description: IBAN dužnika (pošiljatelja) transakcije
+          example: HR1234567890123456789
+        ultimateDebtor:
+          type: string
+          description: Naziv krajnjeg dužnika (ako je primjenjivo)
+          example: Krajnji dužnik d.o.o.
+        RemittanceInformationUnstructured:
+          type: string
+          description: Neformatirana informacija o plaćanju (ie. opis plaćanja)
+          example: Plaćanje po uplatnici 01-2025
+        RemittanceInformationStructured:
+          type: string
+          description: Formatirana informacija o plaćanju (ie. model i poziv na broj))
+          example: HR00 12345
+        additionalInformation:
+          type: string
+          description: Dodatne informacije o transakciji (ako su dostupne)
+          example: Dodatna napomena o transakciji
+        purposeCode:
+          type: string
+          description: Svrha transakcije (ako je primjenjivo)
+          example: GOVT ili COST ili SALA
+        bankTransactionCode:
+          type: string
+          description: Bankovni kod transakcije (ako je primjenjivo)
+          example: PMNT-RCDT-DMCT
+        propriatyBankTransactionCode:
+          type: string
+          description: Vlastiti bankovni kod transakcije (ako je primjenjivo)
+          example: PMNT-1234
+        bankTransactionId:
+          type: string
+          description: ID transakcije u banci (ako je primjenjivo)
+          example: '1234567890'
+    
+    AccountBalanceResponse:
+      type: object
+      required:
+      - accountType
+      - balance
+      properties:
+        accountType:
+          type: string
+          description: Vrsta korisničkog računa (Prepaid, Postpaid...)
+          example: Prepaid
+        balance:
+          type: number
+          format: float
+          description: Trenutno stanje na računu korisnika (za prepaid korisnike)
+            ili trenutna potrošnja (za postpaid korisnike)
+          example: 10.5
+        balanceExpiresOn:
+          type: string
+          format: date-time
+          description: Datum i vrijeme do kada vrijede prepaid sredstva (samo za Prepaid korisnike)
+    AccountTransferPrepaidFundsRequest:
+      type: object
+      required:
+        - destinationUsername
+        - amount
+      properties:
+        destinationUsername:
+          type: string
+          description: Korisničko ime računa na koji se šalju prepaid sredstva
+          example: korisnik123
+        amount:
+          type: number
+          format: float
+          description: Iznos koji se šalje korisniku (bez PDV-a, minimalan iznos 4.00)
+    AccountTransferPrepaidFundsResponse:
+      type: object
+      required:
+        - currentBalance
+      properties:
+        currentBalance:
+          type: number
+          format: float
+          description: Iznos prepaid sredstava na računu pošiljatelja nakon transfera
+    AccountApiKeyRequest:
+      type: object
+      required:
+      - username
+      - password
+      - vatId
+      - softwareId
+      properties:
+        username:
+          type: string
+          description: Korisničko ime za autentifikaciju korisnika u sustavu ePoslovanja
+          example: korisnik123
+        password:
+          type: string
+          description: Lozinka za autentifikaciju korisnika u sustavu ePoslovanja
+          example: lozinka123
+        vatId:
+          type: string
+          description: OIB korisnika koji se koristi za autentifikaciju u sustavu
+            ePoslovanja
+          example: '12345678901'
+        softwareId:
+          type: string
+          description: Identifikator programskog riješenja preko kojeg se šalje zahtjev
+            za API ključ
+          example: NUMICUS-001
+    AccountApiKeyResponse:
+      type: object
+      required:
+      - apiKey
+      properties:
+        apiKey:
+          type: string
+          description: API ključ koji se koristi za autentifikaciju korisnika u sustavu
+            ePoslovanja
+          example: 1234567890abcdef1234567890abcdef
+    AccountRegistrationRequest:
+      type: object
+      required:
+        - companyName
+        - vatId
+        - iban
+        - contactFirstname
+        - contactLastname
+        - contactPhone
+        - contactGsm
+        - contactEmail
+        - address
+        - city
+        - zip
+        - country
+        - username
+        - password
+        - softwareId
+        - plan
+      properties:
+        companyName:
+          type: string
+          description: Naziv tvrtke za koju se registrira korisnički račun
+          example: Moja Tvrtka d.o.o.
+        vatId:
+          type: string
+          description: OIB tvrtke za koju se registrira korisnički račun
+          example: '12345678901'
+        iban:
+          type: string
+          description: IBAN bankovnog računa tvrtke za koju se registrira korisnički
+            račun
+          example: HR1212345678901234567
+        referenceId:
+          type: string
+          description: Referentni ID koji se koristi za referral program
+          example: preporučitelj-1234
+        businessUnit:
+          type: string
+          description: Poslovna jedinica tvrtke za koju se registrira korisnički račun
+            (ako je primjenjivo)
+          example: 9934:12345678901::HR99:1000
+        contactFirstname:
+          type: string
+          description: Ime kontakt osobe za korisnički račun
+          example: Ivan
+        contactLastname:
+          type: string
+          description: Prezime kontakt osobe za korisnički račun
+          example: Ivić
+        contactPhone:
+          type: string
+          description: Broj telefona kontakt osobe za korisnički račun
+          example: '+38512345678'
+        contactGsm:
+          type: string
+          description: Broj mobitela kontakt osobe za korisnički račun
+          example: '+38598765432'
+        contactEmail:
+          type: string
+          description: Email adresa kontakt osobe za korisnički račun
+          example: mail@firma.com
+        address:
+          type: string
+          description: Adresa sjedišta tvrtke za koju se registrira korisnički račun
+          example: Ulica 1
+        city:
+          type: string
+          description: Grad sjedišta tvrtke za koju se registrira korisnički račun
+          example: Split
+        zip:
+          type: string
+          description: Poštanski broj sjedišta tvrtke za koju se registrira korisnički
+            račun
+          example: '21000'
+        country:
+          type: string
+          description: Država sjedišta tvrtke za koju se registrira korisnički račun
+          example: HR
+        username:
+          type: string
+          description: Korisničko ime za autentifikaciju korisnika u sustavu ePoslovanja
+          example: korisnik123
+        password:
+          type: string
+          description: Lozinka za autentifikaciju korisnika u sustavu ePoslovanja
+          example: lozinka123
+        softwareId:
+          type: string
+          description: Identifikator programskog riješenja preko kojeg se šalje zahtjev
+            za registraciju korisničkog računa
+          example: NUMICUS-001
+        plan:
+          type: string
+          description: Plan korisničkog računa (Prepaid, Postpaid)
+          example: Prepaid
+    AccountRegistrationResponse:
+      type: object
+      required:
+      - apiKey
+      properties:
+        apiKey:
+          type: string
+          description: API ključ registriranog korisnika koji se koristi za autentifikaciju
+            korisnika u sustavu ePoslovanja nakon registracije
+          example: 1234567890abcdef1234567890abcdef
+    F2Settings:
+      type: object
+      required:
+      - AutomaticFiscalizeOutgoingInvoices
+      - AutomaticFiscalizeIncomingInvoices
+      properties:
+        AutomaticFiscalizeOutgoingInvoices:
+          type: boolean
+          description: Definira želite li da ePoslovanje automatski fiskalizira odlazne dokumente. true ako želite, false ako ne želite
+          example: true
+        AutomaticFiscalizeIncomingInvoices:
+          type: boolean
+          description: Definira želite li da ePoslovanje automatski fiskalizira ulazne dokumente. true ako želite, false ako ne želite
+          example: false
+    
+    GetBusinessUnitsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/BusinessUnit'
+        description: Lista poslovnih jedinica korisnika
+    BusinessUnit:
+      type: object
+      required:
+      - name
+      - code
+      properties:
+        name:
+          type: string
+          description: Naziv poslovne jedinice
+          example: HŠ D.O.O. UPRAVA ŠUMA PODRUŽNICA SENJ
+        code:
+          type: string
+          description: Oznaka poslovne jedinice
+          example: 9934:69693144506::HR99:1200
+
+    AmsCheckRequest:
+      type: object
+      required:
+      - schema
+      - identifier
+      properties:
+        schema:
+          type: string
+          description: Schema identifikatora (9934 za VATID tip identifikatora ili 0088 za GLN tip identifikatora)
+          example: '9934'
+        identifier:
+          type: string
+          description: Identifikator korisnika (npr. OIB ako se koristi 9934 schema ili GLN broj ako se koristi 0088 schema)
+          example: '62781739468'
+    AmsCheckResponse:
+      type: object
+      required:
+      - schema
+      - identifier
+      - publishedOnAms
+      properties:
+        schema:
+          type: string
+          description: Schema identifikatora (9934 za VATID tip identifikatora ili 0088 za GLN tip identifikatora)
+          example: 9934
+        identifier:
+          type: string
+          description: Identifikator korisnika (npr. OIB ako se koristi 9934 schema ili GLN broj ako se koristi 0088 schema)
+          example: 62781739468   
+        publishedOnAms:
+          type: boolean
+          description: Ako korisnik ima objavljen svoj identifikator na AMS servisu Porezne uprave, vrijednost je true, u suprotnom je vrijednost false
+          example: true       
+        mpsEndpoint:
+          type: string
+          description: Adresa MPS servisa objavljenog na AMS servisu Porezne uprave za navedeni identifikator korisnika 
+          example: 'https://prod.mps.eposlovanje.hr'      
+    
+    DocumentStatusEnum:
+      type: integer
+      description: Status dokumenta
+
+        * 1 - Na čekanju (zaprimljeno u ePoslovanje, čeka validaciju)
+
+        * 2 - Na slanju (dokument je zaprimljen u ePoslovanje, potpisan i čeka slanje prema informatičkom posredniku primatelja)
+
+        * 3 - Poslan (dokument je uspješno poslan prema informatičkom posredniku primatelja)
+
+        * 4 - Isporučen (dokument je uspješno isporučen kupcu)
+
+        * 5 - Odobren (dokument je odobren od strane kupca)
+
+        * 6 - Odbijen (dokument je odbijen od strane kupca)
+
+        * 7 - Plaćen u potpunosti (dokument je u potpunosti plaćen)
+
+        * 8 - Parcijalno plaćen (dokument je djelomično plaćen)
+
+        * 9 - Neuspješna isporuka (neuspješno slanje dokumenta prema informatičkom posredniku primatelja)
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+    eReportingRequestTypeEnum:
+      type: integer
+      description: Tip eIzvještavanje zahtjeva koji se šalju u Fiskalizaciju 2.0
+
+        * 1 - Evidencija izlaznog računa
+
+        * 2 - Evidencija ulaznog računa
+
+        * 3 - Evidencija isporuke za koju nije izdan eRačun
+
+        * 4 - Evidencija naplate računa
+
+        * 5 - Evidencija odbijanja računa
+    eReportingPaymentTypeEnum:
+      type: integer
+      description: Tip plaćanja za korištenje u eIzvještavanju u Fiskalizaciji 2.0
+
+        * 1 - Transakcijski račun (oznaka T u službenoj dokumentaciji)
+
+        * 2 - Obračunsko plaćanje (oznaka O u službenoj dokumentaciji)
+
+        * 3 - Ostalo (oznaka Z u službenoj dokumentaciji)
+      enum:
+      - 1
+      - 2
+      - 3
+    eReportingRejectionTypeEnum:
+      type: integer
+      description: Tip odbijanja računa za korištenje u eIzvještavanju u Fiskalizaciji 2.0
+
+        * 1 - Odbijanje zbog neusklađenosti podataka koji ne utječu na obračun poreza
+        (oznaka N u službenoj dokumentaciji)
+
+        * 2 - Odbijanje zbog neusklađenosti podataka koji utječu na obračun poreza (oznaka
+        U u službenoj dokumentaciji)
+
+        * 3 - Ostalo (oznaka O u službenoj dokumentaciji)
+      enum:
+      - 1
+      - 2
+      - 3
+    bankingTransactionTypeEnum:
+      type: integer
+      description: Vrsta transakcije
+        
+        * 1 - Uplata
+
+        * 2 - Isplata
+      enum:
+      - 1
+      - 2
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
