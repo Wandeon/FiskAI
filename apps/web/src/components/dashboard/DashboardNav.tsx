@@ -32,7 +32,10 @@ export function DashboardNav() {
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map((item) => {
-        const isActive = pathname === item.href
+        // For settings, match any path that starts with /settings
+        const isActive = item.href === "/settings"
+          ? pathname.startsWith("/settings")
+          : pathname === item.href
         const Icon = item.icon
 
         return (

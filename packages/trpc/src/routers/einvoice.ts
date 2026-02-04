@@ -3,7 +3,7 @@ import { router, protectedProcedure } from "../trpc"
 import { eInvoiceLineSchema, eurosToCents, formatInvoiceNumber } from "@fiskai/shared"
 import { EPoslovanjeProvider } from "../lib/einvoice/eposlovanje"
 import { generateUBLInvoice } from "../lib/einvoice/ubl-generator"
-import { decryptSecret } from "../lib/crypto"
+import { decryptSecret, encryptSecret } from "../lib/crypto"
 
 // Input schema for createDraft - we define it here to avoid ZodEffects merge issues
 const createDraftInputSchema = z.object({
@@ -413,5 +413,164 @@ export const eInvoiceRouter = router({
           },
         },
       })
+    }),
+
+  // Get e-invoice settings for company
+  getSettings: protectedProcedure
+    .input(z.object({
+      companyId: z.string().cuid(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const company = await ctx.db.company.findFirst({
+        where: {
+          id: input.companyId,
+          members: {
+            some: { userId: ctx.userId },
+          },
+        },
+        select: {
+          eInvoiceEnabled: true,
+          eInvoiceProvider: true,
+          eInvoiceApiKeyEncrypted: true,
+        },
+      })
+
+      if (!company) {
+        throw new Error("UNAUTHORIZED")
+      }
+
+      return {
+        enabled: company.eInvoiceEnabled,
+        provider: company.eInvoiceProvider,
+        hasApiKey: !!company.eInvoiceApiKeyEncrypted,
+      }
+    }),
+
+  // Update e-invoice settings
+  updateSettings: protectedProcedure
+    .input(z.object({
+      companyId: z.string().cuid(),
+      enabled: z.boolean(),
+      provider: z.string().optional(),
+      apiKey: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify user has access to company with OWNER or ADMIN role
+      const company = await ctx.db.company.findFirst({
+        where: {
+          id: input.companyId,
+          members: {
+            some: {
+              userId: ctx.userId,
+              role: { in: ["OWNER", "ADMIN"] },
+            },
+          },
+        },
+      })
+
+      if (!company) {
+        throw new Error("UNAUTHORIZED")
+      }
+
+      // Prepare update data
+      const updateData: {
+        eInvoiceEnabled: boolean
+        eInvoiceProvider?: string | null
+        eInvoiceApiKeyEncrypted?: string | null
+      } = {
+        eInvoiceEnabled: input.enabled,
+      }
+
+      // Update provider if provided
+      if (input.provider !== undefined) {
+        updateData.eInvoiceProvider = input.provider || null
+      }
+
+      // Encrypt and store API key if provided
+      if (input.apiKey !== undefined) {
+        updateData.eInvoiceApiKeyEncrypted = input.apiKey
+          ? encryptSecret(input.apiKey)
+          : null
+      }
+
+      const updated = await ctx.db.company.update({
+        where: { id: input.companyId },
+        data: updateData,
+        select: {
+          eInvoiceEnabled: true,
+          eInvoiceProvider: true,
+          eInvoiceApiKeyEncrypted: true,
+        },
+      })
+
+      return {
+        enabled: updated.eInvoiceEnabled,
+        provider: updated.eInvoiceProvider,
+        hasApiKey: !!updated.eInvoiceApiKeyEncrypted,
+      }
+    }),
+
+  // Test e-invoice provider connection
+  testConnection: protectedProcedure
+    .input(z.object({
+      companyId: z.string().cuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify user has access to company
+      const company = await ctx.db.company.findFirst({
+        where: {
+          id: input.companyId,
+          members: {
+            some: { userId: ctx.userId },
+          },
+        },
+        select: {
+          eInvoiceProvider: true,
+          eInvoiceApiKeyEncrypted: true,
+        },
+      })
+
+      if (!company) {
+        throw new Error("UNAUTHORIZED")
+      }
+
+      if (!company.eInvoiceProvider) {
+        throw new Error("Davatelj usluge nije konfiguriran")
+      }
+
+      if (!company.eInvoiceApiKeyEncrypted) {
+        throw new Error("API kljuc nije konfiguriran")
+      }
+
+      // Decrypt API key
+      const apiKey = decryptSecret(company.eInvoiceApiKeyEncrypted)
+
+      // Test connection based on provider
+      if (company.eInvoiceProvider === "e-poslovanje") {
+        const provider = new EPoslovanjeProvider({ apiKey })
+        try {
+          const result = await provider.ping()
+          return {
+            success: true,
+            message: result.message || "Veza uspjesno uspostavljena",
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Nepoznata greska"
+          return {
+            success: false,
+            message: `Greska pri povezivanju: ${errorMessage}`,
+          }
+        }
+      }
+
+      // Mock provider for testing
+      if (company.eInvoiceProvider === "mock") {
+        return {
+          success: true,
+          message: "Mock davatelj - veza uspjesno uspostavljena",
+        }
+      }
+
+      throw new Error("Nepoznati davatelj usluge")
     }),
 })
