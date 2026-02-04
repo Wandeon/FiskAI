@@ -51,14 +51,19 @@ export async function createCompany(
   input: CreateCompanyInput
 ): Promise<CreateCompanyResult> {
   try {
+    console.log("[createCompany] Input received:", JSON.stringify(input, null, 2))
+
     // Verify user is authenticated
     const session = await auth()
+    console.log("[createCompany] Session:", JSON.stringify(session, null, 2))
+
     if (!session?.user?.id) {
       return { success: false, error: "Niste prijavljeni" }
     }
 
     // Validate input
     const parsed = companySchema.safeParse(input)
+    console.log("[createCompany] Validation result:", parsed.success, parsed.error?.errors)
     if (!parsed.success) {
       const firstError = parsed.error.errors[0]
       return { success: false, error: firstError?.message || "Neispravni podaci" }
@@ -114,12 +119,22 @@ export async function createCompany(
       })
 
       // Create default business premises
-      await tx.businessPremises.create({
+      const premises = await tx.businessPremises.create({
         data: {
           companyId: newCompany.id,
           name: data.premisesName,
           code: data.premisesCode,
           address: data.address,
+          isActive: true,
+        },
+      })
+
+      // Create default payment device
+      await tx.paymentDevice.create({
+        data: {
+          businessPremisesId: premises.id,
+          code: "1",
+          name: "Glavni uređaj",
           isActive: true,
         },
       })
@@ -131,6 +146,8 @@ export async function createCompany(
     return { success: true, companyId: company.id }
   } catch (error) {
     console.error("Create company error:", error)
-    return { success: false, error: "Greška pri stvaranju tvrtke" }
+    // Return more detailed error message in development
+    const errorMessage = error instanceof Error ? error.message : "Greška pri stvaranju tvrtke"
+    return { success: false, error: process.env.NODE_ENV === "development" ? errorMessage : "Greška pri stvaranju tvrtke" }
   }
 }
